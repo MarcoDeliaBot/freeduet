@@ -206,6 +206,115 @@ export const EN = {
   "voice.listeningStop": "Listening… I'll stop when you pause",
   "voice.listening": "I'm listening, just start talking",
   "voice.permission": "Waiting for microphone permission…",
+  "voice.widget.unavailable": "Call unavailable",
+  "voice.widget.connecting": "Connecting…",
+  "voice.widget.speaking": "{name} is speaking",
+  "voice.widget.working": "Working on your request",
+  "voice.widget.muted": "Your microphone is muted",
+  "voice.widget.listening": "Listening to you",
+  "voice.widget.ready": "Ready when you are",
+  "voice.widget.label": "Voice call with {name}",
+  "voice.widget.duration": "Call duration",
+  "voice.widget.expand": "Expand voice call",
+  "voice.widget.expandTitle": "Expand call",
+  "voice.widget.end": "End voice call",
+  "voice.widget.endTitle": "End call",
+  "voice.widget.returnChat": "Return to chat",
+  "voice.widget.returnChatTitle": "Return to chat · keep call open",
+  "voice.widget.settings": "Call settings",
+  "voice.widget.captions": "Show live captions",
+  "voice.widget.captionsEmpty":
+    "Speak when you’re ready. This call is part of this conversation.",
+  "voice.widget.you": "You",
+  "voice.widget.youMuted": "You · microphone muted",
+  "voice.widget.youNamed": "{name} (you)",
+  "voice.widget.mute": "Mute your microphone",
+  "voice.widget.unmute": "Unmute your microphone",
+  "voice.widget.muteTitle":
+    "Mute your microphone · you’ll still hear the Bot",
+  "voice.session.slow":
+    "The call took too long to connect. Check microphone permission and try again.",
+  "voice.session.timeLimit":
+    "This call reached its 15-minute limit. You can start a new call.",
+  "voice.session.muteFailed":
+    "The microphone could not be changed. Please call again.",
+  "voice.session.lost": "The voice connection was lost.",
+  "voice.session.startFailed": "Could not start the voice call.",
+  "voice.session.transcriptLimit":
+    "This call reached its transcript limit. Start a new call to continue.",
+  "voice.session.responseFailed":
+    "The voice service could not complete its response. Please call again.",
+  "voice.session.serviceError":
+    "The voice service reported an error. Please end the call and try again.",
+  "voice.webrtc.unsupported":
+    "This browser does not support WebRTC voice calls.",
+  "voice.webrtc.playback":
+    "Audio playback was blocked. Allow sound in your browser, then call again.",
+  "voice.webrtc.lost":
+    "The voice connection was lost. Your chat is still available. Call again to reconnect.",
+  "voice.webrtc.micGone":
+    "The microphone disconnected. Check it and call again.",
+  "voice.webrtc.channelFailed": "The voice connection failed. Please call again.",
+  "voice.webrtc.ended": "The voice call ended. You can call again.",
+  "voice.webrtc.unreadable":
+    "The voice service returned an unreadable event. Please call again.",
+  "voice.webrtc.connectFailed":
+    "Could not connect the voice call. Please try again.",
+  "voice.webrtc.invalid":
+    "The voice service returned an invalid connection. Please try again.",
+  "voice.webrtc.notConnected": "The voice call is no longer connected.",
+  "voice.websocket.audio":
+    "This browser could not start call audio. Allow sound and try again.",
+  "voice.websocket.config": "Invalid voice connection configuration.",
+  "voice.websocket.address": "Unsupported voice service address.",
+  "voice.websocket.startFailed": "Could not start the voice call.",
+  "voice.websocket.connect":
+    "Could not connect to Grok Voice. Check your connection and try again.",
+  "voice.websocket.closed":
+    "The voice connection closed. Your chat is still available.",
+  "voice.websocket.notConnected": "The voice call is no longer connected.",
+  "voice.websocket.invalid":
+    "The voice service sent invalid audio or controls. Please call again.",
+  "voice.websocket.slow":
+    "Your connection is too slow for live audio. Please call again.",
+  "voice.websocket.micGone":
+    "The microphone disconnected. Check it and call again.",
+  "voice.connection.unsupported":
+    "Voice calls need a supported browser and HTTPS or localhost.",
+  "voice.connection.unavailable":
+    "Voice calls are unavailable. Check the deployment's voice configuration.",
+  "voice.connection.transport":
+    "This deployment uses an unsupported voice connection.",
+  "dictation.controls.dictate": "Dictate a message",
+  "dictation.controls.cancel": "Cancel dictation",
+  "dictation.controls.transcribing": "Transcribing…",
+  "dictation.controls.listening": "Listening",
+  "dictation.controls.duration": "Recording duration",
+  "dictation.controls.stop": "Stop and transcribe",
+  "dictation.controls.stopTitle": "Stop and add to draft",
+  "dictation.controls.send": "Transcribe and send",
+  "dictation.recording.secure":
+    "The microphone only works on a secure page. Open FreeDuet on the computer where it runs (localhost), or ask whoever runs it to put it behind https.",
+  "dictation.recording.noRecorder":
+    "This browser cannot record audio. Try an up-to-date Chrome, Edge, Firefox or Safari.",
+  "dictation.recording.noFormat":
+    "This browser cannot record a supported audio format.",
+  "dictation.recording.tooLarge": "Recording is too large. Try a shorter message.",
+  "dictation.recording.stopped":
+    "The microphone stopped recording. Please try again.",
+  "dictation.recording.interrupted":
+    "Recording was interrupted. Please try again.",
+  "dictation.recording.empty":
+    "The recording is empty or unsupported. Please record again.",
+  "dictation.recording.noSpeech": "No speech was detected. Try recording again.",
+  "dictation.recording.failed": "Transcription failed. Please retry.",
+  "dictation.session.denied":
+    "Microphone access was denied. Allow it in your browser and try again.",
+  "dictation.session.startFailed":
+    "Could not start recording. Check your microphone and try again.",
+  "dictation.session.finishFailed":
+    "Could not finish recording. Please record again.",
+  "dictation.session.transcribeFailed": "Transcription failed. Please retry.",
   "home.bots": "Meet your team and manage each Bot.",
   "home.capabilities": "Skills and memory.",
   "home.connectionsLabel": "Accounts, apps and mail rules",

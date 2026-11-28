@@ -1,4 +1,5 @@
 import { MAX_DICTATION_SECONDS } from "@openbot/shared/dictation";
+import { englishT, type T } from "@/freeduet/i18n/provider";
 import { NoSpeechError, type Recording } from "./recording";
 
 export type DictationState = {
@@ -33,8 +34,14 @@ export class DictationSession {
       record: (onError: (error: Error) => void) => Promise<Recording>;
       transcribe: (audio: Blob, signal: AbortSignal) => Promise<string>;
       onTranscript: (text: string, intent: DictationIntent) => void;
+      /** The app's translator for the words the composer shows (D181). English when none is given. */
+      t?: T;
     },
   ) {}
+
+  private get t(): T {
+    return this.deps.t ?? englishT;
+  }
 
   getSnapshot = () => this.state;
   subscribe = (listener: () => void) => {
@@ -93,12 +100,12 @@ export class DictationSession {
         phase: "error",
         error:
           error instanceof Error && error.name === "NotAllowedError"
-            ? "Microphone access was denied. Allow it in your browser and try again."
+            ? this.t("dictation.session.denied")
             : // Its message names the page's problem and the way out, which "check your microphone" would hide.
               error instanceof Error &&
                 error.name === "RecordingUnsupportedError"
               ? error.message
-              : "Could not start recording. Check your microphone and try again.",
+              : this.t("dictation.session.startFailed"),
       });
     }
   };
@@ -133,7 +140,7 @@ export class DictationSession {
       this.update({
         ...idle,
         phase: "error",
-        error: "Could not finish recording. Please record again.",
+        error: this.t("dictation.session.finishFailed"),
       });
     }
   };
@@ -179,7 +186,7 @@ export class DictationSession {
         error:
           error instanceof Error
             ? error.message
-            : "Transcription failed. Please retry.",
+            : this.t("dictation.session.transcribeFailed"),
       });
     }
   }

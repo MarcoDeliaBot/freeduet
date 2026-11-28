@@ -1,3 +1,4 @@
+import { englishT } from "@/freeduet/i18n/provider";
 import type { ConnectVoice } from "./types";
 import { connectWebRtc } from "./webrtc";
 import { connectWebSocket } from "./websocket";
@@ -10,22 +11,18 @@ export function voiceSupported(): boolean {
 }
 
 export const connectVoice: ConnectVoice = async (options) => {
+  const t = options.t ?? englishT;
   if (!voiceSupported())
-    throw new Error(
-      "Voice calls need a supported browser and HTTPS or localhost.",
-    );
+    throw new Error(t("voice.connection.unsupported"));
   const response = await fetch("/api/voice/config", {
     credentials: "include",
     signal: options.signal,
   });
-  if (!response.ok)
-    throw new Error(
-      "Voice calls are unavailable. Check the deployment's voice configuration.",
-    );
+  if (!response.ok) throw new Error(t("voice.connection.unavailable"));
   const config: unknown = await response.json();
   if (config && typeof config === "object" && "transport" in config) {
     if (config.transport === "webrtc") return connectWebRtc(options);
     if (config.transport === "websocket") return connectWebSocket(options);
   }
-  throw new Error("This deployment uses an unsupported voice connection.");
+  throw new Error(t("voice.connection.transport"));
 };

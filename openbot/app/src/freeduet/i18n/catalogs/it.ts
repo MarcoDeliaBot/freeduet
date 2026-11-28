@@ -214,6 +214,116 @@ export const it: Catalog<typeof EN> = {
   "voice.listeningStop": "Ascolto… mi fermo quando fai una pausa",
   "voice.listening": "Ti ascolto, inizia pure a parlare",
   "voice.permission": "In attesa del permesso per il microfono…",
+  "voice.widget.unavailable": "Chiamata non disponibile",
+  "voice.widget.connecting": "Connessione in corso…",
+  "voice.widget.speaking": "{name} sta parlando",
+  "voice.widget.working": "Sto lavorando alla tua richiesta",
+  "voice.widget.muted": "Il tuo microfono è disattivato",
+  "voice.widget.listening": "Ti sto ascoltando",
+  "voice.widget.ready": "Pronto quando vuoi",
+  "voice.widget.label": "Chiamata vocale con {name}",
+  "voice.widget.duration": "Durata della chiamata",
+  "voice.widget.expand": "Espandi la chiamata vocale",
+  "voice.widget.expandTitle": "Espandi la chiamata",
+  "voice.widget.end": "Termina la chiamata vocale",
+  "voice.widget.endTitle": "Termina la chiamata",
+  "voice.widget.returnChat": "Torna alla chat",
+  "voice.widget.returnChatTitle": "Torna alla chat · la chiamata resta aperta",
+  "voice.widget.settings": "Impostazioni della chiamata",
+  "voice.widget.captions": "Mostra i sottotitoli in tempo reale",
+  "voice.widget.captionsEmpty":
+    "Parla quando vuoi. Questa chiamata fa parte di questa conversazione.",
+  "voice.widget.you": "Tu",
+  "voice.widget.youMuted": "Tu · microfono disattivato",
+  "voice.widget.youNamed": "{name} (tu)",
+  "voice.widget.mute": "Disattiva il tuo microfono",
+  "voice.widget.unmute": "Riattiva il tuo microfono",
+  "voice.widget.muteTitle":
+    "Disattiva il tuo microfono · sentirai comunque il Bot",
+  "voice.session.slow":
+    "La chiamata ha impiegato troppo tempo a connettersi. Controlla il permesso del microfono e riprova.",
+  "voice.session.timeLimit":
+    "Questa chiamata ha raggiunto il limite di 15 minuti. Puoi avviarne una nuova.",
+  "voice.session.muteFailed":
+    "Non è stato possibile cambiare lo stato del microfono. Chiama di nuovo.",
+  "voice.session.lost": "La connessione vocale si è interrotta.",
+  "voice.session.startFailed": "Non è stato possibile avviare la chiamata vocale.",
+  "voice.session.transcriptLimit":
+    "Questa chiamata ha raggiunto il limite della trascrizione. Avvia una nuova chiamata per continuare.",
+  "voice.session.responseFailed":
+    "Il servizio vocale non è riuscito a completare la sua risposta. Chiama di nuovo.",
+  "voice.session.serviceError":
+    "Il servizio vocale ha segnalato un errore. Termina la chiamata e riprova.",
+  "voice.webrtc.unsupported":
+    "Questo browser non supporta le chiamate vocali WebRTC.",
+  "voice.webrtc.playback":
+    "La riproduzione audio è stata bloccata. Consenti l'audio nel browser, poi chiama di nuovo.",
+  "voice.webrtc.lost":
+    "La connessione vocale si è interrotta. La tua chat resta disponibile. Chiama di nuovo per riconnetterti.",
+  "voice.webrtc.micGone":
+    "Il microfono si è disconnesso. Controllalo e chiama di nuovo.",
+  "voice.webrtc.channelFailed":
+    "La connessione vocale non è riuscita. Chiama di nuovo.",
+  "voice.webrtc.ended": "La chiamata vocale è terminata. Puoi chiamare di nuovo.",
+  "voice.webrtc.unreadable":
+    "Il servizio vocale ha inviato un evento illeggibile. Chiama di nuovo.",
+  "voice.webrtc.connectFailed":
+    "Non è stato possibile collegare la chiamata vocale. Riprova.",
+  "voice.webrtc.invalid":
+    "Il servizio vocale ha restituito una connessione non valida. Riprova.",
+  "voice.webrtc.notConnected": "La chiamata vocale non è più connessa.",
+  "voice.websocket.audio":
+    "Questo browser non è riuscito ad avviare l'audio della chiamata. Consenti l'audio e riprova.",
+  "voice.websocket.config": "Configurazione della connessione vocale non valida.",
+  "voice.websocket.address": "Indirizzo del servizio vocale non supportato.",
+  "voice.websocket.startFailed": "Non è stato possibile avviare la chiamata vocale.",
+  "voice.websocket.connect":
+    "Non è stato possibile collegarsi a Grok Voice. Controlla la connessione e riprova.",
+  "voice.websocket.closed":
+    "La connessione vocale si è chiusa. La tua chat resta disponibile.",
+  "voice.websocket.notConnected": "La chiamata vocale non è più connessa.",
+  "voice.websocket.invalid":
+    "Il servizio vocale ha inviato audio o comandi non validi. Chiama di nuovo.",
+  "voice.websocket.slow":
+    "La tua connessione è troppo lenta per l'audio in tempo reale. Chiama di nuovo.",
+  "voice.websocket.micGone":
+    "Il microfono si è disconnesso. Controllalo e chiama di nuovo.",
+  "voice.connection.unsupported":
+    "Le chiamate vocali richiedono un browser supportato e HTTPS o localhost.",
+  "voice.connection.unavailable":
+    "Le chiamate vocali non sono disponibili. Controlla la configurazione vocale dell'installazione.",
+  "voice.connection.transport":
+    "Questa installazione usa una connessione vocale non supportata.",
+  "dictation.controls.dictate": "Detta un messaggio",
+  "dictation.controls.cancel": "Annulla la dettatura",
+  "dictation.controls.transcribing": "Trascrizione in corso…",
+  "dictation.controls.listening": "In ascolto",
+  "dictation.controls.duration": "Durata della registrazione",
+  "dictation.controls.stop": "Ferma e trascrivi",
+  "dictation.controls.stopTitle": "Ferma e aggiungi alla bozza",
+  "dictation.controls.send": "Trascrivi e invia",
+  "dictation.recording.secure":
+    "Il microfono funziona solo su una pagina sicura. Apri FreeDuet sul computer dove gira (localhost), oppure chiedi a chi lo gestisce di metterlo dietro https.",
+  "dictation.recording.noRecorder":
+    "Questo browser non sa registrare l'audio. Prova con una versione aggiornata di Chrome, Edge, Firefox o Safari.",
+  "dictation.recording.noFormat":
+    "Questo browser non sa registrare un formato audio supportato.",
+  "dictation.recording.tooLarge": "La registrazione è troppo grande. Prova con un messaggio più breve.",
+  "dictation.recording.stopped":
+    "Il microfono ha smesso di registrare. Riprova.",
+  "dictation.recording.interrupted":
+    "La registrazione è stata interrotta. Riprova.",
+  "dictation.recording.empty":
+    "La registrazione è vuota o non supportata. Registra di nuovo.",
+  "dictation.recording.noSpeech": "Non è stato rilevato nessun parlato. Prova a registrare di nuovo.",
+  "dictation.recording.failed": "La trascrizione non è riuscita. Riprova.",
+  "dictation.session.denied":
+    "L'accesso al microfono è stato negato. Consentilo nel browser e riprova.",
+  "dictation.session.startFailed":
+    "Non è stato possibile avviare la registrazione. Controlla il microfono e riprova.",
+  "dictation.session.finishFailed":
+    "Non è stato possibile terminare la registrazione. Registra di nuovo.",
+  "dictation.session.transcribeFailed": "La trascrizione non è riuscita. Riprova.",
   "home.bots": "Conosci il tuo team e gestisci ogni Bot.",
   "home.capabilities": "Competenze e memoria.",
   "home.connectionsLabel": "Account, app e regole per la posta",

@@ -1,3 +1,4 @@
+import { englishT, type T } from "@/freeduet/i18n/provider";
 import {
   DICTATION_TIMEOUT_MS,
   dictationExtension,
@@ -34,23 +35,24 @@ export class RecordingUnsupportedError extends Error {
  * microphone only to https pages and to localhost, so a phone that opens http://<computer>:3010
  * has none; that is the case worth naming, the other being a browser too old to record.
  */
-export function recordingUnsupportedMessage(): string {
+export function recordingUnsupportedMessage(t: T = englishT): string {
   if (typeof window !== "undefined" && window.isSecureContext === false) {
-    return "The microphone only works on a secure page. Open FreeDuet on the computer where it runs (localhost), or ask whoever runs it to put it behind https.";
+    return t("dictation.recording.secure");
   }
-  return "This browser cannot record audio. Try an up-to-date Chrome, Edge, Firefox or Safari.";
+  return t("dictation.recording.noRecorder");
 }
 
 export async function startRecording(
   onError: (error: Error) => void,
+  t: T = englishT,
 ): Promise<Recording> {
   if (!recordingSupported())
-    throw new RecordingUnsupportedError(recordingUnsupportedMessage());
+    throw new RecordingUnsupportedError(recordingUnsupportedMessage(t));
   const mimeType = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"].find(
     (type) => MediaRecorder.isTypeSupported(type),
   );
   if (!mimeType)
-    throw new Error("This browser cannot record a supported audio format.");
+    throw new Error(t("dictation.recording.noFormat"));
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   const release = () => {
     for (const track of stream.getTracks()) track.stop();
@@ -78,19 +80,19 @@ export async function startRecording(
     size += event.data.size;
     if (size > MAX_DICTATION_BYTES) {
       cancel();
-      onError(new Error("Recording is too large. Try a shorter message."));
+      onError(new Error(t("dictation.recording.tooLarge")));
       return;
     }
     if (event.data.size) chunks.push(event.data);
   };
   recorder.onerror = () => {
     cancel();
-    onError(new Error("The microphone stopped recording. Please try again."));
+    onError(new Error(t("dictation.recording.stopped")));
   };
   recorder.onstop = () => {
     release();
     if (!done) {
-      onError(new Error("Recording was interrupted. Please try again."));
+      onError(new Error(t("dictation.recording.interrupted")));
       return;
     }
     done.resolve(
@@ -135,13 +137,12 @@ export function interfaceLanguage(): string | undefined {
 export async function transcribeRecording(
   audio: Blob,
   signal: AbortSignal,
+  t: T = englishT,
 ): Promise<string> {
   const type = dictationMediaType(audio.type);
   const extension = dictationExtension(type);
   if (!extension || !audio.size || audio.size > MAX_DICTATION_BYTES) {
-    throw new Error(
-      "The recording is empty or unsupported. Please record again.",
-    );
+    throw new Error(t("dictation.recording.empty"));
   }
   const body = new FormData();
   body.set("file", audio, `recording.${extension}`);
@@ -167,7 +168,7 @@ export async function transcribeRecording(
         "error" in result &&
         typeof result.error === "string"
         ? result.error
-        : "Transcription failed. Please retry.",
+        : t("dictation.recording.failed"),
     );
   }
   if (
@@ -177,7 +178,7 @@ export async function transcribeRecording(
     typeof result.text !== "string" ||
     !result.text.trim()
   ) {
-    throw new NoSpeechError("No speech was detected. Try recording again.");
+    throw new NoSpeechError(t("dictation.recording.noSpeech"));
   }
   return result.text.trim();
 }
