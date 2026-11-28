@@ -15,17 +15,24 @@ import { settleReactWork } from "./settle-react-work";
 
 const itT = createTranslator(SOURCE, CATALOGS, "it");
 
-beforeAll(() => GlobalRegistrator.register({ url: "http://localhost/" }));
+const originalFetch = globalThis.fetch;
+
+beforeAll(() => {
+  GlobalRegistrator.register({ url: "http://localhost/" });
+  // The widget asks who is signed in; no person is, so no request leaves the test.
+  globalThis.fetch = Object.assign(
+    async () => new Response(null, { status: 401 }),
+    { preconnect: originalFetch.preconnect },
+  );
+});
 afterEach(() => {
   cleanup();
-  globalThis.fetch = originalFetch;
 });
 afterAll(async () => {
   await settleReactWork();
+  globalThis.fetch = originalFetch;
   GlobalRegistrator.unregister();
 });
-
-const originalFetch = globalThis.fetch;
 
 /** A call that is connected and quiet: the widget shows its ready line and its controls. */
 const connectedCall = {
