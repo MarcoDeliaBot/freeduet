@@ -2120,6 +2120,263 @@ export const EN = {
   "admin.skills.instructionsPlaceholder":
     "What the Bot should do when this skill is used.",
   "admin.skills.install": "Install skill",
+  // connections-begin
+  "connections.connect": "Connect",
+  "connections.reconnect": "Reconnect",
+  "connections.connected": "Connected",
+  "connections.teamAccount": "Team account",
+  "connections.disconnect": "Disconnect",
+  "connections.disconnecting": "Disconnecting…",
+  "connections.startFailed":
+    "Couldn't start connecting, so nothing was connected. Try again, or ask an admin if it keeps happening.",
+  "connections.list.auth.no-broker":
+    "Connecting apps isn't set up yet, so nothing was recorded. Ask an admin to set it up.",
+  "connections.list.auth.not-supported":
+    "Apps here connect once, with Connect on the app's page. They aren't authorized one action at a time.",
+  "connections.list.auth.missing-handle":
+    "That link doesn't say which authorization it finishes, so nothing was done. Start again from the app's page.",
+  "connections.list.auth.no-attempt":
+    "There's no authorization in progress for you to finish. It may have expired, or started in another session. Start again from the app's page.",
+  "connections.list.auth.vendor-unavailable":
+    "The app didn't answer when {product} tried to finish that authorization, so nothing was recorded. Try the link again in a moment.",
+  "connections.list.auth.not-your-authorization":
+    "That link doesn't match the authorization you have in progress, so nothing was recorded. Finish it in the tab you started it in, or start again from the app's page.",
+  "connections.list.auth.not-finished":
+    "That authorization hasn't finished yet, so nothing was recorded. Finish it at the app, then open the link again.",
+  "connections.list.auth.authorization-failed":
+    "The app didn't complete that authorization, so nothing was recorded. Start again from the app's page.",
+  "connections.list.auth.context-changed":
+    "That app's account changed while the authorization was open, so nothing was recorded. Access given to the old account was removed. Start again from the app's page.",
+  "connections.list.auth.not-permitted":
+    "You can't connect that app's account anymore, so nothing was recorded. Your access or the app's setup changed while the authorization was open. Ask an admin if you expected to finish it.",
+  "connections.list.auth.cancelled":
+    "That authorization was cancelled while it was being finished, so nothing was recorded. The access it gave was removed.",
+  "connections.list.auth.cancelled-left-live":
+    "That authorization was cancelled while it was being finished, so nothing was recorded. The access it gave couldn't be removed, so the app may still allow the action you cancelled. To remove it, disconnect the app from its page, then connect again and authorize only what you want.",
+  "connections.list.auth.not-recorded":
+    "Couldn't record that authorization, so nothing was saved. Start again from the app's page, or ask an admin if it keeps happening.",
+  "connections.list.description":
+    "The apps and accounts your Bots use as you. Open one to connect it or change it.",
+  "connections.list.connectFailed":
+    "Couldn't connect that account. Nothing was saved. Try again.",
+  "connections.list.title": "Your connections",
+  "connections.list.loading": "Loading connections…",
+  "connections.list.loadError":
+    "Couldn't load your connections. Reload the page, or ask an admin if it keeps happening.",
+  "connections.list.empty":
+    "Nothing to connect yet. Apps show up here once an admin turns them on.",
+  "connections.list.count": "{inUse} in use · {total} in all",
+  "connections.list.search": "Search connections",
+  "connections.list.noMatch": "Nothing matches “{query}”.",
+  "connections.list.linksError":
+    "Couldn't load GitHub and Slack, so they aren't listed. Reload the page.",
+  "connections.list.connectNamed": "Connect {title}",
+  "connections.list.reconnectNamed": "Reconnect {title}",
+  "connections.app.landed": "You just authorized {action}.",
+  "connections.app.pendingTitle": "Account",
+  "connections.app.loadError":
+    "Couldn't load this connection. Reload the page, or ask an admin if it keeps happening.",
+  "connections.app.appLoadError":
+    "Couldn't load this app. Reload the page, or ask an admin if it keeps happening.",
+  "connections.app.notSetUp":
+    "{title} isn't set up yet. An admin has to turn it on before anyone can connect it.",
+  "connections.app.sharedDesc":
+    "Shared by your organisation. Bots act as the team account.",
+  "connections.app.brokeredDesc":
+    "Bots use this as you, and see only what you can see.",
+  "connections.app.reassurance": "No Bot can use this as you.",
+  "connections.app.tripPerAction": "Authorize the actions you want below.",
+  "connections.app.tripConnect":
+    "Connecting takes you to {title} to approve access.",
+  "connections.app.connectedDesc":
+    "Bots you allow use your {title} as you. Disconnecting removes their access everywhere.",
+  "connections.app.notYours": "You don't connect this app yourself.",
+  "connections.app.oneShared":
+    "Bots use one shared account for this app, the same for everybody.",
+  "connections.app.noApp": "{product} has no app by that name.",
+  "connections.app.yourAccount": "Your account",
+  "connections.app.notAvailable":
+    "Not available yet. An admin has to turn this on first.",
+  "connections.app.connectedAsYou":
+    "Bots you allow use this as you, and see only what you can see.",
+  "connections.app.notConnected":
+    "No Bot can use this as you. Connecting takes you to {vendor} to approve access.",
+  "connections.app.disconnectedDone":
+    "Disconnected. {product} can't use your {vendor} account any more.",
+  "connections.app.disconnectedUnconfirmed":
+    "Disconnected here. {vendor} didn't confirm it, so also remove {product} in your {vendor} account's third-party access settings.",
+  "connections.app.accessDesc":
+    "What you allowed, as {vendor} recorded it. This can be less than {product} asked for.",
+  "connections.app.access": "Access",
+  "connections.app.allowed": "Allowed",
+  "connections.app.vendorDidntSay": "{vendor} didn't say.",
+  "connections.identity.toolsDesc":
+    "Lets your Bots read and change your repositories as you. You connect this separately from your account above.",
+  "connections.identity.tools": "Tools",
+  "connections.identity.githubTools": "GitHub tools",
+  "connections.identity.notConnected": "Not connected",
+  "connections.mail.neverRun": "Has not run yet.",
+  "connections.mail.lastRun": {
+    one: "Last run {when}: {count} message. {total} in all.",
+    other: "Last run {when}: {count} messages. {total} in all.",
+  },
+  "connections.mail.on": "On. {activity}",
+  "connections.mail.off": "Off",
+  "connections.mail.switchOff": "Switch off",
+  "connections.mail.switchOn": "Switch on",
+  "connections.mail.delete": "Delete",
+  "connections.mail.lastProblem": "Last problem: {error}",
+  "connections.mail.description":
+    "Standing rules you asked for in chat. Your Bots keep and apply them to new mail every few minutes; they are not Gmail filters. Deleting a rule does not undo what it already did.",
+  "connections.mail.title": "Mail rules",
+  "connections.mail.search": "Search mail rules",
+  "connections.mail.statusLabel": "Rule status",
+  "connections.mail.allStatuses": "All statuses",
+  "connections.mail.optActive": "Active",
+  "connections.mail.optPaused": "Paused",
+  "connections.mail.active": "Active",
+  "connections.mail.paused": "Paused",
+  "connections.mail.noMatch": "No rules match these filters.",
+  "connections.mail.paging": {
+    one: "{from}–{to} of {count} rule",
+    other: "{from}–{to} of {count} rules",
+  },
+  "connections.mail.previous": "Previous",
+  "connections.mail.next": "Next",
+  "connections.secret.aMember": "A member",
+  "connections.secret.doneMemberCal":
+    "Connected. {name} can now read your mail and calendar as you.",
+  "connections.secret.doneMember":
+    "Connected. {name} can now read your mail as you.",
+  "connections.secret.doneBotsCal":
+    "Connected. Bots you allow can now read your mail and calendar as you.",
+  "connections.secret.doneBots":
+    "Connected. Bots you allow can now read your mail as you.",
+  "connections.secret.notAvailable":
+    "Not available yet. An admin has to turn this on first.",
+  "connections.secret.statusError":
+    "Couldn't load whether you've connected this. Reload the page, or ask an admin if it keeps happening.",
+  "connections.secret.yourAccount": "Your account",
+  "connections.secret.connectedCal":
+    "Connected as {address}. Your calendar is connected too. Bots you allow use this as you.",
+  "connections.secret.connectedNoCal":
+    "Connected as {address}. No calendar is connected. Bots you allow use this as you.",
+  "connections.secret.notConnected":
+    "No Bot can use this as you. Paste an app password below to connect your Gmail.",
+  "connections.secret.useDifferent": "Use a different app password",
+  "connections.secret.disconnected":
+    "Disconnected. {product} can't read your mail or calendar any more. To be sure the app password stops working, delete it at {url} too.",
+  "connections.secret.formDesc":
+    "Two steps at Google, then paste what they give you. Nothing is saved unless Gmail accepts it.",
+  "connections.secret.connectTitle": "Connect",
+  "connections.secret.memberWillUse": "{name} will use this mailbox.",
+  "connections.secret.step1Lead":
+    "Turn on 2-Step Verification for your Google account, then make an app password at",
+  "connections.secret.step1Tail":
+    ". Name it {product} and copy the sixteen letters.",
+  "connections.secret.step2Lead":
+    "To let your Bots see your calendar too: in Google Calendar, open Settings, choose your calendar, and copy its",
+  "connections.secret.step2Link": "Secret address in iCal format",
+  "connections.secret.step2Tail": ". This one is optional.",
+  "connections.secret.address": "Your Gmail address",
+  "connections.secret.password": "App password",
+  "connections.secret.passwordHint":
+    "The sixteen letters from Google, with or without the spaces. Not your usual password.",
+  "connections.secret.calendar": "Calendar secret address (optional)",
+  "connections.secret.calendarHint":
+    "Anyone with this address can read your calendar, so it is kept as carefully as the password.",
+  "connections.secret.checking": "Checking with Gmail…",
+  "connections.secret.canDoTitle": "What this lets your Bots do",
+  "connections.secret.canDoDesc":
+    "An app password opens your whole mailbox, so it is worth knowing what this does.",
+  "connections.secret.canDo":
+    "Your Bots can search and read your mail and look at your calendar. They cannot delete, move or label anything. A reply goes out only after you approve it, and only to people already on the message. You can disconnect at any time, and you can delete the app password at Google whenever you like.",
+  "connections.mode.goesShared": "The shared account will be disconnected.",
+  "connections.mode.goesNoShared": "No shared account is connected.",
+  "connections.mode.goesPersonal": {
+    one: "{count} personal account will be disconnected.",
+    other: "{count} personal accounts will be disconnected.",
+  },
+  "connections.mode.makeShared": "Make {title} shared",
+  "connections.mode.makePersonal": "Make {title} personal",
+  "connections.mode.titleShared": "Share one {title} account?",
+  "connections.mode.titlePersonal": "Give everyone their own {title} account?",
+  "connections.mode.checking": "Checking what this would change…",
+  "connections.mode.everyone":
+    "Everyone using a Bot with this app will act as this one account.",
+  "connections.cancel": "Cancel",
+  "connections.dir.description":
+    "{name}'s app directory. Add an app to make its tools available to Bots. Each person still connects their own account before it reads anything.",
+  "connections.dir.appsTitle": "Apps",
+  "connections.dir.appsDesc":
+    "Search by name. Nobody here has reviewed these apps.",
+  "connections.dir.searchAria": "Search {name} apps",
+  "connections.dir.searchPlaceholder": "Search by app name",
+  "connections.dir.noMatch": 'No {name} app matches "{query}".',
+  "connections.dir.none": "{name} returned no apps.",
+  "connections.dir.actions": {
+    one: "{count} action",
+    other: "{count} actions",
+  },
+  "connections.dir.added": "Added",
+  "connections.dir.adding": "Adding…",
+  "connections.dir.add": "Add",
+  "connections.grants.consentFailed":
+    "{product} answered without a consent link, so nothing was authorized. Try again, or ask an admin if it keeps happening.",
+  "connections.grants.title": "Actions",
+  "connections.grants.readError":
+    "Couldn't read what this account allows right now.",
+  "connections.grants.retry": "Retry",
+  "connections.grants.description":
+    "Grouped by the permission each action asks for. This matches what the consent screen shows.",
+  "connections.grants.search": "Search actions",
+  "connections.grants.wholeApp": "Everything in this app, approved together",
+  "connections.grants.noPermission": "Asks for no permission of its own",
+  "connections.grants.needs": "Needs {scopes}",
+  "connections.grants.authorize": "Authorize",
+  "connections.grants.hidden": {
+    one: "{count} more action not yet authorized. Search to find it.",
+    other: "{count} more actions not yet authorized. Search to find one.",
+  },
+  "connections.grants.noMatch": "No action matches that search.",
+  "connections.grants.before": "Before you authorize {action}",
+  "connections.grants.continue": "Continue to consent",
+  "connections.grants.notRequired": "Needs no authorization.",
+  "connections.grants.authorized": "Authorized.",
+  "connections.grants.notYet": "Not authorized yet.",
+  "connections.grants.notYetAdmin":
+    "Not authorized yet. An admin can authorize it.",
+  "connections.grants.missing":
+    "Missing {missing}. An admin has to set it. Authorizing can't fix it.",
+  "connections.grants.missingSetting":
+    "A setting is missing. An admin has to set it. Authorizing can't fix it.",
+  "connections.grants.unknown": "Couldn't read this one right now. {reason}",
+  "connections.row.connectKey":
+    "This app connects with a key, not a sign-in page, so nothing was connected. Reload the page and press Connect again.",
+  "connections.row.noAuth":
+    "{title} doesn't need an account. Bots that have it can use it as it is.",
+  "connections.row.verified": "Connected with your key. Last checked {date}.",
+  "connections.row.failedCheck":
+    "Your key didn't pass a check with {title}. That may be the key, or {title} itself. Your account is still connected. Press Re-check to try again, or disconnect and connect with a new key.",
+  "connections.row.noSafeCheck":
+    "Connected with your key. It hasn't been checked with {title}. At the time, {title} had no safe way to check a key. That's about the app, not your key.",
+  "connections.row.unchecked":
+    "Connected with your key. It hasn't been checked with {title}.",
+  "connections.row.keyStillWorks":
+    "Disconnected. Your key still works at {title}. Change it there to stop all access.",
+  "connections.row.asksForKey":
+    "{title} connects with a key you already have. Connect asks for it.",
+  "connections.row.signedIn": "Signed in with {title}. {description}",
+  "connections.row.yourAccount": "Your account",
+  "connections.row.keyMissing": "Key missing",
+  "connections.row.recheck": "Re-check",
+  "connections.row.rechecking": "Checking…",
+  "connections.row.perAction": "Approved per action",
+  "connections.row.connectYour": "Connect your account",
+  "connections.row.checkingNeeds": "Checking what the app needs…",
+  "connections.row.noNeeds":
+    "Couldn't find out what this app needs. Close this and try again.",
+  // connections-end
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;

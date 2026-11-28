@@ -49,6 +49,12 @@ import {
   pluginsProvider,
 } from "@/lib/plugins/queries";
 import { searchTextEntry } from "@/lib/search-text";
+import {
+  englishT,
+  type T,
+  useAppLanguage,
+  useT,
+} from "@/freeduet/i18n/provider";
 
 /** The product's own name, for the sentences a person reads here. */
 const PRODUCT = appConfig.brand.productName;
@@ -92,8 +98,8 @@ export function landedActionFrom(action: string | undefined): string | null {
 }
 
 /** What the landing says about the action somebody has just come back from authorizing. */
-export function landedActionNotice(action: string): string {
-  return `You just authorized ${action}.`;
+export function landedActionNotice(action: string, t: T = englishT): string {
+  return t("connections.app.landed", { action });
 }
 
 /**
@@ -143,6 +149,8 @@ function RouteComponent() {
 }
 
 function AppConnectionPage() {
+  const t = useT();
+  const { date } = useAppLanguage();
   const { key } = useParams({
     from: "/_authed/_app/connections/$key",
   });
@@ -205,9 +213,7 @@ function AppConnectionPage() {
        * deployment's own origin. See `connectAccountMutationOptions`.
        */
       if (authorizationUrl === null) {
-        setNotice(
-          "Couldn't start connecting, so nothing was connected. Try again, or ask an admin if it keeps happening.",
-        );
+        setNotice(t("connections.startFailed"));
         return;
       }
       window.location.href = authorizationUrl;
@@ -247,7 +253,7 @@ function AppConnectionPage() {
   });
   const siblingsNotice =
     brokered && connection !== undefined && siblings.data
-      ? disconnectSiblingsNotice(siblings.data)
+      ? disconnectSiblingsNotice(siblings.data, t)
       : null;
   /* From the snapshot above and never from the live search, which is stripped. */
   const landedAction = arrival.key === key ? arrival.landedAction : null;
@@ -316,11 +322,13 @@ function AppConnectionPage() {
    * whole of its state defaulted to "you have never connected this".
    */
   if (plugins.isPending || connections.isPending) {
-    return <PageShell title="Account">{null}</PageShell>;
+    return (
+      <PageShell title={t("connections.app.pendingTitle")}>{null}</PageShell>
+    );
   }
 
   const back = {
-    label: "Connections",
+    label: t("nav.connections"),
     linkProps: { to: "/connections" as const },
   };
 
@@ -344,8 +352,7 @@ function AppConnectionPage() {
     return (
       <PageShell backButton={back} title={server?.title ?? key}>
         <p className="mt-12 text-destructive text-sm" role="alert">
-          Couldn't load this connection. Reload the page, or ask an admin if it
-          keeps happening.
+          {t("connections.app.loadError")}
         </p>
       </PageShell>
     );
@@ -360,8 +367,7 @@ function AppConnectionPage() {
     return (
       <PageShell backButton={back} title={key}>
         <p className="mt-12 text-destructive text-sm" role="alert">
-          Couldn't load this app. Reload the page, or ask an admin if it keeps
-          happening.
+          {t("connections.app.appLoadError")}
         </p>
       </PageShell>
     );
@@ -378,8 +384,7 @@ function AppConnectionPage() {
     return (
       <PageShell backButton={back} title={server.title}>
         <PageEmpty>
-          {server.title} isn't set up yet. An admin has to turn it on before
-          anyone can connect it.
+          {t("connections.app.notSetUp", { title: server.title })}
         </PageEmpty>
       </PageShell>
     );
@@ -410,7 +415,7 @@ function AppConnectionPage() {
             data-landed-action={landedAction}
             role="status"
           >
-            {landedActionNotice(landedAction)}
+            {landedActionNotice(landedAction, t)}
           </p>
         ) : null}
 
@@ -419,9 +424,9 @@ function AppConnectionPage() {
           <PageRows className="mt-0">
             <Item size="sm">
               <ItemContent>
-                <ItemTitle>Team account</ItemTitle>
+                <ItemTitle>{t("connections.teamAccount")}</ItemTitle>
                 <ItemDescription>
-                  Shared by your organisation. Bots act as the team account.
+                  {t("connections.app.sharedDesc")}
                 </ItemDescription>
               </ItemContent>
             </Item>
@@ -453,17 +458,17 @@ function AppConnectionPage() {
   if (brokered && server) {
     /* Bound once because the row below is told it twice — once inside the whole disconnected
        sentence and once on its own — and two copies of it would drift. */
-    const reassurance = "No Bot can use this as you.";
+    const reassurance = t("connections.app.reassurance");
     /* Where the next step is. A broker that approves one action at a time has no whole-app Connect,
        so the sentence points at the action list underneath instead of a button that is not there. */
     const trip = perActionGrants
-      ? "Authorize the actions you want below."
-      : `Connecting takes you to ${server.title} to approve access.`;
+      ? t("connections.app.tripPerAction")
+      : t("connections.app.tripConnect", { title: server.title });
 
     return (
       <PageShell
         backButton={back}
-        description="Bots use this as you, and see only what you can see."
+        description={t("connections.app.brokeredDesc")}
         title={server.title}
       >
         {notice ? (
@@ -478,7 +483,7 @@ function AppConnectionPage() {
             data-landed-action={landedAction}
             role="status"
           >
-            {landedActionNotice(landedAction)}
+            {landedActionNotice(landedAction, t)}
           </p>
         ) : null}
 
@@ -490,7 +495,9 @@ function AppConnectionPage() {
               /* Said beside the button rather than after it: disconnecting ends the account at
                  Composio, so what it undoes is not the row here but the grant on your own mailbox,
                  and connecting again is a fresh consent. */
-              connectedDescription={`Bots you allow use your ${server.title} as you. Disconnecting removes their access everywhere.`}
+              connectedDescription={t("connections.app.connectedDesc", {
+                title: server.title,
+              })}
               disconnectedDescription={`${reassurance} ${trip}`}
               /* What is true either way. The trip to Composio is not — an app whose key somebody
                  types never leaves this page — but which Bots can read this person's mail is the
@@ -541,13 +548,13 @@ function AppConnectionPage() {
     return (
       <PageShell
         backButton={back}
-        description="You don't connect this app yourself."
+        description={t("connections.app.notYours")}
         title={entry?.title ?? key}
       >
         <PageEmpty>
           {entry
-            ? "Bots use one shared account for this app, the same for everybody."
-            : `${PRODUCT} has no app by that name.`}
+            ? t("connections.app.oneShared")
+            : t("connections.app.noApp", { product: PRODUCT })}
         </PageEmpty>
       </PageShell>
     );
@@ -577,13 +584,15 @@ function AppConnectionPage() {
             <ItemContent>
               {/* Not "Connect your account": the row is also the connected state, and a title has to
                   read for both. */}
-              <ItemTitle>Your account</ItemTitle>
+              <ItemTitle>{t("connections.app.yourAccount")}</ItemTitle>
               <ItemDescription>
                 {!enabled
-                  ? "Not available yet. An admin has to turn this on first."
+                  ? t("connections.app.notAvailable")
                   : connection
-                    ? "Bots you allow use this as you, and see only what you can see."
-                    : `No Bot can use this as you. Connecting takes you to ${entry.vendor} to approve access.`}
+                    ? t("connections.app.connectedAsYou")
+                    : t("connections.app.notConnected", {
+                        vendor: entry.vendor,
+                      })}
               </ItemDescription>
             </ItemContent>
             <ItemActions>
@@ -607,7 +616,7 @@ function AppConnectionPage() {
                           aria-hidden="true"
                           className="size-1.5 rounded-full bg-emerald-500"
                         />
-                        Connected
+                        {t("connections.connected")}
                         <IconChevronDown />
                       </Button>
                     }
@@ -637,15 +646,23 @@ function AppConnectionPage() {
                           onSuccess: (answer) =>
                             setDone(
                               answer.vendorRevoked || !answer.disconnected
-                                ? `Disconnected. ${PRODUCT} can't use your ${entry.vendor} account any more.`
-                                : `Disconnected here. ${entry.vendor} didn't confirm it, so also remove ${PRODUCT} in your ${entry.vendor} account's third-party access settings.`,
+                                ? t("connections.app.disconnectedDone", {
+                                    product: PRODUCT,
+                                    vendor: entry.vendor,
+                                  })
+                                : t("connections.app.disconnectedUnconfirmed", {
+                                    product: PRODUCT,
+                                    vendor: entry.vendor,
+                                  }),
                             ),
                           onError: (thrown: Error) => setNotice(thrown.message),
                         });
                       }}
                       variant="destructive"
                     >
-                      {disconnect.isPending ? "Disconnecting…" : "Disconnect"}
+                      {disconnect.isPending
+                        ? t("connections.disconnecting")
+                        : t("connections.disconnect")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -664,7 +681,7 @@ function AppConnectionPage() {
                   type="button"
                   variant="outline"
                 >
-                  Connect
+                  {t("connections.connect")}
                   <IconArrowUpRight />
                 </Button>
               )}
@@ -675,26 +692,35 @@ function AppConnectionPage() {
 
       {connection ? (
         <PageSection
-          description={`What you allowed, as ${entry.vendor} recorded it. This can be less than ${PRODUCT} asked for.`}
-          title="Access"
+          description={t("connections.app.accessDesc", {
+            vendor: entry.vendor,
+            product: PRODUCT,
+          })}
+          title={t("connections.app.access")}
         >
           <PageRows>
             <Item size="sm">
               <ItemContent>
-                <ItemTitle>Allowed</ItemTitle>
+                <ItemTitle>{t("connections.app.allowed")}</ItemTitle>
                 <ItemDescription className="line-clamp-none">
-                  {connection.scope || `${entry.vendor} didn't say.`}
+                  {connection.scope ||
+                    t("connections.app.vendorDidntSay", {
+                      vendor: entry.vendor,
+                    })}
                 </ItemDescription>
               </ItemContent>
             </Item>
             <Separator />
             <Item size="sm">
               <ItemContent>
-                <ItemTitle>Connected</ItemTitle>
+                <ItemTitle>{t("connections.connected")}</ItemTitle>
               </ItemContent>
               <ItemActions>
                 <span className="text-muted-foreground text-xs">
-                  {new Date(connection.connectedAt).toLocaleString()}
+                  {date(new Date(connection.connectedAt), {
+                    dateStyle: "short",
+                    timeStyle: "medium",
+                  })}
                 </span>
               </ItemActions>
             </Item>

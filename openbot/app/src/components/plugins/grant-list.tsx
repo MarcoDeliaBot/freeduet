@@ -10,6 +10,7 @@ import {
   ItemDescription,
   ItemTitle,
 } from "@/components/ui/item";
+import { englishT, type T, useT } from "@/freeduet/i18n/provider";
 import { appConfig } from "@/lib/generated/application-config";
 import { consentCopy } from "@/lib/plugins/enablement-notes";
 import {
@@ -56,6 +57,7 @@ export function GrantList({
   landedAction: string | null;
   returnTo: "settings" | "admin";
 }) {
+  const t = useT();
   const grants = useQuery(grantsQueryOptions(serverId, true));
   const [search, setSearch] = useState("");
   const [choosing, setChoosing] = useState<string | null>(null);
@@ -67,7 +69,9 @@ export function GrantList({
     onSuccess: (authorizationUrl) => {
       if (authorizationUrl === null) {
         setNotice(
-          `${appConfig.brand.productName} answered without a consent link, so nothing was authorized. Try again, or ask an admin if it keeps happening.`,
+          t("connections.grants.consentFailed", {
+            product: appConfig.brand.productName,
+          }),
         );
         return;
       }
@@ -78,16 +82,16 @@ export function GrantList({
   if (grants.isPending) return null;
   if (grants.error) {
     return (
-      <PageSection title="Actions">
+      <PageSection title={t("connections.grants.title")}>
         <p className="text-destructive text-sm" role="alert">
-          Couldn't read what this account allows right now.{" "}
+          {t("connections.grants.readError")}{" "}
           <Button
             onClick={() => grants.refetch()}
             size="sm"
             type="button"
             variant="outline"
           >
-            Retry
+            {t("connections.grants.retry")}
           </Button>
         </p>
       </PageSection>
@@ -98,11 +102,11 @@ export function GrantList({
   if (couldNotRead(all, appNames)) {
     const [only] = all;
     return (
-      <PageSection title="Actions">
+      <PageSection title={t("connections.grants.title")}>
         {/* Not an action: the entry's label is the toolkit's own name, which a person must not
             see in their grant list as if it were one. */}
         <p data-could-not-read="" role="status" className="text-sm">
-          Couldn't read what this account allows right now.
+          {t("connections.grants.readError")}
           {only?.state === "unknown" ? ` ${only.reason}` : null}{" "}
           <Button
             onClick={() => grants.refetch()}
@@ -110,7 +114,7 @@ export function GrantList({
             type="button"
             variant="outline"
           >
-            Retry
+            {t("connections.grants.retry")}
           </Button>
         </p>
       </PageSection>
@@ -142,8 +146,8 @@ export function GrantList({
 
   return (
     <PageSection
-      description="Grouped by the permission each action asks for. This matches what the consent screen shows."
-      title="Actions"
+      description={t("connections.grants.description")}
+      title={t("connections.grants.title")}
     >
       {notice ? (
         <p className="text-destructive text-sm" role="alert">
@@ -151,9 +155,9 @@ export function GrantList({
         </p>
       ) : null}
       <Input
-        aria-label="Search actions"
+        aria-label={t("connections.grants.search")}
         onChange={(event) => setSearch(event.target.value)}
-        placeholder="Search actions"
+        placeholder={t("connections.grants.search")}
         type="search"
         value={search}
       />
@@ -166,10 +170,12 @@ export function GrantList({
         >
           <p className="mb-1 text-muted-foreground text-xs">
             {group.kind === "whole-app"
-              ? "Everything in this app, approved together"
+              ? t("connections.grants.wholeApp")
               : group.kind === "none"
-                ? "Asks for no permission of its own"
-                : `Needs ${group.scopes.join(", ")}`}
+                ? t("connections.grants.noPermission")
+                : t("connections.grants.needs", {
+                    scopes: group.scopes.join(", "),
+                  })}
           </p>
           <PageRows>
             {group.grants.map((grant) => (
@@ -183,7 +189,7 @@ export function GrantList({
                 <ItemContent>
                   <ItemTitle>{grant.action}</ItemTitle>
                   <ItemDescription className="line-clamp-none">
-                    {describe(grant, canAuthorize)}
+                    {describe(grant, canAuthorize, t)}
                   </ItemDescription>
                 </ItemContent>
                 <ItemActions>
@@ -197,7 +203,7 @@ export function GrantList({
                       type="button"
                       variant="outline"
                     >
-                      Authorize
+                      {t("connections.grants.authorize")}
                     </Button>
                   ) : null}
                   {grant.state === "unknown" ? (
@@ -207,7 +213,7 @@ export function GrantList({
                       type="button"
                       variant="outline"
                     >
-                      Retry
+                      {t("connections.grants.retry")}
                     </Button>
                   ) : null}
                 </ItemActions>
@@ -218,13 +224,12 @@ export function GrantList({
       ))}
       {hidden > 0 ? (
         <p className="text-muted-foreground text-sm">
-          {hidden} more {hidden === 1 ? "action" : "actions"} not yet
-          authorized. Search to find {hidden === 1 ? "it" : "one"}.
+          {t("connections.grants.hidden", { count: hidden })}
         </p>
       ) : null}
       {term.length > 0 && groups.length === 0 ? (
         <p className="text-muted-foreground text-sm">
-          No action matches that search.
+          {t("connections.grants.noMatch")}
         </p>
       ) : null}
       {choosing !== null ? (
@@ -257,9 +262,10 @@ function ConsentNotice({
   onCancel: () => void;
   onContinue: () => void;
 }) {
+  const t = useT();
   return (
     <fieldset
-      aria-label={`Before you authorize ${action}`}
+      aria-label={t("connections.grants.before", { action })}
       className="m-0 flex min-w-0 flex-col gap-2 rounded-lg border p-3"
       data-consent-copy=""
     >
@@ -272,32 +278,36 @@ function ConsentNotice({
           type="button"
           variant="outline"
         >
-          Continue to consent
+          {t("connections.grants.continue")}
         </Button>
         <Button onClick={onCancel} size="sm" type="button" variant="ghost">
-          Cancel
+          {t("connections.cancel")}
         </Button>
       </div>
     </fieldset>
   );
 }
 
-function describe(grant: GrantState, canAuthorize: boolean): string {
+function describe(
+  grant: GrantState,
+  canAuthorize: boolean,
+  t: T = englishT,
+): string {
   switch (grant.state) {
     case "authorized":
       // Nobody authorized an action that needs no authorization, so the row does not say they did.
       return grant.authorization === "not-required"
-        ? "Needs no authorization."
-        : "Authorized.";
+        ? t("connections.grants.notRequired")
+        : t("connections.grants.authorized");
     case "needs-consent":
       return canAuthorize
-        ? "Not authorized yet."
-        : "Not authorized yet. An admin can authorize it.";
+        ? t("connections.grants.notYet")
+        : t("connections.grants.notYetAdmin");
     case "needs-operator":
       return grant.missing.length > 0
-        ? `Missing ${grant.missing.join(", ")}. An admin has to set it. Authorizing can't fix it.`
-        : "A setting is missing. An admin has to set it. Authorizing can't fix it.";
+        ? t("connections.grants.missing", { missing: grant.missing.join(", ") })
+        : t("connections.grants.missingSetting");
     case "unknown":
-      return `Couldn't read this one right now. ${grant.reason}`;
+      return t("connections.grants.unknown", { reason: grant.reason });
   }
 }

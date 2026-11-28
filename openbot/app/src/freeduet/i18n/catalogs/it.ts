@@ -2216,4 +2216,266 @@ export const it: Catalog<typeof EN> = {
   "admin.skills.instructionsPlaceholder":
     "Che cosa deve fare il Bot quando questa skill viene usata.",
   "admin.skills.install": "Installa la skill",
+  // connections-begin
+  "connections.connect": "Collega",
+  "connections.reconnect": "Ricollega",
+  "connections.connected": "Collegato",
+  "connections.teamAccount": "Account del team",
+  "connections.disconnect": "Scollega",
+  "connections.disconnecting": "Scollego…",
+  "connections.startFailed":
+    "Non sono riuscito ad avviare il collegamento, quindi non è stato collegato nulla. Riprova, oppure chiedi a un amministratore se continua a succedere.",
+  "connections.list.auth.no-broker":
+    "Il collegamento delle app non è ancora configurato, quindi non è stato registrato nulla. Chiedi a un amministratore di configurarlo.",
+  "connections.list.auth.not-supported":
+    "Qui le app si collegano una volta sola, con Collega nella pagina dell'app. Non vengono autorizzate un'azione alla volta.",
+  "connections.list.auth.missing-handle":
+    "Quel link non dice quale autorizzazione completa, quindi non è stato fatto nulla. Ricomincia dalla pagina dell'app.",
+  "connections.list.auth.no-attempt":
+    "Non c'è nessuna autorizzazione in corso da completare. Potrebbe essere scaduta o iniziata in un'altra sessione. Ricomincia dalla pagina dell'app.",
+  "connections.list.auth.vendor-unavailable":
+    "L'app non ha risposto quando {product} ha provato a completare quell'autorizzazione, quindi non è stato registrato nulla. Riprova il link tra un attimo.",
+  "connections.list.auth.not-your-authorization":
+    "Quel link non corrisponde all'autorizzazione che hai in corso, quindi non è stato registrato nulla. Completala nella scheda in cui l'hai avviata, oppure ricomincia dalla pagina dell'app.",
+  "connections.list.auth.not-finished":
+    "Quell'autorizzazione non è ancora terminata, quindi non è stato registrato nulla. Completala nell'app, poi apri di nuovo il link.",
+  "connections.list.auth.authorization-failed":
+    "L'app non ha completato quell'autorizzazione, quindi non è stato registrato nulla. Ricomincia dalla pagina dell'app.",
+  "connections.list.auth.context-changed":
+    "L'account di quell'app è cambiato mentre l'autorizzazione era aperta, quindi non è stato registrato nulla. L'accesso dato al vecchio account è stato rimosso. Ricomincia dalla pagina dell'app.",
+  "connections.list.auth.not-permitted":
+    "Non puoi più collegare l'account di quell'app, quindi non è stato registrato nulla. Il tuo accesso o la configurazione dell'app sono cambiati mentre l'autorizzazione era aperta. Chiedi a un amministratore se ti aspettavi di completarla.",
+  "connections.list.auth.cancelled":
+    "Quell'autorizzazione è stata annullata mentre veniva completata, quindi non è stato registrato nulla. L'accesso che aveva dato è stato rimosso.",
+  "connections.list.auth.cancelled-left-live":
+    "Quell'autorizzazione è stata annullata mentre veniva completata, quindi non è stato registrato nulla. L'accesso che aveva dato non si è potuto rimuovere, quindi l'app potrebbe ancora consentire l'azione che hai annullato. Per rimuoverlo, scollega l'app dalla sua pagina, poi collegala di nuovo e autorizza solo ciò che vuoi.",
+  "connections.list.auth.not-recorded":
+    "Non sono riuscito a registrare quell'autorizzazione, quindi non è stato salvato nulla. Ricomincia dalla pagina dell'app, oppure chiedi a un amministratore se continua a succedere.",
+  "connections.list.description":
+    "Le app e gli account che i tuoi Bot usano come te. Aprine uno per collegarlo o cambiarlo.",
+  "connections.list.connectFailed":
+    "Non sono riuscito a collegare quell'account. Non è stato salvato nulla. Riprova.",
+  "connections.list.title": "Le tue connessioni",
+  "connections.list.loading": "Caricamento delle connessioni…",
+  "connections.list.loadError":
+    "Non sono riuscito a caricare le tue connessioni. Ricarica la pagina, oppure chiedi a un amministratore se continua a succedere.",
+  "connections.list.empty":
+    "Ancora niente da collegare. Le app compaiono qui quando un amministratore le attiva.",
+  "connections.list.count": "{inUse} in uso · {total} in tutto",
+  "connections.list.search": "Cerca connessioni",
+  "connections.list.noMatch": "Nessun risultato per “{query}”.",
+  "connections.list.linksError":
+    "Non sono riuscito a caricare GitHub e Slack, quindi non sono nell'elenco. Ricarica la pagina.",
+  "connections.list.connectNamed": "Collega {title}",
+  "connections.list.reconnectNamed": "Ricollega {title}",
+  "connections.app.landed": "Hai appena autorizzato {action}.",
+  "connections.app.pendingTitle": "Account",
+  "connections.app.loadError":
+    "Non sono riuscito a caricare questa connessione. Ricarica la pagina, oppure chiedi a un amministratore se continua a succedere.",
+  "connections.app.appLoadError":
+    "Non sono riuscito a caricare questa app. Ricarica la pagina, oppure chiedi a un amministratore se continua a succedere.",
+  "connections.app.notSetUp":
+    "{title} non è ancora configurato. Un amministratore deve attivarlo prima che qualcuno possa collegarlo.",
+  "connections.app.sharedDesc":
+    "Condiviso dalla tua organizzazione. I Bot agiscono come l'account del team.",
+  "connections.app.brokeredDesc":
+    "I Bot lo usano come te e vedono solo ciò che vedi tu.",
+  "connections.app.reassurance": "Nessun Bot può usarlo come te.",
+  "connections.app.tripPerAction": "Autorizza qui sotto le azioni che vuoi.",
+  "connections.app.tripConnect":
+    "Collegando, vai su {title} per approvare l'accesso.",
+  "connections.app.connectedDesc":
+    "I Bot che autorizzi usano il tuo {title} come te. Scollegando, il loro accesso viene rimosso ovunque.",
+  "connections.app.notYours": "Questa app non la colleghi tu.",
+  "connections.app.oneShared":
+    "I Bot usano un solo account condiviso per questa app, lo stesso per tutti.",
+  "connections.app.noApp": "{product} non ha nessuna app con questo nome.",
+  "connections.app.yourAccount": "Il tuo account",
+  "connections.app.notAvailable":
+    "Non ancora disponibile. Prima un amministratore deve attivarla.",
+  "connections.app.connectedAsYou":
+    "I Bot che autorizzi lo usano come te e vedono solo ciò che vedi tu.",
+  "connections.app.notConnected":
+    "Nessun Bot può usarlo come te. Collegando, vai su {vendor} per approvare l'accesso.",
+  "connections.app.disconnectedDone":
+    "Scollegato. {product} non può più usare il tuo account {vendor}.",
+  "connections.app.disconnectedUnconfirmed":
+    "Scollegato qui. {vendor} non l'ha confermato, quindi rimuovi anche {product} nelle impostazioni di accesso di terze parti del tuo account {vendor}.",
+  "connections.app.accessDesc":
+    "Ciò che hai consentito, come l'ha registrato {vendor}. Può essere meno di quanto {product} ha chiesto.",
+  "connections.app.access": "Accesso",
+  "connections.app.allowed": "Consentito",
+  "connections.app.vendorDidntSay": "{vendor} non l'ha detto.",
+  "connections.identity.toolsDesc":
+    "Permette ai tuoi Bot di leggere e modificare i tuoi repository come te. Lo colleghi separatamente dal tuo account qui sopra.",
+  "connections.identity.tools": "Strumenti",
+  "connections.identity.githubTools": "Strumenti GitHub",
+  "connections.identity.notConnected": "Non collegato",
+  "connections.mail.neverRun": "Non è ancora stata eseguita.",
+  "connections.mail.lastRun": {
+    one: "Ultima esecuzione {when}: {count} messaggio. {total} in tutto.",
+    other: "Ultima esecuzione {when}: {count} messaggi. {total} in tutto.",
+  },
+  "connections.mail.on": "Attiva. {activity}",
+  "connections.mail.off": "Disattivata",
+  "connections.mail.switchOff": "Disattiva",
+  "connections.mail.switchOn": "Attiva",
+  "connections.mail.delete": "Elimina",
+  "connections.mail.lastProblem": "Ultimo problema: {error}",
+  "connections.mail.description":
+    "Regole permanenti che hai chiesto in chat. I tuoi Bot le tengono e le applicano alla posta nuova ogni pochi minuti; non sono filtri di Gmail. Eliminare una regola non annulla ciò che ha già fatto.",
+  "connections.mail.title": "Regole della posta",
+  "connections.mail.search": "Cerca nelle regole della posta",
+  "connections.mail.statusLabel": "Stato della regola",
+  "connections.mail.allStatuses": "Tutti gli stati",
+  "connections.mail.optActive": "Attive",
+  "connections.mail.optPaused": "In pausa",
+  "connections.mail.active": "Attiva",
+  "connections.mail.paused": "In pausa",
+  "connections.mail.noMatch": "Nessuna regola corrisponde a questi filtri.",
+  "connections.mail.paging": {
+    one: "{from}–{to} di {count} regola",
+    other: "{from}–{to} di {count} regole",
+  },
+  "connections.mail.previous": "Precedente",
+  "connections.mail.next": "Successiva",
+  "connections.secret.aMember": "Un membro",
+  "connections.secret.doneMemberCal":
+    "Collegato. {name} ora può leggere la tua posta e il tuo calendario come te.",
+  "connections.secret.doneMember":
+    "Collegato. {name} ora può leggere la tua posta come te.",
+  "connections.secret.doneBotsCal":
+    "Collegato. I Bot che autorizzi ora possono leggere la tua posta e il tuo calendario come te.",
+  "connections.secret.doneBots":
+    "Collegato. I Bot che autorizzi ora possono leggere la tua posta come te.",
+  "connections.secret.notAvailable":
+    "Non ancora disponibile. Prima un amministratore deve attivarla.",
+  "connections.secret.statusError":
+    "Non sono riuscito a caricare se l'hai già collegata. Ricarica la pagina, oppure chiedi a un amministratore se continua a succedere.",
+  "connections.secret.yourAccount": "Il tuo account",
+  "connections.secret.connectedCal":
+    "Collegato come {address}. Anche il tuo calendario è collegato. I Bot che autorizzi la usano come te.",
+  "connections.secret.connectedNoCal":
+    "Collegato come {address}. Nessun calendario è collegato. I Bot che autorizzi la usano come te.",
+  "connections.secret.notConnected":
+    "Nessun Bot può usarla come te. Incolla qui sotto una password per le app per collegare il tuo Gmail.",
+  "connections.secret.useDifferent": "Usa un'altra password per le app",
+  "connections.secret.disconnected":
+    "Scollegato. {product} non può più leggere la tua posta né il tuo calendario. Per essere sicuro che la password per le app smetta di funzionare, eliminala anche su {url}.",
+  "connections.secret.formDesc":
+    "Due passaggi su Google, poi incolla ciò che ti danno. Non viene salvato nulla se Gmail non lo accetta.",
+  "connections.secret.connectTitle": "Collega",
+  "connections.secret.memberWillUse": "{name} userà questa casella di posta.",
+  "connections.secret.step1Lead":
+    "Attiva la verifica in due passaggi per il tuo account Google, poi crea una password per le app su",
+  "connections.secret.step1Tail":
+    ". Chiamala {product} e copia le sedici lettere.",
+  "connections.secret.step2Lead":
+    "Per far vedere anche il calendario ai tuoi Bot: in Google Calendar apri le Impostazioni, scegli il tuo calendario e copia il suo",
+  "connections.secret.step2Link": "Indirizzo segreto in formato iCal",
+  "connections.secret.step2Tail": ". Questo passaggio è facoltativo.",
+  "connections.secret.address": "Il tuo indirizzo Gmail",
+  "connections.secret.password": "Password per le app",
+  "connections.secret.passwordHint":
+    "Le sedici lettere di Google, con o senza gli spazi. Non è la tua password abituale.",
+  "connections.secret.calendar":
+    "Indirizzo segreto del calendario (facoltativo)",
+  "connections.secret.calendarHint":
+    "Chiunque abbia questo indirizzo può leggere il tuo calendario, quindi viene custodito con la stessa cura della password.",
+  "connections.secret.checking": "Controllo con Gmail…",
+  "connections.secret.canDoTitle": "Cosa permette ai tuoi Bot di fare",
+  "connections.secret.canDoDesc":
+    "Una password per le app apre tutta la tua casella di posta, quindi vale la pena sapere cosa comporta.",
+  "connections.secret.canDo":
+    "I tuoi Bot possono cercare e leggere la tua posta e guardare il tuo calendario. Non possono eliminare, spostare o etichettare nulla. Una risposta parte solo dopo la tua approvazione, e solo verso persone già presenti nel messaggio. Puoi scollegare in qualsiasi momento ed eliminare la password per le app su Google quando vuoi.",
+  "connections.mode.goesShared": "L'account condiviso verrà scollegato.",
+  "connections.mode.goesNoShared": "Nessun account condiviso è collegato.",
+  "connections.mode.goesPersonal": {
+    one: "{count} account personale verrà scollegato.",
+    other: "{count} account personali verranno scollegati.",
+  },
+  "connections.mode.makeShared": "Rendi {title} condiviso",
+  "connections.mode.makePersonal": "Rendi {title} personale",
+  "connections.mode.titleShared": "Condividere un solo account {title}?",
+  "connections.mode.titlePersonal":
+    "Dare a ciascuno il proprio account {title}?",
+  "connections.mode.checking": "Controllo cosa cambierebbe…",
+  "connections.mode.everyone":
+    "Chiunque usi un Bot con questa app agirà come questo unico account.",
+  "connections.cancel": "Annulla",
+  "connections.dir.description":
+    "La directory di app di {name}. Aggiungi un'app per rendere i suoi strumenti disponibili ai Bot. Ogni persona collega comunque il proprio account prima che legga qualsiasi cosa.",
+  "connections.dir.appsTitle": "App",
+  "connections.dir.appsDesc":
+    "Cerca per nome. Nessuno qui ha controllato queste app.",
+  "connections.dir.searchAria": "Cerca nelle app di {name}",
+  "connections.dir.searchPlaceholder": "Cerca per nome dell'app",
+  "connections.dir.noMatch": 'Nessuna app di {name} corrisponde a "{query}".',
+  "connections.dir.none": "{name} non ha restituito nessuna app.",
+  "connections.dir.actions": {
+    one: "{count} azione",
+    other: "{count} azioni",
+  },
+  "connections.dir.added": "Aggiunta",
+  "connections.dir.adding": "Aggiungo…",
+  "connections.dir.add": "Aggiungi",
+  "connections.grants.consentFailed":
+    "{product} ha risposto senza un link di consenso, quindi non è stato autorizzato nulla. Riprova, oppure chiedi a un amministratore se continua a succedere.",
+  "connections.grants.title": "Azioni",
+  "connections.grants.readError":
+    "Non riesco a leggere cosa consente questo account in questo momento.",
+  "connections.grants.retry": "Riprova",
+  "connections.grants.description":
+    "Raggruppate per il permesso che ogni azione richiede. Corrisponde a ciò che mostra la schermata di consenso.",
+  "connections.grants.search": "Cerca azioni",
+  "connections.grants.wholeApp": "Tutto in questa app, approvato insieme",
+  "connections.grants.noPermission": "Non chiede nessun permesso proprio",
+  "connections.grants.needs": "Richiede {scopes}",
+  "connections.grants.authorize": "Autorizza",
+  "connections.grants.hidden": {
+    one: "{count} altra azione non ancora autorizzata. Cerca per trovarla.",
+    other:
+      "{count} altre azioni non ancora autorizzate. Cerca per trovarne una.",
+  },
+  "connections.grants.noMatch": "Nessuna azione corrisponde a questa ricerca.",
+  "connections.grants.before": "Prima di autorizzare {action}",
+  "connections.grants.continue": "Continua al consenso",
+  "connections.grants.notRequired": "Non richiede autorizzazione.",
+  "connections.grants.authorized": "Autorizzata.",
+  "connections.grants.notYet": "Non ancora autorizzata.",
+  "connections.grants.notYetAdmin":
+    "Non ancora autorizzata. Un amministratore può autorizzarla.",
+  "connections.grants.missing":
+    "Manca {missing}. Un amministratore deve impostarlo. Autorizzare non lo risolve.",
+  "connections.grants.missingSetting":
+    "Manca un'impostazione. Un amministratore deve impostarla. Autorizzare non la risolve.",
+  "connections.grants.unknown":
+    "Non sono riuscito a leggere questa azione in questo momento. {reason}",
+  "connections.row.connectKey":
+    "Questa app si collega con una chiave, non con una pagina di accesso, quindi non è stato collegato nulla. Ricarica la pagina e premi di nuovo Collega.",
+  "connections.row.noAuth":
+    "{title} non ha bisogno di un account. I Bot che ce l'hanno possono usarla così com'è.",
+  "connections.row.verified":
+    "Collegato con la tua chiave. Ultimo controllo: {date}.",
+  "connections.row.failedCheck":
+    "La tua chiave non ha superato un controllo con {title}. Potrebbe essere la chiave, oppure {title} stesso. Il tuo account è ancora collegato. Premi Ricontrolla per riprovare, oppure scollega e collega con una nuova chiave.",
+  "connections.row.noSafeCheck":
+    "Collegato con la tua chiave. Non è stata controllata con {title}. In quel momento {title} non aveva un modo sicuro per controllare una chiave. Riguarda l'app, non la tua chiave.",
+  "connections.row.unchecked":
+    "Collegato con la tua chiave. Non è stata controllata con {title}.",
+  "connections.row.keyStillWorks":
+    "Scollegato. La tua chiave funziona ancora su {title}. Cambiala lì per interrompere ogni accesso.",
+  "connections.row.asksForKey":
+    "{title} si collega con una chiave che hai già. Il pulsante Collega te la chiede.",
+  "connections.row.signedIn": "Accesso eseguito con {title}. {description}",
+  "connections.row.yourAccount": "Il tuo account",
+  "connections.row.keyMissing": "Chiave mancante",
+  "connections.row.recheck": "Ricontrolla",
+  "connections.row.rechecking": "Controllo…",
+  "connections.row.perAction": "Approvato per azione",
+  "connections.row.connectYour": "Collega il tuo account",
+  "connections.row.checkingNeeds": "Controllo di cosa ha bisogno l'app…",
+  "connections.row.noNeeds":
+    "Non sono riuscito a scoprire di cosa ha bisogno questa app. Chiudi e riprova.",
+  // connections-end
 };
