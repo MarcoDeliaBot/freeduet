@@ -460,7 +460,7 @@ describe("the instruction limit for an imported member", () => {
       error: "What it does must be text between 1 and 1000 characters.",
     });
   });
-  test("the shipped members that do not fit the imported limit are pinned: Jules, Iris and Otto, and Leo fits", () => {
+  test("the shipped members that do not fit the imported limit are pinned: Jules, Iris, Kai, Otto and Ada, and Leo fits", () => {
     // A shipped member is not required to fit a team file. The list is pinned, so a change to a shipped
     // member's text, or to the limit, that moves a name into or out of it fails here and is decided on
     // purpose. Iris (freeduet) has a shared paragraph inside her text, so her author's text cannot be
@@ -493,6 +493,7 @@ describe("the instruction limit for an imported member", () => {
       "freeduet",
       "gamedev",
       "inbox",
+      "webdev", // D192 (28 November 2026): the hand-over sentence put Ada at 10,145 of 10,000; a shipped member need not fit
     ]);
   });
 });
