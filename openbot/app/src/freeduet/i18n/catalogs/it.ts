@@ -866,7 +866,7 @@ export const it: Catalog<typeof EN> = {
   "approvals.behaviour.allow": "Agisci senza chiedere",
   "approvals.behaviour.preApproved": "Agisci se è già approvato in anticipo",
   "approvals.behaviour.ask": "Chiedi prima di agire",
-  "approvals.behaviour.handOff": "Passa a te",
+  "approvals.behaviour.handOff": "Lascia fare a te",
   "approvals.host.ask": "Chiedi ogni volta",
   "approvals.host.allow": "Consenti sempre",
   "approvals.host.never": "Mai",
@@ -912,7 +912,7 @@ export const it: Catalog<typeof EN> = {
   "approvals.before.hostLine":
     "L'app desktop di {product} ti mostra comunque ogni comando prima che venga eseguito.",
   "approvals.every.lead":
-    "Vince la regola più restrittiva tra quelle che corrispondono. Una regola «chiedi» prevale su una regola «consenti». Le regole del team sono bloccate. Password e impostazioni di sicurezza passano sempre a te, e così i pagamenti, a meno che tu non attivi l'accesso completo per un Bot qui sotto. Le regole per un solo Bot sono su",
+    "Vince la regola più restrittiva tra quelle che corrispondono. Una regola «chiedi» prevale su una regola «consenti». Le regole del team sono bloccate. Password e impostazioni di sicurezza passano sempre a te, e così i pagamenti, a meno che tu non attivi l'Accesso completo per un Bot qui sotto. Le regole per un solo Bot sono su",
   "approvals.every.botPage": "la pagina di quel Bot",
   "approvals.every.title": "Regole per ogni Bot",
   "approvals.every.empty": "Ancora nessuna regola.",
