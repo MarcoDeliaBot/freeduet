@@ -3275,4 +3275,21 @@ export const de: Catalog<typeof EN> = {
   "claude.copied": "",
   "claude.copy": "",
   // onboarding-end
+  // files-start
+  "files.title": "",
+  "files.lead": "",
+  "files.rowDescription": "",
+  "files.empty": "",
+  "files.refresh": "",
+  "files.refreshing": "",
+  "files.download": "",
+  "files.downloading": "",
+  "files.loading": "",
+  "files.loadError": "",
+  "files.downloadError": "",
+  "files.more": "",
+  "files.size": "",
+  "files.modified": "",
+  "files.purpose": "",
+  // files-end
 };

@@ -1,6 +1,6 @@
-import { IconPencil } from "@tabler/icons-react";
+import { IconFiles, IconPencil } from "@tabler/icons-react";
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
-import { Navigate, useNavigate } from "@tanstack/react-router";
+import { Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ChannelChat } from "@/components/channels/channel-chat";
 import { ChannelGlyph } from "@/components/duet/channel-look";
@@ -16,6 +16,7 @@ import {
 } from "@/lib/duet-channels/mutations";
 import type { DuetChannel } from "@/lib/duet-channels/queries";
 import { useDuetChannels } from "@/lib/duet-channels/use-channel";
+import { useT } from "@/freeduet/i18n/provider";
 import { queryClient } from "@/query-client";
 import { ScreenNotice } from "./chat-screen";
 import { ChannelSheet } from "./channel-sheet";
@@ -58,7 +59,12 @@ export function ChannelScreen({ channelId }: { channelId: string }) {
       inShell
       key={conversation.data.id}
       lead={
-        <ChannelHeader botId={bot.id} botName={bot.name} channel={record} />
+        <ChannelHeader
+          botId={bot.id}
+          botName={bot.name}
+          channel={record}
+          memberId={runtimeAgentId}
+        />
       }
       runtimeAgentId={runtimeAgentId}
     />
@@ -86,11 +92,15 @@ function ChannelHeader({
   channel,
   botId,
   botName,
+  memberId,
 }: {
   channel: DuetChannel;
   botId: string;
   botName: string;
+  /** The member this thread is with: its Files panel (D194) is one tap from here. */
+  memberId: string;
 }) {
+  const t = useT();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const roster = useInfiniteQuery(channelListQueryOptions());
@@ -118,6 +128,14 @@ function ChannelHeader({
             </p>
           ) : null}
         </div>
+        <Link
+          aria-label={t("files.title")}
+          className="duet-glass grid size-10 shrink-0 place-items-center rounded-full text-duet-ink shadow-duet-glass transition-transform focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-duet-violet/40 active:scale-95"
+          params={{ agentId: memberId }}
+          to="/bots/$agentId/files"
+        >
+          <IconFiles size={18} stroke={2} />
+        </Link>
         <button
           aria-label="Edit channel"
           className="duet-glass grid size-10 shrink-0 place-items-center rounded-full text-duet-ink shadow-duet-glass transition-transform focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-duet-violet/40 active:scale-95"

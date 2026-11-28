@@ -56,7 +56,7 @@ export function fileSizeText(
 }
 
 /** Hands the bytes to the browser as a file to save, and nothing else: no link, no tab, no frame. */
-function save(bytes: Blob, name: string) {
+export function save(bytes: Blob, name: string) {
   const url = URL.createObjectURL(bytes.slice(0, bytes.size, OPAQUE));
   const anchor = document.createElement("a");
   anchor.href = url;
