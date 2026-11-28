@@ -1293,63 +1293,90 @@ export const es: Catalog<typeof EN> = {
     "Escribe el cambio en el cuadro de mensaje de abajo.",
   "routines.card.close": "Cerrar",
   "admin.boundaries.title": "Límites",
-  "admin.boundaries.descLead": "Lo que un asistente puede y no puede hacer con su ordenador. Cada acción se comprueba antes de que ocurra. Los rechazos aparecen en",
+  "admin.boundaries.descLead":
+    "Lo que un asistente puede y no puede hacer con su ordenador. Cada acción se comprueba antes de que ocurra. Los rechazos aparecen en",
   "admin.boundaries.descAudit": "Auditoría",
   "admin.boundaries.descTail": "con la regla que los rechazó.",
   "admin.boundaries.whenTitle": "Cuando una regla coincide",
-  "admin.boundaries.whenDesc": "Detener la acción, o registrarla y dejarla pasar. Registrar te permite probar una regla con actividad real antes de que rechace nada.",
+  "admin.boundaries.whenDesc":
+    "Detener la acción, o registrarla y dejarla pasar. Registrar te permite probar una regla con actividad real antes de que rechace nada.",
   "admin.boundaries.modeEnforce": "Detener la acción",
   "admin.boundaries.modeRecord": "Registrarla y permitirla",
-  "admin.boundaries.modeEnforceNote": "El asistente se detiene y se le dice qué regla lo rechazó.",
-  "admin.boundaries.modeRecordNote": "No se detiene nada. Cada coincidencia se registra como si se hubiera rechazado.",
+  "admin.boundaries.modeEnforceNote":
+    "El asistente se detiene y se le dice qué regla lo rechazó.",
+  "admin.boundaries.modeRecordNote":
+    "No se detiene nada. Cada coincidencia se registra como si se hubiera rechazado.",
   "admin.boundaries.neverTitle": "Los asistentes nunca pueden",
-  "admin.boundaries.neverLead": "Se comprueba primero. Una coincidencia detiene la acción y se le dice al asistente qué regla la rechazó. Las reglas son CEL. Pueden comprobar",
+  "admin.boundaries.neverLead":
+    "Se comprueba primero. Una coincidencia detiene la acción y se le dice al asistente qué regla la rechazó. Las reglas son CEL. Pueden comprobar",
   "admin.boundaries.neverMid1": ", el elemento, la tecla",
   "admin.boundaries.neverMid2": "pulsada, el archivo, el",
   "admin.boundaries.neverMid3": "ejecutado y",
   "admin.boundaries.neverMid4": "para herramientas externas.",
   "admin.boundaries.neverMid5": "dice qué inició la ejecución:",
-  "admin.boundaries.neverTail": "Una ejecución programada actúa como su propietario, así que",
-  "admin.boundaries.neverTail2": "por sí solo no puede decirte eso. Una regla que no se puede evaluar cuenta como coincidencia. Una errata nunca deja pasar una acción.",
+  "admin.boundaries.neverTail":
+    "Una ejecución programada actúa como su propietario, así que",
+  "admin.boundaries.neverTail2":
+    "por sí solo no puede decirte eso. Una regla que no se puede evaluar cuenta como coincidencia. Una errata nunca deja pasar una acción.",
   "admin.boundaries.or": "o",
-  "admin.boundaries.noRules": "Sin reglas. Cada acción se permite y se registra.",
+  "admin.boundaries.noRules":
+    "Sin reglas. Cada acción se permite y se registra.",
   "admin.boundaries.remove": "Quitar",
   "admin.boundaries.ruleLabel": "Una regla, escrita en CEL",
   "admin.boundaries.testing": "Probando…",
   "admin.boundaries.testFirst": "Probar primero",
   "admin.boundaries.addRule": "Añadir regla",
   "admin.boundaries.preset.form": "Nunca enviar un formulario",
-  "admin.boundaries.preset.formCost": "También impide que el asistente pulse Intro en cualquier otro sitio. Un formulario puede enviarse con Intro en cualquier campo. No cubre elegir en un menú o en un campo de fecha, cuyo cambio puede enviar un formulario por sí solo.",
-  "admin.boundaries.preset.password": "Nunca escribir en un campo de contraseña",
-  "admin.boundaries.preset.passwordCost": "Un campo de contraseña con otra etiqueta no queda cubierto. La regla se basa en la etiqueta.",
+  "admin.boundaries.preset.formCost":
+    "También impide que el asistente pulse Intro en cualquier otro sitio. Un formulario puede enviarse con Intro en cualquier campo. No cubre elegir en un menú o en un campo de fecha, cuyo cambio puede enviar un formulario por sí solo.",
+  "admin.boundaries.preset.password":
+    "Nunca escribir en un campo de contraseña",
+  "admin.boundaries.preset.passwordCost":
+    "Un campo de contraseña con otra etiqueta no queda cubierto. La regla se basa en la etiqueta.",
   "admin.boundaries.preset.social": "Mantenerse fuera de las redes sociales",
-  "admin.boundaries.preset.socialCost": "Solo estos dos hosts. Se permite un enlace que redirige allí desde otro sitio.",
+  "admin.boundaries.preset.socialCost":
+    "Solo estos dos hosts. Se permite un enlace que redirige allí desde otro sitio.",
   "admin.boundaries.otherwiseTitle": "En otro caso pueden",
-  "admin.boundaries.otherwiseDesc": "Se aplica a todo lo que la lista de arriba no recogió. Una lista vacía aquí no permite nada, y se rechaza cada acción.",
+  "admin.boundaries.otherwiseDesc":
+    "Se aplica a todo lo que la lista de arriba no recogió. Una lista vacía aquí no permite nada, y se rechaza cada acción.",
   "admin.boundaries.allowAll": "true, todo lo que no se rechaza arriba",
-  "admin.boundaries.saved": "Guardado. Se aplica a la próxima acción de cualquier asistente.",
-  "admin.boundaries.footer": "Los cambios se aplican a la próxima acción de cualquier asistente. Se mantienen tras un reinicio.",
-  "admin.boundaries.dry.none": "Aún no hay acciones del ordenador registradas para probar. La regla es válida. Verás qué recoge cuando los asistentes hayan actuado.",
-  "admin.boundaries.dry.zero": "Probada con las últimas {scanned} acciones registradas. Esta regla no habría rechazado ninguna. Aun así puede coincidir con futuras.",
-  "admin.boundaries.dry.some": "Probada con las últimas {scanned} acciones registradas. Esta regla habría rechazado {refused}.",
+  "admin.boundaries.saved":
+    "Guardado. Se aplica a la próxima acción de cualquier asistente.",
+  "admin.boundaries.footer":
+    "Los cambios se aplican a la próxima acción de cualquier asistente. Se mantienen tras un reinicio.",
+  "admin.boundaries.dry.none":
+    "Aún no hay acciones del ordenador registradas para probar. La regla es válida. Verás qué recoge cuando los asistentes hayan actuado.",
+  "admin.boundaries.dry.zero":
+    "Probada con las últimas {scanned} acciones registradas. Esta regla no habría rechazado ninguna. Aun así puede coincidir con futuras.",
+  "admin.boundaries.dry.some":
+    "Probada con las últimas {scanned} acciones registradas. Esta regla habría rechazado {refused}.",
   "admin.boundaries.dry.wouldRefuse": "Rechazaría",
   "admin.boundaries.dry.wouldAllow": "Ahora permitiría",
   "admin.boundaries.dry.on": "en «{name}»",
   "admin.boundaries.dry.running": "ejecutando",
   "admin.boundaries.dry.touching": "tocando {file}",
-  "admin.boundaries.dry.first": "Se muestran las primeras {shown}. El recuento de arriba abarca todo lo comprobado.",
+  "admin.boundaries.dry.first":
+    "Se muestran las primeras {shown}. El recuento de arriba abarca todo lo comprobado.",
   "admin.people.title": "Personas",
-  "admin.people.desc": "Todas las personas que han iniciado sesión. Los administradores pueden abrir estas pantallas. Todos los demás hablan con los asistentes.",
+  "admin.people.desc":
+    "Todas las personas que han iniciado sesión. Los administradores pueden abrir estas pantallas. Todos los demás hablan con los asistentes.",
   "admin.people.whoTitle": "Quién está aquí",
-  "admin.people.whoDesc": "Las direcciones de INITIAL_ADMIN_EMAILS son siempre administradoras. No puedes cambiarlas aquí.",
-  "admin.people.stopped": { one: "{count} ordenador detenido", many: "{count} de ordenadores detenidos", other: "{count} ordenadores detenidos" },
+  "admin.people.whoDesc":
+    "Las direcciones de INITIAL_ADMIN_EMAILS son siempre administradoras. No puedes cambiarlas aquí.",
+  "admin.people.stopped": {
+    one: "{count} ordenador detenido",
+    many: "{count} de ordenadores detenidos",
+    other: "{count} ordenadores detenidos",
+  },
   "admin.people.stoppedFailed": ". {failed} no se pudieron detener",
   "admin.people.disksKept": ". Sus discos se conservan.",
   "admin.people.searchLabel": "Buscar personas",
   "admin.people.searchPlaceholder": "Buscar por nombre o dirección",
-  "admin.people.loadError": "No se pudieron cargar las personas. Recarga la página.",
+  "admin.people.loadError":
+    "No se pudieron cargar las personas. Recarga la página.",
   "admin.people.noMatch": "Nadie coincide con «{query}».",
-  "admin.people.nobody": "Todavía nadie ha iniciado sesión. Las personas aparecerán aquí cuando lo hagan.",
+  "admin.people.nobody":
+    "Todavía nadie ha iniciado sesión. Las personas aparecerán aquí cuando lo hagan.",
   "admin.people.lastSignedIn": "última sesión {date}",
   "admin.people.neverSignedIn": "nunca ha iniciado sesión",
   "admin.people.noProvider": "sin proveedor",
@@ -1364,41 +1391,53 @@ export const es: Catalog<typeof EN> = {
   "admin.boundaries.and": "y",
   "admin.credentials.title": "Credenciales",
   "admin.credentials.add": "Añadir credencial",
-  "admin.credentials.desc": "Claves y tokens de esta instalación. {product} nunca muestra un secreto después de guardarlo.",
-  "admin.credentials.dialogDesc": "Se guarda para esta instalación. No volverás a ver el secreto.",
+  "admin.credentials.desc":
+    "Claves y tokens de esta instalación. {product} nunca muestra un secreto después de guardarlo.",
+  "admin.credentials.dialogDesc":
+    "Se guarda para esta instalación. No volverás a ver el secreto.",
   "admin.credentials.type": "Tipo",
   "admin.credentials.model": "Modelo",
   "admin.credentials.connector": "Conector",
   "admin.credentials.provider": "Proveedor",
   "admin.credentials.keyId": "ID de clave",
   "admin.credentials.secret": "Secreto",
-  "admin.credentials.replaces": "Esta clave ya tiene una credencial activa. Al guardar se sustituye y se revoca la anterior.",
-  "admin.credentials.saveError": "No se pudo guardar la credencial. Inténtalo de nuevo.",
+  "admin.credentials.replaces":
+    "Esta clave ya tiene una credencial activa. Al guardar se sustituye y se revoca la anterior.",
+  "admin.credentials.saveError":
+    "No se pudo guardar la credencial. Inténtalo de nuevo.",
   "admin.credentials.cancel": "Cancelar",
   "admin.credentials.saving": "Guardando…",
   "admin.credentials.save": "Guardar credencial",
   "admin.credentials.savedTitle": "Credenciales guardadas",
-  "admin.credentials.loadError": "No se pudieron cargar las credenciales. Recarga la página.",
-  "admin.credentials.empty": "Aún no hay credenciales. Añade una con Añadir credencial.",
+  "admin.credentials.loadError":
+    "No se pudieron cargar las credenciales. Recarga la página.",
+  "admin.credentials.empty":
+    "Aún no hay credenciales. Añade una con Añadir credencial.",
   "admin.credentials.revoked": "revocada",
   "admin.credentials.active": "activa",
   "admin.credentials.revoke": "Revocar",
   "admin.idp.title": "Proveedores de identidad",
   "admin.idp.add": "Añadir un proveedor",
-  "admin.idp.desc": "El proveedor SAML u OpenID Connect propio de tu empresa. Las personas inician sesión con su correo, y su dominio elige el proveedor.",
+  "admin.idp.desc":
+    "El proveedor SAML u OpenID Connect propio de tu empresa. Las personas inician sesión con su correo, y su dominio elige el proveedor.",
   "admin.idp.registeredTitle": "Registrados",
-  "admin.idp.registeredDesc": "Google, Microsoft y Okta se configuran en el entorno. No aparecen aquí.",
-  "admin.idp.loadError": "No se pudieron cargar los proveedores de identidad. Recarga la página.",
-  "admin.idp.empty": "Aún no hay proveedores de identidad. Añade uno con los metadatos de tu equipo de identidad.",
+  "admin.idp.registeredDesc":
+    "Google, Microsoft y Okta se configuran en el entorno. No aparecen aquí.",
+  "admin.idp.loadError":
+    "No se pudieron cargar los proveedores de identidad. Recarga la página.",
+  "admin.idp.empty":
+    "Aún no hay proveedores de identidad. Añade uno con los metadatos de tu equipo de identidad.",
   "admin.idp.remove": "Quitar",
   "admin.idp.dialogTitle": "Añadir un proveedor de identidad",
   "admin.idp.name": "Nombre",
   "admin.idp.domain": "Dominio de correo",
-  "admin.idp.domainNote": "Cualquiera con una dirección de este dominio inicia sesión aquí. Separa varios con comas.",
+  "admin.idp.domainNote":
+    "Cualquiera con una dirección de este dominio inicia sesión aquí. Separa varios con comas.",
   "admin.idp.issuer": "Emisor",
   "admin.idp.signOnUrl": "URL de inicio de sesión",
   "admin.idp.metadata": "XML de metadatos",
-  "admin.idp.metadataNote": "El archivo de tu equipo de identidad. Incluye el certificado de firma.",
+  "admin.idp.metadataNote":
+    "El archivo de tu equipo de identidad. Incluye el certificado de firma.",
   "admin.idp.clientId": "ID de cliente",
   "admin.idp.clientSecret": "Secreto de cliente",
   "admin.idp.cancel": "Cancelar",
@@ -1409,49 +1448,66 @@ export const es: Catalog<typeof EN> = {
   "admin.audit.decision.computer.policy_loaded": "Límite al arrancar",
   "admin.audit.decision.computer.isolation_loaded": "Aislamiento al arrancar",
   "admin.audit.decision.computer.control_taken": "Una persona tomó el control",
-  "admin.audit.decision.computer.control_released": "El control volvió al asistente",
+  "admin.audit.decision.computer.control_released":
+    "El control volvió al asistente",
   "admin.audit.decision.computer.help_requested": "El asistente pidió ayuda",
-  "admin.audit.decision.computer.secret_requested": "El asistente pidió un secreto",
-  "admin.audit.decision.computer.secret_supplied": "Una persona proporcionó un secreto",
+  "admin.audit.decision.computer.secret_requested":
+    "El asistente pidió un secreto",
+  "admin.audit.decision.computer.secret_supplied":
+    "Una persona proporcionó un secreto",
   "admin.audit.decision.computer.reset": "Se reinició el ordenador",
   "admin.audit.decision.computer.updated": "Se actualizó el ordenador",
   "admin.audit.decision.computer.stopped": "Una persona pulsó detener",
   "admin.audit.decision.component.granted": "Concedido a este asistente",
   "admin.audit.decision.component.revoked": "Retirado de este asistente",
-  "admin.audit.decision.component.published": "Publicado. Todos los asistentes pueden usarlo",
-  "admin.audit.decision.component.unpublished": "Despublicado. Ningún asistente puede usarlo",
-  "admin.audit.decision.component.draft_saved": "Borrador guardado, aún sin publicar",
+  "admin.audit.decision.component.published":
+    "Publicado. Todos los asistentes pueden usarlo",
+  "admin.audit.decision.component.unpublished":
+    "Despublicado. Ningún asistente puede usarlo",
+  "admin.audit.decision.component.draft_saved":
+    "Borrador guardado, aún sin publicar",
   "admin.audit.decision.component.refused": "Rechazado",
   "admin.audit.decision.component.function_granted": "Puede leer esto",
   "admin.audit.decision.component.function_revoked": "Ya no puede leer esto",
   "admin.audit.decision.component.function_called": "Leyó datos reales",
   "admin.audit.decision.component.function_refused": "Rechazado",
   "admin.audit.decision.component.function_failed": "No pudo leerlo",
-  "admin.audit.decision.mcp.tools_discovered": "Herramientas ofrecidas para una ejecución",
-  "admin.audit.decision.mcp.call_succeeded": "Llamado en nombre de este asistente",
+  "admin.audit.decision.mcp.tools_discovered":
+    "Herramientas ofrecidas para una ejecución",
+  "admin.audit.decision.mcp.call_succeeded":
+    "Llamado en nombre de este asistente",
   "admin.audit.decision.mcp.call_rejected": "Bloqueado",
   "admin.audit.decision.mcp.call_failed": "El servidor no respondió",
-  "admin.audit.decision.mcp.callback_refused": "No pudo confirmar qué asistente era",
+  "admin.audit.decision.mcp.callback_refused":
+    "No pudo confirmar qué asistente era",
   "admin.audit.decision.configuration.changed": "Configuración cambiada",
   "admin.audit.decision.credential.created": "Credencial guardada",
-  "admin.audit.discovery.under-floor": "Pocas herramientas, así que se ofrecieron todas",
-  "admin.audit.discovery.nothing-declared": "Ninguna habilidad declara ninguna de estas herramientas",
-  "admin.audit.discovery.unavailable": "No se pudo elegir, así que se ofrecieron todas",
-  "admin.audit.discovery.nothing-chosen": "No se aplicó ninguna habilidad, así que se ofrecieron todas",
+  "admin.audit.discovery.under-floor":
+    "Pocas herramientas, así que se ofrecieron todas",
+  "admin.audit.discovery.nothing-declared":
+    "Ninguna habilidad declara ninguna de estas herramientas",
+  "admin.audit.discovery.unavailable":
+    "No se pudo elegir, así que se ofrecieron todas",
+  "admin.audit.discovery.nothing-chosen":
+    "No se aplicó ninguna habilidad, así que se ofrecieron todas",
   "admin.audit.discovery.selected": "Elegidas por habilidad",
   "admin.audit.title": "Auditoría",
-  "admin.audit.desc": "Cada acción que realizó un asistente y cada una que la política de esta instalación rechazó.",
+  "admin.audit.desc":
+    "Cada acción que realizó un asistente y cada una que la política de esta instalación rechazó.",
   "admin.audit.export": "Exportar CSV",
   "admin.audit.exporting": "Exportando…",
   "admin.audit.refresh": "Actualizar",
-  "admin.audit.exportFailed": "No se pudieron exportar los eventos de auditoría. Inténtalo de nuevo.",
+  "admin.audit.exportFailed":
+    "No se pudieron exportar los eventos de auditoría. Inténtalo de nuevo.",
   "admin.audit.filter.all": "Todo",
   "admin.audit.filter.computer": "Acciones del ordenador",
   "admin.audit.filter.blocked": "Bloqueado",
   "admin.audit.filter.didNot": "No ocurrió",
   "admin.audit.filter.nobody": "Nadie vigilando",
-  "admin.audit.capped": "El archivo tiene los {count} eventos más recientes, no todos. Acota el filtro o las fechas para exportar el resto.",
-  "admin.audit.loadError": "No se pudo cargar el registro de auditoría. Recarga la página.",
+  "admin.audit.capped":
+    "El archivo tiene los {count} eventos más recientes, no todos. Acota el filtro o las fechas para exportar el resto.",
+  "admin.audit.loadError":
+    "No se pudo cargar el registro de auditoría. Recarga la página.",
   "admin.audit.empty": "Todavía no hay eventos que coincidan con este filtro.",
   "admin.audit.col.when": "Cuándo",
   "admin.audit.col.what": "Qué",

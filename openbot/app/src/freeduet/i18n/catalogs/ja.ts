@@ -1255,63 +1255,88 @@ export const ja: Catalog<typeof EN> = {
   "routines.card.writeBelow": "変更内容は下のメッセージ欄に書いてください。",
   "routines.card.close": "閉じる",
   "admin.boundaries.title": "制限",
-  "admin.boundaries.descLead": "アシスタントが自分のコンピューターでできること、できないこと。すべての操作は実行前に確認されます。拒否された操作は、拒否したルールとともに",
+  "admin.boundaries.descLead":
+    "アシスタントが自分のコンピューターでできること、できないこと。すべての操作は実行前に確認されます。拒否された操作は、拒否したルールとともに",
   "admin.boundaries.descAudit": "監査",
   "admin.boundaries.descTail": "に表示されます。",
   "admin.boundaries.whenTitle": "ルールに一致したとき",
-  "admin.boundaries.whenDesc": "操作を止めるか、記録して通すかを選びます。記録しておくと、ルールが何かを拒否する前に、実際の動きで試せます。",
+  "admin.boundaries.whenDesc":
+    "操作を止めるか、記録して通すかを選びます。記録しておくと、ルールが何かを拒否する前に、実際の動きで試せます。",
   "admin.boundaries.modeEnforce": "操作を止める",
   "admin.boundaries.modeRecord": "記録して許可する",
-  "admin.boundaries.modeEnforceNote": "アシスタントは止められ、どのルールに拒否されたかが伝えられます。",
-  "admin.boundaries.modeRecordNote": "何も止められません。一致したものは、拒否されたものとして記録されます。",
+  "admin.boundaries.modeEnforceNote":
+    "アシスタントは止められ、どのルールに拒否されたかが伝えられます。",
+  "admin.boundaries.modeRecordNote":
+    "何も止められません。一致したものは、拒否されたものとして記録されます。",
   "admin.boundaries.neverTitle": "アシスタントが決してしてはいけないこと",
-  "admin.boundaries.neverLead": "最初に確認されます。一致すると操作は止められ、どのルールに拒否されたかがアシスタントに伝えられます。ルールは CEL で書きます。次の値を確認できます:",
+  "admin.boundaries.neverLead":
+    "最初に確認されます。一致すると操作は止められ、どのルールに拒否されたかがアシスタントに伝えられます。ルールは CEL で書きます。次の値を確認できます:",
   "admin.boundaries.neverMid1": "、要素、押された",
   "admin.boundaries.neverMid2": "、ファイル、実行された",
   "admin.boundaries.neverMid3": "、そして外部ツール用の",
   "admin.boundaries.neverMid4": "です。",
   "admin.boundaries.neverMid5": "の値は、何が実行を始めたかを示します:",
-  "admin.boundaries.neverTail": "スケジュールされた実行は所有者として動くため、",
-  "admin.boundaries.neverTail2": "の値だけではそれは分かりません。評価できないルールは一致として扱われます。入力ミスで操作が通ってしまうことはありません。",
+  "admin.boundaries.neverTail":
+    "スケジュールされた実行は所有者として動くため、",
+  "admin.boundaries.neverTail2":
+    "の値だけではそれは分かりません。評価できないルールは一致として扱われます。入力ミスで操作が通ってしまうことはありません。",
   "admin.boundaries.or": "または",
-  "admin.boundaries.noRules": "ルールはありません。すべての操作が許可され、記録されます。",
+  "admin.boundaries.noRules":
+    "ルールはありません。すべての操作が許可され、記録されます。",
   "admin.boundaries.remove": "削除",
   "admin.boundaries.ruleLabel": "CEL で書いたルール",
   "admin.boundaries.testing": "テスト中…",
   "admin.boundaries.testFirst": "先にテスト",
   "admin.boundaries.addRule": "ルールを追加",
   "admin.boundaries.preset.form": "フォームを決して送信しない",
-  "admin.boundaries.preset.formCost": "ほかの場所で Enter を押すことも止めます。フォームは、どの入力欄でも Enter で送信されることがあります。メニューや日付欄での選択は対象外です。その変更だけでフォームが送信されることがあります。",
+  "admin.boundaries.preset.formCost":
+    "ほかの場所で Enter を押すことも止めます。フォームは、どの入力欄でも Enter で送信されることがあります。メニューや日付欄での選択は対象外です。その変更だけでフォームが送信されることがあります。",
   "admin.boundaries.preset.password": "パスワード欄に決して入力しない",
-  "admin.boundaries.preset.passwordCost": "ラベルが違うパスワード欄は対象外です。ルールはラベルで一致を判断します。",
+  "admin.boundaries.preset.passwordCost":
+    "ラベルが違うパスワード欄は対象外です。ルールはラベルで一致を判断します。",
   "admin.boundaries.preset.social": "ソーシャルメディアに近づかない",
-  "admin.boundaries.preset.socialCost": "この2つのホストだけです。ほかの場所からそこへ転送されるリンクは許可されます。",
+  "admin.boundaries.preset.socialCost":
+    "この2つのホストだけです。ほかの場所からそこへ転送されるリンクは許可されます。",
   "admin.boundaries.otherwiseTitle": "それ以外では次を許可",
-  "admin.boundaries.otherwiseDesc": "上のリストで捕まえられなかったすべてに適用されます。ここが空のリストなら何も許可されず、すべての操作が拒否されます。",
+  "admin.boundaries.otherwiseDesc":
+    "上のリストで捕まえられなかったすべてに適用されます。ここが空のリストなら何も許可されず、すべての操作が拒否されます。",
   "admin.boundaries.allowAll": "true、上で拒否されなかったすべて",
-  "admin.boundaries.saved": "保存しました。どのアシスタントでも、次の操作から適用されます。",
-  "admin.boundaries.footer": "変更は、どのアシスタントでも次の操作から適用されます。再起動後も残ります。",
-  "admin.boundaries.dry.none": "テストに使える、記録済みのコンピューター操作がまだありません。ルールは有効です。アシスタントが動いたあとで、何に一致するか確認できます。",
-  "admin.boundaries.dry.zero": "記録済みの直近 {scanned} 件の操作でテストしました。このルールでは1件も拒否されません。今後の操作には一致する可能性があります。",
-  "admin.boundaries.dry.some": "記録済みの直近 {scanned} 件の操作でテストしました。このルールでは {refused} 件が拒否されます。",
+  "admin.boundaries.saved":
+    "保存しました。どのアシスタントでも、次の操作から適用されます。",
+  "admin.boundaries.footer":
+    "変更は、どのアシスタントでも次の操作から適用されます。再起動後も残ります。",
+  "admin.boundaries.dry.none":
+    "テストに使える、記録済みのコンピューター操作がまだありません。ルールは有効です。アシスタントが動いたあとで、何に一致するか確認できます。",
+  "admin.boundaries.dry.zero":
+    "記録済みの直近 {scanned} 件の操作でテストしました。このルールでは1件も拒否されません。今後の操作には一致する可能性があります。",
+  "admin.boundaries.dry.some":
+    "記録済みの直近 {scanned} 件の操作でテストしました。このルールでは {refused} 件が拒否されます。",
   "admin.boundaries.dry.wouldRefuse": "拒否される",
   "admin.boundaries.dry.wouldAllow": "今は許可される",
   "admin.boundaries.dry.on": "「{name}」上で",
   "admin.boundaries.dry.running": "実行中",
   "admin.boundaries.dry.touching": "{file} に触れる",
-  "admin.boundaries.dry.first": "最初の {shown} 件を表示しています。上の件数は確認したすべてを含みます。",
+  "admin.boundaries.dry.first":
+    "最初の {shown} 件を表示しています。上の件数は確認したすべてを含みます。",
   "admin.people.title": "ユーザー",
-  "admin.people.desc": "サインインしたことのあるすべての人です。管理者はこれらの画面を開けます。それ以外の人はアシスタントと話します。",
+  "admin.people.desc":
+    "サインインしたことのあるすべての人です。管理者はこれらの画面を開けます。それ以外の人はアシスタントと話します。",
   "admin.people.whoTitle": "ここにいる人",
-  "admin.people.whoDesc": "INITIAL_ADMIN_EMAILS にあるアドレスは常に管理者です。ここでは変更できません。",
-  "admin.people.stopped": { one: "{count} 台のコンピューターを停止しました", other: "{count} 台のコンピューターを停止しました" },
+  "admin.people.whoDesc":
+    "INITIAL_ADMIN_EMAILS にあるアドレスは常に管理者です。ここでは変更できません。",
+  "admin.people.stopped": {
+    one: "{count} 台のコンピューターを停止しました",
+    other: "{count} 台のコンピューターを停止しました",
+  },
   "admin.people.stoppedFailed": "。{failed} 台は停止できませんでした",
   "admin.people.disksKept": "。ディスクは保持されます。",
   "admin.people.searchLabel": "ユーザーを検索",
   "admin.people.searchPlaceholder": "名前またはアドレスで検索",
-  "admin.people.loadError": "ユーザーを読み込めませんでした。ページを再読み込みしてください。",
+  "admin.people.loadError":
+    "ユーザーを読み込めませんでした。ページを再読み込みしてください。",
   "admin.people.noMatch": "「{query}」に一致する人はいません。",
-  "admin.people.nobody": "まだ誰もサインインしていません。サインインすると、ここに表示されます。",
+  "admin.people.nobody":
+    "まだ誰もサインインしていません。サインインすると、ここに表示されます。",
   "admin.people.lastSignedIn": "最終サインイン {date}",
   "admin.people.neverSignedIn": "サインインなし",
   "admin.people.noProvider": "プロバイダーなし",
@@ -1326,94 +1351,126 @@ export const ja: Catalog<typeof EN> = {
   "admin.boundaries.and": "と",
   "admin.credentials.title": "認証情報",
   "admin.credentials.add": "認証情報を追加",
-  "admin.credentials.desc": "このデプロイ用のキーとトークンです。{product} は、保存したシークレットを二度と表示しません。",
-  "admin.credentials.dialogDesc": "このデプロイ用に保存されます。シークレットは二度と表示されません。",
+  "admin.credentials.desc":
+    "このデプロイ用のキーとトークンです。{product} は、保存したシークレットを二度と表示しません。",
+  "admin.credentials.dialogDesc":
+    "このデプロイ用に保存されます。シークレットは二度と表示されません。",
   "admin.credentials.type": "種類",
   "admin.credentials.model": "モデル",
   "admin.credentials.connector": "コネクター",
   "admin.credentials.provider": "プロバイダー",
   "admin.credentials.keyId": "キー ID",
   "admin.credentials.secret": "シークレット",
-  "admin.credentials.replaces": "このキーには、有効な認証情報がすでにあります。保存すると置き換えられ、古いものは無効になります。",
-  "admin.credentials.saveError": "認証情報を保存できませんでした。もう一度お試しください。",
+  "admin.credentials.replaces":
+    "このキーには、有効な認証情報がすでにあります。保存すると置き換えられ、古いものは無効になります。",
+  "admin.credentials.saveError":
+    "認証情報を保存できませんでした。もう一度お試しください。",
   "admin.credentials.cancel": "キャンセル",
   "admin.credentials.saving": "保存中…",
   "admin.credentials.save": "認証情報を保存",
   "admin.credentials.savedTitle": "保存済みの認証情報",
-  "admin.credentials.loadError": "認証情報を読み込めませんでした。ページを再読み込みしてください。",
-  "admin.credentials.empty": "認証情報はまだありません。「認証情報を追加」で追加してください。",
+  "admin.credentials.loadError":
+    "認証情報を読み込めませんでした。ページを再読み込みしてください。",
+  "admin.credentials.empty":
+    "認証情報はまだありません。「認証情報を追加」で追加してください。",
   "admin.credentials.revoked": "無効化済み",
   "admin.credentials.active": "有効",
   "admin.credentials.revoke": "無効化",
   "admin.idp.title": "ID プロバイダー",
   "admin.idp.add": "プロバイダーを追加",
-  "admin.idp.desc": "お使いの会社独自の SAML または OpenID Connect プロバイダーです。ユーザーはメールアドレスでサインインし、そのドメインでプロバイダーが決まります。",
+  "admin.idp.desc":
+    "お使いの会社独自の SAML または OpenID Connect プロバイダーです。ユーザーはメールアドレスでサインインし、そのドメインでプロバイダーが決まります。",
   "admin.idp.registeredTitle": "登録済み",
-  "admin.idp.registeredDesc": "Google、Microsoft、Okta は環境設定で指定します。ここには表示されません。",
-  "admin.idp.loadError": "ID プロバイダーを読み込めませんでした。ページを再読み込みしてください。",
-  "admin.idp.empty": "ID プロバイダーはまだありません。ID チームから受け取ったメタデータで追加してください。",
+  "admin.idp.registeredDesc":
+    "Google、Microsoft、Okta は環境設定で指定します。ここには表示されません。",
+  "admin.idp.loadError":
+    "ID プロバイダーを読み込めませんでした。ページを再読み込みしてください。",
+  "admin.idp.empty":
+    "ID プロバイダーはまだありません。ID チームから受け取ったメタデータで追加してください。",
   "admin.idp.remove": "削除",
   "admin.idp.dialogTitle": "ID プロバイダーを追加",
   "admin.idp.name": "名前",
   "admin.idp.domain": "メールのドメイン",
-  "admin.idp.domainNote": "このドメインのアドレスを持つ人は全員、ここでサインインします。複数ある場合はカンマで区切ります。",
+  "admin.idp.domainNote":
+    "このドメインのアドレスを持つ人は全員、ここでサインインします。複数ある場合はカンマで区切ります。",
   "admin.idp.issuer": "発行者",
   "admin.idp.signOnUrl": "サインオン URL",
   "admin.idp.metadata": "メタデータ XML",
-  "admin.idp.metadataNote": "ID チームから受け取ったファイルです。署名用の証明書が含まれています。",
+  "admin.idp.metadataNote":
+    "ID チームから受け取ったファイルです。署名用の証明書が含まれています。",
   "admin.idp.clientId": "クライアント ID",
   "admin.idp.clientSecret": "クライアントシークレット",
   "admin.idp.cancel": "キャンセル",
   "admin.idp.adding": "追加中…",
   "admin.idp.addShort": "追加",
   "admin.audit.decision.bot.declined": "アシスタントが断りました",
-  "admin.audit.decision.agent.stream_stalled": "アシスタントが応答しなくなりました",
+  "admin.audit.decision.agent.stream_stalled":
+    "アシスタントが応答しなくなりました",
   "admin.audit.decision.computer.policy_loaded": "起動時の制限",
   "admin.audit.decision.computer.isolation_loaded": "起動時の隔離",
   "admin.audit.decision.computer.control_taken": "人が操作を引き継ぎました",
-  "admin.audit.decision.computer.control_released": "操作がアシスタントに戻りました",
-  "admin.audit.decision.computer.help_requested": "アシスタントが助けを求めました",
-  "admin.audit.decision.computer.secret_requested": "アシスタントがシークレットを求めました",
-  "admin.audit.decision.computer.secret_supplied": "人がシークレットを渡しました",
+  "admin.audit.decision.computer.control_released":
+    "操作がアシスタントに戻りました",
+  "admin.audit.decision.computer.help_requested":
+    "アシスタントが助けを求めました",
+  "admin.audit.decision.computer.secret_requested":
+    "アシスタントがシークレットを求めました",
+  "admin.audit.decision.computer.secret_supplied":
+    "人がシークレットを渡しました",
   "admin.audit.decision.computer.reset": "コンピューターをリセットしました",
   "admin.audit.decision.computer.updated": "コンピューターを更新しました",
   "admin.audit.decision.computer.stopped": "人が停止を押しました",
   "admin.audit.decision.component.granted": "このアシスタントに付与しました",
-  "admin.audit.decision.component.revoked": "このアシスタントから取り上げました",
-  "admin.audit.decision.component.published": "公開しました。すべてのアシスタントが使えます",
-  "admin.audit.decision.component.unpublished": "公開を取り下げました。どのアシスタントも使えません",
-  "admin.audit.decision.component.draft_saved": "下書きを保存しました。まだ公開されていません",
+  "admin.audit.decision.component.revoked":
+    "このアシスタントから取り上げました",
+  "admin.audit.decision.component.published":
+    "公開しました。すべてのアシスタントが使えます",
+  "admin.audit.decision.component.unpublished":
+    "公開を取り下げました。どのアシスタントも使えません",
+  "admin.audit.decision.component.draft_saved":
+    "下書きを保存しました。まだ公開されていません",
   "admin.audit.decision.component.refused": "拒否しました",
   "admin.audit.decision.component.function_granted": "これを読み取れます",
-  "admin.audit.decision.component.function_revoked": "これを読み取れなくなりました",
-  "admin.audit.decision.component.function_called": "実際のデータを読み取りました",
+  "admin.audit.decision.component.function_revoked":
+    "これを読み取れなくなりました",
+  "admin.audit.decision.component.function_called":
+    "実際のデータを読み取りました",
   "admin.audit.decision.component.function_refused": "拒否しました",
   "admin.audit.decision.component.function_failed": "読み取れませんでした",
   "admin.audit.decision.mcp.tools_discovered": "1回の実行に提示したツール",
-  "admin.audit.decision.mcp.call_succeeded": "このアシスタントの代わりに呼び出しました",
+  "admin.audit.decision.mcp.call_succeeded":
+    "このアシスタントの代わりに呼び出しました",
   "admin.audit.decision.mcp.call_rejected": "ブロックしました",
   "admin.audit.decision.mcp.call_failed": "サーバーが応答しませんでした",
-  "admin.audit.decision.mcp.callback_refused": "どのアシスタントか確認できませんでした",
+  "admin.audit.decision.mcp.callback_refused":
+    "どのアシスタントか確認できませんでした",
   "admin.audit.decision.configuration.changed": "設定を変更しました",
   "admin.audit.decision.credential.created": "認証情報を保存しました",
-  "admin.audit.discovery.under-floor": "ツールが少ないため、すべてを提示しました",
-  "admin.audit.discovery.nothing-declared": "これらのツールを宣言しているスキルはありません",
+  "admin.audit.discovery.under-floor":
+    "ツールが少ないため、すべてを提示しました",
+  "admin.audit.discovery.nothing-declared":
+    "これらのツールを宣言しているスキルはありません",
   "admin.audit.discovery.unavailable": "選べなかったため、すべてを提示しました",
-  "admin.audit.discovery.nothing-chosen": "当てはまるスキルがなかったため、すべてを提示しました",
+  "admin.audit.discovery.nothing-chosen":
+    "当てはまるスキルがなかったため、すべてを提示しました",
   "admin.audit.discovery.selected": "スキルで選択",
   "admin.audit.title": "監査",
-  "admin.audit.desc": "アシスタントが行ったすべての操作と、このデプロイのポリシーが拒否したすべての操作です。",
+  "admin.audit.desc":
+    "アシスタントが行ったすべての操作と、このデプロイのポリシーが拒否したすべての操作です。",
   "admin.audit.export": "CSV を書き出す",
   "admin.audit.exporting": "書き出し中…",
   "admin.audit.refresh": "更新",
-  "admin.audit.exportFailed": "監査イベントを書き出せませんでした。もう一度お試しください。",
+  "admin.audit.exportFailed":
+    "監査イベントを書き出せませんでした。もう一度お試しください。",
   "admin.audit.filter.all": "すべて",
   "admin.audit.filter.computer": "コンピューター操作",
   "admin.audit.filter.blocked": "ブロック済み",
   "admin.audit.filter.didNot": "実行されず",
   "admin.audit.filter.nobody": "誰も見ていない",
-  "admin.audit.capped": "ファイルには、すべてではなく最新の {count} 件のイベントが入っています。残りを書き出すには、フィルターか日付を絞り込んでください。",
-  "admin.audit.loadError": "監査ログを読み込めませんでした。ページを再読み込みしてください。",
+  "admin.audit.capped":
+    "ファイルには、すべてではなく最新の {count} 件のイベントが入っています。残りを書き出すには、フィルターか日付を絞り込んでください。",
+  "admin.audit.loadError":
+    "監査ログを読み込めませんでした。ページを再読み込みしてください。",
   "admin.audit.empty": "このフィルターに一致するイベントはまだありません。",
   "admin.audit.col.when": "日時",
   "admin.audit.col.what": "内容",

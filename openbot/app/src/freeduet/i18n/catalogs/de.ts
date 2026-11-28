@@ -1265,63 +1265,88 @@ export const de: Catalog<typeof EN> = {
     "Schreibe die Änderung unten ins Nachrichtenfeld.",
   "routines.card.close": "Schließen",
   "admin.boundaries.title": "Grenzen",
-  "admin.boundaries.descLead": "Was ein Assistent mit seinem Computer tun darf und was nicht. Jede Aktion wird geprüft, bevor sie passiert. Ablehnungen erscheinen im",
+  "admin.boundaries.descLead":
+    "Was ein Assistent mit seinem Computer tun darf und was nicht. Jede Aktion wird geprüft, bevor sie passiert. Ablehnungen erscheinen im",
   "admin.boundaries.descAudit": "Audit",
   "admin.boundaries.descTail": "zusammen mit der Regel, die sie abgelehnt hat.",
   "admin.boundaries.whenTitle": "Wenn eine Regel zutrifft",
-  "admin.boundaries.whenDesc": "Die Aktion stoppen, oder sie aufzeichnen und durchlassen. Mit dem Aufzeichnen kannst du eine Regel an echter Aktivität ausprobieren, bevor sie irgendetwas ablehnt.",
+  "admin.boundaries.whenDesc":
+    "Die Aktion stoppen, oder sie aufzeichnen und durchlassen. Mit dem Aufzeichnen kannst du eine Regel an echter Aktivität ausprobieren, bevor sie irgendetwas ablehnt.",
   "admin.boundaries.modeEnforce": "Die Aktion stoppen",
   "admin.boundaries.modeRecord": "Aufzeichnen und erlauben",
-  "admin.boundaries.modeEnforceNote": "Der Assistent wird gestoppt und erfährt, welche Regel ihn abgelehnt hat.",
-  "admin.boundaries.modeRecordNote": "Nichts wird gestoppt. Jeder Treffer wird aufgezeichnet, als wäre er abgelehnt worden.",
+  "admin.boundaries.modeEnforceNote":
+    "Der Assistent wird gestoppt und erfährt, welche Regel ihn abgelehnt hat.",
+  "admin.boundaries.modeRecordNote":
+    "Nichts wird gestoppt. Jeder Treffer wird aufgezeichnet, als wäre er abgelehnt worden.",
   "admin.boundaries.neverTitle": "Assistenten dürfen nie",
-  "admin.boundaries.neverLead": "Wird zuerst geprüft. Ein Treffer stoppt die Aktion, und der Assistent erfährt, welche Regel ihn abgelehnt hat. Die Regeln sind in CEL. Sie können prüfen:",
+  "admin.boundaries.neverLead":
+    "Wird zuerst geprüft. Ein Treffer stoppt die Aktion, und der Assistent erfährt, welche Regel ihn abgelehnt hat. Die Regeln sind in CEL. Sie können prüfen:",
   "admin.boundaries.neverMid1": ", das Element, die gedrückte",
   "admin.boundaries.neverMid2": ", die Datei, den ausgeführten",
   "admin.boundaries.neverMid3": "sowie",
   "admin.boundaries.neverMid4": "für externe Werkzeuge.",
   "admin.boundaries.neverMid5": "sagt, was den Lauf gestartet hat:",
-  "admin.boundaries.neverTail": "Ein geplanter Lauf handelt als sein Eigentümer, deshalb kann",
-  "admin.boundaries.neverTail2": "allein das nicht verraten. Eine Regel, die sich nicht auswerten lässt, zählt als Treffer. Ein Tippfehler lässt nie eine Aktion durch.",
+  "admin.boundaries.neverTail":
+    "Ein geplanter Lauf handelt als sein Eigentümer, deshalb kann",
+  "admin.boundaries.neverTail2":
+    "allein das nicht verraten. Eine Regel, die sich nicht auswerten lässt, zählt als Treffer. Ein Tippfehler lässt nie eine Aktion durch.",
   "admin.boundaries.or": "oder",
-  "admin.boundaries.noRules": "Keine Regeln. Jede Aktion ist erlaubt und wird aufgezeichnet.",
+  "admin.boundaries.noRules":
+    "Keine Regeln. Jede Aktion ist erlaubt und wird aufgezeichnet.",
   "admin.boundaries.remove": "Entfernen",
   "admin.boundaries.ruleLabel": "Eine Regel, in CEL geschrieben",
   "admin.boundaries.testing": "Wird getestet…",
   "admin.boundaries.testFirst": "Erst testen",
   "admin.boundaries.addRule": "Regel hinzufügen",
   "admin.boundaries.preset.form": "Nie ein Formular absenden",
-  "admin.boundaries.preset.formCost": "Hindert den Assistenten auch daran, anderswo die Eingabetaste zu drücken. Ein Formular kann sich mit der Eingabetaste in jedem Feld absenden. Nicht erfasst ist die Auswahl in einem Menü oder Datumsfeld, deren Änderung ein Formular von selbst absenden kann.",
+  "admin.boundaries.preset.formCost":
+    "Hindert den Assistenten auch daran, anderswo die Eingabetaste zu drücken. Ein Formular kann sich mit der Eingabetaste in jedem Feld absenden. Nicht erfasst ist die Auswahl in einem Menü oder Datumsfeld, deren Änderung ein Formular von selbst absenden kann.",
   "admin.boundaries.preset.password": "Nie in ein Passwortfeld tippen",
-  "admin.boundaries.preset.passwordCost": "Ein Passwortfeld mit anderer Beschriftung ist nicht erfasst. Die Regel greift auf die Beschriftung.",
+  "admin.boundaries.preset.passwordCost":
+    "Ein Passwortfeld mit anderer Beschriftung ist nicht erfasst. Die Regel greift auf die Beschriftung.",
   "admin.boundaries.preset.social": "Soziale Medien meiden",
-  "admin.boundaries.preset.socialCost": "Nur diese beiden Hosts. Ein Link, der von anderswo dorthin weiterleitet, ist erlaubt.",
+  "admin.boundaries.preset.socialCost":
+    "Nur diese beiden Hosts. Ein Link, der von anderswo dorthin weiterleitet, ist erlaubt.",
   "admin.boundaries.otherwiseTitle": "Sonst dürfen sie",
-  "admin.boundaries.otherwiseDesc": "Gilt für alles, was die Liste oben nicht erfasst hat. Eine leere Liste erlaubt hier nichts, und jede Aktion wird abgelehnt.",
+  "admin.boundaries.otherwiseDesc":
+    "Gilt für alles, was die Liste oben nicht erfasst hat. Eine leere Liste erlaubt hier nichts, und jede Aktion wird abgelehnt.",
   "admin.boundaries.allowAll": "true, alles, was oben nicht abgelehnt wird",
-  "admin.boundaries.saved": "Gespeichert. Gilt für die nächste Aktion jedes Assistenten.",
-  "admin.boundaries.footer": "Änderungen gelten für die nächste Aktion jedes Assistenten. Sie bleiben nach einem Neustart erhalten.",
-  "admin.boundaries.dry.none": "Es gibt noch keine aufgezeichneten Computeraktionen zum Testen. Die Regel ist gültig. Was sie trifft, siehst du, sobald Assistenten gehandelt haben.",
-  "admin.boundaries.dry.zero": "An den letzten {scanned} aufgezeichneten Aktionen getestet. Diese Regel hätte keine abgelehnt. Sie kann künftige trotzdem treffen.",
-  "admin.boundaries.dry.some": "An den letzten {scanned} aufgezeichneten Aktionen getestet. Diese Regel hätte {refused} abgelehnt.",
+  "admin.boundaries.saved":
+    "Gespeichert. Gilt für die nächste Aktion jedes Assistenten.",
+  "admin.boundaries.footer":
+    "Änderungen gelten für die nächste Aktion jedes Assistenten. Sie bleiben nach einem Neustart erhalten.",
+  "admin.boundaries.dry.none":
+    "Es gibt noch keine aufgezeichneten Computeraktionen zum Testen. Die Regel ist gültig. Was sie trifft, siehst du, sobald Assistenten gehandelt haben.",
+  "admin.boundaries.dry.zero":
+    "An den letzten {scanned} aufgezeichneten Aktionen getestet. Diese Regel hätte keine abgelehnt. Sie kann künftige trotzdem treffen.",
+  "admin.boundaries.dry.some":
+    "An den letzten {scanned} aufgezeichneten Aktionen getestet. Diese Regel hätte {refused} abgelehnt.",
   "admin.boundaries.dry.wouldRefuse": "Würde ablehnen",
   "admin.boundaries.dry.wouldAllow": "Würde jetzt erlauben",
   "admin.boundaries.dry.on": "auf „{name}“",
   "admin.boundaries.dry.running": "führt aus",
   "admin.boundaries.dry.touching": "berührt {file}",
-  "admin.boundaries.dry.first": "Gezeigt werden die ersten {shown}. Die Zahl oben umfasst alles Geprüfte.",
+  "admin.boundaries.dry.first":
+    "Gezeigt werden die ersten {shown}. Die Zahl oben umfasst alles Geprüfte.",
   "admin.people.title": "Personen",
-  "admin.people.desc": "Alle, die sich angemeldet haben. Admins können diese Bildschirme öffnen. Alle anderen sprechen mit Assistenten.",
+  "admin.people.desc":
+    "Alle, die sich angemeldet haben. Admins können diese Bildschirme öffnen. Alle anderen sprechen mit Assistenten.",
   "admin.people.whoTitle": "Wer hier ist",
-  "admin.people.whoDesc": "Adressen in INITIAL_ADMIN_EMAILS sind immer Admins. Du kannst sie hier nicht ändern.",
-  "admin.people.stopped": { one: "{count} Computer gestoppt", other: "{count} Computer gestoppt" },
+  "admin.people.whoDesc":
+    "Adressen in INITIAL_ADMIN_EMAILS sind immer Admins. Du kannst sie hier nicht ändern.",
+  "admin.people.stopped": {
+    one: "{count} Computer gestoppt",
+    other: "{count} Computer gestoppt",
+  },
   "admin.people.stoppedFailed": ". {failed} konnten nicht gestoppt werden",
   "admin.people.disksKept": ". Ihre Festplatten bleiben erhalten.",
   "admin.people.searchLabel": "Personen suchen",
   "admin.people.searchPlaceholder": "Nach Name oder Adresse suchen",
-  "admin.people.loadError": "Personen konnten nicht geladen werden. Lade die Seite neu.",
+  "admin.people.loadError":
+    "Personen konnten nicht geladen werden. Lade die Seite neu.",
   "admin.people.noMatch": "Niemand passt zu „{query}“.",
-  "admin.people.nobody": "Noch hat sich niemand angemeldet. Personen erscheinen hier, sobald sie es tun.",
+  "admin.people.nobody":
+    "Noch hat sich niemand angemeldet. Personen erscheinen hier, sobald sie es tun.",
   "admin.people.lastSignedIn": "zuletzt angemeldet {date}",
   "admin.people.neverSignedIn": "nie angemeldet",
   "admin.people.noProvider": "kein Anbieter",
@@ -1336,94 +1361,128 @@ export const de: Catalog<typeof EN> = {
   "admin.boundaries.and": "und",
   "admin.credentials.title": "Zugangsdaten",
   "admin.credentials.add": "Zugangsdaten hinzufügen",
-  "admin.credentials.desc": "Schlüssel und Tokens für diese Installation. {product} zeigt ein Geheimnis nie wieder an, sobald es gespeichert ist.",
-  "admin.credentials.dialogDesc": "Für diese Installation gespeichert. Das Geheimnis siehst du nicht noch einmal.",
+  "admin.credentials.desc":
+    "Schlüssel und Tokens für diese Installation. {product} zeigt ein Geheimnis nie wieder an, sobald es gespeichert ist.",
+  "admin.credentials.dialogDesc":
+    "Für diese Installation gespeichert. Das Geheimnis siehst du nicht noch einmal.",
   "admin.credentials.type": "Typ",
   "admin.credentials.model": "Modell",
   "admin.credentials.connector": "Konnektor",
   "admin.credentials.provider": "Anbieter",
   "admin.credentials.keyId": "Schlüssel-ID",
   "admin.credentials.secret": "Geheimnis",
-  "admin.credentials.replaces": "Für diesen Schlüssel gibt es schon aktive Zugangsdaten. Beim Speichern werden sie ersetzt und die alten widerrufen.",
-  "admin.credentials.saveError": "Die Zugangsdaten konnten nicht gespeichert werden. Versuch es erneut.",
+  "admin.credentials.replaces":
+    "Für diesen Schlüssel gibt es schon aktive Zugangsdaten. Beim Speichern werden sie ersetzt und die alten widerrufen.",
+  "admin.credentials.saveError":
+    "Die Zugangsdaten konnten nicht gespeichert werden. Versuch es erneut.",
   "admin.credentials.cancel": "Abbrechen",
   "admin.credentials.saving": "Wird gespeichert…",
   "admin.credentials.save": "Zugangsdaten speichern",
   "admin.credentials.savedTitle": "Gespeicherte Zugangsdaten",
-  "admin.credentials.loadError": "Zugangsdaten konnten nicht geladen werden. Lade die Seite neu.",
-  "admin.credentials.empty": "Noch keine Zugangsdaten. Füge welche mit „Zugangsdaten hinzufügen“ hinzu.",
+  "admin.credentials.loadError":
+    "Zugangsdaten konnten nicht geladen werden. Lade die Seite neu.",
+  "admin.credentials.empty":
+    "Noch keine Zugangsdaten. Füge welche mit „Zugangsdaten hinzufügen“ hinzu.",
   "admin.credentials.revoked": "widerrufen",
   "admin.credentials.active": "aktiv",
   "admin.credentials.revoke": "Widerrufen",
   "admin.idp.title": "Identitätsanbieter",
   "admin.idp.add": "Anbieter hinzufügen",
-  "admin.idp.desc": "Der SAML- oder OpenID-Connect-Anbieter deines Unternehmens. Die Leute melden sich mit ihrer E-Mail-Adresse an, und deren Domain bestimmt den Anbieter.",
+  "admin.idp.desc":
+    "Der SAML- oder OpenID-Connect-Anbieter deines Unternehmens. Die Leute melden sich mit ihrer E-Mail-Adresse an, und deren Domain bestimmt den Anbieter.",
   "admin.idp.registeredTitle": "Registriert",
-  "admin.idp.registeredDesc": "Google, Microsoft und Okta werden in der Umgebung eingestellt. Sie erscheinen hier nicht.",
-  "admin.idp.loadError": "Identitätsanbieter konnten nicht geladen werden. Lade die Seite neu.",
-  "admin.idp.empty": "Noch keine Identitätsanbieter. Füge einen mit den Metadaten deines Identitätsteams hinzu.",
+  "admin.idp.registeredDesc":
+    "Google, Microsoft und Okta werden in der Umgebung eingestellt. Sie erscheinen hier nicht.",
+  "admin.idp.loadError":
+    "Identitätsanbieter konnten nicht geladen werden. Lade die Seite neu.",
+  "admin.idp.empty":
+    "Noch keine Identitätsanbieter. Füge einen mit den Metadaten deines Identitätsteams hinzu.",
   "admin.idp.remove": "Entfernen",
   "admin.idp.dialogTitle": "Identitätsanbieter hinzufügen",
   "admin.idp.name": "Name",
   "admin.idp.domain": "E-Mail-Domain",
-  "admin.idp.domainNote": "Alle mit einer Adresse in dieser Domain melden sich hier an. Mehrere trennst du mit Kommas.",
+  "admin.idp.domainNote":
+    "Alle mit einer Adresse in dieser Domain melden sich hier an. Mehrere trennst du mit Kommas.",
   "admin.idp.issuer": "Aussteller",
   "admin.idp.signOnUrl": "Anmelde-URL",
   "admin.idp.metadata": "Metadaten-XML",
-  "admin.idp.metadataNote": "Die Datei von deinem Identitätsteam. Sie enthält das Signaturzertifikat.",
+  "admin.idp.metadataNote":
+    "Die Datei von deinem Identitätsteam. Sie enthält das Signaturzertifikat.",
   "admin.idp.clientId": "Client-ID",
   "admin.idp.clientSecret": "Client-Geheimnis",
   "admin.idp.cancel": "Abbrechen",
   "admin.idp.adding": "Wird hinzugefügt…",
   "admin.idp.addShort": "Hinzufügen",
   "admin.audit.decision.bot.declined": "Der Assistent hat abgelehnt",
-  "admin.audit.decision.agent.stream_stalled": "Der Assistent hat nicht mehr geantwortet",
+  "admin.audit.decision.agent.stream_stalled":
+    "Der Assistent hat nicht mehr geantwortet",
   "admin.audit.decision.computer.policy_loaded": "Grenze beim Start",
   "admin.audit.decision.computer.isolation_loaded": "Isolation beim Start",
-  "admin.audit.decision.computer.control_taken": "Eine Person hat die Steuerung übernommen",
-  "admin.audit.decision.computer.control_released": "Die Steuerung ging zurück an den Assistenten",
-  "admin.audit.decision.computer.help_requested": "Der Assistent hat um Hilfe gebeten",
-  "admin.audit.decision.computer.secret_requested": "Der Assistent hat nach einem Geheimnis gefragt",
-  "admin.audit.decision.computer.secret_supplied": "Eine Person hat ein Geheimnis geliefert",
+  "admin.audit.decision.computer.control_taken":
+    "Eine Person hat die Steuerung übernommen",
+  "admin.audit.decision.computer.control_released":
+    "Die Steuerung ging zurück an den Assistenten",
+  "admin.audit.decision.computer.help_requested":
+    "Der Assistent hat um Hilfe gebeten",
+  "admin.audit.decision.computer.secret_requested":
+    "Der Assistent hat nach einem Geheimnis gefragt",
+  "admin.audit.decision.computer.secret_supplied":
+    "Eine Person hat ein Geheimnis geliefert",
   "admin.audit.decision.computer.reset": "Der Computer wurde zurückgesetzt",
   "admin.audit.decision.computer.updated": "Der Computer wurde aktualisiert",
   "admin.audit.decision.computer.stopped": "Eine Person hat auf Stopp gedrückt",
   "admin.audit.decision.component.granted": "Diesem Assistenten gewährt",
   "admin.audit.decision.component.revoked": "Diesem Assistenten entzogen",
-  "admin.audit.decision.component.published": "Veröffentlicht. Jeder Assistent kann es nutzen",
-  "admin.audit.decision.component.unpublished": "Zurückgezogen. Kein Assistent kann es nutzen",
-  "admin.audit.decision.component.draft_saved": "Entwurf gespeichert, noch nicht veröffentlicht",
+  "admin.audit.decision.component.published":
+    "Veröffentlicht. Jeder Assistent kann es nutzen",
+  "admin.audit.decision.component.unpublished":
+    "Zurückgezogen. Kein Assistent kann es nutzen",
+  "admin.audit.decision.component.draft_saved":
+    "Entwurf gespeichert, noch nicht veröffentlicht",
   "admin.audit.decision.component.refused": "Abgelehnt",
   "admin.audit.decision.component.function_granted": "Darf dies lesen",
-  "admin.audit.decision.component.function_revoked": "Darf dies nicht mehr lesen",
+  "admin.audit.decision.component.function_revoked":
+    "Darf dies nicht mehr lesen",
   "admin.audit.decision.component.function_called": "Echte Daten gelesen",
   "admin.audit.decision.component.function_refused": "Abgelehnt",
-  "admin.audit.decision.component.function_failed": "Konnte nicht gelesen werden",
-  "admin.audit.decision.mcp.tools_discovered": "Werkzeuge für einen Lauf angeboten",
-  "admin.audit.decision.mcp.call_succeeded": "Im Namen dieses Assistenten aufgerufen",
+  "admin.audit.decision.component.function_failed":
+    "Konnte nicht gelesen werden",
+  "admin.audit.decision.mcp.tools_discovered":
+    "Werkzeuge für einen Lauf angeboten",
+  "admin.audit.decision.mcp.call_succeeded":
+    "Im Namen dieses Assistenten aufgerufen",
   "admin.audit.decision.mcp.call_rejected": "Blockiert",
   "admin.audit.decision.mcp.call_failed": "Der Server hat nicht geantwortet",
-  "admin.audit.decision.mcp.callback_refused": "Konnte nicht bestätigen, welcher Assistent es war",
+  "admin.audit.decision.mcp.callback_refused":
+    "Konnte nicht bestätigen, welcher Assistent es war",
   "admin.audit.decision.configuration.changed": "Konfiguration geändert",
   "admin.audit.decision.credential.created": "Zugangsdaten gespeichert",
-  "admin.audit.discovery.under-floor": "So wenige Werkzeuge, dass alle angeboten wurden",
-  "admin.audit.discovery.nothing-declared": "Kein Skill nennt eines dieser Werkzeuge",
-  "admin.audit.discovery.unavailable": "Auswahl nicht möglich, deshalb wurden alle angeboten",
-  "admin.audit.discovery.nothing-chosen": "Kein Skill passte, deshalb wurden alle angeboten",
+  "admin.audit.discovery.under-floor":
+    "So wenige Werkzeuge, dass alle angeboten wurden",
+  "admin.audit.discovery.nothing-declared":
+    "Kein Skill nennt eines dieser Werkzeuge",
+  "admin.audit.discovery.unavailable":
+    "Auswahl nicht möglich, deshalb wurden alle angeboten",
+  "admin.audit.discovery.nothing-chosen":
+    "Kein Skill passte, deshalb wurden alle angeboten",
   "admin.audit.discovery.selected": "Vom Skill ausgewählt",
   "admin.audit.title": "Audit",
-  "admin.audit.desc": "Jede Aktion, die ein Assistent ausgeführt hat, und jede, die die Richtlinie dieser Installation abgelehnt hat.",
+  "admin.audit.desc":
+    "Jede Aktion, die ein Assistent ausgeführt hat, und jede, die die Richtlinie dieser Installation abgelehnt hat.",
   "admin.audit.export": "CSV exportieren",
   "admin.audit.exporting": "Wird exportiert…",
   "admin.audit.refresh": "Aktualisieren",
-  "admin.audit.exportFailed": "Die Audit-Ereignisse konnten nicht exportiert werden. Versuch es erneut.",
+  "admin.audit.exportFailed":
+    "Die Audit-Ereignisse konnten nicht exportiert werden. Versuch es erneut.",
   "admin.audit.filter.all": "Alles",
   "admin.audit.filter.computer": "Computeraktionen",
   "admin.audit.filter.blocked": "Blockiert",
   "admin.audit.filter.didNot": "Nicht geschehen",
   "admin.audit.filter.nobody": "Niemand schaut zu",
-  "admin.audit.capped": "Die Datei enthält die neuesten {count} Ereignisse, nicht alle. Grenze den Filter oder die Daten ein, um den Rest zu exportieren.",
-  "admin.audit.loadError": "Das Audit-Protokoll konnte nicht geladen werden. Lade die Seite neu.",
+  "admin.audit.capped":
+    "Die Datei enthält die neuesten {count} Ereignisse, nicht alle. Grenze den Filter oder die Daten ein, um den Rest zu exportieren.",
+  "admin.audit.loadError":
+    "Das Audit-Protokoll konnte nicht geladen werden. Lade die Seite neu.",
   "admin.audit.empty": "Noch keine Ereignisse passen zu diesem Filter.",
   "admin.audit.col.when": "Wann",
   "admin.audit.col.what": "Was",
@@ -1437,11 +1496,13 @@ export const de: Catalog<typeof EN> = {
   "admin.audit.by.memory": "Eine Gedächtnisquelle",
   "admin.audit.by.responsibility": "Eine Zuständigkeit",
   "admin.audit.by.deployment": "Diese Installation",
-  "admin.audit.by.remote": "Ein Browser, der nicht mit dem Computer gekoppelt ist",
+  "admin.audit.by.remote":
+    "Ein Browser, der nicht mit dem Computer gekoppelt ist",
   "admin.audit.by.person": "Eine Person",
   "admin.audit.routed.mention": "Die Person hat diesen Assistenten gewählt",
   "admin.audit.routed.default": "An den Standard-Assistenten geschickt",
-  "admin.audit.routed.meant": "An den Assistenten geschickt, für den es gedacht war",
+  "admin.audit.routed.meant":
+    "An den Assistenten geschickt, für den es gedacht war",
   "admin.audit.toolsOf": "{offered} von {granted} Werkzeugen",
   "admin.audit.blocked": "Blockiert",
   "admin.audit.didNot": "Nicht geschehen",

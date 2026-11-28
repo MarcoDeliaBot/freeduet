@@ -1343,63 +1343,90 @@ export const pl: Catalog<typeof EN> = {
   "routines.card.writeBelow": "Napisz zmianę w polu wiadomości poniżej.",
   "routines.card.close": "Zamknij",
   "admin.boundaries.title": "Granice",
-  "admin.boundaries.descLead": "Co asystent może, a czego nie może robić ze swoim komputerem. Każda akcja jest sprawdzana, zanim się wydarzy. Odmowy widać w",
+  "admin.boundaries.descLead":
+    "Co asystent może, a czego nie może robić ze swoim komputerem. Każda akcja jest sprawdzana, zanim się wydarzy. Odmowy widać w",
   "admin.boundaries.descAudit": "Audyt",
   "admin.boundaries.descTail": "razem z regułą, która ich odmówiła.",
   "admin.boundaries.whenTitle": "Gdy reguła pasuje",
-  "admin.boundaries.whenDesc": "Zatrzymać akcję albo ją zapisać i przepuścić. Zapisywanie pozwala wypróbować regułę na prawdziwej aktywności, zanim cokolwiek odmówi.",
+  "admin.boundaries.whenDesc":
+    "Zatrzymać akcję albo ją zapisać i przepuścić. Zapisywanie pozwala wypróbować regułę na prawdziwej aktywności, zanim cokolwiek odmówi.",
   "admin.boundaries.modeEnforce": "Zatrzymaj akcję",
   "admin.boundaries.modeRecord": "Zapisz ją i zezwól",
-  "admin.boundaries.modeEnforceNote": "Asystent zostaje zatrzymany i dowiaduje się, która reguła mu odmówiła.",
-  "admin.boundaries.modeRecordNote": "Nic nie jest zatrzymywane. Każde dopasowanie jest zapisywane tak, jakby zostało odrzucone.",
+  "admin.boundaries.modeEnforceNote":
+    "Asystent zostaje zatrzymany i dowiaduje się, która reguła mu odmówiła.",
+  "admin.boundaries.modeRecordNote":
+    "Nic nie jest zatrzymywane. Każde dopasowanie jest zapisywane tak, jakby zostało odrzucone.",
   "admin.boundaries.neverTitle": "Asystenci nigdy nie mogą",
-  "admin.boundaries.neverLead": "Sprawdzane najpierw. Dopasowanie zatrzymuje akcję, a asystent dowiaduje się, która reguła jej odmówiła. Reguły są w CEL. Mogą sprawdzać",
+  "admin.boundaries.neverLead":
+    "Sprawdzane najpierw. Dopasowanie zatrzymuje akcję, a asystent dowiaduje się, która reguła jej odmówiła. Reguły są w CEL. Mogą sprawdzać",
   "admin.boundaries.neverMid1": ", element, naciśnięty",
   "admin.boundaries.neverMid2": ", plik, uruchomione",
   "admin.boundaries.neverMid3": "oraz",
   "admin.boundaries.neverMid4": "dla zewnętrznych narzędzi.",
   "admin.boundaries.neverMid5": "mówi, co uruchomiło wykonanie:",
-  "admin.boundaries.neverTail": "Zaplanowane wykonanie działa jako jego właściciel, więc samo",
-  "admin.boundaries.neverTail2": "tego nie powie. Reguła, której nie da się ocenić, liczy się jako dopasowanie. Literówka nigdy nie przepuści akcji.",
+  "admin.boundaries.neverTail":
+    "Zaplanowane wykonanie działa jako jego właściciel, więc samo",
+  "admin.boundaries.neverTail2":
+    "tego nie powie. Reguła, której nie da się ocenić, liczy się jako dopasowanie. Literówka nigdy nie przepuści akcji.",
   "admin.boundaries.or": "lub",
-  "admin.boundaries.noRules": "Brak reguł. Każda akcja jest dozwolona i zapisywana.",
+  "admin.boundaries.noRules":
+    "Brak reguł. Każda akcja jest dozwolona i zapisywana.",
   "admin.boundaries.remove": "Usuń",
   "admin.boundaries.ruleLabel": "Reguła zapisana w CEL",
   "admin.boundaries.testing": "Testowanie…",
   "admin.boundaries.testFirst": "Najpierw przetestuj",
   "admin.boundaries.addRule": "Dodaj regułę",
   "admin.boundaries.preset.form": "Nigdy nie wysyłaj formularza",
-  "admin.boundaries.preset.formCost": "Powstrzymuje też asystenta przed naciskaniem Enter w innych miejscach. Formularz może się wysłać po Enter w dowolnym polu. Nie obejmuje wyboru z menu ani pola daty, których zmiana może sama wysłać formularz.",
+  "admin.boundaries.preset.formCost":
+    "Powstrzymuje też asystenta przed naciskaniem Enter w innych miejscach. Formularz może się wysłać po Enter w dowolnym polu. Nie obejmuje wyboru z menu ani pola daty, których zmiana może sama wysłać formularz.",
   "admin.boundaries.preset.password": "Nigdy nie wpisuj w pole hasła",
-  "admin.boundaries.preset.passwordCost": "Pole hasła z inną etykietą nie jest objęte. Reguła dopasowuje etykietę.",
-  "admin.boundaries.preset.social": "Trzymaj się z dala od mediów społecznościowych",
-  "admin.boundaries.preset.socialCost": "Tylko te dwa hosty. Link, który przekierowuje tam z innego miejsca, jest dozwolony.",
+  "admin.boundaries.preset.passwordCost":
+    "Pole hasła z inną etykietą nie jest objęte. Reguła dopasowuje etykietę.",
+  "admin.boundaries.preset.social":
+    "Trzymaj się z dala od mediów społecznościowych",
+  "admin.boundaries.preset.socialCost":
+    "Tylko te dwa hosty. Link, który przekierowuje tam z innego miejsca, jest dozwolony.",
   "admin.boundaries.otherwiseTitle": "W pozostałych przypadkach mogą",
-  "admin.boundaries.otherwiseDesc": "Dotyczy wszystkiego, czego nie złapała lista powyżej. Pusta lista tutaj nie pozwala na nic, a każda akcja jest odrzucana.",
+  "admin.boundaries.otherwiseDesc":
+    "Dotyczy wszystkiego, czego nie złapała lista powyżej. Pusta lista tutaj nie pozwala na nic, a każda akcja jest odrzucana.",
   "admin.boundaries.allowAll": "true, wszystko, co nie jest odrzucone powyżej",
-  "admin.boundaries.saved": "Zapisano. Obowiązuje przy następnej akcji dowolnego asystenta.",
-  "admin.boundaries.footer": "Zmiany obowiązują przy następnej akcji dowolnego asystenta. Zostają po ponownym uruchomieniu.",
-  "admin.boundaries.dry.none": "Nie ma jeszcze zapisanych akcji komputera do testu. Reguła jest poprawna. Zobaczysz, co łapie, gdy asystenci zaczną działać.",
-  "admin.boundaries.dry.zero": "Przetestowano na ostatnich {scanned} zapisanych akcjach. Ta reguła nie odrzuciłaby żadnej. Nadal może pasować do przyszłych.",
-  "admin.boundaries.dry.some": "Przetestowano na ostatnich {scanned} zapisanych akcjach. Ta reguła odrzuciłaby {refused}.",
+  "admin.boundaries.saved":
+    "Zapisano. Obowiązuje przy następnej akcji dowolnego asystenta.",
+  "admin.boundaries.footer":
+    "Zmiany obowiązują przy następnej akcji dowolnego asystenta. Zostają po ponownym uruchomieniu.",
+  "admin.boundaries.dry.none":
+    "Nie ma jeszcze zapisanych akcji komputera do testu. Reguła jest poprawna. Zobaczysz, co łapie, gdy asystenci zaczną działać.",
+  "admin.boundaries.dry.zero":
+    "Przetestowano na ostatnich {scanned} zapisanych akcjach. Ta reguła nie odrzuciłaby żadnej. Nadal może pasować do przyszłych.",
+  "admin.boundaries.dry.some":
+    "Przetestowano na ostatnich {scanned} zapisanych akcjach. Ta reguła odrzuciłaby {refused}.",
   "admin.boundaries.dry.wouldRefuse": "Odrzuciłaby",
   "admin.boundaries.dry.wouldAllow": "Teraz by dopuściła",
   "admin.boundaries.dry.on": "na „{name}”",
   "admin.boundaries.dry.running": "uruchamia",
   "admin.boundaries.dry.touching": "dotyka {file}",
-  "admin.boundaries.dry.first": "Pokazano pierwsze {shown}. Liczba powyżej obejmuje wszystko, co sprawdzono.",
+  "admin.boundaries.dry.first":
+    "Pokazano pierwsze {shown}. Liczba powyżej obejmuje wszystko, co sprawdzono.",
   "admin.people.title": "Osoby",
-  "admin.people.desc": "Wszyscy, którzy się zalogowali. Administratorzy mogą otwierać te ekrany. Wszyscy pozostali rozmawiają z asystentami.",
+  "admin.people.desc":
+    "Wszyscy, którzy się zalogowali. Administratorzy mogą otwierać te ekrany. Wszyscy pozostali rozmawiają z asystentami.",
   "admin.people.whoTitle": "Kto tu jest",
-  "admin.people.whoDesc": "Adresy z INITIAL_ADMIN_EMAILS są zawsze administratorami. Nie możesz ich tu zmienić.",
-  "admin.people.stopped": { one: "Zatrzymano {count} komputer", few: "Zatrzymano {count} komputery", many: "Zatrzymano {count} komputerów", other: "Zatrzymano {count} komputera" },
+  "admin.people.whoDesc":
+    "Adresy z INITIAL_ADMIN_EMAILS są zawsze administratorami. Nie możesz ich tu zmienić.",
+  "admin.people.stopped": {
+    one: "Zatrzymano {count} komputer",
+    few: "Zatrzymano {count} komputery",
+    many: "Zatrzymano {count} komputerów",
+    other: "Zatrzymano {count} komputera",
+  },
   "admin.people.stoppedFailed": ". Nie udało się zatrzymać: {failed}",
   "admin.people.disksKept": ". Ich dyski zostają zachowane.",
   "admin.people.searchLabel": "Szukaj osób",
   "admin.people.searchPlaceholder": "Szukaj po nazwie lub adresie",
   "admin.people.loadError": "Nie udało się wczytać osób. Odśwież stronę.",
   "admin.people.noMatch": "Nikt nie pasuje do „{query}”.",
-  "admin.people.nobody": "Nikt jeszcze się nie zalogował. Osoby pojawią się tutaj, gdy to zrobią.",
+  "admin.people.nobody":
+    "Nikt jeszcze się nie zalogował. Osoby pojawią się tutaj, gdy to zrobią.",
   "admin.people.lastSignedIn": "ostatnie logowanie {date}",
   "admin.people.neverSignedIn": "nigdy się nie zalogowano",
   "admin.people.noProvider": "brak dostawcy",
@@ -1414,41 +1441,53 @@ export const pl: Catalog<typeof EN> = {
   "admin.boundaries.and": "i",
   "admin.credentials.title": "Dane logowania",
   "admin.credentials.add": "Dodaj dane logowania",
-  "admin.credentials.desc": "Klucze i tokeny tej instalacji. {product} nigdy nie pokazuje sekretu po jego zapisaniu.",
-  "admin.credentials.dialogDesc": "Zapisane dla tej instalacji. Sekretu nie zobaczysz ponownie.",
+  "admin.credentials.desc":
+    "Klucze i tokeny tej instalacji. {product} nigdy nie pokazuje sekretu po jego zapisaniu.",
+  "admin.credentials.dialogDesc":
+    "Zapisane dla tej instalacji. Sekretu nie zobaczysz ponownie.",
   "admin.credentials.type": "Typ",
   "admin.credentials.model": "Model",
   "admin.credentials.connector": "Konektor",
   "admin.credentials.provider": "Dostawca",
   "admin.credentials.keyId": "ID klucza",
   "admin.credentials.secret": "Sekret",
-  "admin.credentials.replaces": "Ten klucz ma już aktywne dane logowania. Zapis zastępuje je i unieważnia stare.",
-  "admin.credentials.saveError": "Nie udało się zapisać danych logowania. Spróbuj ponownie.",
+  "admin.credentials.replaces":
+    "Ten klucz ma już aktywne dane logowania. Zapis zastępuje je i unieważnia stare.",
+  "admin.credentials.saveError":
+    "Nie udało się zapisać danych logowania. Spróbuj ponownie.",
   "admin.credentials.cancel": "Anuluj",
   "admin.credentials.saving": "Zapisywanie…",
   "admin.credentials.save": "Zapisz dane logowania",
   "admin.credentials.savedTitle": "Zapisane dane logowania",
-  "admin.credentials.loadError": "Nie udało się wczytać danych logowania. Odśwież stronę.",
-  "admin.credentials.empty": "Nie ma jeszcze danych logowania. Dodaj je przyciskiem Dodaj dane logowania.",
+  "admin.credentials.loadError":
+    "Nie udało się wczytać danych logowania. Odśwież stronę.",
+  "admin.credentials.empty":
+    "Nie ma jeszcze danych logowania. Dodaj je przyciskiem Dodaj dane logowania.",
   "admin.credentials.revoked": "unieważnione",
   "admin.credentials.active": "aktywne",
   "admin.credentials.revoke": "Unieważnij",
   "admin.idp.title": "Dostawcy tożsamości",
   "admin.idp.add": "Dodaj dostawcę",
-  "admin.idp.desc": "Własny dostawca SAML lub OpenID Connect twojej firmy. Ludzie logują się swoim adresem e-mail, a jego domena wybiera dostawcę.",
+  "admin.idp.desc":
+    "Własny dostawca SAML lub OpenID Connect twojej firmy. Ludzie logują się swoim adresem e-mail, a jego domena wybiera dostawcę.",
   "admin.idp.registeredTitle": "Zarejestrowani",
-  "admin.idp.registeredDesc": "Google, Microsoft i Okta są ustawiane w środowisku. Nie pokazują się tutaj.",
-  "admin.idp.loadError": "Nie udało się wczytać dostawców tożsamości. Odśwież stronę.",
-  "admin.idp.empty": "Nie ma jeszcze dostawców tożsamości. Dodaj jednego z metadanymi od swojego zespołu tożsamości.",
+  "admin.idp.registeredDesc":
+    "Google, Microsoft i Okta są ustawiane w środowisku. Nie pokazują się tutaj.",
+  "admin.idp.loadError":
+    "Nie udało się wczytać dostawców tożsamości. Odśwież stronę.",
+  "admin.idp.empty":
+    "Nie ma jeszcze dostawców tożsamości. Dodaj jednego z metadanymi od swojego zespołu tożsamości.",
   "admin.idp.remove": "Usuń",
   "admin.idp.dialogTitle": "Dodaj dostawcę tożsamości",
   "admin.idp.name": "Nazwa",
   "admin.idp.domain": "Domena e-mail",
-  "admin.idp.domainNote": "Każdy z adresem w tej domenie loguje się tutaj. Kilka domen oddziel przecinkami.",
+  "admin.idp.domainNote":
+    "Każdy z adresem w tej domenie loguje się tutaj. Kilka domen oddziel przecinkami.",
   "admin.idp.issuer": "Wystawca",
   "admin.idp.signOnUrl": "Adres URL logowania",
   "admin.idp.metadata": "XML metadanych",
-  "admin.idp.metadataNote": "Plik od twojego zespołu tożsamości. Zawiera certyfikat podpisu.",
+  "admin.idp.metadataNote":
+    "Plik od twojego zespołu tożsamości. Zawiera certyfikat podpisu.",
   "admin.idp.clientId": "ID klienta",
   "admin.idp.clientSecret": "Sekret klienta",
   "admin.idp.cancel": "Anuluj",
@@ -1457,51 +1496,68 @@ export const pl: Catalog<typeof EN> = {
   "admin.audit.decision.bot.declined": "Asystent odmówił",
   "admin.audit.decision.agent.stream_stalled": "Asystent przestał odpowiadać",
   "admin.audit.decision.computer.policy_loaded": "Granica przy uruchomieniu",
-  "admin.audit.decision.computer.isolation_loaded": "Izolacja przy uruchomieniu",
+  "admin.audit.decision.computer.isolation_loaded":
+    "Izolacja przy uruchomieniu",
   "admin.audit.decision.computer.control_taken": "Osoba przejęła kontrolę",
-  "admin.audit.decision.computer.control_released": "Kontrola wróciła do asystenta",
+  "admin.audit.decision.computer.control_released":
+    "Kontrola wróciła do asystenta",
   "admin.audit.decision.computer.help_requested": "Asystent poprosił o pomoc",
-  "admin.audit.decision.computer.secret_requested": "Asystent poprosił o sekret",
+  "admin.audit.decision.computer.secret_requested":
+    "Asystent poprosił o sekret",
   "admin.audit.decision.computer.secret_supplied": "Osoba podała sekret",
   "admin.audit.decision.computer.reset": "Komputer został zresetowany",
   "admin.audit.decision.computer.updated": "Komputer został zaktualizowany",
   "admin.audit.decision.computer.stopped": "Osoba nacisnęła stop",
   "admin.audit.decision.component.granted": "Przyznano temu asystentowi",
   "admin.audit.decision.component.revoked": "Odebrano temu asystentowi",
-  "admin.audit.decision.component.published": "Opublikowano. Każdy asystent może tego używać",
-  "admin.audit.decision.component.unpublished": "Wycofano z publikacji. Żaden asystent nie może tego używać",
-  "admin.audit.decision.component.draft_saved": "Szkic zapisany, jeszcze nieopublikowany",
+  "admin.audit.decision.component.published":
+    "Opublikowano. Każdy asystent może tego używać",
+  "admin.audit.decision.component.unpublished":
+    "Wycofano z publikacji. Żaden asystent nie może tego używać",
+  "admin.audit.decision.component.draft_saved":
+    "Szkic zapisany, jeszcze nieopublikowany",
   "admin.audit.decision.component.refused": "Odmówiono",
   "admin.audit.decision.component.function_granted": "Może to czytać",
   "admin.audit.decision.component.function_revoked": "Nie może już tego czytać",
   "admin.audit.decision.component.function_called": "Odczytano prawdziwe dane",
   "admin.audit.decision.component.function_refused": "Odmówiono",
   "admin.audit.decision.component.function_failed": "Nie udało się odczytać",
-  "admin.audit.decision.mcp.tools_discovered": "Narzędzia zaoferowane na jedno wykonanie",
-  "admin.audit.decision.mcp.call_succeeded": "Wywołano w imieniu tego asystenta",
+  "admin.audit.decision.mcp.tools_discovered":
+    "Narzędzia zaoferowane na jedno wykonanie",
+  "admin.audit.decision.mcp.call_succeeded":
+    "Wywołano w imieniu tego asystenta",
   "admin.audit.decision.mcp.call_rejected": "Zablokowano",
   "admin.audit.decision.mcp.call_failed": "Serwer nie odpowiedział",
-  "admin.audit.decision.mcp.callback_refused": "Nie udało się potwierdzić, który to był asystent",
+  "admin.audit.decision.mcp.callback_refused":
+    "Nie udało się potwierdzić, który to był asystent",
   "admin.audit.decision.configuration.changed": "Zmieniono konfigurację",
   "admin.audit.decision.credential.created": "Zapisano dane logowania",
-  "admin.audit.discovery.under-floor": "Tak mało narzędzi, że zaoferowano wszystkie",
-  "admin.audit.discovery.nothing-declared": "Żadna umiejętność nie deklaruje żadnego z tych narzędzi",
-  "admin.audit.discovery.unavailable": "Nie udało się wybrać, więc zaoferowano wszystkie",
-  "admin.audit.discovery.nothing-chosen": "Żadna umiejętność nie pasowała, więc zaoferowano wszystkie",
+  "admin.audit.discovery.under-floor":
+    "Tak mało narzędzi, że zaoferowano wszystkie",
+  "admin.audit.discovery.nothing-declared":
+    "Żadna umiejętność nie deklaruje żadnego z tych narzędzi",
+  "admin.audit.discovery.unavailable":
+    "Nie udało się wybrać, więc zaoferowano wszystkie",
+  "admin.audit.discovery.nothing-chosen":
+    "Żadna umiejętność nie pasowała, więc zaoferowano wszystkie",
   "admin.audit.discovery.selected": "Wybrane przez umiejętność",
   "admin.audit.title": "Audyt",
-  "admin.audit.desc": "Każda akcja asystenta i każda, której odmówiła polityka tej instalacji.",
+  "admin.audit.desc":
+    "Każda akcja asystenta i każda, której odmówiła polityka tej instalacji.",
   "admin.audit.export": "Eksportuj CSV",
   "admin.audit.exporting": "Eksportowanie…",
   "admin.audit.refresh": "Odśwież",
-  "admin.audit.exportFailed": "Nie udało się wyeksportować zdarzeń audytu. Spróbuj ponownie.",
+  "admin.audit.exportFailed":
+    "Nie udało się wyeksportować zdarzeń audytu. Spróbuj ponownie.",
   "admin.audit.filter.all": "Wszystko",
   "admin.audit.filter.computer": "Akcje komputera",
   "admin.audit.filter.blocked": "Zablokowane",
   "admin.audit.filter.didNot": "Nie doszło do skutku",
   "admin.audit.filter.nobody": "Nikt nie obserwuje",
-  "admin.audit.capped": "Plik zawiera najnowsze zdarzenia ({count}), nie wszystkie. Zawęź filtr lub daty, aby wyeksportować resztę.",
-  "admin.audit.loadError": "Nie udało się wczytać dziennika audytu. Odśwież stronę.",
+  "admin.audit.capped":
+    "Plik zawiera najnowsze zdarzenia ({count}), nie wszystkie. Zawęź filtr lub daty, aby wyeksportować resztę.",
+  "admin.audit.loadError":
+    "Nie udało się wczytać dziennika audytu. Odśwież stronę.",
   "admin.audit.empty": "Żadne zdarzenia nie pasują jeszcze do tego filtra.",
   "admin.audit.col.when": "Kiedy",
   "admin.audit.col.what": "Co",
@@ -1519,7 +1575,8 @@ export const pl: Catalog<typeof EN> = {
   "admin.audit.by.person": "Osoba",
   "admin.audit.routed.mention": "Osoba wybrała tego asystenta",
   "admin.audit.routed.default": "Wysłano do domyślnego asystenta",
-  "admin.audit.routed.meant": "Wysłano do asystenta, dla którego było przeznaczone",
+  "admin.audit.routed.meant":
+    "Wysłano do asystenta, dla którego było przeznaczone",
   "admin.audit.toolsOf": "{offered} z {granted} narzędzi",
   "admin.audit.blocked": "Zablokowane",
   "admin.audit.didNot": "Nie doszło do skutku",

@@ -1153,24 +1153,30 @@ export const zh: Catalog<typeof EN> = {
   "routines.card.writeBelow": "请在下方的消息框中写下修改内容。",
   "routines.card.close": "关闭",
   "admin.boundaries.title": "限制",
-  "admin.boundaries.descLead": "助理可以用它的电脑做什么、不可以做什么。每个操作在发生前都会被检查。被拒绝的操作会连同拒绝它的规则显示在",
+  "admin.boundaries.descLead":
+    "助理可以用它的电脑做什么、不可以做什么。每个操作在发生前都会被检查。被拒绝的操作会连同拒绝它的规则显示在",
   "admin.boundaries.descAudit": "审计",
   "admin.boundaries.descTail": "中。",
   "admin.boundaries.whenTitle": "规则匹配时",
-  "admin.boundaries.whenDesc": "停止该操作，或记录下来并放行。记录可以让你在规则拒绝任何东西之前，先用真实的活动试一试。",
+  "admin.boundaries.whenDesc":
+    "停止该操作，或记录下来并放行。记录可以让你在规则拒绝任何东西之前，先用真实的活动试一试。",
   "admin.boundaries.modeEnforce": "停止该操作",
   "admin.boundaries.modeRecord": "记录并允许",
-  "admin.boundaries.modeEnforceNote": "助理会被停止，并被告知是哪条规则拒绝了它。",
-  "admin.boundaries.modeRecordNote": "不会停止任何操作。每次匹配都会被记录，就像已被拒绝一样。",
+  "admin.boundaries.modeEnforceNote":
+    "助理会被停止，并被告知是哪条规则拒绝了它。",
+  "admin.boundaries.modeRecordNote":
+    "不会停止任何操作。每次匹配都会被记录，就像已被拒绝一样。",
   "admin.boundaries.neverTitle": "助理绝不可以",
-  "admin.boundaries.neverLead": "最先检查。匹配时会停止该操作，并告知助理是哪条规则拒绝了它。规则使用 CEL 编写。它们可以检查",
+  "admin.boundaries.neverLead":
+    "最先检查。匹配时会停止该操作，并告知助理是哪条规则拒绝了它。规则使用 CEL 编写。它们可以检查",
   "admin.boundaries.neverMid1": "、元素、按下的",
   "admin.boundaries.neverMid2": "、文件、运行的",
   "admin.boundaries.neverMid3": "，以及外部工具的",
   "admin.boundaries.neverMid4": "字段。",
   "admin.boundaries.neverMid5": "表示运行是由什么启动的：",
   "admin.boundaries.neverTail": "定时运行以其所有者的身份执行，因此仅凭",
-  "admin.boundaries.neverTail2": "无法判断这一点。无法求值的规则算作匹配。拼写错误绝不会放过任何操作。",
+  "admin.boundaries.neverTail2":
+    "无法判断这一点。无法求值的规则算作匹配。拼写错误绝不会放过任何操作。",
   "admin.boundaries.or": "或",
   "admin.boundaries.noRules": "没有规则。每个操作都被允许并被记录。",
   "admin.boundaries.remove": "移除",
@@ -1179,30 +1185,43 @@ export const zh: Catalog<typeof EN> = {
   "admin.boundaries.testFirst": "先测试",
   "admin.boundaries.addRule": "添加规则",
   "admin.boundaries.preset.form": "绝不提交表单",
-  "admin.boundaries.preset.formCost": "同时也会阻止助理在其他任何地方按 Enter。表单可以在任何字段中按 Enter 提交。不涵盖在菜单或日期字段中的选择，它们的变化本身就可能提交表单。",
+  "admin.boundaries.preset.formCost":
+    "同时也会阻止助理在其他任何地方按 Enter。表单可以在任何字段中按 Enter 提交。不涵盖在菜单或日期字段中的选择，它们的变化本身就可能提交表单。",
   "admin.boundaries.preset.password": "绝不在密码框中输入",
-  "admin.boundaries.preset.passwordCost": "标签不同的密码框不在涵盖范围内。规则匹配的是标签。",
+  "admin.boundaries.preset.passwordCost":
+    "标签不同的密码框不在涵盖范围内。规则匹配的是标签。",
   "admin.boundaries.preset.social": "远离社交媒体",
-  "admin.boundaries.preset.socialCost": "仅限这两个主机。从其他地方重定向到那里的链接是允许的。",
+  "admin.boundaries.preset.socialCost":
+    "仅限这两个主机。从其他地方重定向到那里的链接是允许的。",
   "admin.boundaries.otherwiseTitle": "其他情况下它们可以",
-  "admin.boundaries.otherwiseDesc": "适用于上面的列表没有拦住的一切。这里的列表为空则什么都不允许，每个操作都会被拒绝。",
+  "admin.boundaries.otherwiseDesc":
+    "适用于上面的列表没有拦住的一切。这里的列表为空则什么都不允许，每个操作都会被拒绝。",
   "admin.boundaries.allowAll": "true，上面没有被拒绝的一切",
   "admin.boundaries.saved": "已保存。对任何助理的下一个操作生效。",
   "admin.boundaries.footer": "更改对任何助理的下一个操作生效。重启后依然保留。",
-  "admin.boundaries.dry.none": "还没有可用来测试的已记录电脑操作。规则有效。等助理行动之后，你就能看到它匹配了什么。",
-  "admin.boundaries.dry.zero": "已用最近 {scanned} 个已记录的操作测试。这条规则不会拒绝其中任何一个。它仍可能匹配以后的操作。",
-  "admin.boundaries.dry.some": "已用最近 {scanned} 个已记录的操作测试。这条规则会拒绝其中 {refused} 个。",
+  "admin.boundaries.dry.none":
+    "还没有可用来测试的已记录电脑操作。规则有效。等助理行动之后，你就能看到它匹配了什么。",
+  "admin.boundaries.dry.zero":
+    "已用最近 {scanned} 个已记录的操作测试。这条规则不会拒绝其中任何一个。它仍可能匹配以后的操作。",
+  "admin.boundaries.dry.some":
+    "已用最近 {scanned} 个已记录的操作测试。这条规则会拒绝其中 {refused} 个。",
   "admin.boundaries.dry.wouldRefuse": "会拒绝",
   "admin.boundaries.dry.wouldAllow": "现在会允许",
   "admin.boundaries.dry.on": "在“{name}”上",
   "admin.boundaries.dry.running": "正在运行",
   "admin.boundaries.dry.touching": "涉及 {file}",
-  "admin.boundaries.dry.first": "显示前 {shown} 个。上面的数字涵盖了所有已检查的操作。",
+  "admin.boundaries.dry.first":
+    "显示前 {shown} 个。上面的数字涵盖了所有已检查的操作。",
   "admin.people.title": "人员",
-  "admin.people.desc": "所有登录过的人。管理员可以打开这些页面。其他所有人与助理对话。",
+  "admin.people.desc":
+    "所有登录过的人。管理员可以打开这些页面。其他所有人与助理对话。",
   "admin.people.whoTitle": "谁在这里",
-  "admin.people.whoDesc": "INITIAL_ADMIN_EMAILS 中的地址始终是管理员。你无法在这里更改。",
-  "admin.people.stopped": { one: "已停止 {count} 台电脑", other: "已停止 {count} 台电脑" },
+  "admin.people.whoDesc":
+    "INITIAL_ADMIN_EMAILS 中的地址始终是管理员。你无法在这里更改。",
+  "admin.people.stopped": {
+    one: "已停止 {count} 台电脑",
+    other: "已停止 {count} 台电脑",
+  },
   "admin.people.stoppedFailed": "。有 {failed} 台无法停止",
   "admin.people.disksKept": "。它们的磁盘会保留。",
   "admin.people.searchLabel": "搜索人员",
@@ -1224,7 +1243,8 @@ export const zh: Catalog<typeof EN> = {
   "admin.boundaries.and": "和",
   "admin.credentials.title": "凭证",
   "admin.credentials.add": "添加凭证",
-  "admin.credentials.desc": "此部署的密钥和令牌。{product} 在密钥保存后绝不会再显示它。",
+  "admin.credentials.desc":
+    "此部署的密钥和令牌。{product} 在密钥保存后绝不会再显示它。",
   "admin.credentials.dialogDesc": "已为此部署保存。你不会再看到这个密钥。",
   "admin.credentials.type": "类型",
   "admin.credentials.model": "模型",
@@ -1232,7 +1252,8 @@ export const zh: Catalog<typeof EN> = {
   "admin.credentials.provider": "提供方",
   "admin.credentials.keyId": "密钥 ID",
   "admin.credentials.secret": "密钥内容",
-  "admin.credentials.replaces": "此密钥已有一个有效的凭证。保存会替换它，并撤销旧的凭证。",
+  "admin.credentials.replaces":
+    "此密钥已有一个有效的凭证。保存会替换它，并撤销旧的凭证。",
   "admin.credentials.saveError": "无法保存凭证。请重试。",
   "admin.credentials.cancel": "取消",
   "admin.credentials.saving": "保存中…",
@@ -1245,16 +1266,19 @@ export const zh: Catalog<typeof EN> = {
   "admin.credentials.revoke": "撤销",
   "admin.idp.title": "身份提供方",
   "admin.idp.add": "添加提供方",
-  "admin.idp.desc": "你公司自己的 SAML 或 OpenID Connect 提供方。人们用电子邮件登录，邮件的域名决定使用哪个提供方。",
+  "admin.idp.desc":
+    "你公司自己的 SAML 或 OpenID Connect 提供方。人们用电子邮件登录，邮件的域名决定使用哪个提供方。",
   "admin.idp.registeredTitle": "已注册",
-  "admin.idp.registeredDesc": "Google、Microsoft 和 Okta 在环境中设置。它们不会显示在这里。",
+  "admin.idp.registeredDesc":
+    "Google、Microsoft 和 Okta 在环境中设置。它们不会显示在这里。",
   "admin.idp.loadError": "无法加载身份提供方。请刷新页面。",
   "admin.idp.empty": "还没有身份提供方。请用你的身份团队提供的元数据添加一个。",
   "admin.idp.remove": "移除",
   "admin.idp.dialogTitle": "添加身份提供方",
   "admin.idp.name": "名称",
   "admin.idp.domain": "邮箱域名",
-  "admin.idp.domainNote": "地址属于此域名的任何人都在这里登录。多个域名请用逗号分隔。",
+  "admin.idp.domainNote":
+    "地址属于此域名的任何人都在这里登录。多个域名请用逗号分隔。",
   "admin.idp.issuer": "颁发者",
   "admin.idp.signOnUrl": "登录 URL",
   "admin.idp.metadata": "元数据 XML",
@@ -1310,7 +1334,8 @@ export const zh: Catalog<typeof EN> = {
   "admin.audit.filter.blocked": "已拦截",
   "admin.audit.filter.didNot": "未发生",
   "admin.audit.filter.nobody": "无人在看",
-  "admin.audit.capped": "文件包含最新的 {count} 个事件，并非全部。缩小筛选条件或日期范围即可导出其余部分。",
+  "admin.audit.capped":
+    "文件包含最新的 {count} 个事件，并非全部。缩小筛选条件或日期范围即可导出其余部分。",
   "admin.audit.loadError": "无法加载审计日志。请刷新页面。",
   "admin.audit.empty": "还没有符合此筛选条件的事件。",
   "admin.audit.col.when": "时间",

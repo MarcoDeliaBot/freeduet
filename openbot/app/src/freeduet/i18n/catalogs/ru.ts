@@ -1342,63 +1342,89 @@ export const ru: Catalog<typeof EN> = {
   "routines.card.writeBelow": "Напиши изменение в поле сообщения ниже.",
   "routines.card.close": "Закрыть",
   "admin.boundaries.title": "Границы",
-  "admin.boundaries.descLead": "Что помощник может и чего не может делать со своим компьютером. Каждое действие проверяется до того, как оно произойдёт. Отказы видны в разделе",
+  "admin.boundaries.descLead":
+    "Что помощник может и чего не может делать со своим компьютером. Каждое действие проверяется до того, как оно произойдёт. Отказы видны в разделе",
   "admin.boundaries.descAudit": "Аудит",
   "admin.boundaries.descTail": "вместе с правилом, которое их отклонило.",
   "admin.boundaries.whenTitle": "Когда правило совпадает",
-  "admin.boundaries.whenDesc": "Остановить действие или записать его и пропустить. Запись позволяет проверить правило на реальной активности, прежде чем оно что-либо отклонит.",
+  "admin.boundaries.whenDesc":
+    "Остановить действие или записать его и пропустить. Запись позволяет проверить правило на реальной активности, прежде чем оно что-либо отклонит.",
   "admin.boundaries.modeEnforce": "Остановить действие",
   "admin.boundaries.modeRecord": "Записать и разрешить",
-  "admin.boundaries.modeEnforceNote": "Помощника останавливают и сообщают, какое правило его отклонило.",
-  "admin.boundaries.modeRecordNote": "Ничего не останавливается. Каждое совпадение записывается так, как если бы оно было отклонено.",
+  "admin.boundaries.modeEnforceNote":
+    "Помощника останавливают и сообщают, какое правило его отклонило.",
+  "admin.boundaries.modeRecordNote":
+    "Ничего не останавливается. Каждое совпадение записывается так, как если бы оно было отклонено.",
   "admin.boundaries.neverTitle": "Помощникам никогда нельзя",
-  "admin.boundaries.neverLead": "Проверяется первым. Совпадение останавливает действие, и помощнику сообщают, какое правило его отклонило. Правила пишутся на CEL. Они могут проверять",
+  "admin.boundaries.neverLead":
+    "Проверяется первым. Совпадение останавливает действие, и помощнику сообщают, какое правило его отклонило. Правила пишутся на CEL. Они могут проверять",
   "admin.boundaries.neverMid1": ", элемент, нажатую клавишу",
   "admin.boundaries.neverMid2": ", файл, выполненную команду",
   "admin.boundaries.neverMid3": "а также",
   "admin.boundaries.neverMid4": "для внешних инструментов.",
   "admin.boundaries.neverMid5": "показывает, что запустило выполнение:",
-  "admin.boundaries.neverTail": "Запланированный запуск действует от имени своего владельца, поэтому одного",
-  "admin.boundaries.neverTail2": "для этого недостаточно. Правило, которое нельзя вычислить, считается совпадением. Опечатка никогда не пропустит действие.",
+  "admin.boundaries.neverTail":
+    "Запланированный запуск действует от имени своего владельца, поэтому одного",
+  "admin.boundaries.neverTail2":
+    "для этого недостаточно. Правило, которое нельзя вычислить, считается совпадением. Опечатка никогда не пропустит действие.",
   "admin.boundaries.or": "или",
-  "admin.boundaries.noRules": "Правил нет. Каждое действие разрешено и записывается.",
+  "admin.boundaries.noRules":
+    "Правил нет. Каждое действие разрешено и записывается.",
   "admin.boundaries.remove": "Удалить",
   "admin.boundaries.ruleLabel": "Правило на CEL",
   "admin.boundaries.testing": "Проверка…",
   "admin.boundaries.testFirst": "Сначала проверить",
   "admin.boundaries.addRule": "Добавить правило",
   "admin.boundaries.preset.form": "Никогда не отправлять форму",
-  "admin.boundaries.preset.formCost": "Также не даёт помощнику нажимать Enter где-либо ещё. Форма может отправиться по Enter в любом поле. Не охватывает выбор в меню или в поле даты: их изменение может само отправить форму.",
+  "admin.boundaries.preset.formCost":
+    "Также не даёт помощнику нажимать Enter где-либо ещё. Форма может отправиться по Enter в любом поле. Не охватывает выбор в меню или в поле даты: их изменение может само отправить форму.",
   "admin.boundaries.preset.password": "Никогда не вводить текст в поле пароля",
-  "admin.boundaries.preset.passwordCost": "Поле пароля с другой подписью не охвачено. Правило сравнивает подпись.",
+  "admin.boundaries.preset.passwordCost":
+    "Поле пароля с другой подписью не охвачено. Правило сравнивает подпись.",
   "admin.boundaries.preset.social": "Держаться подальше от соцсетей",
-  "admin.boundaries.preset.socialCost": "Только эти два хоста. Ссылка, которая перенаправляет туда с другого сайта, разрешена.",
+  "admin.boundaries.preset.socialCost":
+    "Только эти два хоста. Ссылка, которая перенаправляет туда с другого сайта, разрешена.",
   "admin.boundaries.otherwiseTitle": "В остальных случаях они могут",
-  "admin.boundaries.otherwiseDesc": "Относится ко всему, что не поймал список выше. Пустой список здесь ничего не разрешает, и каждое действие отклоняется.",
+  "admin.boundaries.otherwiseDesc":
+    "Относится ко всему, что не поймал список выше. Пустой список здесь ничего не разрешает, и каждое действие отклоняется.",
   "admin.boundaries.allowAll": "true, всё, что не отклонено выше",
-  "admin.boundaries.saved": "Сохранено. Действует со следующего действия любого помощника.",
-  "admin.boundaries.footer": "Изменения действуют со следующего действия любого помощника. Они сохраняются после перезапуска.",
-  "admin.boundaries.dry.none": "Записанных действий компьютера для проверки пока нет. Правило допустимо. Что оно ловит, станет видно, когда помощники начнут действовать.",
-  "admin.boundaries.dry.zero": "Проверено на последних {scanned} записанных действиях. Это правило не отклонило бы ни одного. Оно всё равно может совпасть с будущими.",
-  "admin.boundaries.dry.some": "Проверено на последних {scanned} записанных действиях. Это правило отклонило бы {refused}.",
+  "admin.boundaries.saved":
+    "Сохранено. Действует со следующего действия любого помощника.",
+  "admin.boundaries.footer":
+    "Изменения действуют со следующего действия любого помощника. Они сохраняются после перезапуска.",
+  "admin.boundaries.dry.none":
+    "Записанных действий компьютера для проверки пока нет. Правило допустимо. Что оно ловит, станет видно, когда помощники начнут действовать.",
+  "admin.boundaries.dry.zero":
+    "Проверено на последних {scanned} записанных действиях. Это правило не отклонило бы ни одного. Оно всё равно может совпасть с будущими.",
+  "admin.boundaries.dry.some":
+    "Проверено на последних {scanned} записанных действиях. Это правило отклонило бы {refused}.",
   "admin.boundaries.dry.wouldRefuse": "Отклонило бы",
   "admin.boundaries.dry.wouldAllow": "Теперь разрешило бы",
   "admin.boundaries.dry.on": "на «{name}»",
   "admin.boundaries.dry.running": "запускает",
   "admin.boundaries.dry.touching": "затрагивает {file}",
-  "admin.boundaries.dry.first": "Показаны первые {shown}. Число выше охватывает всё проверенное.",
+  "admin.boundaries.dry.first":
+    "Показаны первые {shown}. Число выше охватывает всё проверенное.",
   "admin.people.title": "Люди",
-  "admin.people.desc": "Все, кто входил в систему. Администраторы могут открывать эти экраны. Все остальные общаются с помощниками.",
+  "admin.people.desc":
+    "Все, кто входил в систему. Администраторы могут открывать эти экраны. Все остальные общаются с помощниками.",
   "admin.people.whoTitle": "Кто здесь",
-  "admin.people.whoDesc": "Адреса из INITIAL_ADMIN_EMAILS всегда администраторы. Здесь их изменить нельзя.",
-  "admin.people.stopped": { one: "{count} компьютер остановлен", few: "{count} компьютера остановлены", many: "{count} компьютеров остановлено", other: "{count} компьютера остановлено" },
+  "admin.people.whoDesc":
+    "Адреса из INITIAL_ADMIN_EMAILS всегда администраторы. Здесь их изменить нельзя.",
+  "admin.people.stopped": {
+    one: "{count} компьютер остановлен",
+    few: "{count} компьютера остановлены",
+    many: "{count} компьютеров остановлено",
+    other: "{count} компьютера остановлено",
+  },
   "admin.people.stoppedFailed": ". Не удалось остановить: {failed}",
   "admin.people.disksKept": ". Их диски сохраняются.",
   "admin.people.searchLabel": "Поиск людей",
   "admin.people.searchPlaceholder": "Искать по имени или адресу",
   "admin.people.loadError": "Не удалось загрузить людей. Перезагрузи страницу.",
   "admin.people.noMatch": "Никто не подходит под «{query}».",
-  "admin.people.nobody": "Пока никто не входил. Люди появятся здесь, когда войдут.",
+  "admin.people.nobody":
+    "Пока никто не входил. Люди появятся здесь, когда войдут.",
   "admin.people.lastSignedIn": "последний вход {date}",
   "admin.people.neverSignedIn": "ни разу не входил",
   "admin.people.noProvider": "нет поставщика",
@@ -1413,41 +1439,53 @@ export const ru: Catalog<typeof EN> = {
   "admin.boundaries.and": "и",
   "admin.credentials.title": "Учётные данные",
   "admin.credentials.add": "Добавить учётные данные",
-  "admin.credentials.desc": "Ключи и токены этой установки. {product} никогда не показывает секрет после его сохранения.",
-  "admin.credentials.dialogDesc": "Сохраняется для этой установки. Секрет ты больше не увидишь.",
+  "admin.credentials.desc":
+    "Ключи и токены этой установки. {product} никогда не показывает секрет после его сохранения.",
+  "admin.credentials.dialogDesc":
+    "Сохраняется для этой установки. Секрет ты больше не увидишь.",
   "admin.credentials.type": "Тип",
   "admin.credentials.model": "Модель",
   "admin.credentials.connector": "Коннектор",
   "admin.credentials.provider": "Поставщик",
   "admin.credentials.keyId": "ID ключа",
   "admin.credentials.secret": "Секрет",
-  "admin.credentials.replaces": "У этого ключа уже есть активные учётные данные. Сохранение заменяет их и отзывает старые.",
-  "admin.credentials.saveError": "Не удалось сохранить учётные данные. Попробуй ещё раз.",
+  "admin.credentials.replaces":
+    "У этого ключа уже есть активные учётные данные. Сохранение заменяет их и отзывает старые.",
+  "admin.credentials.saveError":
+    "Не удалось сохранить учётные данные. Попробуй ещё раз.",
   "admin.credentials.cancel": "Отмена",
   "admin.credentials.saving": "Сохранение…",
   "admin.credentials.save": "Сохранить учётные данные",
   "admin.credentials.savedTitle": "Сохранённые учётные данные",
-  "admin.credentials.loadError": "Не удалось загрузить учётные данные. Перезагрузи страницу.",
-  "admin.credentials.empty": "Учётных данных пока нет. Добавь их кнопкой «Добавить учётные данные».",
+  "admin.credentials.loadError":
+    "Не удалось загрузить учётные данные. Перезагрузи страницу.",
+  "admin.credentials.empty":
+    "Учётных данных пока нет. Добавь их кнопкой «Добавить учётные данные».",
   "admin.credentials.revoked": "отозваны",
   "admin.credentials.active": "активны",
   "admin.credentials.revoke": "Отозвать",
   "admin.idp.title": "Поставщики удостоверений",
   "admin.idp.add": "Добавить поставщика",
-  "admin.idp.desc": "Собственный поставщик SAML или OpenID Connect твоей компании. Люди входят по своей электронной почте, а её домен выбирает поставщика.",
+  "admin.idp.desc":
+    "Собственный поставщик SAML или OpenID Connect твоей компании. Люди входят по своей электронной почте, а её домен выбирает поставщика.",
   "admin.idp.registeredTitle": "Зарегистрированные",
-  "admin.idp.registeredDesc": "Google, Microsoft и Okta задаются в окружении. Здесь они не показаны.",
-  "admin.idp.loadError": "Не удалось загрузить поставщиков удостоверений. Перезагрузи страницу.",
-  "admin.idp.empty": "Поставщиков удостоверений пока нет. Добавь одного с метаданными от своей команды по удостоверениям.",
+  "admin.idp.registeredDesc":
+    "Google, Microsoft и Okta задаются в окружении. Здесь они не показаны.",
+  "admin.idp.loadError":
+    "Не удалось загрузить поставщиков удостоверений. Перезагрузи страницу.",
+  "admin.idp.empty":
+    "Поставщиков удостоверений пока нет. Добавь одного с метаданными от своей команды по удостоверениям.",
   "admin.idp.remove": "Удалить",
   "admin.idp.dialogTitle": "Добавить поставщика удостоверений",
   "admin.idp.name": "Название",
   "admin.idp.domain": "Домен почты",
-  "admin.idp.domainNote": "Все, у кого адрес в этом домене, входят здесь. Несколько доменов разделяй запятыми.",
+  "admin.idp.domainNote":
+    "Все, у кого адрес в этом домене, входят здесь. Несколько доменов разделяй запятыми.",
   "admin.idp.issuer": "Издатель",
   "admin.idp.signOnUrl": "URL входа",
   "admin.idp.metadata": "XML метаданных",
-  "admin.idp.metadataNote": "Файл от твоей команды по удостоверениям. В нём есть сертификат подписи.",
+  "admin.idp.metadataNote":
+    "Файл от твоей команды по удостоверениям. В нём есть сертификат подписи.",
   "admin.idp.clientId": "ID клиента",
   "admin.idp.clientSecret": "Секрет клиента",
   "admin.idp.cancel": "Отмена",
@@ -1457,8 +1495,10 @@ export const ru: Catalog<typeof EN> = {
   "admin.audit.decision.agent.stream_stalled": "Помощник перестал отвечать",
   "admin.audit.decision.computer.policy_loaded": "Граница при запуске",
   "admin.audit.decision.computer.isolation_loaded": "Изоляция при запуске",
-  "admin.audit.decision.computer.control_taken": "Человек взял управление на себя",
-  "admin.audit.decision.computer.control_released": "Управление вернулось помощнику",
+  "admin.audit.decision.computer.control_taken":
+    "Человек взял управление на себя",
+  "admin.audit.decision.computer.control_released":
+    "Управление вернулось помощнику",
   "admin.audit.decision.computer.help_requested": "Помощник попросил помощи",
   "admin.audit.decision.computer.secret_requested": "Помощник запросил секрет",
   "admin.audit.decision.computer.secret_supplied": "Человек передал секрет",
@@ -1467,40 +1507,54 @@ export const ru: Catalog<typeof EN> = {
   "admin.audit.decision.computer.stopped": "Человек нажал «Стоп»",
   "admin.audit.decision.component.granted": "Выдано этому помощнику",
   "admin.audit.decision.component.revoked": "Отозвано у этого помощника",
-  "admin.audit.decision.component.published": "Опубликовано. Любой помощник может использовать",
-  "admin.audit.decision.component.unpublished": "Снято с публикации. Ни один помощник не может использовать",
-  "admin.audit.decision.component.draft_saved": "Черновик сохранён, ещё не опубликован",
+  "admin.audit.decision.component.published":
+    "Опубликовано. Любой помощник может использовать",
+  "admin.audit.decision.component.unpublished":
+    "Снято с публикации. Ни один помощник не может использовать",
+  "admin.audit.decision.component.draft_saved":
+    "Черновик сохранён, ещё не опубликован",
   "admin.audit.decision.component.refused": "Отказано",
   "admin.audit.decision.component.function_granted": "Может это читать",
-  "admin.audit.decision.component.function_revoked": "Больше не может это читать",
+  "admin.audit.decision.component.function_revoked":
+    "Больше не может это читать",
   "admin.audit.decision.component.function_called": "Прочитал реальные данные",
   "admin.audit.decision.component.function_refused": "Отказано",
   "admin.audit.decision.component.function_failed": "Не удалось прочитать",
-  "admin.audit.decision.mcp.tools_discovered": "Инструменты, предложенные для одного запуска",
+  "admin.audit.decision.mcp.tools_discovered":
+    "Инструменты, предложенные для одного запуска",
   "admin.audit.decision.mcp.call_succeeded": "Вызвано от имени этого помощника",
   "admin.audit.decision.mcp.call_rejected": "Заблокировано",
   "admin.audit.decision.mcp.call_failed": "Сервер не ответил",
-  "admin.audit.decision.mcp.callback_refused": "Не удалось подтвердить, какой это был помощник",
+  "admin.audit.decision.mcp.callback_refused":
+    "Не удалось подтвердить, какой это был помощник",
   "admin.audit.decision.configuration.changed": "Конфигурация изменена",
   "admin.audit.decision.credential.created": "Учётные данные сохранены",
-  "admin.audit.discovery.under-floor": "Инструментов так мало, что предложены все",
-  "admin.audit.discovery.nothing-declared": "Ни один навык не объявляет ни одного из этих инструментов",
-  "admin.audit.discovery.unavailable": "Выбрать не удалось, поэтому предложены все",
-  "admin.audit.discovery.nothing-chosen": "Ни один навык не подошёл, поэтому предложены все",
+  "admin.audit.discovery.under-floor":
+    "Инструментов так мало, что предложены все",
+  "admin.audit.discovery.nothing-declared":
+    "Ни один навык не объявляет ни одного из этих инструментов",
+  "admin.audit.discovery.unavailable":
+    "Выбрать не удалось, поэтому предложены все",
+  "admin.audit.discovery.nothing-chosen":
+    "Ни один навык не подошёл, поэтому предложены все",
   "admin.audit.discovery.selected": "Выбрано по навыку",
   "admin.audit.title": "Аудит",
-  "admin.audit.desc": "Каждое действие помощника и каждое, которое отклонила политика этой установки.",
+  "admin.audit.desc":
+    "Каждое действие помощника и каждое, которое отклонила политика этой установки.",
   "admin.audit.export": "Экспорт CSV",
   "admin.audit.exporting": "Экспорт…",
   "admin.audit.refresh": "Обновить",
-  "admin.audit.exportFailed": "Не удалось экспортировать события аудита. Попробуй ещё раз.",
+  "admin.audit.exportFailed":
+    "Не удалось экспортировать события аудита. Попробуй ещё раз.",
   "admin.audit.filter.all": "Всё",
   "admin.audit.filter.computer": "Действия компьютера",
   "admin.audit.filter.blocked": "Заблокировано",
   "admin.audit.filter.didNot": "Не произошло",
   "admin.audit.filter.nobody": "Никто не наблюдал",
-  "admin.audit.capped": "В файле самые новые события ({count}), не все. Сузь фильтр или даты, чтобы экспортировать остальные.",
-  "admin.audit.loadError": "Не удалось загрузить журнал аудита. Перезагрузи страницу.",
+  "admin.audit.capped":
+    "В файле самые новые события ({count}), не все. Сузь фильтр или даты, чтобы экспортировать остальные.",
+  "admin.audit.loadError":
+    "Не удалось загрузить журнал аудита. Перезагрузи страницу.",
   "admin.audit.empty": "Пока нет событий, подходящих под этот фильтр.",
   "admin.audit.col.when": "Когда",
   "admin.audit.col.what": "Что",

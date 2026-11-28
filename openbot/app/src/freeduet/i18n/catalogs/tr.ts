@@ -1224,63 +1224,88 @@ export const tr: Catalog<typeof EN> = {
   "routines.card.writeBelow": "Değişikliği aşağıdaki mesaj kutusuna yaz.",
   "routines.card.close": "Kapat",
   "admin.boundaries.title": "Sınırlar",
-  "admin.boundaries.descLead": "Bir asistanın bilgisayarıyla neler yapabileceği ve neler yapamayacağı. Her eylem gerçekleşmeden önce kontrol edilir. Reddedilenler,",
+  "admin.boundaries.descLead":
+    "Bir asistanın bilgisayarıyla neler yapabileceği ve neler yapamayacağı. Her eylem gerçekleşmeden önce kontrol edilir. Reddedilenler,",
   "admin.boundaries.descAudit": "Denetim",
-  "admin.boundaries.descTail": "bölümünde, onları reddeden kuralla birlikte görünür.",
+  "admin.boundaries.descTail":
+    "bölümünde, onları reddeden kuralla birlikte görünür.",
   "admin.boundaries.whenTitle": "Bir kural eşleştiğinde",
-  "admin.boundaries.whenDesc": "Eylemi durdur, ya da kaydet ve geçmesine izin ver. Kaydetmek, bir kuralı hiçbir şeyi reddetmeden önce gerçek etkinlik üzerinde denemeni sağlar.",
+  "admin.boundaries.whenDesc":
+    "Eylemi durdur, ya da kaydet ve geçmesine izin ver. Kaydetmek, bir kuralı hiçbir şeyi reddetmeden önce gerçek etkinlik üzerinde denemeni sağlar.",
   "admin.boundaries.modeEnforce": "Eylemi durdur",
   "admin.boundaries.modeRecord": "Kaydet ve izin ver",
-  "admin.boundaries.modeEnforceNote": "Asistan durdurulur ve hangi kuralın onu reddettiği söylenir.",
-  "admin.boundaries.modeRecordNote": "Hiçbir şey durdurulmaz. Her eşleşme, reddedilmiş gibi kaydedilir.",
+  "admin.boundaries.modeEnforceNote":
+    "Asistan durdurulur ve hangi kuralın onu reddettiği söylenir.",
+  "admin.boundaries.modeRecordNote":
+    "Hiçbir şey durdurulmaz. Her eşleşme, reddedilmiş gibi kaydedilir.",
   "admin.boundaries.neverTitle": "Asistanlar asla yapamaz",
-  "admin.boundaries.neverLead": "Önce kontrol edilir. Bir eşleşme eylemi durdurur ve asistana hangi kuralın onu reddettiği söylenir. Kurallar CEL ile yazılır. Şunları kontrol edebilirler:",
+  "admin.boundaries.neverLead":
+    "Önce kontrol edilir. Bir eşleşme eylemi durdurur ve asistana hangi kuralın onu reddettiği söylenir. Kurallar CEL ile yazılır. Şunları kontrol edebilirler:",
   "admin.boundaries.neverMid1": ", öğe, basılan",
   "admin.boundaries.neverMid2": ", dosya, çalıştırılan",
   "admin.boundaries.neverMid3": "ve harici araçlar için",
   "admin.boundaries.neverMid4": "değerleri.",
   "admin.boundaries.neverMid5": "çalıştırmayı neyin başlattığını söyler:",
-  "admin.boundaries.neverTail": "Zamanlanmış bir çalıştırma sahibi olarak davranır, bu yüzden",
-  "admin.boundaries.neverTail2": "tek başına bunu söyleyemez. Değerlendirilemeyen bir kural eşleşme sayılır. Bir yazım hatası asla bir eylemin geçmesine izin vermez.",
+  "admin.boundaries.neverTail":
+    "Zamanlanmış bir çalıştırma sahibi olarak davranır, bu yüzden",
+  "admin.boundaries.neverTail2":
+    "tek başına bunu söyleyemez. Değerlendirilemeyen bir kural eşleşme sayılır. Bir yazım hatası asla bir eylemin geçmesine izin vermez.",
   "admin.boundaries.or": "veya",
-  "admin.boundaries.noRules": "Kural yok. Her eyleme izin verilir ve kaydedilir.",
+  "admin.boundaries.noRules":
+    "Kural yok. Her eyleme izin verilir ve kaydedilir.",
   "admin.boundaries.remove": "Kaldır",
   "admin.boundaries.ruleLabel": "CEL ile yazılmış bir kural",
   "admin.boundaries.testing": "Test ediliyor…",
   "admin.boundaries.testFirst": "Önce test et",
   "admin.boundaries.addRule": "Kural ekle",
   "admin.boundaries.preset.form": "Asla form gönderme",
-  "admin.boundaries.preset.formCost": "Asistanın başka yerlerde Enter'a basmasını da engeller. Bir form, herhangi bir alanda Enter ile gönderilebilir. Bir menüden ya da tarih alanından seçim yapmayı kapsamaz; bunların değişikliği bir formu kendiliğinden gönderebilir.",
+  "admin.boundaries.preset.formCost":
+    "Asistanın başka yerlerde Enter'a basmasını da engeller. Bir form, herhangi bir alanda Enter ile gönderilebilir. Bir menüden ya da tarih alanından seçim yapmayı kapsamaz; bunların değişikliği bir formu kendiliğinden gönderebilir.",
   "admin.boundaries.preset.password": "Asla parola alanına yazma",
-  "admin.boundaries.preset.passwordCost": "Etiketi farklı olan bir parola kutusu kapsanmaz. Kural etiketle eşleşir.",
+  "admin.boundaries.preset.passwordCost":
+    "Etiketi farklı olan bir parola kutusu kapsanmaz. Kural etiketle eşleşir.",
   "admin.boundaries.preset.social": "Sosyal medyadan uzak dur",
-  "admin.boundaries.preset.socialCost": "Yalnızca bu iki ana makine. Başka yerden oraya yönlendiren bir bağlantıya izin verilir.",
+  "admin.boundaries.preset.socialCost":
+    "Yalnızca bu iki ana makine. Başka yerden oraya yönlendiren bir bağlantıya izin verilir.",
   "admin.boundaries.otherwiseTitle": "Aksi halde yapabilirler",
-  "admin.boundaries.otherwiseDesc": "Yukarıdaki listenin yakalamadığı her şey için geçerlidir. Burada boş bir liste hiçbir şeye izin vermez ve her eylem reddedilir.",
+  "admin.boundaries.otherwiseDesc":
+    "Yukarıdaki listenin yakalamadığı her şey için geçerlidir. Burada boş bir liste hiçbir şeye izin vermez ve her eylem reddedilir.",
   "admin.boundaries.allowAll": "true, yukarıda reddedilmeyen her şey",
-  "admin.boundaries.saved": "Kaydedildi. Herhangi bir asistanın bir sonraki eylemi için geçerli olur.",
-  "admin.boundaries.footer": "Değişiklikler herhangi bir asistanın bir sonraki eylemi için geçerli olur. Yeniden başlatmadan sonra da kalır.",
-  "admin.boundaries.dry.none": "Test edilecek kayıtlı bilgisayar eylemi henüz yok. Kural geçerli. Asistanlar harekete geçtikten sonra neyi yakaladığını göreceksin.",
-  "admin.boundaries.dry.zero": "Kaydedilen son {scanned} eylemde test edildi. Bu kural hiçbirini reddetmezdi. Yine de gelecekteki eylemlerle eşleşebilir.",
-  "admin.boundaries.dry.some": "Kaydedilen son {scanned} eylemde test edildi. Bu kural {refused} tanesini reddederdi.",
+  "admin.boundaries.saved":
+    "Kaydedildi. Herhangi bir asistanın bir sonraki eylemi için geçerli olur.",
+  "admin.boundaries.footer":
+    "Değişiklikler herhangi bir asistanın bir sonraki eylemi için geçerli olur. Yeniden başlatmadan sonra da kalır.",
+  "admin.boundaries.dry.none":
+    "Test edilecek kayıtlı bilgisayar eylemi henüz yok. Kural geçerli. Asistanlar harekete geçtikten sonra neyi yakaladığını göreceksin.",
+  "admin.boundaries.dry.zero":
+    "Kaydedilen son {scanned} eylemde test edildi. Bu kural hiçbirini reddetmezdi. Yine de gelecekteki eylemlerle eşleşebilir.",
+  "admin.boundaries.dry.some":
+    "Kaydedilen son {scanned} eylemde test edildi. Bu kural {refused} tanesini reddederdi.",
   "admin.boundaries.dry.wouldRefuse": "Reddederdi",
   "admin.boundaries.dry.wouldAllow": "Şimdi izin verirdi",
   "admin.boundaries.dry.on": "“{name}” üzerinde",
   "admin.boundaries.dry.running": "çalıştırıyor",
   "admin.boundaries.dry.touching": "{file} dosyasına dokunuyor",
-  "admin.boundaries.dry.first": "İlk {shown} gösteriliyor. Yukarıdaki sayı kontrol edilen her şeyi kapsar.",
+  "admin.boundaries.dry.first":
+    "İlk {shown} gösteriliyor. Yukarıdaki sayı kontrol edilen her şeyi kapsar.",
   "admin.people.title": "Kişiler",
-  "admin.people.desc": "Giriş yapmış herkes. Yöneticiler bu ekranları açabilir. Diğer herkes asistanlarla konuşur.",
+  "admin.people.desc":
+    "Giriş yapmış herkes. Yöneticiler bu ekranları açabilir. Diğer herkes asistanlarla konuşur.",
   "admin.people.whoTitle": "Kimler burada",
-  "admin.people.whoDesc": "INITIAL_ADMIN_EMAILS içindeki adresler her zaman yöneticidir. Bunları buradan değiştiremezsin.",
-  "admin.people.stopped": { one: "{count} bilgisayar durduruldu", other: "{count} bilgisayar durduruldu" },
+  "admin.people.whoDesc":
+    "INITIAL_ADMIN_EMAILS içindeki adresler her zaman yöneticidir. Bunları buradan değiştiremezsin.",
+  "admin.people.stopped": {
+    one: "{count} bilgisayar durduruldu",
+    other: "{count} bilgisayar durduruldu",
+  },
   "admin.people.stoppedFailed": ". {failed} tanesi durdurulamadı",
   "admin.people.disksKept": ". Diskleri korunur.",
   "admin.people.searchLabel": "Kişi ara",
   "admin.people.searchPlaceholder": "Ada veya adrese göre ara",
   "admin.people.loadError": "Kişiler yüklenemedi. Sayfayı yenile.",
   "admin.people.noMatch": "“{query}” ile eşleşen kimse yok.",
-  "admin.people.nobody": "Henüz kimse giriş yapmadı. Kişiler giriş yapınca burada görünür.",
+  "admin.people.nobody":
+    "Henüz kimse giriş yapmadı. Kişiler giriş yapınca burada görünür.",
   "admin.people.lastSignedIn": "son giriş {date}",
   "admin.people.neverSignedIn": "hiç giriş yapmadı",
   "admin.people.noProvider": "sağlayıcı yok",
@@ -1295,41 +1320,51 @@ export const tr: Catalog<typeof EN> = {
   "admin.boundaries.and": "ve",
   "admin.credentials.title": "Kimlik bilgileri",
   "admin.credentials.add": "Kimlik bilgisi ekle",
-  "admin.credentials.desc": "Bu kurulumun anahtarları ve belirteçleri. {product}, kaydedilen bir sırrı bir daha asla göstermez.",
-  "admin.credentials.dialogDesc": "Bu kurulum için kaydedilir. Sırrı bir daha göremezsin.",
+  "admin.credentials.desc":
+    "Bu kurulumun anahtarları ve belirteçleri. {product}, kaydedilen bir sırrı bir daha asla göstermez.",
+  "admin.credentials.dialogDesc":
+    "Bu kurulum için kaydedilir. Sırrı bir daha göremezsin.",
   "admin.credentials.type": "Tür",
   "admin.credentials.model": "Model",
   "admin.credentials.connector": "Bağlayıcı",
   "admin.credentials.provider": "Sağlayıcı",
   "admin.credentials.keyId": "Anahtar kimliği",
   "admin.credentials.secret": "Sır",
-  "admin.credentials.replaces": "Bu anahtarın zaten etkin bir kimlik bilgisi var. Kaydetmek onu değiştirir ve eskisini iptal eder.",
+  "admin.credentials.replaces":
+    "Bu anahtarın zaten etkin bir kimlik bilgisi var. Kaydetmek onu değiştirir ve eskisini iptal eder.",
   "admin.credentials.saveError": "Kimlik bilgisi kaydedilemedi. Tekrar dene.",
   "admin.credentials.cancel": "Vazgeç",
   "admin.credentials.saving": "Kaydediliyor…",
   "admin.credentials.save": "Kimlik bilgisini kaydet",
   "admin.credentials.savedTitle": "Kayıtlı kimlik bilgileri",
-  "admin.credentials.loadError": "Kimlik bilgileri yüklenemedi. Sayfayı yenile.",
-  "admin.credentials.empty": "Henüz kimlik bilgisi yok. Kimlik bilgisi ekle ile bir tane ekle.",
+  "admin.credentials.loadError":
+    "Kimlik bilgileri yüklenemedi. Sayfayı yenile.",
+  "admin.credentials.empty":
+    "Henüz kimlik bilgisi yok. Kimlik bilgisi ekle ile bir tane ekle.",
   "admin.credentials.revoked": "iptal edildi",
   "admin.credentials.active": "etkin",
   "admin.credentials.revoke": "İptal et",
   "admin.idp.title": "Kimlik sağlayıcılar",
   "admin.idp.add": "Sağlayıcı ekle",
-  "admin.idp.desc": "Şirketinin kendi SAML veya OpenID Connect sağlayıcısı. Kişiler e-postalarıyla giriş yapar, sağlayıcıyı e-postanın alan adı belirler.",
+  "admin.idp.desc":
+    "Şirketinin kendi SAML veya OpenID Connect sağlayıcısı. Kişiler e-postalarıyla giriş yapar, sağlayıcıyı e-postanın alan adı belirler.",
   "admin.idp.registeredTitle": "Kayıtlı",
-  "admin.idp.registeredDesc": "Google, Microsoft ve Okta ortamda ayarlanır. Burada görünmezler.",
+  "admin.idp.registeredDesc":
+    "Google, Microsoft ve Okta ortamda ayarlanır. Burada görünmezler.",
   "admin.idp.loadError": "Kimlik sağlayıcılar yüklenemedi. Sayfayı yenile.",
-  "admin.idp.empty": "Henüz kimlik sağlayıcı yok. Kimlik ekibinden aldığın metaverilerle bir tane ekle.",
+  "admin.idp.empty":
+    "Henüz kimlik sağlayıcı yok. Kimlik ekibinden aldığın metaverilerle bir tane ekle.",
   "admin.idp.remove": "Kaldır",
   "admin.idp.dialogTitle": "Kimlik sağlayıcı ekle",
   "admin.idp.name": "Ad",
   "admin.idp.domain": "E-posta alan adı",
-  "admin.idp.domainNote": "Bu alan adında adresi olan herkes buradan giriş yapar. Birden fazlasını virgülle ayır.",
+  "admin.idp.domainNote":
+    "Bu alan adında adresi olan herkes buradan giriş yapar. Birden fazlasını virgülle ayır.",
   "admin.idp.issuer": "Veren",
   "admin.idp.signOnUrl": "Oturum açma URL'si",
   "admin.idp.metadata": "Metaveri XML",
-  "admin.idp.metadataNote": "Kimlik ekibinden gelen dosya. İmza sertifikasını içerir.",
+  "admin.idp.metadataNote":
+    "Kimlik ekibinden gelen dosya. İmza sertifikasını içerir.",
   "admin.idp.clientId": "İstemci kimliği",
   "admin.idp.clientSecret": "İstemci sırrı",
   "admin.idp.cancel": "Vazgeç",
@@ -1340,7 +1375,8 @@ export const tr: Catalog<typeof EN> = {
   "admin.audit.decision.computer.policy_loaded": "Başlangıçta sınır",
   "admin.audit.decision.computer.isolation_loaded": "Başlangıçta yalıtım",
   "admin.audit.decision.computer.control_taken": "Bir kişi kontrolü aldı",
-  "admin.audit.decision.computer.control_released": "Kontrol asistana geri döndü",
+  "admin.audit.decision.computer.control_released":
+    "Kontrol asistana geri döndü",
   "admin.audit.decision.computer.help_requested": "Asistan yardım istedi",
   "admin.audit.decision.computer.secret_requested": "Asistan bir sır istedi",
   "admin.audit.decision.computer.secret_supplied": "Bir kişi bir sır verdi",
@@ -1349,39 +1385,50 @@ export const tr: Catalog<typeof EN> = {
   "admin.audit.decision.computer.stopped": "Bir kişi durdura bastı",
   "admin.audit.decision.component.granted": "Bu asistana verildi",
   "admin.audit.decision.component.revoked": "Bu asistandan alındı",
-  "admin.audit.decision.component.published": "Yayımlandı. Her asistan kullanabilir",
-  "admin.audit.decision.component.unpublished": "Yayından kaldırıldı. Hiçbir asistan kullanamaz",
-  "admin.audit.decision.component.draft_saved": "Taslak kaydedildi, henüz yayımlanmadı",
+  "admin.audit.decision.component.published":
+    "Yayımlandı. Her asistan kullanabilir",
+  "admin.audit.decision.component.unpublished":
+    "Yayından kaldırıldı. Hiçbir asistan kullanamaz",
+  "admin.audit.decision.component.draft_saved":
+    "Taslak kaydedildi, henüz yayımlanmadı",
   "admin.audit.decision.component.refused": "Reddedildi",
   "admin.audit.decision.component.function_granted": "Bunu okuyabilir",
   "admin.audit.decision.component.function_revoked": "Artık bunu okuyamaz",
   "admin.audit.decision.component.function_called": "Gerçek veri okundu",
   "admin.audit.decision.component.function_refused": "Reddedildi",
   "admin.audit.decision.component.function_failed": "Okunamadı",
-  "admin.audit.decision.mcp.tools_discovered": "Bir çalıştırma için sunulan araçlar",
+  "admin.audit.decision.mcp.tools_discovered":
+    "Bir çalıştırma için sunulan araçlar",
   "admin.audit.decision.mcp.call_succeeded": "Bu asistan adına çağrıldı",
   "admin.audit.decision.mcp.call_rejected": "Engellendi",
   "admin.audit.decision.mcp.call_failed": "Sunucu yanıt vermedi",
-  "admin.audit.decision.mcp.callback_refused": "Hangi asistan olduğu doğrulanamadı",
+  "admin.audit.decision.mcp.callback_refused":
+    "Hangi asistan olduğu doğrulanamadı",
   "admin.audit.decision.configuration.changed": "Yapılandırma değişti",
   "admin.audit.decision.credential.created": "Kimlik bilgisi kaydedildi",
-  "admin.audit.discovery.under-floor": "Araç sayısı az olduğu için hepsi sunuldu",
-  "admin.audit.discovery.nothing-declared": "Hiçbir beceri bu araçlardan hiçbirini bildirmiyor",
+  "admin.audit.discovery.under-floor":
+    "Araç sayısı az olduğu için hepsi sunuldu",
+  "admin.audit.discovery.nothing-declared":
+    "Hiçbir beceri bu araçlardan hiçbirini bildirmiyor",
   "admin.audit.discovery.unavailable": "Seçilemedi, bu yüzden hepsi sunuldu",
-  "admin.audit.discovery.nothing-chosen": "Hiçbir beceri uygulanmadı, bu yüzden hepsi sunuldu",
+  "admin.audit.discovery.nothing-chosen":
+    "Hiçbir beceri uygulanmadı, bu yüzden hepsi sunuldu",
   "admin.audit.discovery.selected": "Beceriye göre seçildi",
   "admin.audit.title": "Denetim",
-  "admin.audit.desc": "Bir asistanın yaptığı her eylem ve bu kurulumun politikasının reddettiği her eylem.",
+  "admin.audit.desc":
+    "Bir asistanın yaptığı her eylem ve bu kurulumun politikasının reddettiği her eylem.",
   "admin.audit.export": "CSV dışa aktar",
   "admin.audit.exporting": "Dışa aktarılıyor…",
   "admin.audit.refresh": "Yenile",
-  "admin.audit.exportFailed": "Denetim olayları dışa aktarılamadı. Tekrar dene.",
+  "admin.audit.exportFailed":
+    "Denetim olayları dışa aktarılamadı. Tekrar dene.",
   "admin.audit.filter.all": "Hepsi",
   "admin.audit.filter.computer": "Bilgisayar eylemleri",
   "admin.audit.filter.blocked": "Engellenenler",
   "admin.audit.filter.didNot": "Gerçekleşmeyenler",
   "admin.audit.filter.nobody": "Kimse izlemiyor",
-  "admin.audit.capped": "Dosyada en yeni {count} olay var, hepsi değil. Kalanını dışa aktarmak için filtreyi veya tarihleri daralt.",
+  "admin.audit.capped":
+    "Dosyada en yeni {count} olay var, hepsi değil. Kalanını dışa aktarmak için filtreyi veya tarihleri daralt.",
   "admin.audit.loadError": "Denetim kaydı yüklenemedi. Sayfayı yenile.",
   "admin.audit.empty": "Bu filtreyle eşleşen olay henüz yok.",
   "admin.audit.col.when": "Ne zaman",
