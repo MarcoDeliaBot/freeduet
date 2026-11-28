@@ -1938,7 +1938,7 @@ export const ja: Catalog<typeof EN> = {
     "はブラウザーを閉じ、サインインは保持します。アシスタントが次に必要としたときに再び起動します。",
   "admin.computers.foot.resetLead": "リセット",
   "admin.computers.foot.resetRest":
-    "はプロファイルを削除し、アシスタントをすべてからサインアウトさせます。",
+    "はプロファイルを削除し、アシスタントをすべてのサービスからサインアウトさせます。",
   "admin.computers.foot.updateLead": "コンピューターを更新",
   "admin.computers.foot.updateRest":
     "は、コンピューターが古いイメージで動いているときに表示されます。コンピューターを新しいイメージに移し、ファイルとサインインは保持します。",

@@ -2062,8 +2062,8 @@ export const pl: Catalog<typeof EN> = {
   "admin.computers.host.stopping": "Zatrzymywanie…",
   "admin.computers.host.viewAudit": "Zobacz audyt",
   "admin.computers.host.readOnly": "Tylko do odczytu",
-  "admin.computers.host.revoke": "Cofnij",
-  "admin.computers.host.revoking": "Cofanie…",
+  "admin.computers.host.revoke": "Odwołaj",
+  "admin.computers.host.revoking": "Odwoływanie…",
   "admin.computers.host.pendingFrom": "{label} od {owner}.",
   "admin.computers.host.pendingFromFor": "{label} od {owner} dla {name}.",
   "admin.computers.host.folders": {

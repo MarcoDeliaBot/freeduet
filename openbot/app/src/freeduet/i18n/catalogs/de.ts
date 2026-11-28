@@ -1918,7 +1918,7 @@ export const de: Catalog<typeof EN> = {
     "Die Computer konnten nicht geladen werden. Lade die Seite neu.",
   "admin.computers.shared.lead": "Alle Assistenten teilen sich einen Computer.",
   "admin.computers.shared.before":
-    "Sie teilen sich seine Anmeldungen, Dateien und Sitzung. Ein Assistent kann erreichen, wobei sich ein anderer angemeldet hat. Stelle",
+    "Sie teilen sich seine Anmeldungen, Dateien und Sitzung. Ein Assistent kann auf das zugreifen, wo sich ein anderer angemeldet hat. Stelle",
   "admin.computers.shared.after":
     "ein, damit jeder Assistent seinen eigenen bekommt.",
   "admin.computers.perBot":

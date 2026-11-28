@@ -1909,8 +1909,8 @@ export const tr: Catalog<typeof EN> = {
   "admin.computers.host.stopping": "Durduruluyor…",
   "admin.computers.host.viewAudit": "Denetimi gör",
   "admin.computers.host.readOnly": "Salt okunur",
-  "admin.computers.host.revoke": "Geri al",
-  "admin.computers.host.revoking": "Geri alınıyor…",
+  "admin.computers.host.revoke": "İptal et",
+  "admin.computers.host.revoking": "İptal ediliyor…",
   "admin.computers.host.pendingFrom": "{owner} tarafından {label}.",
   "admin.computers.host.pendingFromFor":
     "{owner} tarafından {name} için {label}.",
@@ -1925,8 +1925,8 @@ export const tr: Catalog<typeof EN> = {
   "admin.computers.host.none": "Onaylanmış klasör yok.",
   "admin.computers.host.owner": "masaüstünün sahibi",
   "admin.computers.host.p.write":
-    "Dosya değişikliği onay bekliyor veya tamamlanmak üzere",
-  "admin.computers.host.p.run": "Komut onay bekliyor veya tamamlanmak üzere",
+    "Dosya değişikliği onayı veya tamamlanmayı bekliyor",
+  "admin.computers.host.p.run": "Komut onayı veya tamamlanmayı bekliyor",
   "admin.computers.host.p.list": "Dosyalar listeleniyor",
   "admin.computers.host.p.read": "Bir dosya okunuyor",
   "admin.computers.host.p.stop": "Klasör işi durduruluyor",

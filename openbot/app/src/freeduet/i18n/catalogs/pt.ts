@@ -2168,7 +2168,7 @@ export const pt: Catalog<typeof EN> = {
     "Definido pelo conector, não pelo nome da ferramenta. Tudo o que é desconhecido conta como gravação.",
   "admin.plugins.tool.bots.title": "Assistentes",
   "admin.plugins.tool.bots.description":
-    "Um assistente só pode chamar esta ferramenta enquanto o botão dele estiver ligado. Desligá-lo vale a partir da próxima chamada.",
+    "Um assistente só pode chamar esta ferramenta enquanto o interruptor dele estiver ligado. Desligá-lo vale a partir da próxima chamada.",
   "admin.plugins.tool.bots.empty":
     "Ainda não há assistentes. Crie um para dar esta ferramenta a ele.",
   "admin.plugins.tool.hidden": "Oculto da sua lista.",

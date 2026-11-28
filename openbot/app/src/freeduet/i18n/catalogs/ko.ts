@@ -1907,8 +1907,8 @@ export const ko: Catalog<typeof EN> = {
   "admin.computers.host.stopping": "중지하는 중…",
   "admin.computers.host.viewAudit": "감사 보기",
   "admin.computers.host.readOnly": "읽기 전용",
-  "admin.computers.host.revoke": "취소",
-  "admin.computers.host.revoking": "취소하는 중…",
+  "admin.computers.host.revoke": "해지",
+  "admin.computers.host.revoking": "해지하는 중…",
   "admin.computers.host.pendingFrom": "{owner}님의 {label}.",
   "admin.computers.host.pendingFromFor":
     "{owner}님이 {name}에게 요청한 {label}.",

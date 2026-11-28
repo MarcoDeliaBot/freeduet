@@ -2046,7 +2046,7 @@ export const fr: Catalog<typeof EN> = {
   "admin.computers.host.p.read": "Lecture d'un fichier",
   "admin.computers.host.p.stop": "Arrêt du travail sur les dossiers",
   "admin.computers.host.p.default":
-    "Accès aux dossiers en attente d'approbation",
+    "L'accès aux dossiers attend une approbation",
   "admin.learning.description":
     "Apprendre des conversations terminées, passer en revue les compétences proposées par Intelligence et donner les compétences publiées aux Bots.",
   "admin.learning.auto.assigned":
