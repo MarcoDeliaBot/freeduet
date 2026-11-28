@@ -808,7 +808,7 @@ export const zh: Catalog<typeof EN> = {
   "time.recently": "最近",
   // Stage 2f (D181): the approval rules, the responsibility dialog, the routine history, Passwords.
   "approvals.behaviour.allow": "无需询问，直接行动",
-  "approvals.behaviour.preApproved": "已预先批准时才行动",
+  "approvals.behaviour.preApproved": "如已预先批准则行动",
   "approvals.behaviour.ask": "行动前先询问",
   "approvals.behaviour.handOff": "交给你处理",
   "approvals.host.ask": "每次都询问",
