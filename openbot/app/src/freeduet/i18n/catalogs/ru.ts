@@ -1598,70 +1598,94 @@ export const ru: Catalog<typeof EN> = {
   "admin.nav.idp": "Поставщики удостоверений",
   "admin.nav.audit": "Аудит",
   "admin.enterprise.mode.allow_all": "Разрешить любой доступ к сети",
-  "admin.enterprise.mode.defaults_plus_allowlist": "Значения по умолчанию плюс список разрешённых команды",
+  "admin.enterprise.mode.defaults_plus_allowlist":
+    "Значения по умолчанию плюс список разрешённых команды",
   "admin.enterprise.mode.allowlist_only": "Только список разрешённых команды",
-  "admin.enterprise.noPolicy": "Политики нет. Компьютеры помощников могут обращаться ко всему, что разрешает кластер",
+  "admin.enterprise.noPolicy":
+    "Политики нет. Компьютеры помощников могут обращаться ко всему, что разрешает кластер",
   "admin.enterprise.locked": " · заблокировано",
-  "admin.enterprise.loadError": "Не удалось загрузить корпоративные настройки. Перезагрузи страницу.",
+  "admin.enterprise.loadError":
+    "Не удалось загрузить корпоративные настройки. Перезагрузи страницу.",
   "admin.enterprise.title": "Корпоративные настройки",
-  "admin.enterprise.description": "Что могут использовать участники, как компьютеры помощников выходят в сеть и что записывается. Каждое изменение видно в Аудите.",
-  "admin.enterprise.signin.description": "Адреса из {env} всегда могут входить через соцсети, как аварийный способ входа. Каждый такой вход виден в Аудите.",
+  "admin.enterprise.description":
+    "Что могут использовать участники, как компьютеры помощников выходят в сеть и что записывается. Каждое изменение видно в Аудите.",
+  "admin.enterprise.signin.description":
+    "Адреса из {env} всегда могут входить через соцсети, как аварийный способ входа. Каждый такой вход виден в Аудите.",
   "admin.enterprise.signin.title": "Вход",
   "admin.enterprise.sso.title": "Требовать SSO",
-  "admin.enterprise.sso.on": "Люди могут входить только через зарегистрированного поставщика SAML или OpenID Connect.",
-  "admin.enterprise.sso.off": "Люди могут также входить через Google, Microsoft или Okta.",
+  "admin.enterprise.sso.on":
+    "Люди могут входить только через зарегистрированного поставщика SAML или OpenID Connect.",
+  "admin.enterprise.sso.off":
+    "Люди могут также входить через Google, Microsoft или Okta.",
   "admin.enterprise.scim.title": "Провижининг SCIM",
-  "admin.enterprise.scim.on": "Базовый URL каталога {url} с bearer-токеном {env}. Деактивация завершает сеансы, блокирует адрес, отзывает учётные данные коннекторов и останавливает их компьютеры.",
+  "admin.enterprise.scim.on":
+    "Базовый URL каталога {url} с bearer-токеном {env}. Деактивация завершает сеансы, блокирует адрес, отзывает учётные данные коннекторов и останавливает их компьютеры.",
   "admin.enterprise.scim.unsetUrl": "(задай BETTER_AUTH_URL)",
-  "admin.enterprise.scim.off": "Выключено. Задай {env}, чтобы принимать провижининг из Okta, Entra или другого каталога.",
+  "admin.enterprise.scim.off":
+    "Выключено. Задай {env}, чтобы принимать провижининг из Okta, Entra или другого каталога.",
   "admin.enterprise.on": "Вкл.",
   "admin.enterprise.off": "Выкл.",
-  "admin.enterprise.cap.description": "Каждый переключатель действует на всю организацию. Роль может его переопределить, а группа каталога может получить возможность, которую организация выключила.",
+  "admin.enterprise.cap.description":
+    "Каждый переключатель действует на всю организацию. Роль может его переопределить, а группа каталога может получить возможность, которую организация выключила.",
   "admin.enterprise.cap.title": "Возможности",
-  "admin.enterprise.cap.offFor": "Выключено для всех, если роль или группа не включит её.",
+  "admin.enterprise.cap.offFor":
+    "Выключено для всех, если роль или группа не включит её.",
   "admin.enterprise.over.title": "Исключения для ролей и групп",
   "admin.enterprise.over.none": "Нет. Все получают переключатели выше",
   "admin.enterprise.over.set": "Задано: {count}",
-  "admin.enterprise.net.description": "Куда могут подключаться компьютеры помощников. Изменения доходят до работающих компьютеров за секунды, без перезапуска. Политика группы заменяет политику организации, если та не заблокирована.",
+  "admin.enterprise.net.description":
+    "Куда могут подключаться компьютеры помощников. Изменения доходят до работающих компьютеров за секунды, без перезапуска. Политика группы заменяет политику организации, если та не заблокирована.",
   "admin.enterprise.net.title": "Сеть",
   "admin.enterprise.net.org": "Организация",
   "admin.enterprise.net.group": "Группа: {name}",
   "admin.enterprise.net.addGroup": "Добавить политику группы",
-  "admin.enterprise.mcp.description": "Когда список разрешённых включён, помощники могут вызывать инструменты только на MCP-серверах, одобренных здесь. Вызовы любого другого сервера отклоняются.",
+  "admin.enterprise.mcp.description":
+    "Когда список разрешённых включён, помощники могут вызывать инструменты только на MCP-серверах, одобренных здесь. Вызовы любого другого сервера отклоняются.",
   "admin.enterprise.mcp.title": "MCP-серверы",
   "admin.enterprise.mcp.only": "Только одобренные серверы",
   "admin.enterprise.mcp.approved": "Одобрено: {count}",
-  "admin.enterprise.mcp.offDesc": "Выключено. Помощники могут использовать любой зарегистрированный сервер, к которому у них есть доступ.",
+  "admin.enterprise.mcp.offDesc":
+    "Выключено. Помощники могут использовать любой зарегистрированный сервер, к которому у них есть доступ.",
   "admin.enterprise.mcp.onlyAria": "Только одобренные MCP-серверы",
   "admin.enterprise.mcp.approveAria": "Одобрить {name}",
-  "admin.enterprise.models.description": "Встроенный помощник работает на {model}. Удалённый помощник выбирает свою модель сам, и модель, о которой он сообщает, записывается.",
+  "admin.enterprise.models.description":
+    "Встроенный помощник работает на {model}. Удалённый помощник выбирает свою модель сам, и модель, о которой он сообщает, записывается.",
   "admin.enterprise.models.configured": "модели, настроенной в этой установке",
   "admin.enterprise.models.title": "Модели",
   "admin.enterprise.models.allowlist": "Список разрешённых моделей",
-  "admin.enterprise.models.allowlistOn": "Встроенный помощник с моделью не из списка отклоняется до запуска.",
-  "admin.enterprise.models.allowlistOff": "Выключено. Можно использовать любую модель.",
+  "admin.enterprise.models.allowlistOn":
+    "Встроенный помощник с моделью не из списка отклоняется до запуска.",
+  "admin.enterprise.models.allowlistOff":
+    "Выключено. Можно использовать любую модель.",
   "admin.enterprise.models.allowed": "Разрешённые модели",
   "admin.enterprise.models.none": "В списке ничего нет",
-  "admin.enterprise.models.listDesc": "Одна модель в строке, в виде поставщик/модель, например {example}.",
-  "admin.enterprise.rec.description": "Задай {env}, чтобы передавать события аудита и действия помощников в твой коллектор OpenTelemetry или SIEM. Они помечены тегом {tag}.",
+  "admin.enterprise.models.listDesc":
+    "Одна модель в строке, в виде поставщик/модель, например {example}.",
+  "admin.enterprise.rec.description":
+    "Задай {env}, чтобы передавать события аудита и действия помощников в твой коллектор OpenTelemetry или SIEM. Они помечены тегом {tag}.",
   "admin.enterprise.rec.title": "Запись и экспорт",
   "admin.enterprise.rec.action": "Action Recording",
-  "admin.enterprise.rec.actionOn": "Команды оболочки, которые выполняют помощники, записываются без секретов и хранятся {days} дн.",
+  "admin.enterprise.rec.actionOn":
+    "Команды оболочки, которые выполняют помощники, записываются без секретов и хранятся {days} дн.",
   "admin.enterprise.rec.actionOff": "Выключено. Команды видны только в Аудите.",
   "admin.enterprise.rec.otel": "Экспорт в OpenTelemetry",
   "admin.enterprise.rec.otelOn": "Экспорт идёт по OTLP/HTTP.",
   "admin.enterprise.rec.otelOff": "Не настроено. Задай {env} на сервере.",
-  "admin.enterprise.comp.description": "Остановка компьютера завершает работающих на нём помощников и сохраняет его диск. В следующем сеансе помощник получит новый компьютер. Чтобы остановить компьютеры одного человека, перейди в раздел «Люди».",
+  "admin.enterprise.comp.description":
+    "Остановка компьютера завершает работающих на нём помощников и сохраняет его диск. В следующем сеансе помощник получит новый компьютер. Чтобы остановить компьютеры одного человека, перейди в раздел «Люди».",
   "admin.enterprise.comp.title": "Компьютеры",
   "admin.enterprise.comp.stopInactive": "Останавливать неактивные компьютеры",
   "admin.enterprise.comp.afterDays": "Через {days} дн. без использования",
-  "admin.enterprise.usage.error": "Не удалось загрузить использование моделей. Перезагрузи страницу.",
-  "admin.enterprise.usage.empty": "За последние 30 дней не было запусков помощников.",
+  "admin.enterprise.usage.error":
+    "Не удалось загрузить использование моделей. Перезагрузи страницу.",
+  "admin.enterprise.usage.empty":
+    "За последние 30 дней не было запусков помощников.",
   "admin.enterprise.usage.runs": "{runs} запусков за 30 дней · {who}: {people}",
   "admin.enterprise.usage.person": "человек",
   "admin.enterprise.usage.people": "людей",
   "admin.enterprise.usage.refused": " · не из списка разрешённых: {count}",
-  "admin.enterprise.recorded.error": "Не удалось загрузить записанные действия. Перезагрузи страницу.",
+  "admin.enterprise.recorded.error":
+    "Не удалось загрузить записанные действия. Перезагрузи страницу.",
   "admin.enterprise.recorded.empty": "Пока нет записанных команд.",
   "admin.enterprise.recorded.local": "Компьютер участника",
   "admin.enterprise.recorded.bot": "Помощник {id}",
@@ -1672,8 +1696,10 @@ export const ru: Catalog<typeof EN> = {
   "admin.enterprise.ov.members": "Участники",
   "admin.enterprise.ov.group": "Группа: {name}",
   "admin.enterprise.ov.scope": "Область",
-  "admin.enterprise.ov.groupNote": "Группа может только добавлять. «Выдать» даёт её участникам возможность, даже если организация её выключила.",
-  "admin.enterprise.ov.roleNote": "Настройка роли заменяет переключатель организации для всех с этой ролью.",
+  "admin.enterprise.ov.groupNote":
+    "Группа может только добавлять. «Выдать» даёт её участникам возможность, даже если организация её выключила.",
+  "admin.enterprise.ov.roleNote":
+    "Настройка роли заменяет переключатель организации для всех с этой ролью.",
   "admin.enterprise.ov.forScope": "{title}: {scope}",
   "admin.enterprise.ov.inherit": "Наследовать",
   "admin.enterprise.ov.grant": "Выдать",
@@ -1682,28 +1708,50 @@ export const ru: Catalog<typeof EN> = {
   "admin.enterprise.netd.groupLabel": "Группа",
   "admin.enterprise.netd.mode": "Режим",
   "admin.enterprise.netd.allowlist": "Список разрешённых",
-  "admin.enterprise.netd.help": "По одному в строке. Домен охватывает свои поддомены. *.имя охватывает только поддомены. Диапазон IP может содержать порты. По умолчанию это {first} и ещё {more} хостов пакетов и исходников.",
-  "admin.enterprise.netd.lock": "Заблокировать, чтобы группы не могли заменить эту политику",
+  "admin.enterprise.netd.help":
+    "По одному в строке. Домен охватывает свои поддомены. *.имя охватывает только поддомены. Диапазон IP может содержать порты. По умолчанию это {first} и ещё {more} хостов пакетов и исходников.",
+  "admin.enterprise.netd.lock":
+    "Заблокировать, чтобы группы не могли заменить эту политику",
   "admin.enterprise.netd.remove": "Удалить политику",
   "admin.enterprise.days.label": "Дней без использования",
   "admin.enterprise.days.help": "0 выключает. Проверяется каждый час.",
   "admin.plugins.title": "Плагины",
-  "admin.plugins.description": "До чего может добраться эта установка и какие помощники могут этим пользоваться. Добавленный тобой плагин доступен всем. Каких помощников наделить его инструментами, выбери на его странице.",
-  "admin.plugins.loadError": "Не удалось загрузить плагины. Перезагрузи страницу.",
-  "admin.plugins.connected.description": "Добавлены для всех. Открой один, чтобы настроить его и выбрать, каким помощникам достанутся его инструменты.",
+  "admin.plugins.description":
+    "До чего может добраться эта установка и какие помощники могут этим пользоваться. Добавленный тобой плагин доступен всем. Каких помощников наделить его инструментами, выбери на его странице.",
+  "admin.plugins.loadError":
+    "Не удалось загрузить плагины. Перезагрузи страницу.",
+  "admin.plugins.connected.description":
+    "Добавлены для всех. Открой один, чтобы настроить его и выбрать, каким помощникам достанутся его инструменты.",
   "admin.plugins.connected.title": "Подключены",
-  "admin.plugins.connected.empty": "Пока ничего не подключено. Выбери плагин из списка ниже.",
-  "admin.plugins.explore.description": "Проверенные серверы первой стороны. Открой один, чтобы добавить его.",
+  "admin.plugins.connected.empty":
+    "Пока ничего не подключено. Выбери плагин из списка ниже.",
+  "admin.plugins.explore.description":
+    "Проверенные серверы первой стороны. Открой один, чтобы добавить его.",
   "admin.plugins.explore.title": "Найти плагины",
   "admin.plugins.explore.empty": "Все плагины из каталога подключены.",
   "admin.plugins.notAdded": "Не добавлен",
   "admin.plugins.more.title": "Другие приложения",
   "admin.plugins.sum.notConnected": "Не подключён",
   "admin.plugins.sum.noTools": "Инструментов пока нет",
-  "admin.plugins.sum.tools": { one: "{count} инструмент", few: "{count} инструмента", many: "{count} инструментов", other: "{count} инструмента" },
+  "admin.plugins.sum.tools": {
+    one: "{count} инструмент",
+    few: "{count} инструмента",
+    many: "{count} инструментов",
+    other: "{count} инструмента",
+  },
   "admin.plugins.sum.toolsNoBots": "{tools} · без помощников",
-  "admin.plugins.sum.bots": { one: "{count} помощник", few: "{count} помощника", many: "{count} помощников", other: "{count} помощника" },
-  "admin.plugins.requests": { one: "{count} запрос", few: "{count} запроса", many: "{count} запросов", other: "{count} запроса" },
+  "admin.plugins.sum.bots": {
+    one: "{count} помощник",
+    few: "{count} помощника",
+    many: "{count} помощников",
+    other: "{count} помощника",
+  },
+  "admin.plugins.requests": {
+    one: "{count} запрос",
+    few: "{count} запроса",
+    many: "{count} запросов",
+    other: "{count} запроса",
+  },
   "admin.plugins.key.grant.none": "Нет помощников",
   "admin.plugins.key.grant.one": "1 помощник",
   "admin.plugins.key.grant.all": "Все помощники",
@@ -1714,118 +1762,189 @@ export const ru: Catalog<typeof EN> = {
   "admin.plugins.key.held.some": "{held} из {total} инструментов",
   "admin.plugins.key.notApproved": "Не одобрен",
   "admin.plugins.key.unreadableTitle": "Твой аккаунт",
-  "admin.plugins.key.unreadable": "Не удалось узнать, подключён ли здесь твой аккаунт. Перезагрузи страницу или проверь журналы этой установки, если это повторяется.",
-  "admin.plugins.key.noConsent": "{product} не получил обратно ссылку на согласие, поэтому ничего не подключено. Попробуй ещё раз или проверь настройку этого коннектора, если это повторяется.",
-  "admin.plugins.key.reassurance": "Настройка завершена и без него, и он доступен только твоим документам.",
-  "admin.plugins.key.notPlugin.description": "Плагина с таким именем нет ни здесь, ни в каталоге.",
+  "admin.plugins.key.unreadable":
+    "Не удалось узнать, подключён ли здесь твой аккаунт. Перезагрузи страницу или проверь журналы этой установки, если это повторяется.",
+  "admin.plugins.key.noConsent":
+    "{product} не получил обратно ссылку на согласие, поэтому ничего не подключено. Попробуй ещё раз или проверь настройку этого коннектора, если это повторяется.",
+  "admin.plugins.key.reassurance":
+    "Настройка завершена и без него, и он доступен только твоим документам.",
+  "admin.plugins.key.notPlugin.description":
+    "Плагина с таким именем нет ни здесь, ни в каталоге.",
   "admin.plugins.key.notPlugin.title": "Это не плагин",
   "admin.plugins.key.notPlugin.empty": "Нечего настраивать.",
   "admin.plugins.key.enable.title": "Включить для этой установки",
-  "admin.plugins.key.enable.on": "Помощникам можно выдать его инструменты. Выключение удаляет плагин и отзывает у всех помощников доступ к его инструментам.",
-  "admin.plugins.key.enable.off": "Ни один помощник не может обратиться к этому поставщику. Включи, чтобы настроить его и выдать помощникам его инструменты.",
+  "admin.plugins.key.enable.on":
+    "Помощникам можно выдать его инструменты. Выключение удаляет плагин и отзывает у всех помощников доступ к его инструментам.",
+  "admin.plugins.key.enable.off":
+    "Ни один помощник не может обратиться к этому поставщику. Включи, чтобы настроить его и выдать помощникам его инструменты.",
   "admin.plugins.key.enable.aria": "Включить {title} для этой установки",
   "admin.plugins.key.whose.title": "Чей аккаунт",
   "admin.plugins.key.whose.shared": "Один общий аккаунт для всех.",
   "admin.plugins.key.whose.personal": "Каждый подключает свой.",
   "admin.plugins.key.whose.makePersonal": "Сделать личным",
   "admin.plugins.key.whose.makeShared": "Сделать общим",
-  "admin.plugins.key.conn.oauth": "Этот поставщик отвечает от имени того, кто спрашивает. Установка регистрирует клиент OAuth, а каждый человек подключает свой аккаунт. Помощник видит только то, что может видеть этот человек.",
-  "admin.plugins.key.conn.secret": "Этот поставщик отвечает от имени того, кто спрашивает. Каждый человек вставляет свой пароль приложения на своей странице «Подключения». Регистрировать здесь нечего, а собственного пароля установка не хранит.",
-  "admin.plugins.key.conn.builtin": "Встроено в эту установку. Нет поставщика, к которому нужно обращаться, и нет учётных данных, которые нужно хранить. Вызов выполняется от имени того, кто его запросил.",
-  "admin.plugins.key.conn.bearer": "То, что эта установка отправляет поставщику. Одни учётные данные для всех.",
+  "admin.plugins.key.conn.oauth":
+    "Этот поставщик отвечает от имени того, кто спрашивает. Установка регистрирует клиент OAuth, а каждый человек подключает свой аккаунт. Помощник видит только то, что может видеть этот человек.",
+  "admin.plugins.key.conn.secret":
+    "Этот поставщик отвечает от имени того, кто спрашивает. Каждый человек вставляет свой пароль приложения на своей странице «Подключения». Регистрировать здесь нечего, а собственного пароля установка не хранит.",
+  "admin.plugins.key.conn.builtin":
+    "Встроено в эту установку. Нет поставщика, к которому нужно обращаться, и нет учётных данных, которые нужно хранить. Вызов выполняется от имени того, кто его запросил.",
+  "admin.plugins.key.conn.bearer":
+    "То, что эта установка отправляет поставщику. Одни учётные данные для всех.",
   "admin.plugins.key.conn.title": "Подключение",
-  "admin.plugins.key.builtin.desc": "Настраивать нечего. Эти инструменты работают внутри этой установки, на её собственных данных.",
+  "admin.plugins.key.builtin.desc":
+    "Настраивать нечего. Эти инструменты работают внутри этой установки, на её собственных данных.",
   "admin.plugins.key.builtin.badge": "Встроено",
   "admin.plugins.key.secret.title": "Пароль приложения",
-  "admin.plugins.key.secret.desc": "Каждый человек создаёт свой в Google и вставляет на своей странице «Подключения». Он даёт доступ ко всему почтовому ящику, поэтому то, что могут делать помощники, определяют инструменты, которые ты выдашь ниже.",
+  "admin.plugins.key.secret.desc":
+    "Каждый человек создаёт свой в Google и вставляет на своей странице «Подключения». Он даёт доступ ко всему почтовому ящику, поэтому то, что могут делать помощники, определяют инструменты, которые ты выдашь ниже.",
   "admin.plugins.key.secret.badge": "Для каждого",
   "admin.plugins.key.reach.title": "Как к этому обращаются",
   "admin.plugins.key.token.title": "Токен доступа",
-  "admin.plugins.key.token.desc": "Отправляется с каждым вызовом этого поставщика.",
+  "admin.plugins.key.token.desc":
+    "Отправляется с каждым вызовом этого поставщика.",
   "admin.plugins.key.saved": "Сохранено",
   "admin.plugins.key.notSet": "Не задано",
   "admin.plugins.key.client.title": "Клиент OAuth",
-  "admin.plugins.key.client.selfDesc": "Эта установка сама регистрируется у поставщика при первом подключении. Вставлять ничего не нужно.",
+  "admin.plugins.key.client.selfDesc":
+    "Эта установка сама регистрируется у поставщика при первом подключении. Вставлять ничего не нужно.",
   "admin.plugins.key.client.selfBadge": "Самостоятельная регистрация",
-  "admin.plugins.key.client.desc": "Представляет эту установку поставщику. Сам по себе он не может добраться до чьих-либо документов.",
+  "admin.plugins.key.client.desc":
+    "Представляет эту установку поставщику. Сам по себе он не может добраться до чьих-либо документов.",
   "admin.plugins.key.client.registered": "Зарегистрирован",
   "admin.plugins.key.client.notRegistered": "Не зарегистрирован",
-  "admin.plugins.key.team.connected": "Подключено{who}. Каждый помощник с этими инструментами действует от имени этого аккаунта.",
+  "admin.plugins.key.team.connected":
+    "Подключено{who}. Каждый помощник с этими инструментами действует от имени этого аккаунта.",
   "admin.plugins.key.team.as": " как {name}",
   "admin.plugins.key.team.by": " пользователем {name}",
-  "admin.plugins.key.team.disconnected": "Аккаунт команды не подключён. Помощники с этими инструментами получают отказ.",
+  "admin.plugins.key.team.disconnected":
+    "Аккаунт команды не подключён. Помощники с этими инструментами получают отказ.",
   "admin.plugins.key.team.heading": "Аккаунт команды",
-  "admin.plugins.key.team.notice": "Войди под аккаунтом команды, а не под своим.",
-  "admin.plugins.key.mine.connected": "Подключено. Помощник с этими инструментами использует твой {title} от твоего имени. {note}",
-  "admin.plugins.key.mine.tryConnect": "Подключи свой аккаунт, чтобы попробовать этот коннектор. {note}",
-  "admin.plugins.key.oauthAcct.connected": "Подключено. Помощник с этими инструментами использует твой {title} от твоего имени. Все остальные подключают свой.",
-  "admin.plugins.key.oauthAcct.connect": "Подключи свой аккаунт, чтобы попробовать этот коннектор. Настройка завершена и без него, и он доступен только твоим документам.",
+  "admin.plugins.key.team.notice":
+    "Войди под аккаунтом команды, а не под своим.",
+  "admin.plugins.key.mine.connected":
+    "Подключено. Помощник с этими инструментами использует твой {title} от твоего имени. {note}",
+  "admin.plugins.key.mine.tryConnect":
+    "Подключи свой аккаунт, чтобы попробовать этот коннектор. {note}",
+  "admin.plugins.key.oauthAcct.connected":
+    "Подключено. Помощник с этими инструментами использует твой {title} от твоего имени. Все остальные подключают свой.",
+  "admin.plugins.key.oauthAcct.connect":
+    "Подключи свой аккаунт, чтобы попробовать этот коннектор. Настройка завершена и без него, и он доступен только твоим документам.",
   "admin.plugins.key.connected": "Подключено",
   "admin.plugins.key.connect": "Подключить",
   "admin.plugins.key.instance.title": "Хост экземпляра",
-  "admin.plugins.key.instance.desc": "Этот поставщик даёт каждому клиенту собственное имя хоста. Перед сохранением оно проверяется по шаблону поставщика.",
+  "admin.plugins.key.instance.desc":
+    "Этот поставщик даёт каждому клиенту собственное имя хоста. Перед сохранением оно проверяется по шаблону поставщика.",
   "admin.plugins.key.docs.builtin": "Документация",
   "admin.plugins.key.docs.vendor": "Документация поставщика",
-  "admin.plugins.key.docs.builtinDesc": "Что предлагают эти инструменты, от тех, кто их поддерживает.",
-  "admin.plugins.key.docs.vendorDesc": "Что предлагает этот сервер, от тех, кто его поддерживает.",
-  "admin.plugins.key.redirect.dynamic": "Установка сама регистрирует свой URI перенаправления. У поставщика добавлять ничего не нужно.",
-  "admin.plugins.key.redirect.manual": "Добавь это в разрешённые URI перенаправления клиента у поставщика, точно как написано. Один неверный символ приведёт там к ошибке, в которой {product} не упоминается.",
-  "admin.plugins.key.redirect.noUrl": "У этой установки нет публичного URL, поэтому никто не может завершить подключение. Задай {env}.",
+  "admin.plugins.key.docs.builtinDesc":
+    "Что предлагают эти инструменты, от тех, кто их поддерживает.",
+  "admin.plugins.key.docs.vendorDesc":
+    "Что предлагает этот сервер, от тех, кто его поддерживает.",
+  "admin.plugins.key.redirect.dynamic":
+    "Установка сама регистрирует свой URI перенаправления. У поставщика добавлять ничего не нужно.",
+  "admin.plugins.key.redirect.manual":
+    "Добавь это в разрешённые URI перенаправления клиента у поставщика, точно как написано. Один неверный символ приведёт там к ошибке, в которой {product} не упоминается.",
+  "admin.plugins.key.redirect.noUrl":
+    "У этой установки нет публичного URL, поэтому никто не может завершить подключение. Задай {env}.",
   "admin.plugins.key.tools.refresh": "Обновить инструменты",
   "admin.plugins.key.tools.grant": "Выдать инструменты…",
-  "admin.plugins.key.tools.description": "Помощник видит только те инструменты, которые ему выданы. Каждый вызов проверяется в момент выполнения, поэтому отзыв доступа действует со следующего вызова.",
+  "admin.plugins.key.tools.description":
+    "Помощник видит только те инструменты, которые ему выданы. Каждый вызов проверяется в момент выполнения, поэтому отзыв доступа действует со следующего вызова.",
   "admin.plugins.key.tools.title": "Инструменты",
-  "admin.plugins.key.tools.empty": "Инструментов в списке нет. Обнови инструменты, чтобы проверить снова.",
+  "admin.plugins.key.tools.empty":
+    "Инструментов в списке нет. Обнови инструменты, чтобы проверить снова.",
   "admin.plugins.key.tools.writes": "вносит изменения",
   "admin.plugins.key.tools.reads": "читает",
   "admin.plugins.key.byBot": "По помощнику",
-  "admin.plugins.key.byBot.hidden": "Скрыто из твоего списка. Включай или выключай действия этого приложения по одному.",
-  "admin.plugins.key.byBot.shown": "Включай или выключай действия этого приложения по одному.",
-  "admin.plugins.key.gone.description": "Этот поставщик больше их не перечисляет. Ни один помощник их не видит и не может вызвать. Доступ по-прежнему сохранён и вернётся, если поставщик снова перечислит инструмент. Чтобы убрать его, используй страницу самого помощника.",
+  "admin.plugins.key.byBot.hidden":
+    "Скрыто из твоего списка. Включай или выключай действия этого приложения по одному.",
+  "admin.plugins.key.byBot.shown":
+    "Включай или выключай действия этого приложения по одному.",
+  "admin.plugins.key.gone.description":
+    "Этот поставщик больше их не перечисляет. Ни один помощник их не видит и не может вызвать. Доступ по-прежнему сохранён и вернётся, если поставщик снова перечислит инструмент. Чтобы убрать его, используй страницу самого помощника.",
   "admin.plugins.key.gone.title": "Выдано, но больше не перечисляется",
   "admin.plugins.key.gone.row": "{title} не перечисляет{asOf}.",
   "admin.plugins.key.gone.asOf": " по состоянию на последнее обновление",
   "admin.plugins.key.dlg.client": "Клиент OAuth для {title}",
   "admin.plugins.key.dlg.instance": "Хост экземпляра для {title}",
   "admin.plugins.key.dlg.token": "Токен доступа для {title}",
-  "admin.plugins.key.dlg.clientDesc": "Из консоли поставщика. Секрет сохраняется в хранилище этой установки и больше никогда не показывается.",
-  "admin.plugins.key.dlg.instanceDesc": "Твоё собственное имя хоста у этого поставщика. Перед сохранением оно проверяется по шаблону поставщика.",
-  "admin.plugins.key.dlg.tokenDesc": "Сохраняется в хранилище этой установки и больше никогда не показывается.",
+  "admin.plugins.key.dlg.clientDesc":
+    "Из консоли поставщика. Секрет сохраняется в хранилище этой установки и больше никогда не показывается.",
+  "admin.plugins.key.dlg.instanceDesc":
+    "Твоё собственное имя хоста у этого поставщика. Перед сохранением оно проверяется по шаблону поставщика.",
+  "admin.plugins.key.dlg.tokenDesc":
+    "Сохраняется в хранилище этой установки и больше никогда не показывается.",
   "admin.plugins.key.dlg.clientId": "ID клиента",
   "admin.plugins.key.dlg.clientSecret": "Секрет клиента",
   "admin.plugins.key.gr.title": "Выдать инструменты",
-  "admin.plugins.key.gr.description": "Каждая выдача — отдельная строка в Аудите. Инструменты, которые вносят изменения, при каждом вызове по-прежнему проверяются по границам.",
+  "admin.plugins.key.gr.description":
+    "Каждая выдача — отдельная строка в Аудите. Инструменты, которые вносят изменения, при каждом вызове по-прежнему проверяются по границам.",
   "admin.plugins.key.gr.to": "Кому",
   "admin.plugins.key.gr.reads": "Читает",
   "admin.plugins.key.gr.writes": "Вносит изменения",
   "admin.plugins.key.gr.selectAll": "Выбрать все",
   "admin.plugins.key.gr.button": "Выдать",
   "admin.plugins.key.gr.progress": "Выдаётся {current} из {total}…",
-  "admin.plugins.key.gr.summary": { one: "Выдать {count} инструмент: {names}.", few: "Выдать {count} инструмента: {names}.", many: "Выдать {count} инструментов: {names}.", other: "Выдать {count} инструмента: {names}." },
-  "admin.plugins.key.gr.changing": { one: "{count} вносит изменения.", few: "{count} вносят изменения.", many: "{count} вносят изменения.", other: "{count} вносит изменения." },
-  "admin.home.reach.desc": "Чего помощник может касаться за пределами {product} и какие на это есть ограничения.",
+  "admin.plugins.key.gr.summary": {
+    one: "Выдать {count} инструмент: {names}.",
+    few: "Выдать {count} инструмента: {names}.",
+    many: "Выдать {count} инструментов: {names}.",
+    other: "Выдать {count} инструмента: {names}.",
+  },
+  "admin.plugins.key.gr.changing": {
+    one: "{count} вносит изменения.",
+    few: "{count} вносят изменения.",
+    many: "{count} вносят изменения.",
+    other: "{count} вносит изменения.",
+  },
+  "admin.home.reach.desc":
+    "Чего помощник может касаться за пределами {product} и какие на это есть ограничения.",
   "admin.home.credentials.desc": "Ключи и токены этой установки.",
-  "admin.home.boundaries.desc": "То, что ни один помощник не должен делать никогда.",
-  "admin.home.approvals.desc": "О чём помощники участников должны спрашивать, прежде чем действовать.",
-  "admin.home.computers.desc": "Машины, на которых помощники запускают инструменты.",
-  "admin.home.do.desc": "Приложения, навыки и элементы интерфейса, которые может использовать любой помощник.",
-  "admin.home.plugins.desc": "Сервисы, до которых может добраться {product}, и какие помощники могут ими пользоваться.",
-  "admin.home.skills.desc": "Именованные инструкции, которые любой может запустить через /.",
-  "admin.home.learning.desc": "Учиться на завершённых разговорах и просматривать предложенные навыки.",
-  "admin.home.components.desc": "Собственные элементы, которые помощник может нарисовать в разговоре.",
-  "admin.home.playground.desc": "Напиши компонент и смотри, как он отрисовывается по мере набора.",
-  "admin.home.engines.desc": "ИИ-движки, на которых работают участники, и может ли каждый из них отвечать сейчас.",
-  "admin.home.people.desc": "Все, кто входил в систему, кто администраторы и у кого отозван доступ.",
-  "admin.home.enterprise.desc": "Роли и группы, обязательный SSO, SCIM, сетевая политика, списки разрешённых MCP и моделей, Action Recording.",
-  "admin.home.idp.desc": "Поставщик SAML или OpenID Connect твоей компании, подбирается по домену электронной почты.",
+  "admin.home.boundaries.desc":
+    "То, что ни один помощник не должен делать никогда.",
+  "admin.home.approvals.desc":
+    "О чём помощники участников должны спрашивать, прежде чем действовать.",
+  "admin.home.computers.desc":
+    "Машины, на которых помощники запускают инструменты.",
+  "admin.home.do.desc":
+    "Приложения, навыки и элементы интерфейса, которые может использовать любой помощник.",
+  "admin.home.plugins.desc":
+    "Сервисы, до которых может добраться {product}, и какие помощники могут ими пользоваться.",
+  "admin.home.skills.desc":
+    "Именованные инструкции, которые любой может запустить через /.",
+  "admin.home.learning.desc":
+    "Учиться на завершённых разговорах и просматривать предложенные навыки.",
+  "admin.home.components.desc":
+    "Собственные элементы, которые помощник может нарисовать в разговоре.",
+  "admin.home.playground.desc":
+    "Напиши компонент и смотри, как он отрисовывается по мере набора.",
+  "admin.home.engines.desc":
+    "ИИ-движки, на которых работают участники, и может ли каждый из них отвечать сейчас.",
+  "admin.home.people.desc":
+    "Все, кто входил в систему, кто администраторы и у кого отозван доступ.",
+  "admin.home.enterprise.desc":
+    "Роли и группы, обязательный SSO, SCIM, сетевая политика, списки разрешённых MCP и моделей, Action Recording.",
+  "admin.home.idp.desc":
+    "Поставщик SAML или OpenID Connect твоей компании, подбирается по домену электронной почты.",
   "admin.home.audit.desc": "Каждое действие в {product} и кто его совершил.",
-  "admin.home.description": "Настройки для всех в этой установке. Изменение здесь затрагивает каждого человека и каждого помощника.",
-  "admin.plugins.directoryError": "Не удалось загрузить настройки плагинов. Перезагрузи страницу.",
-  "admin.components.description": "Чем может отвечать каждый помощник. Каждый опубликованный компонент включён для каждого помощника. Выключи один, и этот помощник его не увидит. Изменения и отказы видны в Аудите.",
-  "admin.components.loadError": "Не удалось загрузить компоненты. Перезагрузи страницу.",
+  "admin.home.description":
+    "Настройки для всех в этой установке. Изменение здесь затрагивает каждого человека и каждого помощника.",
+  "admin.plugins.directoryError":
+    "Не удалось загрузить настройки плагинов. Перезагрузи страницу.",
+  "admin.components.description":
+    "Чем может отвечать каждый помощник. Каждый опубликованный компонент включён для каждого помощника. Выключи один, и этот помощник его не увидит. Изменения и отказы видны в Аудите.",
+  "admin.components.loadError":
+    "Не удалось загрузить компоненты. Перезагрузи страницу.",
   "admin.components.emptyTitle": "Компонентов пока нет",
-  "admin.components.emptyDesc": "Компоненты, которые могут использовать твои помощники, появятся здесь.",
+  "admin.components.emptyDesc":
+    "Компоненты, которые могут использовать твои помощники, появятся здесь.",
   "admin.audit.silence.quiet": "Молчит {seconds} с",
   "admin.audit.silence.nothing": "{quiet}, ничего не сказав",
-  "admin.audit.silence.after": { one: "{quiet}, после {count} фрагмента", few: "{quiet}, после {count} фрагментов", many: "{quiet}, после {count} фрагментов", other: "{quiet}, после {count} фрагмента" },
+  "admin.audit.silence.after": {
+    one: "{quiet}, после {count} фрагмента",
+    few: "{quiet}, после {count} фрагментов",
+    many: "{quiet}, после {count} фрагментов",
+    other: "{quiet}, после {count} фрагмента",
+  },
 };

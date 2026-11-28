@@ -1528,70 +1528,96 @@ export const de: Catalog<typeof EN> = {
   "admin.nav.idp": "Identitätsanbieter",
   "admin.nav.audit": "Audit",
   "admin.enterprise.mode.allow_all": "Gesamten Netzwerkzugriff erlauben",
-  "admin.enterprise.mode.defaults_plus_allowlist": "Standardliste plus Team-Zulassungsliste",
+  "admin.enterprise.mode.defaults_plus_allowlist":
+    "Standardliste plus Team-Zulassungsliste",
   "admin.enterprise.mode.allowlist_only": "Nur Team-Zulassungsliste",
-  "admin.enterprise.noPolicy": "Keine Richtlinie. Die Computer der Assistenten erreichen alles, was der Cluster erlaubt",
+  "admin.enterprise.noPolicy":
+    "Keine Richtlinie. Die Computer der Assistenten erreichen alles, was der Cluster erlaubt",
   "admin.enterprise.locked": " · gesperrt",
-  "admin.enterprise.loadError": "Die Unternehmenssteuerung konnte nicht geladen werden. Lade die Seite neu.",
+  "admin.enterprise.loadError":
+    "Die Unternehmenssteuerung konnte nicht geladen werden. Lade die Seite neu.",
   "admin.enterprise.title": "Unternehmenssteuerung",
-  "admin.enterprise.description": "Was Mitglieder nutzen können, wie die Computer der Assistenten das Netzwerk erreichen und was aufgezeichnet wird. Jede Änderung erscheint im Audit.",
-  "admin.enterprise.signin.description": "Adressen in {env} können sich immer per Social-Login anmelden, als Notzugang. Jede dieser Anmeldungen erscheint im Audit.",
+  "admin.enterprise.description":
+    "Was Mitglieder nutzen können, wie die Computer der Assistenten das Netzwerk erreichen und was aufgezeichnet wird. Jede Änderung erscheint im Audit.",
+  "admin.enterprise.signin.description":
+    "Adressen in {env} können sich immer per Social-Login anmelden, als Notzugang. Jede dieser Anmeldungen erscheint im Audit.",
   "admin.enterprise.signin.title": "Anmeldung",
   "admin.enterprise.sso.title": "SSO verlangen",
-  "admin.enterprise.sso.on": "Personen können sich nur über einen registrierten SAML- oder OpenID-Connect-Anbieter anmelden.",
-  "admin.enterprise.sso.off": "Personen können sich auch mit Google, Microsoft oder Okta anmelden.",
+  "admin.enterprise.sso.on":
+    "Personen können sich nur über einen registrierten SAML- oder OpenID-Connect-Anbieter anmelden.",
+  "admin.enterprise.sso.off":
+    "Personen können sich auch mit Google, Microsoft oder Okta anmelden.",
   "admin.enterprise.scim.title": "SCIM-Provisionierung",
-  "admin.enterprise.scim.on": "Basis-URL des Verzeichnisses {url} mit dem Bearer-Token {env}. Beim Deprovisionieren werden Sitzungen beendet, die Adresse gesperrt, die Zugangsdaten der Konnektoren eingezogen und die Computer der Person gestoppt.",
+  "admin.enterprise.scim.on":
+    "Basis-URL des Verzeichnisses {url} mit dem Bearer-Token {env}. Beim Deprovisionieren werden Sitzungen beendet, die Adresse gesperrt, die Zugangsdaten der Konnektoren eingezogen und die Computer der Person gestoppt.",
   "admin.enterprise.scim.unsetUrl": "(BETTER_AUTH_URL setzen)",
-  "admin.enterprise.scim.off": "Aus. Setze {env}, um die Provisionierung von Okta, Entra oder einem anderen Verzeichnis anzunehmen.",
+  "admin.enterprise.scim.off":
+    "Aus. Setze {env}, um die Provisionierung von Okta, Entra oder einem anderen Verzeichnis anzunehmen.",
   "admin.enterprise.on": "An",
   "admin.enterprise.off": "Aus",
-  "admin.enterprise.cap.description": "Jeder Schalter gilt für die gesamte Organisation. Eine Rolle kann ihn überschreiben, und eine Verzeichnisgruppe kann eine Fähigkeit erhalten, die die Organisation ausgeschaltet hat.",
+  "admin.enterprise.cap.description":
+    "Jeder Schalter gilt für die gesamte Organisation. Eine Rolle kann ihn überschreiben, und eine Verzeichnisgruppe kann eine Fähigkeit erhalten, die die Organisation ausgeschaltet hat.",
   "admin.enterprise.cap.title": "Fähigkeiten",
-  "admin.enterprise.cap.offFor": "Für alle aus, außer eine Rolle oder Gruppe schaltet sie ein.",
+  "admin.enterprise.cap.offFor":
+    "Für alle aus, außer eine Rolle oder Gruppe schaltet sie ein.",
   "admin.enterprise.over.title": "Überschreibungen für Rollen und Gruppen",
   "admin.enterprise.over.none": "Keine. Alle bekommen die Schalter oben",
   "admin.enterprise.over.set": "{count} gesetzt",
-  "admin.enterprise.net.description": "Wohin sich die Computer der Assistenten verbinden dürfen. Änderungen erreichen laufende Computer innerhalb von Sekunden, ohne Neustart. Eine Gruppenrichtlinie ersetzt die der Organisation, außer diese ist gesperrt.",
+  "admin.enterprise.net.description":
+    "Wohin sich die Computer der Assistenten verbinden dürfen. Änderungen erreichen laufende Computer innerhalb von Sekunden, ohne Neustart. Eine Gruppenrichtlinie ersetzt die der Organisation, außer diese ist gesperrt.",
   "admin.enterprise.net.title": "Netzwerk",
   "admin.enterprise.net.org": "Organisation",
   "admin.enterprise.net.group": "Gruppe: {name}",
   "admin.enterprise.net.addGroup": "Gruppenrichtlinie hinzufügen",
-  "admin.enterprise.mcp.description": "Bei eingeschalteter Zulassungsliste können Assistenten nur Tools auf den hier genehmigten MCP-Servern aufrufen. Aufrufe an jeden anderen Server werden abgelehnt.",
+  "admin.enterprise.mcp.description":
+    "Bei eingeschalteter Zulassungsliste können Assistenten nur Tools auf den hier genehmigten MCP-Servern aufrufen. Aufrufe an jeden anderen Server werden abgelehnt.",
   "admin.enterprise.mcp.title": "MCP-Server",
   "admin.enterprise.mcp.only": "Nur genehmigte Server",
   "admin.enterprise.mcp.approved": "{count} genehmigt",
-  "admin.enterprise.mcp.offDesc": "Aus. Assistenten können jeden registrierten Server nutzen, auf den sie Zugriff haben.",
+  "admin.enterprise.mcp.offDesc":
+    "Aus. Assistenten können jeden registrierten Server nutzen, auf den sie Zugriff haben.",
   "admin.enterprise.mcp.onlyAria": "Nur genehmigte MCP-Server",
   "admin.enterprise.mcp.approveAria": "{name} genehmigen",
-  "admin.enterprise.models.description": "Der integrierte Assistent läuft mit {model}. Ein entfernter Assistent wählt selbst, und das Modell, das er meldet, wird aufgezeichnet.",
-  "admin.enterprise.models.configured": "dem in dieser Installation konfigurierten Modell",
+  "admin.enterprise.models.description":
+    "Der integrierte Assistent läuft mit {model}. Ein entfernter Assistent wählt selbst, und das Modell, das er meldet, wird aufgezeichnet.",
+  "admin.enterprise.models.configured":
+    "dem in dieser Installation konfigurierten Modell",
   "admin.enterprise.models.title": "Modelle",
   "admin.enterprise.models.allowlist": "Modell-Zulassungsliste",
-  "admin.enterprise.models.allowlistOn": "Ein integrierter Assistent mit einem nicht gelisteten Modell wird abgelehnt, bevor er läuft.",
-  "admin.enterprise.models.allowlistOff": "Aus. Jedes Modell kann verwendet werden.",
+  "admin.enterprise.models.allowlistOn":
+    "Ein integrierter Assistent mit einem nicht gelisteten Modell wird abgelehnt, bevor er läuft.",
+  "admin.enterprise.models.allowlistOff":
+    "Aus. Jedes Modell kann verwendet werden.",
   "admin.enterprise.models.allowed": "Erlaubte Modelle",
   "admin.enterprise.models.none": "Keine aufgeführt",
-  "admin.enterprise.models.listDesc": "Ein Modell pro Zeile, als Anbieter/Modell, zum Beispiel {example}.",
-  "admin.enterprise.rec.description": "Setze {env}, um Audit-Ereignisse und Aktionen der Assistenten an deinen OpenTelemetry-Collector oder dein SIEM zu streamen. Sie tragen das Tag {tag}.",
+  "admin.enterprise.models.listDesc":
+    "Ein Modell pro Zeile, als Anbieter/Modell, zum Beispiel {example}.",
+  "admin.enterprise.rec.description":
+    "Setze {env}, um Audit-Ereignisse und Aktionen der Assistenten an deinen OpenTelemetry-Collector oder dein SIEM zu streamen. Sie tragen das Tag {tag}.",
   "admin.enterprise.rec.title": "Aufzeichnung und Export",
   "admin.enterprise.rec.action": "Action Recording",
-  "admin.enterprise.rec.actionOn": "Shell-Befehle, die Assistenten ausführen, werden ohne Geheimnisse aufgezeichnet und {days} Tage aufbewahrt.",
+  "admin.enterprise.rec.actionOn":
+    "Shell-Befehle, die Assistenten ausführen, werden ohne Geheimnisse aufgezeichnet und {days} Tage aufbewahrt.",
   "admin.enterprise.rec.actionOff": "Aus. Befehle erscheinen nur im Audit.",
   "admin.enterprise.rec.otel": "OpenTelemetry-Export",
   "admin.enterprise.rec.otelOn": "Export über OTLP/HTTP.",
-  "admin.enterprise.rec.otelOff": "Nicht eingerichtet. Setze {env} auf dem Server.",
-  "admin.enterprise.comp.description": "Das Stoppen eines Computers beendet die laufenden Assistenten und behält seine Festplatte. Beim nächsten Einsatz bekommt der Assistent einen frischen Computer. Um die Computer einer einzelnen Person zu stoppen, gehe zu Personen.",
+  "admin.enterprise.rec.otelOff":
+    "Nicht eingerichtet. Setze {env} auf dem Server.",
+  "admin.enterprise.comp.description":
+    "Das Stoppen eines Computers beendet die laufenden Assistenten und behält seine Festplatte. Beim nächsten Einsatz bekommt der Assistent einen frischen Computer. Um die Computer einer einzelnen Person zu stoppen, gehe zu Personen.",
   "admin.enterprise.comp.title": "Computer",
   "admin.enterprise.comp.stopInactive": "Inaktive Computer stoppen",
   "admin.enterprise.comp.afterDays": "Nach {days} Tagen ohne Nutzung",
-  "admin.enterprise.usage.error": "Die Modellnutzung konnte nicht geladen werden. Lade die Seite neu.",
-  "admin.enterprise.usage.empty": "Keine Läufe von Assistenten in den letzten 30 Tagen.",
+  "admin.enterprise.usage.error":
+    "Die Modellnutzung konnte nicht geladen werden. Lade die Seite neu.",
+  "admin.enterprise.usage.empty":
+    "Keine Läufe von Assistenten in den letzten 30 Tagen.",
   "admin.enterprise.usage.runs": "{runs} Läufe von {people} {who} in 30 Tagen",
   "admin.enterprise.usage.person": "Person",
   "admin.enterprise.usage.people": "Personen",
   "admin.enterprise.usage.refused": " · {count} nicht auf der Zulassungsliste",
-  "admin.enterprise.recorded.error": "Die aufgezeichneten Aktionen konnten nicht geladen werden. Lade die Seite neu.",
+  "admin.enterprise.recorded.error":
+    "Die aufgezeichneten Aktionen konnten nicht geladen werden. Lade die Seite neu.",
   "admin.enterprise.recorded.empty": "Noch keine Befehle aufgezeichnet.",
   "admin.enterprise.recorded.local": "Rechner des Mitglieds",
   "admin.enterprise.recorded.bot": "Assistent {id}",
@@ -1602,8 +1628,10 @@ export const de: Catalog<typeof EN> = {
   "admin.enterprise.ov.members": "Mitglieder",
   "admin.enterprise.ov.group": "Gruppe: {name}",
   "admin.enterprise.ov.scope": "Geltungsbereich",
-  "admin.enterprise.ov.groupNote": "Eine Gruppe kann nur etwas hinzufügen. Erlauben gibt ihren Mitgliedern die Fähigkeit, auch wenn die Organisation sie ausgeschaltet hat.",
-  "admin.enterprise.ov.roleNote": "Die Einstellung einer Rolle ersetzt den Organisationsschalter für alle mit dieser Rolle.",
+  "admin.enterprise.ov.groupNote":
+    "Eine Gruppe kann nur etwas hinzufügen. Erlauben gibt ihren Mitgliedern die Fähigkeit, auch wenn die Organisation sie ausgeschaltet hat.",
+  "admin.enterprise.ov.roleNote":
+    "Die Einstellung einer Rolle ersetzt den Organisationsschalter für alle mit dieser Rolle.",
   "admin.enterprise.ov.forScope": "{title} für {scope}",
   "admin.enterprise.ov.inherit": "Übernehmen",
   "admin.enterprise.ov.grant": "Erlauben",
@@ -1612,18 +1640,25 @@ export const de: Catalog<typeof EN> = {
   "admin.enterprise.netd.groupLabel": "Gruppe",
   "admin.enterprise.netd.mode": "Modus",
   "admin.enterprise.netd.allowlist": "Zulassungsliste",
-  "admin.enterprise.netd.help": "Eine pro Zeile. Eine Domain umfasst ihre Subdomains. *.name umfasst nur Subdomains. Ein IP-Bereich kann Ports auflisten. Standardmäßig gelten {first} und {more} weitere Paket- und Quell-Hosts.",
-  "admin.enterprise.netd.lock": "Sperren, damit Gruppen diese Richtlinie nicht ersetzen können",
+  "admin.enterprise.netd.help":
+    "Eine pro Zeile. Eine Domain umfasst ihre Subdomains. *.name umfasst nur Subdomains. Ein IP-Bereich kann Ports auflisten. Standardmäßig gelten {first} und {more} weitere Paket- und Quell-Hosts.",
+  "admin.enterprise.netd.lock":
+    "Sperren, damit Gruppen diese Richtlinie nicht ersetzen können",
   "admin.enterprise.netd.remove": "Richtlinie entfernen",
   "admin.enterprise.days.label": "Tage ohne Nutzung",
   "admin.enterprise.days.help": "0 schaltet es aus. Wird stündlich geprüft.",
   "admin.plugins.title": "Plugins",
-  "admin.plugins.description": "Was diese Installation erreichen kann und welche Assistenten es nutzen dürfen. Ein hinzugefügtes Plugin gilt für alle. Auf seiner Seite wählst du, welche Assistenten seine Tools bekommen.",
-  "admin.plugins.loadError": "Die Plugins konnten nicht geladen werden. Lade die Seite neu.",
-  "admin.plugins.connected.description": "Für alle hinzugefügt. Öffne eines, um es einzurichten und zu wählen, welche Assistenten seine Tools bekommen.",
+  "admin.plugins.description":
+    "Was diese Installation erreichen kann und welche Assistenten es nutzen dürfen. Ein hinzugefügtes Plugin gilt für alle. Auf seiner Seite wählst du, welche Assistenten seine Tools bekommen.",
+  "admin.plugins.loadError":
+    "Die Plugins konnten nicht geladen werden. Lade die Seite neu.",
+  "admin.plugins.connected.description":
+    "Für alle hinzugefügt. Öffne eines, um es einzurichten und zu wählen, welche Assistenten seine Tools bekommen.",
   "admin.plugins.connected.title": "Verbunden",
-  "admin.plugins.connected.empty": "Noch nichts verbunden. Wähle unten eines aus der Liste.",
-  "admin.plugins.explore.description": "Geprüfte Server aus erster Hand. Öffne einen, um ihn hinzuzufügen.",
+  "admin.plugins.connected.empty":
+    "Noch nichts verbunden. Wähle unten eines aus der Liste.",
+  "admin.plugins.explore.description":
+    "Geprüfte Server aus erster Hand. Öffne einen, um ihn hinzuzufügen.",
   "admin.plugins.explore.title": "Plugins entdecken",
   "admin.plugins.explore.empty": "Jedes Plugin im Katalog ist verbunden.",
   "admin.plugins.notAdded": "Nicht hinzugefügt",
@@ -1632,8 +1667,14 @@ export const de: Catalog<typeof EN> = {
   "admin.plugins.sum.noTools": "Noch keine Tools",
   "admin.plugins.sum.tools": { one: "{count} Tool", other: "{count} Tools" },
   "admin.plugins.sum.toolsNoBots": "{tools} · keine Assistenten",
-  "admin.plugins.sum.bots": { one: "{count} Assistent", other: "{count} Assistenten" },
-  "admin.plugins.requests": { one: "{count} Anfrage", other: "{count} Anfragen" },
+  "admin.plugins.sum.bots": {
+    one: "{count} Assistent",
+    other: "{count} Assistenten",
+  },
+  "admin.plugins.requests": {
+    one: "{count} Anfrage",
+    other: "{count} Anfragen",
+  },
   "admin.plugins.key.grant.none": "Keine Assistenten",
   "admin.plugins.key.grant.one": "1 Assistent",
   "admin.plugins.key.grant.all": "Alle Assistenten",
@@ -1644,118 +1685,183 @@ export const de: Catalog<typeof EN> = {
   "admin.plugins.key.held.some": "{held} von {total} Tools",
   "admin.plugins.key.notApproved": "Nicht genehmigt",
   "admin.plugins.key.unreadableTitle": "Dein Konto",
-  "admin.plugins.key.unreadable": "Es konnte nicht geladen werden, ob du hier ein Konto verbunden hast. Lade die Seite neu oder prüfe die Protokolle dieser Installation, falls es weiter auftritt.",
-  "admin.plugins.key.noConsent": "{product} hat keinen Einwilligungslink zurückbekommen, also wurde nichts verbunden. Versuche es erneut oder prüfe die Einrichtung dieses Konnektors, falls es weiter auftritt.",
-  "admin.plugins.key.reassurance": "Die Einrichtung ist auch ohne sie abgeschlossen, und sie erreicht nur deine Dokumente.",
-  "admin.plugins.key.notPlugin.description": "Es gibt kein Plugin mit diesem Namen, weder hier noch im Katalog.",
+  "admin.plugins.key.unreadable":
+    "Es konnte nicht geladen werden, ob du hier ein Konto verbunden hast. Lade die Seite neu oder prüfe die Protokolle dieser Installation, falls es weiter auftritt.",
+  "admin.plugins.key.noConsent":
+    "{product} hat keinen Einwilligungslink zurückbekommen, also wurde nichts verbunden. Versuche es erneut oder prüfe die Einrichtung dieses Konnektors, falls es weiter auftritt.",
+  "admin.plugins.key.reassurance":
+    "Die Einrichtung ist auch ohne sie abgeschlossen, und sie erreicht nur deine Dokumente.",
+  "admin.plugins.key.notPlugin.description":
+    "Es gibt kein Plugin mit diesem Namen, weder hier noch im Katalog.",
   "admin.plugins.key.notPlugin.title": "Kein Plugin",
   "admin.plugins.key.notPlugin.empty": "Nichts zu konfigurieren.",
   "admin.plugins.key.enable.title": "Für diese Installation aktivieren",
-  "admin.plugins.key.enable.on": "Assistenten können seine Tools bekommen. Wenn du das ausschaltest, wird es entfernt, und kein Assistent hat mehr Zugriff auf seine Tools.",
-  "admin.plugins.key.enable.off": "Kein Assistent kann diesen Anbieter erreichen. Schalte es ein, um es einzurichten und Assistenten seine Tools zu geben.",
+  "admin.plugins.key.enable.on":
+    "Assistenten können seine Tools bekommen. Wenn du das ausschaltest, wird es entfernt, und kein Assistent hat mehr Zugriff auf seine Tools.",
+  "admin.plugins.key.enable.off":
+    "Kein Assistent kann diesen Anbieter erreichen. Schalte es ein, um es einzurichten und Assistenten seine Tools zu geben.",
   "admin.plugins.key.enable.aria": "{title} für diese Installation aktivieren",
   "admin.plugins.key.whose.title": "Wessen Konto",
   "admin.plugins.key.whose.shared": "Ein gemeinsames Konto für alle.",
   "admin.plugins.key.whose.personal": "Jede Person verbindet ihr eigenes.",
   "admin.plugins.key.whose.makePersonal": "Persönlich machen",
   "admin.plugins.key.whose.makeShared": "Gemeinsam machen",
-  "admin.plugins.key.conn.oauth": "Dieser Anbieter antwortet als die Person, die fragt. Die Installation registriert einen OAuth-Client, und jede Person verbindet ihr eigenes Konto. Ein Assistent sieht nur, was diese Person sehen kann.",
-  "admin.plugins.key.conn.secret": "Dieser Anbieter antwortet als die Person, die fragt. Jede Person fügt ihr eigenes App-Passwort auf ihrer Seite Verbindungen ein. Hier gibt es nichts zu registrieren, und die Installation speichert kein eigenes Passwort.",
-  "admin.plugins.key.conn.builtin": "In diese Installation eingebaut. Es gibt keinen Anbieter, den man erreichen müsste, und keine Zugangsdaten, die man aufbewahrt. Ein Aufruf läuft als die Person, die ihn ausgelöst hat.",
-  "admin.plugins.key.conn.bearer": "Was diese Installation an den Anbieter sendet. Ein einziger Zugangsdatensatz für alle.",
+  "admin.plugins.key.conn.oauth":
+    "Dieser Anbieter antwortet als die Person, die fragt. Die Installation registriert einen OAuth-Client, und jede Person verbindet ihr eigenes Konto. Ein Assistent sieht nur, was diese Person sehen kann.",
+  "admin.plugins.key.conn.secret":
+    "Dieser Anbieter antwortet als die Person, die fragt. Jede Person fügt ihr eigenes App-Passwort auf ihrer Seite Verbindungen ein. Hier gibt es nichts zu registrieren, und die Installation speichert kein eigenes Passwort.",
+  "admin.plugins.key.conn.builtin":
+    "In diese Installation eingebaut. Es gibt keinen Anbieter, den man erreichen müsste, und keine Zugangsdaten, die man aufbewahrt. Ein Aufruf läuft als die Person, die ihn ausgelöst hat.",
+  "admin.plugins.key.conn.bearer":
+    "Was diese Installation an den Anbieter sendet. Ein einziger Zugangsdatensatz für alle.",
   "admin.plugins.key.conn.title": "Verbindung",
-  "admin.plugins.key.builtin.desc": "Nichts einzurichten. Diese Tools laufen innerhalb dieser Installation, mit ihren eigenen Daten.",
+  "admin.plugins.key.builtin.desc":
+    "Nichts einzurichten. Diese Tools laufen innerhalb dieser Installation, mit ihren eigenen Daten.",
   "admin.plugins.key.builtin.badge": "Eingebaut",
   "admin.plugins.key.secret.title": "App-Passwort",
-  "admin.plugins.key.secret.desc": "Jede Person erstellt ihr eigenes bei Google und fügt es auf ihrer Seite Verbindungen ein. Es erreicht das gesamte Postfach, deshalb legen die Tools, die du unten vergibst, fest, was Assistenten tun dürfen.",
+  "admin.plugins.key.secret.desc":
+    "Jede Person erstellt ihr eigenes bei Google und fügt es auf ihrer Seite Verbindungen ein. Es erreicht das gesamte Postfach, deshalb legen die Tools, die du unten vergibst, fest, was Assistenten tun dürfen.",
   "admin.plugins.key.secret.badge": "Pro Person",
   "admin.plugins.key.reach.title": "So wird es erreicht",
   "admin.plugins.key.token.title": "Zugriffstoken",
-  "admin.plugins.key.token.desc": "Wird bei jedem Aufruf an diesen Anbieter mitgesendet.",
+  "admin.plugins.key.token.desc":
+    "Wird bei jedem Aufruf an diesen Anbieter mitgesendet.",
   "admin.plugins.key.saved": "Gespeichert",
   "admin.plugins.key.notSet": "Nicht gesetzt",
   "admin.plugins.key.client.title": "OAuth-Client",
-  "admin.plugins.key.client.selfDesc": "Diese Installation registriert sich beim ersten Verbinden selbst beim Anbieter. Es gibt nichts einzufügen.",
+  "admin.plugins.key.client.selfDesc":
+    "Diese Installation registriert sich beim ersten Verbinden selbst beim Anbieter. Es gibt nichts einzufügen.",
   "admin.plugins.key.client.selfBadge": "Selbst registriert",
-  "admin.plugins.key.client.desc": "Identifiziert diese Installation gegenüber dem Anbieter. Allein kann er auf niemandes Dokumente zugreifen.",
+  "admin.plugins.key.client.desc":
+    "Identifiziert diese Installation gegenüber dem Anbieter. Allein kann er auf niemandes Dokumente zugreifen.",
   "admin.plugins.key.client.registered": "Registriert",
   "admin.plugins.key.client.notRegistered": "Nicht registriert",
-  "admin.plugins.key.team.connected": "Verbunden{who}. Jeder Assistent mit diesen Tools handelt als dieses Konto.",
+  "admin.plugins.key.team.connected":
+    "Verbunden{who}. Jeder Assistent mit diesen Tools handelt als dieses Konto.",
   "admin.plugins.key.team.as": " als {name}",
   "admin.plugins.key.team.by": " von {name}",
-  "admin.plugins.key.team.disconnected": "Es ist kein Team-Konto verbunden. Assistenten mit diesen Tools werden abgelehnt.",
+  "admin.plugins.key.team.disconnected":
+    "Es ist kein Team-Konto verbunden. Assistenten mit diesen Tools werden abgelehnt.",
   "admin.plugins.key.team.heading": "Team-Konto",
-  "admin.plugins.key.team.notice": "Melde dich mit dem Team-Konto an, nicht mit deinem eigenen.",
-  "admin.plugins.key.mine.connected": "Verbunden. Ein Assistent mit diesen Tools nutzt dein {title} als du. {note}",
-  "admin.plugins.key.mine.tryConnect": "Verbinde dein eigenes Konto, um diesen Konnektor auszuprobieren. {note}",
-  "admin.plugins.key.oauthAcct.connected": "Verbunden. Ein Assistent mit diesen Tools nutzt dein {title} als du. Alle anderen verbinden ihr eigenes.",
-  "admin.plugins.key.oauthAcct.connect": "Verbinde dein eigenes Konto, um diesen Konnektor auszuprobieren. Die Einrichtung ist auch ohne es abgeschlossen, und es erreicht nur deine Dokumente.",
+  "admin.plugins.key.team.notice":
+    "Melde dich mit dem Team-Konto an, nicht mit deinem eigenen.",
+  "admin.plugins.key.mine.connected":
+    "Verbunden. Ein Assistent mit diesen Tools nutzt dein {title} als du. {note}",
+  "admin.plugins.key.mine.tryConnect":
+    "Verbinde dein eigenes Konto, um diesen Konnektor auszuprobieren. {note}",
+  "admin.plugins.key.oauthAcct.connected":
+    "Verbunden. Ein Assistent mit diesen Tools nutzt dein {title} als du. Alle anderen verbinden ihr eigenes.",
+  "admin.plugins.key.oauthAcct.connect":
+    "Verbinde dein eigenes Konto, um diesen Konnektor auszuprobieren. Die Einrichtung ist auch ohne es abgeschlossen, und es erreicht nur deine Dokumente.",
   "admin.plugins.key.connected": "Verbunden",
   "admin.plugins.key.connect": "Verbinden",
   "admin.plugins.key.instance.title": "Instanz-Host",
-  "admin.plugins.key.instance.desc": "Dieser Anbieter gibt jedem Kunden einen eigenen Hostnamen. Er wird vor dem Speichern gegen das Muster des Anbieters geprüft.",
+  "admin.plugins.key.instance.desc":
+    "Dieser Anbieter gibt jedem Kunden einen eigenen Hostnamen. Er wird vor dem Speichern gegen das Muster des Anbieters geprüft.",
   "admin.plugins.key.docs.builtin": "Dokumentation",
   "admin.plugins.key.docs.vendor": "Dokumentation des Anbieters",
-  "admin.plugins.key.docs.builtinDesc": "Was diese Tools bieten, von den Leuten, die sie pflegen.",
-  "admin.plugins.key.docs.vendorDesc": "Was dieser Server bietet, von den Leuten, die ihn pflegen.",
-  "admin.plugins.key.redirect.dynamic": "Die Installation registriert ihre Weiterleitungs-URI selbst. Beim Anbieter gibt es nichts hinzuzufügen.",
-  "admin.plugins.key.redirect.manual": "Füge dies beim Anbieter zu den autorisierten Weiterleitungs-URIs des Clients hinzu, genau so geschrieben. Ein falsches Zeichen scheitert dort, mit einer Fehlermeldung, die {product} nicht erwähnt.",
-  "admin.plugins.key.redirect.noUrl": "Diese Installation hat keine öffentliche URL, deshalb kann niemand das Verbinden abschließen. Setze {env}.",
+  "admin.plugins.key.docs.builtinDesc":
+    "Was diese Tools bieten, von den Leuten, die sie pflegen.",
+  "admin.plugins.key.docs.vendorDesc":
+    "Was dieser Server bietet, von den Leuten, die ihn pflegen.",
+  "admin.plugins.key.redirect.dynamic":
+    "Die Installation registriert ihre Weiterleitungs-URI selbst. Beim Anbieter gibt es nichts hinzuzufügen.",
+  "admin.plugins.key.redirect.manual":
+    "Füge dies beim Anbieter zu den autorisierten Weiterleitungs-URIs des Clients hinzu, genau so geschrieben. Ein falsches Zeichen scheitert dort, mit einer Fehlermeldung, die {product} nicht erwähnt.",
+  "admin.plugins.key.redirect.noUrl":
+    "Diese Installation hat keine öffentliche URL, deshalb kann niemand das Verbinden abschließen. Setze {env}.",
   "admin.plugins.key.tools.refresh": "Tools aktualisieren",
   "admin.plugins.key.tools.grant": "Tools vergeben…",
-  "admin.plugins.key.tools.description": "Ein Assistent sieht nur die Tools, die er bekommen hat. Jeder Aufruf wird geprüft, wenn er stattfindet, deshalb gilt ein Entzug des Zugriffs ab dem nächsten Aufruf.",
+  "admin.plugins.key.tools.description":
+    "Ein Assistent sieht nur die Tools, die er bekommen hat. Jeder Aufruf wird geprüft, wenn er stattfindet, deshalb gilt ein Entzug des Zugriffs ab dem nächsten Aufruf.",
   "admin.plugins.key.tools.title": "Tools",
-  "admin.plugins.key.tools.empty": "Keine Tools aufgeführt. Aktualisiere die Tools, um erneut zu prüfen.",
+  "admin.plugins.key.tools.empty":
+    "Keine Tools aufgeführt. Aktualisiere die Tools, um erneut zu prüfen.",
   "admin.plugins.key.tools.writes": "ändert etwas",
   "admin.plugins.key.tools.reads": "liest",
   "admin.plugins.key.byBot": "Nach Assistent",
-  "admin.plugins.key.byBot.hidden": "In deiner Liste ausgeblendet. Schalte die Aktionen dieser App einzeln an oder aus.",
-  "admin.plugins.key.byBot.shown": "Schalte die Aktionen dieser App einzeln an oder aus.",
-  "admin.plugins.key.gone.description": "Dieser Anbieter listet diese nicht mehr auf. Kein Assistent sieht sie, und keiner kann sie aufrufen. Der Zugriff ist weiterhin gespeichert und kommt zurück, wenn der Anbieter das Tool wieder auflistet. Um ihn zu entfernen, nutze die eigene Seite des Assistenten.",
+  "admin.plugins.key.byBot.hidden":
+    "In deiner Liste ausgeblendet. Schalte die Aktionen dieser App einzeln an oder aus.",
+  "admin.plugins.key.byBot.shown":
+    "Schalte die Aktionen dieser App einzeln an oder aus.",
+  "admin.plugins.key.gone.description":
+    "Dieser Anbieter listet diese nicht mehr auf. Kein Assistent sieht sie, und keiner kann sie aufrufen. Der Zugriff ist weiterhin gespeichert und kommt zurück, wenn der Anbieter das Tool wieder auflistet. Um ihn zu entfernen, nutze die eigene Seite des Assistenten.",
   "admin.plugins.key.gone.title": "Vergeben, aber nicht mehr aufgelistet",
   "admin.plugins.key.gone.row": "Nicht aufgelistet von {title}{asOf}.",
   "admin.plugins.key.gone.asOf": " seit der letzten Aktualisierung",
   "admin.plugins.key.dlg.client": "OAuth-Client für {title}",
   "admin.plugins.key.dlg.instance": "Instanz-Host für {title}",
   "admin.plugins.key.dlg.token": "Zugriffstoken für {title}",
-  "admin.plugins.key.dlg.clientDesc": "Aus der Konsole des Anbieters. Das Geheimnis wird im Tresor dieser Installation gespeichert und nie wieder angezeigt.",
-  "admin.plugins.key.dlg.instanceDesc": "Dein eigener Hostname bei diesem Anbieter. Er wird vor dem Speichern gegen das Muster des Anbieters geprüft.",
-  "admin.plugins.key.dlg.tokenDesc": "Wird im Tresor dieser Installation gespeichert und nie wieder angezeigt.",
+  "admin.plugins.key.dlg.clientDesc":
+    "Aus der Konsole des Anbieters. Das Geheimnis wird im Tresor dieser Installation gespeichert und nie wieder angezeigt.",
+  "admin.plugins.key.dlg.instanceDesc":
+    "Dein eigener Hostname bei diesem Anbieter. Er wird vor dem Speichern gegen das Muster des Anbieters geprüft.",
+  "admin.plugins.key.dlg.tokenDesc":
+    "Wird im Tresor dieser Installation gespeichert und nie wieder angezeigt.",
   "admin.plugins.key.dlg.clientId": "Client-ID",
   "admin.plugins.key.dlg.clientSecret": "Client-Geheimnis",
   "admin.plugins.key.gr.title": "Tools vergeben",
-  "admin.plugins.key.gr.description": "Jede Vergabe ist eine eigene Zeile im Audit. Tools, die etwas ändern, werden bei jedem Aufruf weiterhin gegen die Grenzen geprüft.",
+  "admin.plugins.key.gr.description":
+    "Jede Vergabe ist eine eigene Zeile im Audit. Tools, die etwas ändern, werden bei jedem Aufruf weiterhin gegen die Grenzen geprüft.",
   "admin.plugins.key.gr.to": "An",
   "admin.plugins.key.gr.reads": "Liest",
   "admin.plugins.key.gr.writes": "Ändert etwas",
   "admin.plugins.key.gr.selectAll": "Alle auswählen",
   "admin.plugins.key.gr.button": "Vergeben",
   "admin.plugins.key.gr.progress": "{current} von {total} werden vergeben…",
-  "admin.plugins.key.gr.summary": { one: "{count} Tool an {names} vergeben.", other: "{count} Tools an {names} vergeben." },
-  "admin.plugins.key.gr.changing": { one: "{count} ändert etwas.", other: "{count} ändern etwas." },
-  "admin.home.reach.desc": "Was ein Assistent außerhalb von {product} berühren darf, und die Grenzen dafür.",
+  "admin.plugins.key.gr.summary": {
+    one: "{count} Tool an {names} vergeben.",
+    other: "{count} Tools an {names} vergeben.",
+  },
+  "admin.plugins.key.gr.changing": {
+    one: "{count} ändert etwas.",
+    other: "{count} ändern etwas.",
+  },
+  "admin.home.reach.desc":
+    "Was ein Assistent außerhalb von {product} berühren darf, und die Grenzen dafür.",
   "admin.home.credentials.desc": "Schlüssel und Tokens für diese Installation.",
   "admin.home.boundaries.desc": "Dinge, die kein Assistent je tun darf.",
-  "admin.home.approvals.desc": "Wonach die Assistenten der Mitglieder fragen müssen, bevor sie handeln.",
-  "admin.home.computers.desc": "Die Maschinen, auf denen Assistenten Tools ausführen.",
-  "admin.home.do.desc": "Apps, Skills und Oberflächenelemente, die jeder Assistent nutzen kann.",
-  "admin.home.plugins.desc": "Die Dienste, die {product} erreichen kann, und welche Assistenten sie nutzen dürfen.",
-  "admin.home.skills.desc": "Benannte Anweisungen, die jeder mit / ausführen kann.",
-  "admin.home.learning.desc": "Aus abgeschlossenen Gesprächen lernen und die Skills prüfen, die dabei vorgeschlagen werden.",
-  "admin.home.components.desc": "Eigene Elemente, die ein Assistent in einem Gespräch zeichnen kann.",
-  "admin.home.playground.desc": "Schreibe eine Komponente und sieh zu, wie sie sich beim Tippen darstellt.",
-  "admin.home.engines.desc": "Die KI-Engines, auf denen Mitglieder laufen, und ob jede gerade antworten kann.",
-  "admin.home.people.desc": "Alle, die sich angemeldet haben, wer die Admins sind und wem der Zugriff entzogen wurde.",
-  "admin.home.enterprise.desc": "Rollen und Gruppen, verpflichtendes SSO, SCIM, Netzwerkrichtlinie, MCP- und Modell-Zulassungslisten, Action Recording.",
-  "admin.home.idp.desc": "Der SAML- oder OpenID-Connect-Anbieter deines Unternehmens, zugeordnet über die E-Mail-Domain.",
-  "admin.home.audit.desc": "Jede Aktion in {product} und wer sie ausgeführt hat.",
-  "admin.home.description": "Einstellungen für alle in dieser Installation. Eine Änderung hier betrifft jede Person und jeden Assistenten.",
-  "admin.plugins.directoryError": "Die Plugin-Einstellungen konnten nicht geladen werden. Lade die Seite neu.",
-  "admin.components.description": "Womit jeder Assistent antworten kann. Jede veröffentlichte Komponente ist für jeden Assistenten an. Schalte eine aus, und dieser Assistent sieht sie nie. Änderungen und Ablehnungen erscheinen im Audit.",
-  "admin.components.loadError": "Die Komponenten konnten nicht geladen werden. Lade die Seite neu.",
+  "admin.home.approvals.desc":
+    "Wonach die Assistenten der Mitglieder fragen müssen, bevor sie handeln.",
+  "admin.home.computers.desc":
+    "Die Maschinen, auf denen Assistenten Tools ausführen.",
+  "admin.home.do.desc":
+    "Apps, Skills und Oberflächenelemente, die jeder Assistent nutzen kann.",
+  "admin.home.plugins.desc":
+    "Die Dienste, die {product} erreichen kann, und welche Assistenten sie nutzen dürfen.",
+  "admin.home.skills.desc":
+    "Benannte Anweisungen, die jeder mit / ausführen kann.",
+  "admin.home.learning.desc":
+    "Aus abgeschlossenen Gesprächen lernen und die Skills prüfen, die dabei vorgeschlagen werden.",
+  "admin.home.components.desc":
+    "Eigene Elemente, die ein Assistent in einem Gespräch zeichnen kann.",
+  "admin.home.playground.desc":
+    "Schreibe eine Komponente und sieh zu, wie sie sich beim Tippen darstellt.",
+  "admin.home.engines.desc":
+    "Die KI-Engines, auf denen Mitglieder laufen, und ob jede gerade antworten kann.",
+  "admin.home.people.desc":
+    "Alle, die sich angemeldet haben, wer die Admins sind und wem der Zugriff entzogen wurde.",
+  "admin.home.enterprise.desc":
+    "Rollen und Gruppen, verpflichtendes SSO, SCIM, Netzwerkrichtlinie, MCP- und Modell-Zulassungslisten, Action Recording.",
+  "admin.home.idp.desc":
+    "Der SAML- oder OpenID-Connect-Anbieter deines Unternehmens, zugeordnet über die E-Mail-Domain.",
+  "admin.home.audit.desc":
+    "Jede Aktion in {product} und wer sie ausgeführt hat.",
+  "admin.home.description":
+    "Einstellungen für alle in dieser Installation. Eine Änderung hier betrifft jede Person und jeden Assistenten.",
+  "admin.plugins.directoryError":
+    "Die Plugin-Einstellungen konnten nicht geladen werden. Lade die Seite neu.",
+  "admin.components.description":
+    "Womit jeder Assistent antworten kann. Jede veröffentlichte Komponente ist für jeden Assistenten an. Schalte eine aus, und dieser Assistent sieht sie nie. Änderungen und Ablehnungen erscheinen im Audit.",
+  "admin.components.loadError":
+    "Die Komponenten konnten nicht geladen werden. Lade die Seite neu.",
   "admin.components.emptyTitle": "Noch keine Komponenten",
-  "admin.components.emptyDesc": "Komponenten, die deine Assistenten nutzen können, erscheinen hier.",
+  "admin.components.emptyDesc":
+    "Komponenten, die deine Assistenten nutzen können, erscheinen hier.",
   "admin.audit.silence.quiet": "{seconds} s still",
   "admin.audit.silence.nothing": "{quiet}, ohne überhaupt etwas zu sagen",
-  "admin.audit.silence.after": { one: "{quiet}, nach {count} Block", other: "{quiet}, nach {count} Blöcken" },
+  "admin.audit.silence.after": {
+    one: "{quiet}, nach {count} Block",
+    other: "{quiet}, nach {count} Blöcken",
+  },
 };

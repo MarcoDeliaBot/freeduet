@@ -1514,70 +1514,95 @@ export const ja: Catalog<typeof EN> = {
   "admin.nav.idp": "ID プロバイダー",
   "admin.nav.audit": "監査",
   "admin.enterprise.mode.allow_all": "すべてのネットワークアクセスを許可",
-  "admin.enterprise.mode.defaults_plus_allowlist": "既定の設定にチームの許可リストを追加",
+  "admin.enterprise.mode.defaults_plus_allowlist":
+    "既定の設定にチームの許可リストを追加",
   "admin.enterprise.mode.allowlist_only": "チームの許可リストのみ",
-  "admin.enterprise.noPolicy": "ポリシーはありません。アシスタントのコンピューターは、クラスターが許可するあらゆる場所に接続できます",
+  "admin.enterprise.noPolicy":
+    "ポリシーはありません。アシスタントのコンピューターは、クラスターが許可するあらゆる場所に接続できます",
   "admin.enterprise.locked": " · ロック中",
-  "admin.enterprise.loadError": "エンタープライズ設定を読み込めませんでした。ページを再読み込みしてください。",
+  "admin.enterprise.loadError":
+    "エンタープライズ設定を読み込めませんでした。ページを再読み込みしてください。",
   "admin.enterprise.title": "エンタープライズ設定",
-  "admin.enterprise.description": "メンバーが使えるもの、アシスタントのコンピューターがネットワークに接続する方法、記録される内容です。変更はすべて監査に表示されます。",
-  "admin.enterprise.signin.description": "{env} にあるアドレスは、緊急用の入口として常にソーシャルサインインを使えます。そのサインインはすべて監査に表示されます。",
+  "admin.enterprise.description":
+    "メンバーが使えるもの、アシスタントのコンピューターがネットワークに接続する方法、記録される内容です。変更はすべて監査に表示されます。",
+  "admin.enterprise.signin.description":
+    "{env} にあるアドレスは、緊急用の入口として常にソーシャルサインインを使えます。そのサインインはすべて監査に表示されます。",
   "admin.enterprise.signin.title": "サインイン",
   "admin.enterprise.sso.title": "SSO を必須にする",
-  "admin.enterprise.sso.on": "登録済みの SAML または OpenID Connect プロバイダー経由でのみサインインできます。",
-  "admin.enterprise.sso.off": "Google、Microsoft、Okta でもサインインできます。",
+  "admin.enterprise.sso.on":
+    "登録済みの SAML または OpenID Connect プロバイダー経由でのみサインインできます。",
+  "admin.enterprise.sso.off":
+    "Google、Microsoft、Okta でもサインインできます。",
   "admin.enterprise.scim.title": "SCIM プロビジョニング",
-  "admin.enterprise.scim.on": "ディレクトリのベース URL は {url}、ベアラートークンは {env} です。プロビジョニングを解除すると、セッションが終了し、そのアドレスがブロックされ、コネクターの認証情報が取り消され、その人のコンピューターが停止します。",
+  "admin.enterprise.scim.on":
+    "ディレクトリのベース URL は {url}、ベアラートークンは {env} です。プロビジョニングを解除すると、セッションが終了し、そのアドレスがブロックされ、コネクターの認証情報が取り消され、その人のコンピューターが停止します。",
   "admin.enterprise.scim.unsetUrl": "（BETTER_AUTH_URL を設定してください）",
-  "admin.enterprise.scim.off": "オフです。Okta、Entra、その他のディレクトリからのプロビジョニングを受け付けるには {env} を設定してください。",
+  "admin.enterprise.scim.off":
+    "オフです。Okta、Entra、その他のディレクトリからのプロビジョニングを受け付けるには {env} を設定してください。",
   "admin.enterprise.on": "オン",
   "admin.enterprise.off": "オフ",
-  "admin.enterprise.cap.description": "各スイッチは組織全体に適用されます。ロールで上書きでき、ディレクトリグループには組織がオフにしている機能を付与できます。",
+  "admin.enterprise.cap.description":
+    "各スイッチは組織全体に適用されます。ロールで上書きでき、ディレクトリグループには組織がオフにしている機能を付与できます。",
   "admin.enterprise.cap.title": "機能",
-  "admin.enterprise.cap.offFor": "ロールまたはグループがオンにしない限り、全員でオフです。",
+  "admin.enterprise.cap.offFor":
+    "ロールまたはグループがオンにしない限り、全員でオフです。",
   "admin.enterprise.over.title": "ロールとグループの上書き",
   "admin.enterprise.over.none": "なし。全員に上記のスイッチが適用されます",
   "admin.enterprise.over.set": "{count} 件設定済み",
-  "admin.enterprise.net.description": "アシスタントのコンピューターが接続できる先です。変更は再起動なしで、実行中のコンピューターに数秒で反映されます。グループのポリシーは、組織のポリシーがロックされていない限り、それを置き換えます。",
+  "admin.enterprise.net.description":
+    "アシスタントのコンピューターが接続できる先です。変更は再起動なしで、実行中のコンピューターに数秒で反映されます。グループのポリシーは、組織のポリシーがロックされていない限り、それを置き換えます。",
   "admin.enterprise.net.title": "ネットワーク",
   "admin.enterprise.net.org": "組織",
   "admin.enterprise.net.group": "グループ: {name}",
   "admin.enterprise.net.addGroup": "グループのポリシーを追加",
-  "admin.enterprise.mcp.description": "許可リストをオンにすると、アシスタントはここで承認された MCP サーバーのツールだけを呼び出せます。それ以外のサーバーへの呼び出しは拒否されます。",
+  "admin.enterprise.mcp.description":
+    "許可リストをオンにすると、アシスタントはここで承認された MCP サーバーのツールだけを呼び出せます。それ以外のサーバーへの呼び出しは拒否されます。",
   "admin.enterprise.mcp.title": "MCP サーバー",
   "admin.enterprise.mcp.only": "承認済みのサーバーのみ",
   "admin.enterprise.mcp.approved": "{count} 件承認済み",
-  "admin.enterprise.mcp.offDesc": "オフです。アシスタントは、アクセス権のある登録済みサーバーをどれでも使えます。",
+  "admin.enterprise.mcp.offDesc":
+    "オフです。アシスタントは、アクセス権のある登録済みサーバーをどれでも使えます。",
   "admin.enterprise.mcp.onlyAria": "承認済みの MCP サーバーのみ",
   "admin.enterprise.mcp.approveAria": "{name} を承認",
-  "admin.enterprise.models.description": "組込みのアシスタントは {model} で動作します。リモートのアシスタントは自分で選び、報告されたモデルが記録されます。",
+  "admin.enterprise.models.description":
+    "組込みのアシスタントは {model} で動作します。リモートのアシスタントは自分で選び、報告されたモデルが記録されます。",
   "admin.enterprise.models.configured": "このデプロイで設定されたモデル",
   "admin.enterprise.models.title": "モデル",
   "admin.enterprise.models.allowlist": "モデルの許可リスト",
-  "admin.enterprise.models.allowlistOn": "リストにないモデルを使う組込みのアシスタントは、実行前に拒否されます。",
+  "admin.enterprise.models.allowlistOn":
+    "リストにないモデルを使う組込みのアシスタントは、実行前に拒否されます。",
   "admin.enterprise.models.allowlistOff": "オフです。どのモデルでも使えます。",
   "admin.enterprise.models.allowed": "許可するモデル",
   "admin.enterprise.models.none": "登録なし",
-  "admin.enterprise.models.listDesc": "1 行に 1 モデル、プロバイダー/モデルの形式で入力します。例: {example}。",
-  "admin.enterprise.rec.description": "{env} を設定すると、監査イベントとアシスタントの操作を OpenTelemetry コレクターまたは SIEM にストリーミングします。これらには {tag} のタグが付きます。",
+  "admin.enterprise.models.listDesc":
+    "1 行に 1 モデル、プロバイダー/モデルの形式で入力します。例: {example}。",
+  "admin.enterprise.rec.description":
+    "{env} を設定すると、監査イベントとアシスタントの操作を OpenTelemetry コレクターまたは SIEM にストリーミングします。これらには {tag} のタグが付きます。",
   "admin.enterprise.rec.title": "記録とエクスポート",
   "admin.enterprise.rec.action": "Action Recording",
-  "admin.enterprise.rec.actionOn": "アシスタントが実行したシェルコマンドは、シークレットを除いて記録され、{days} 日間保存されます。",
-  "admin.enterprise.rec.actionOff": "オフです。コマンドは監査にのみ表示されます。",
+  "admin.enterprise.rec.actionOn":
+    "アシスタントが実行したシェルコマンドは、シークレットを除いて記録され、{days} 日間保存されます。",
+  "admin.enterprise.rec.actionOff":
+    "オフです。コマンドは監査にのみ表示されます。",
   "admin.enterprise.rec.otel": "OpenTelemetry エクスポート",
   "admin.enterprise.rec.otelOn": "OTLP/HTTP でエクスポート中です。",
-  "admin.enterprise.rec.otelOff": "未設定です。サーバーで {env} を設定してください。",
-  "admin.enterprise.comp.description": "コンピューターを停止すると、その上で動作中のアシスタントは終了しますが、ディスクは残ります。アシスタントは次のセッションで新しいコンピューターを受け取ります。特定の 1 人のコンピューターを停止するには、「ユーザー」に移動してください。",
+  "admin.enterprise.rec.otelOff":
+    "未設定です。サーバーで {env} を設定してください。",
+  "admin.enterprise.comp.description":
+    "コンピューターを停止すると、その上で動作中のアシスタントは終了しますが、ディスクは残ります。アシスタントは次のセッションで新しいコンピューターを受け取ります。特定の 1 人のコンピューターを停止するには、「ユーザー」に移動してください。",
   "admin.enterprise.comp.title": "コンピューター",
   "admin.enterprise.comp.stopInactive": "非アクティブなコンピューターを停止",
   "admin.enterprise.comp.afterDays": "{days} 日間使われなかった後",
-  "admin.enterprise.usage.error": "モデルの利用状況を読み込めませんでした。ページを再読み込みしてください。",
-  "admin.enterprise.usage.empty": "過去 30 日間にアシスタントの実行はありません。",
+  "admin.enterprise.usage.error":
+    "モデルの利用状況を読み込めませんでした。ページを再読み込みしてください。",
+  "admin.enterprise.usage.empty":
+    "過去 30 日間にアシスタントの実行はありません。",
   "admin.enterprise.usage.runs": "30 日間に {people} {who}が {runs} 回実行",
   "admin.enterprise.usage.person": "人",
   "admin.enterprise.usage.people": "人",
   "admin.enterprise.usage.refused": " · 許可リスト外 {count} 件",
-  "admin.enterprise.recorded.error": "記録された操作を読み込めませんでした。ページを再読み込みしてください。",
+  "admin.enterprise.recorded.error":
+    "記録された操作を読み込めませんでした。ページを再読み込みしてください。",
   "admin.enterprise.recorded.empty": "記録されたコマンドはまだありません。",
   "admin.enterprise.recorded.local": "メンバーのマシン",
   "admin.enterprise.recorded.bot": "アシスタント {id}",
@@ -1588,8 +1613,10 @@ export const ja: Catalog<typeof EN> = {
   "admin.enterprise.ov.members": "メンバー",
   "admin.enterprise.ov.group": "グループ: {name}",
   "admin.enterprise.ov.scope": "対象範囲",
-  "admin.enterprise.ov.groupNote": "グループは追加のみできます。「付与」は、組織がオフにしていても、そのグループのメンバーに機能を与えます。",
-  "admin.enterprise.ov.roleNote": "ロールの設定は、そのロールを持つ全員について組織のスイッチを置き換えます。",
+  "admin.enterprise.ov.groupNote":
+    "グループは追加のみできます。「付与」は、組織がオフにしていても、そのグループのメンバーに機能を与えます。",
+  "admin.enterprise.ov.roleNote":
+    "ロールの設定は、そのロールを持つ全員について組織のスイッチを置き換えます。",
   "admin.enterprise.ov.forScope": "{scope}の{title}",
   "admin.enterprise.ov.inherit": "継承",
   "admin.enterprise.ov.grant": "付与",
@@ -1598,28 +1625,44 @@ export const ja: Catalog<typeof EN> = {
   "admin.enterprise.netd.groupLabel": "グループ",
   "admin.enterprise.netd.mode": "モード",
   "admin.enterprise.netd.allowlist": "許可リスト",
-  "admin.enterprise.netd.help": "1 行に 1 つ。ドメインはそのサブドメインを含みます。*.name はサブドメインだけを含みます。IP 範囲にはポートを指定できます。既定は {first} と、ほかに {more} 件のパッケージおよびソースのホストです。",
-  "admin.enterprise.netd.lock": "グループがこのポリシーを置き換えられないようにロックする",
+  "admin.enterprise.netd.help":
+    "1 行に 1 つ。ドメインはそのサブドメインを含みます。*.name はサブドメインだけを含みます。IP 範囲にはポートを指定できます。既定は {first} と、ほかに {more} 件のパッケージおよびソースのホストです。",
+  "admin.enterprise.netd.lock":
+    "グループがこのポリシーを置き換えられないようにロックする",
   "admin.enterprise.netd.remove": "ポリシーを削除",
   "admin.enterprise.days.label": "未使用の日数",
   "admin.enterprise.days.help": "0 でオフになります。1 時間ごとに確認します。",
   "admin.plugins.title": "プラグイン",
-  "admin.plugins.description": "このデプロイが接続できる先と、それを使えるアシスタントです。追加したプラグインは全員のものになります。どのアシスタントにツールを渡すかは、プラグインのページで選びます。",
-  "admin.plugins.loadError": "プラグインを読み込めませんでした。ページを再読み込みしてください。",
-  "admin.plugins.connected.description": "全員に追加済みです。開いて設定し、どのアシスタントにツールを渡すかを選びます。",
+  "admin.plugins.description":
+    "このデプロイが接続できる先と、それを使えるアシスタントです。追加したプラグインは全員のものになります。どのアシスタントにツールを渡すかは、プラグインのページで選びます。",
+  "admin.plugins.loadError":
+    "プラグインを読み込めませんでした。ページを再読み込みしてください。",
+  "admin.plugins.connected.description":
+    "全員に追加済みです。開いて設定し、どのアシスタントにツールを渡すかを選びます。",
   "admin.plugins.connected.title": "接続済み",
-  "admin.plugins.connected.empty": "まだ何も接続されていません。下の一覧から選んでください。",
-  "admin.plugins.explore.description": "審査済みの公式サーバーです。開いて追加します。",
+  "admin.plugins.connected.empty":
+    "まだ何も接続されていません。下の一覧から選んでください。",
+  "admin.plugins.explore.description":
+    "審査済みの公式サーバーです。開いて追加します。",
   "admin.plugins.explore.title": "プラグインを探す",
   "admin.plugins.explore.empty": "カタログのプラグインはすべて接続済みです。",
   "admin.plugins.notAdded": "未追加",
   "admin.plugins.more.title": "その他のアプリ",
   "admin.plugins.sum.notConnected": "未接続",
   "admin.plugins.sum.noTools": "ツールはまだありません",
-  "admin.plugins.sum.tools": { one: "{count} 個のツール", other: "{count} 個のツール" },
+  "admin.plugins.sum.tools": {
+    one: "{count} 個のツール",
+    other: "{count} 個のツール",
+  },
   "admin.plugins.sum.toolsNoBots": "{tools} · アシスタントなし",
-  "admin.plugins.sum.bots": { one: "{count} 体のアシスタント", other: "{count} 体のアシスタント" },
-  "admin.plugins.requests": { one: "{count} 件のリクエスト", other: "{count} 件のリクエスト" },
+  "admin.plugins.sum.bots": {
+    one: "{count} 体のアシスタント",
+    other: "{count} 体のアシスタント",
+  },
+  "admin.plugins.requests": {
+    one: "{count} 件のリクエスト",
+    other: "{count} 件のリクエスト",
+  },
   "admin.plugins.key.grant.none": "アシスタントなし",
   "admin.plugins.key.grant.one": "アシスタント 1 体",
   "admin.plugins.key.grant.all": "すべてのアシスタント",
@@ -1630,118 +1673,182 @@ export const ja: Catalog<typeof EN> = {
   "admin.plugins.key.held.some": "ツール {total} 個中 {held} 個",
   "admin.plugins.key.notApproved": "未承認",
   "admin.plugins.key.unreadableTitle": "あなたのアカウント",
-  "admin.plugins.key.unreadable": "ここでアカウントを接続済みかどうかを読み込めませんでした。ページを再読み込みしてください。繰り返し起きる場合は、このデプロイのログを確認してください。",
-  "admin.plugins.key.noConsent": "{product} は同意リンクを受け取れなかったため、何も接続されていません。もう一度試してください。繰り返し起きる場合は、このコネクターの設定を確認してください。",
-  "admin.plugins.key.reassurance": "これがなくても設定は完了しており、アクセスできるのはあなたのドキュメントだけです。",
-  "admin.plugins.key.notPlugin.description": "この名前のプラグインは、ここにもカタログにもありません。",
+  "admin.plugins.key.unreadable":
+    "ここでアカウントを接続済みかどうかを読み込めませんでした。ページを再読み込みしてください。繰り返し起きる場合は、このデプロイのログを確認してください。",
+  "admin.plugins.key.noConsent":
+    "{product} は同意リンクを受け取れなかったため、何も接続されていません。もう一度試してください。繰り返し起きる場合は、このコネクターの設定を確認してください。",
+  "admin.plugins.key.reassurance":
+    "これがなくても設定は完了しており、アクセスできるのはあなたのドキュメントだけです。",
+  "admin.plugins.key.notPlugin.description":
+    "この名前のプラグインは、ここにもカタログにもありません。",
   "admin.plugins.key.notPlugin.title": "プラグインではありません",
   "admin.plugins.key.notPlugin.empty": "設定するものはありません。",
   "admin.plugins.key.enable.title": "このデプロイで有効にする",
-  "admin.plugins.key.enable.on": "アシスタントにこのツールを渡せます。オフにするとプラグインが削除され、すべてのアシスタントのツールへのアクセスも取り消されます。",
-  "admin.plugins.key.enable.off": "どのアシスタントもこのベンダーに接続できません。オンにすると設定でき、アシスタントにツールを渡せます。",
+  "admin.plugins.key.enable.on":
+    "アシスタントにこのツールを渡せます。オフにするとプラグインが削除され、すべてのアシスタントのツールへのアクセスも取り消されます。",
+  "admin.plugins.key.enable.off":
+    "どのアシスタントもこのベンダーに接続できません。オンにすると設定でき、アシスタントにツールを渡せます。",
   "admin.plugins.key.enable.aria": "{title} をこのデプロイで有効にする",
   "admin.plugins.key.whose.title": "誰のアカウントか",
   "admin.plugins.key.whose.shared": "全員で 1 つの共有アカウントを使います。",
   "admin.plugins.key.whose.personal": "各自が自分のアカウントを接続します。",
   "admin.plugins.key.whose.makePersonal": "個人用にする",
   "admin.plugins.key.whose.makeShared": "共有にする",
-  "admin.plugins.key.conn.oauth": "このベンダーは、リクエストした本人として応答します。デプロイが OAuth クライアントを登録し、各自が自分のアカウントを接続します。アシスタントには、その人が見られるものだけが見えます。",
-  "admin.plugins.key.conn.secret": "このベンダーは、リクエストした本人として応答します。各自が自分のアプリパスワードを、自分の「接続」ページに貼り付けます。ここで登録するものはなく、デプロイ自体はパスワードを保持しません。",
-  "admin.plugins.key.conn.builtin": "このデプロイに組み込まれています。接続するベンダーも、保管する認証情報もありません。呼び出しは、依頼した本人として実行されます。",
-  "admin.plugins.key.conn.bearer": "このデプロイがベンダーに送るものです。全員で 1 つの認証情報を使います。",
+  "admin.plugins.key.conn.oauth":
+    "このベンダーは、リクエストした本人として応答します。デプロイが OAuth クライアントを登録し、各自が自分のアカウントを接続します。アシスタントには、その人が見られるものだけが見えます。",
+  "admin.plugins.key.conn.secret":
+    "このベンダーは、リクエストした本人として応答します。各自が自分のアプリパスワードを、自分の「接続」ページに貼り付けます。ここで登録するものはなく、デプロイ自体はパスワードを保持しません。",
+  "admin.plugins.key.conn.builtin":
+    "このデプロイに組み込まれています。接続するベンダーも、保管する認証情報もありません。呼び出しは、依頼した本人として実行されます。",
+  "admin.plugins.key.conn.bearer":
+    "このデプロイがベンダーに送るものです。全員で 1 つの認証情報を使います。",
   "admin.plugins.key.conn.title": "接続",
-  "admin.plugins.key.builtin.desc": "設定は不要です。これらのツールは、このデプロイの内部で、その独自のデータに対して実行されます。",
+  "admin.plugins.key.builtin.desc":
+    "設定は不要です。これらのツールは、このデプロイの内部で、その独自のデータに対して実行されます。",
   "admin.plugins.key.builtin.badge": "組込み",
   "admin.plugins.key.secret.title": "アプリパスワード",
-  "admin.plugins.key.secret.desc": "各自が Google で自分のものを作成し、自分の「接続」ページに貼り付けます。メールボックス全体にアクセスできるため、アシスタントにできることは、下で付与するツールによって決まります。",
+  "admin.plugins.key.secret.desc":
+    "各自が Google で自分のものを作成し、自分の「接続」ページに貼り付けます。メールボックス全体にアクセスできるため、アシスタントにできることは、下で付与するツールによって決まります。",
   "admin.plugins.key.secret.badge": "1 人ずつ",
   "admin.plugins.key.reach.title": "接続方法",
   "admin.plugins.key.token.title": "アクセストークン",
-  "admin.plugins.key.token.desc": "このベンダーへのすべての呼び出しに付けて送信されます。",
+  "admin.plugins.key.token.desc":
+    "このベンダーへのすべての呼び出しに付けて送信されます。",
   "admin.plugins.key.saved": "保存済み",
   "admin.plugins.key.notSet": "未設定",
   "admin.plugins.key.client.title": "OAuth クライアント",
-  "admin.plugins.key.client.selfDesc": "このデプロイは、最初の接続時にベンダーへ自分自身を登録します。貼り付けるものはありません。",
+  "admin.plugins.key.client.selfDesc":
+    "このデプロイは、最初の接続時にベンダーへ自分自身を登録します。貼り付けるものはありません。",
   "admin.plugins.key.client.selfBadge": "自己登録",
-  "admin.plugins.key.client.desc": "このデプロイをベンダーに識別させるものです。これだけでは、誰のドキュメントにもアクセスできません。",
+  "admin.plugins.key.client.desc":
+    "このデプロイをベンダーに識別させるものです。これだけでは、誰のドキュメントにもアクセスできません。",
   "admin.plugins.key.client.registered": "登録済み",
   "admin.plugins.key.client.notRegistered": "未登録",
-  "admin.plugins.key.team.connected": "接続済み{who}。これらのツールを持つすべてのアシスタントが、このアカウントとして動作します。",
+  "admin.plugins.key.team.connected":
+    "接続済み{who}。これらのツールを持つすべてのアシスタントが、このアカウントとして動作します。",
   "admin.plugins.key.team.as": "（{name} として）",
   "admin.plugins.key.team.by": "（{name} が接続）",
-  "admin.plugins.key.team.disconnected": "チームのアカウントが接続されていません。これらのツールを持つアシスタントは拒否されます。",
+  "admin.plugins.key.team.disconnected":
+    "チームのアカウントが接続されていません。これらのツールを持つアシスタントは拒否されます。",
   "admin.plugins.key.team.heading": "チームのアカウント",
-  "admin.plugins.key.team.notice": "自分のアカウントではなく、チームのアカウントでサインインしてください。",
-  "admin.plugins.key.mine.connected": "接続済みです。これらのツールを持つアシスタントは、あなたの {title} をあなたとして使います。{note}",
-  "admin.plugins.key.mine.tryConnect": "このコネクターを試すには、自分のアカウントを接続してください。{note}",
-  "admin.plugins.key.oauthAcct.connected": "接続済みです。これらのツールを持つアシスタントは、あなたの {title} をあなたとして使います。ほかの人は各自のアカウントを接続します。",
-  "admin.plugins.key.oauthAcct.connect": "このコネクターを試すには、自分のアカウントを接続してください。これがなくても設定は完了しており、アクセスできるのはあなたのドキュメントだけです。",
+  "admin.plugins.key.team.notice":
+    "自分のアカウントではなく、チームのアカウントでサインインしてください。",
+  "admin.plugins.key.mine.connected":
+    "接続済みです。これらのツールを持つアシスタントは、あなたの {title} をあなたとして使います。{note}",
+  "admin.plugins.key.mine.tryConnect":
+    "このコネクターを試すには、自分のアカウントを接続してください。{note}",
+  "admin.plugins.key.oauthAcct.connected":
+    "接続済みです。これらのツールを持つアシスタントは、あなたの {title} をあなたとして使います。ほかの人は各自のアカウントを接続します。",
+  "admin.plugins.key.oauthAcct.connect":
+    "このコネクターを試すには、自分のアカウントを接続してください。これがなくても設定は完了しており、アクセスできるのはあなたのドキュメントだけです。",
   "admin.plugins.key.connected": "接続済み",
   "admin.plugins.key.connect": "接続",
   "admin.plugins.key.instance.title": "インスタンスのホスト",
-  "admin.plugins.key.instance.desc": "このベンダーは、顧客ごとに専用のホスト名を割り当てます。保存する前に、ベンダーのパターンに照らして確認されます。",
+  "admin.plugins.key.instance.desc":
+    "このベンダーは、顧客ごとに専用のホスト名を割り当てます。保存する前に、ベンダーのパターンに照らして確認されます。",
   "admin.plugins.key.docs.builtin": "ドキュメント",
   "admin.plugins.key.docs.vendor": "ベンダーのドキュメント",
-  "admin.plugins.key.docs.builtinDesc": "これらのツールで何ができるかを、保守している人たちが説明しています。",
-  "admin.plugins.key.docs.vendorDesc": "このサーバーで何ができるかを、保守している人たちが説明しています。",
-  "admin.plugins.key.redirect.dynamic": "デプロイがリダイレクト URI を自分で登録します。ベンダー側で追加するものはありません。",
-  "admin.plugins.key.redirect.manual": "これを、ベンダー側のクライアントの承認済みリダイレクト URI に、書かれているとおりに追加してください。1 文字でも違うとそちらで失敗し、そのエラーには {product} のことは書かれません。",
-  "admin.plugins.key.redirect.noUrl": "このデプロイには公開 URL がないため、誰も接続を完了できません。{env} を設定してください。",
+  "admin.plugins.key.docs.builtinDesc":
+    "これらのツールで何ができるかを、保守している人たちが説明しています。",
+  "admin.plugins.key.docs.vendorDesc":
+    "このサーバーで何ができるかを、保守している人たちが説明しています。",
+  "admin.plugins.key.redirect.dynamic":
+    "デプロイがリダイレクト URI を自分で登録します。ベンダー側で追加するものはありません。",
+  "admin.plugins.key.redirect.manual":
+    "これを、ベンダー側のクライアントの承認済みリダイレクト URI に、書かれているとおりに追加してください。1 文字でも違うとそちらで失敗し、そのエラーには {product} のことは書かれません。",
+  "admin.plugins.key.redirect.noUrl":
+    "このデプロイには公開 URL がないため、誰も接続を完了できません。{env} を設定してください。",
   "admin.plugins.key.tools.refresh": "ツールを更新",
   "admin.plugins.key.tools.grant": "ツールを付与…",
-  "admin.plugins.key.tools.description": "アシスタントには、付与されたツールだけが見えます。呼び出しは発生するたびに確認されるため、アクセスを取り消すと次の呼び出しから反映されます。",
+  "admin.plugins.key.tools.description":
+    "アシスタントには、付与されたツールだけが見えます。呼び出しは発生するたびに確認されるため、アクセスを取り消すと次の呼び出しから反映されます。",
   "admin.plugins.key.tools.title": "ツール",
-  "admin.plugins.key.tools.empty": "ツールが一覧にありません。「ツールを更新」で再確認してください。",
+  "admin.plugins.key.tools.empty":
+    "ツールが一覧にありません。「ツールを更新」で再確認してください。",
   "admin.plugins.key.tools.writes": "変更を伴う",
   "admin.plugins.key.tools.reads": "読み取り",
   "admin.plugins.key.byBot": "アシスタント別",
-  "admin.plugins.key.byBot.hidden": "あなたの一覧では非表示です。このアプリの操作を 1 つずつオン・オフできます。",
-  "admin.plugins.key.byBot.shown": "このアプリの操作を 1 つずつオン・オフできます。",
-  "admin.plugins.key.gone.description": "このベンダーは、これらを一覧に載せなくなりました。どのアシスタントにも見えず、呼び出すこともできません。アクセス権は保存されたままで、ベンダーがそのツールを再び一覧に載せれば戻ります。削除するには、そのアシスタント自身のページを使ってください。",
+  "admin.plugins.key.byBot.hidden":
+    "あなたの一覧では非表示です。このアプリの操作を 1 つずつオン・オフできます。",
+  "admin.plugins.key.byBot.shown":
+    "このアプリの操作を 1 つずつオン・オフできます。",
+  "admin.plugins.key.gone.description":
+    "このベンダーは、これらを一覧に載せなくなりました。どのアシスタントにも見えず、呼び出すこともできません。アクセス権は保存されたままで、ベンダーがそのツールを再び一覧に載せれば戻ります。削除するには、そのアシスタント自身のページを使ってください。",
   "admin.plugins.key.gone.title": "付与済みだが、一覧にない",
   "admin.plugins.key.gone.row": "{title} の一覧にありません{asOf}。",
   "admin.plugins.key.gone.asOf": "（前回の更新時点）",
   "admin.plugins.key.dlg.client": "{title} の OAuth クライアント",
   "admin.plugins.key.dlg.instance": "{title} のインスタンスのホスト",
   "admin.plugins.key.dlg.token": "{title} のアクセストークン",
-  "admin.plugins.key.dlg.clientDesc": "ベンダーのコンソールから取得します。シークレットはこのデプロイの保管庫に保存され、二度と表示されません。",
-  "admin.plugins.key.dlg.instanceDesc": "このベンダーでのあなた専用のホスト名です。保存する前に、ベンダーのパターンに照らして確認されます。",
-  "admin.plugins.key.dlg.tokenDesc": "このデプロイの保管庫に保存され、二度と表示されません。",
+  "admin.plugins.key.dlg.clientDesc":
+    "ベンダーのコンソールから取得します。シークレットはこのデプロイの保管庫に保存され、二度と表示されません。",
+  "admin.plugins.key.dlg.instanceDesc":
+    "このベンダーでのあなた専用のホスト名です。保存する前に、ベンダーのパターンに照らして確認されます。",
+  "admin.plugins.key.dlg.tokenDesc":
+    "このデプロイの保管庫に保存され、二度と表示されません。",
   "admin.plugins.key.dlg.clientId": "クライアント ID",
   "admin.plugins.key.dlg.clientSecret": "クライアントシークレット",
   "admin.plugins.key.gr.title": "ツールを付与",
-  "admin.plugins.key.gr.description": "付与のたびに、監査に 1 行ずつ記録されます。変更を伴うツールは、呼び出しのたびに引き続き制限と照合されます。",
+  "admin.plugins.key.gr.description":
+    "付与のたびに、監査に 1 行ずつ記録されます。変更を伴うツールは、呼び出しのたびに引き続き制限と照合されます。",
   "admin.plugins.key.gr.to": "付与先",
   "admin.plugins.key.gr.reads": "読み取り",
   "admin.plugins.key.gr.writes": "変更を伴う",
   "admin.plugins.key.gr.selectAll": "すべて選択",
   "admin.plugins.key.gr.button": "付与",
   "admin.plugins.key.gr.progress": "{total} 件中 {current} 件を付与しています…",
-  "admin.plugins.key.gr.summary": { one: "{count} 個のツールを {names} に付与します。", other: "{count} 個のツールを {names} に付与します。" },
-  "admin.plugins.key.gr.changing": { one: "そのうち {count} 個は変更を伴います。", other: "そのうち {count} 個は変更を伴います。" },
-  "admin.home.reach.desc": "アシスタントが {product} の外で触れられるものと、その制限です。",
+  "admin.plugins.key.gr.summary": {
+    one: "{count} 個のツールを {names} に付与します。",
+    other: "{count} 個のツールを {names} に付与します。",
+  },
+  "admin.plugins.key.gr.changing": {
+    one: "そのうち {count} 個は変更を伴います。",
+    other: "そのうち {count} 個は変更を伴います。",
+  },
+  "admin.home.reach.desc":
+    "アシスタントが {product} の外で触れられるものと、その制限です。",
   "admin.home.credentials.desc": "このデプロイのキーとトークンです。",
-  "admin.home.boundaries.desc": "どのアシスタントにも決して許されないことです。",
-  "admin.home.approvals.desc": "メンバーのアシスタントが行動する前に確認しなければならないことです。",
+  "admin.home.boundaries.desc":
+    "どのアシスタントにも決して許されないことです。",
+  "admin.home.approvals.desc":
+    "メンバーのアシスタントが行動する前に確認しなければならないことです。",
   "admin.home.computers.desc": "アシスタントがツールを実行するマシンです。",
-  "admin.home.do.desc": "すべてのアシスタントが使えるアプリ、スキル、インターフェースの部品です。",
-  "admin.home.plugins.desc": "{product} が接続できるサービスと、それを使えるアシスタントです。",
+  "admin.home.do.desc":
+    "すべてのアシスタントが使えるアプリ、スキル、インターフェースの部品です。",
+  "admin.home.plugins.desc":
+    "{product} が接続できるサービスと、それを使えるアシスタントです。",
   "admin.home.skills.desc": "誰でも / で実行できる名前付きの指示です。",
-  "admin.home.learning.desc": "終了した会話から学習し、提案されたスキルを確認します。",
-  "admin.home.components.desc": "アシスタントが会話の中で描画できるカスタム部品です。",
-  "admin.home.playground.desc": "コンポーネントを書くと、入力しながら描画を確認できます。",
-  "admin.home.engines.desc": "メンバーが動作に使う AI エンジンと、それぞれが今応答できるかどうかです。",
-  "admin.home.people.desc": "サインインしたことのあるすべての人、管理者、アクセス権を削除された人です。",
-  "admin.home.enterprise.desc": "ロールとグループ、必須の SSO、SCIM、ネットワークポリシー、MCP とモデルの許可リスト、Action Recording。",
-  "admin.home.idp.desc": "お使いの会社の SAML または OpenID Connect プロバイダーで、メールのドメインで対応づけます。",
-  "admin.home.audit.desc": "{product} で行われたすべての操作と、その実行者です。",
-  "admin.home.description": "このデプロイの全員に関わる設定です。ここでの変更は、すべての人とすべてのアシスタントに影響します。",
-  "admin.plugins.directoryError": "プラグインの設定を読み込めませんでした。ページを再読み込みしてください。",
-  "admin.components.description": "各アシスタントが回答に使えるものです。公開済みのコンポーネントは、すべてのアシスタントでオンになっています。1 つをオフにすると、そのアシスタントには見えなくなります。変更と拒否は監査に表示されます。",
-  "admin.components.loadError": "コンポーネントを読み込めませんでした。ページを再読み込みしてください。",
+  "admin.home.learning.desc":
+    "終了した会話から学習し、提案されたスキルを確認します。",
+  "admin.home.components.desc":
+    "アシスタントが会話の中で描画できるカスタム部品です。",
+  "admin.home.playground.desc":
+    "コンポーネントを書くと、入力しながら描画を確認できます。",
+  "admin.home.engines.desc":
+    "メンバーが動作に使う AI エンジンと、それぞれが今応答できるかどうかです。",
+  "admin.home.people.desc":
+    "サインインしたことのあるすべての人、管理者、アクセス権を削除された人です。",
+  "admin.home.enterprise.desc":
+    "ロールとグループ、必須の SSO、SCIM、ネットワークポリシー、MCP とモデルの許可リスト、Action Recording。",
+  "admin.home.idp.desc":
+    "お使いの会社の SAML または OpenID Connect プロバイダーで、メールのドメインで対応づけます。",
+  "admin.home.audit.desc":
+    "{product} で行われたすべての操作と、その実行者です。",
+  "admin.home.description":
+    "このデプロイの全員に関わる設定です。ここでの変更は、すべての人とすべてのアシスタントに影響します。",
+  "admin.plugins.directoryError":
+    "プラグインの設定を読み込めませんでした。ページを再読み込みしてください。",
+  "admin.components.description":
+    "各アシスタントが回答に使えるものです。公開済みのコンポーネントは、すべてのアシスタントでオンになっています。1 つをオフにすると、そのアシスタントには見えなくなります。変更と拒否は監査に表示されます。",
+  "admin.components.loadError":
+    "コンポーネントを読み込めませんでした。ページを再読み込みしてください。",
   "admin.components.emptyTitle": "コンポーネントはまだありません",
-  "admin.components.emptyDesc": "アシスタントが使えるコンポーネントがここに表示されます。",
+  "admin.components.emptyDesc":
+    "アシスタントが使えるコンポーネントがここに表示されます。",
   "admin.audit.silence.quiet": "{seconds} 秒間無言",
   "admin.audit.silence.nothing": "{quiet}、何も発言しないまま",
-  "admin.audit.silence.after": { one: "{quiet}、{count} 個のチャンクの後", other: "{quiet}、{count} 個のチャンクの後" },
+  "admin.audit.silence.after": {
+    one: "{quiet}、{count} 個のチャンクの後",
+    other: "{quiet}、{count} 個のチャンクの後",
+  },
 };

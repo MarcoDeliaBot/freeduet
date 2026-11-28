@@ -1473,70 +1473,94 @@ export const tr: Catalog<typeof EN> = {
   "admin.nav.idp": "Kimlik sağlayıcılar",
   "admin.nav.audit": "Denetim",
   "admin.enterprise.mode.allow_all": "Tüm ağ erişimine izin ver",
-  "admin.enterprise.mode.defaults_plus_allowlist": "Varsayılanlar artı ekip izin listesi",
+  "admin.enterprise.mode.defaults_plus_allowlist":
+    "Varsayılanlar artı ekip izin listesi",
   "admin.enterprise.mode.allowlist_only": "Yalnızca ekip izin listesi",
-  "admin.enterprise.noPolicy": "Politika yok. Asistanların bilgisayarları kümenin izin verdiği her yere ulaşabilir",
+  "admin.enterprise.noPolicy":
+    "Politika yok. Asistanların bilgisayarları kümenin izin verdiği her yere ulaşabilir",
   "admin.enterprise.locked": " · kilitli",
-  "admin.enterprise.loadError": "Kurumsal denetimler yüklenemedi. Sayfayı yenile.",
+  "admin.enterprise.loadError":
+    "Kurumsal denetimler yüklenemedi. Sayfayı yenile.",
   "admin.enterprise.title": "Kurumsal denetimler",
-  "admin.enterprise.description": "Üyelerin neleri kullanabileceği, asistanların bilgisayarlarının ağa nasıl eriştiği ve nelerin kaydedildiği. Her değişiklik Denetim'de görünür.",
-  "admin.enterprise.signin.description": "{env} içindeki adresler, acil giriş yolu olarak her zaman sosyal girişi kullanabilir. Bu girişlerin her biri Denetim'de görünür.",
+  "admin.enterprise.description":
+    "Üyelerin neleri kullanabileceği, asistanların bilgisayarlarının ağa nasıl eriştiği ve nelerin kaydedildiği. Her değişiklik Denetim'de görünür.",
+  "admin.enterprise.signin.description":
+    "{env} içindeki adresler, acil giriş yolu olarak her zaman sosyal girişi kullanabilir. Bu girişlerin her biri Denetim'de görünür.",
   "admin.enterprise.signin.title": "Giriş",
   "admin.enterprise.sso.title": "SSO zorunlu olsun",
-  "admin.enterprise.sso.on": "Kişiler yalnızca kayıtlı bir SAML veya OpenID Connect sağlayıcısı üzerinden giriş yapabilir.",
-  "admin.enterprise.sso.off": "Kişiler Google, Microsoft veya Okta ile de giriş yapabilir.",
+  "admin.enterprise.sso.on":
+    "Kişiler yalnızca kayıtlı bir SAML veya OpenID Connect sağlayıcısı üzerinden giriş yapabilir.",
+  "admin.enterprise.sso.off":
+    "Kişiler Google, Microsoft veya Okta ile de giriş yapabilir.",
   "admin.enterprise.scim.title": "SCIM sağlama",
-  "admin.enterprise.scim.on": "Dizin temel URL'si {url}, taşıyıcı belirteci {env}. Sağlamanın kaldırılması oturumları sonlandırır, adresi engeller, bağlayıcıların kimlik bilgilerini geri alır ve bilgisayarlarını durdurur.",
+  "admin.enterprise.scim.on":
+    "Dizin temel URL'si {url}, taşıyıcı belirteci {env}. Sağlamanın kaldırılması oturumları sonlandırır, adresi engeller, bağlayıcıların kimlik bilgilerini geri alır ve bilgisayarlarını durdurur.",
   "admin.enterprise.scim.unsetUrl": "(BETTER_AUTH_URL ayarla)",
-  "admin.enterprise.scim.off": "Kapalı. Okta, Entra veya başka bir dizinden sağlamayı kabul etmek için {env} ayarla.",
+  "admin.enterprise.scim.off":
+    "Kapalı. Okta, Entra veya başka bir dizinden sağlamayı kabul etmek için {env} ayarla.",
   "admin.enterprise.on": "Açık",
   "admin.enterprise.off": "Kapalı",
-  "admin.enterprise.cap.description": "Her anahtar tüm kuruluş için geçerlidir. Bir rol bunu geçersiz kılabilir ve bir dizin grubu, kuruluşun kapalı tuttuğu bir yetenek alabilir.",
+  "admin.enterprise.cap.description":
+    "Her anahtar tüm kuruluş için geçerlidir. Bir rol bunu geçersiz kılabilir ve bir dizin grubu, kuruluşun kapalı tuttuğu bir yetenek alabilir.",
   "admin.enterprise.cap.title": "Yetenekler",
-  "admin.enterprise.cap.offFor": "Bir rol veya grup açmadıkça herkes için kapalı.",
+  "admin.enterprise.cap.offFor":
+    "Bir rol veya grup açmadıkça herkes için kapalı.",
   "admin.enterprise.over.title": "Rol ve grup istisnaları",
   "admin.enterprise.over.none": "Yok. Herkes yukarıdaki anahtarları alır",
   "admin.enterprise.over.set": "{count} ayarlı",
-  "admin.enterprise.net.description": "Asistanların bilgisayarlarının nereye bağlanabileceği. Değişiklikler çalışan bilgisayarlara yeniden başlatma olmadan saniyeler içinde ulaşır. Bir grup politikası, kilitli değilse kuruluşunkinin yerini alır.",
+  "admin.enterprise.net.description":
+    "Asistanların bilgisayarlarının nereye bağlanabileceği. Değişiklikler çalışan bilgisayarlara yeniden başlatma olmadan saniyeler içinde ulaşır. Bir grup politikası, kilitli değilse kuruluşunkinin yerini alır.",
   "admin.enterprise.net.title": "Ağ",
   "admin.enterprise.net.org": "Kuruluş",
   "admin.enterprise.net.group": "Grup: {name}",
   "admin.enterprise.net.addGroup": "Grup politikası ekle",
-  "admin.enterprise.mcp.description": "İzin listesi açıkken asistanlar yalnızca burada onaylanan MCP sunucularındaki araçları çağırabilir. Başka herhangi bir sunucuya yapılan çağrılar reddedilir.",
+  "admin.enterprise.mcp.description":
+    "İzin listesi açıkken asistanlar yalnızca burada onaylanan MCP sunucularındaki araçları çağırabilir. Başka herhangi bir sunucuya yapılan çağrılar reddedilir.",
   "admin.enterprise.mcp.title": "MCP sunucuları",
   "admin.enterprise.mcp.only": "Yalnızca onaylı sunucular",
   "admin.enterprise.mcp.approved": "{count} onaylı",
-  "admin.enterprise.mcp.offDesc": "Kapalı. Asistanlar erişimleri olan her kayıtlı sunucuyu kullanabilir.",
+  "admin.enterprise.mcp.offDesc":
+    "Kapalı. Asistanlar erişimleri olan her kayıtlı sunucuyu kullanabilir.",
   "admin.enterprise.mcp.onlyAria": "Yalnızca onaylı MCP sunucuları",
   "admin.enterprise.mcp.approveAria": "{name} için onay ver",
-  "admin.enterprise.models.description": "Yerleşik asistan {model} ile çalışır. Uzak bir asistan kendi modelini seçer ve bildirdiği model kaydedilir.",
+  "admin.enterprise.models.description":
+    "Yerleşik asistan {model} ile çalışır. Uzak bir asistan kendi modelini seçer ve bildirdiği model kaydedilir.",
   "admin.enterprise.models.configured": "bu kurulumda yapılandırılmış model",
   "admin.enterprise.models.title": "Modeller",
   "admin.enterprise.models.allowlist": "Model izin listesi",
-  "admin.enterprise.models.allowlistOn": "Listede olmayan bir modelle çalışan yerleşik asistan, çalışmadan önce reddedilir.",
+  "admin.enterprise.models.allowlistOn":
+    "Listede olmayan bir modelle çalışan yerleşik asistan, çalışmadan önce reddedilir.",
   "admin.enterprise.models.allowlistOff": "Kapalı. Her model kullanılabilir.",
   "admin.enterprise.models.allowed": "İzin verilen modeller",
   "admin.enterprise.models.none": "Listelenen yok",
-  "admin.enterprise.models.listDesc": "Satır başına bir model, sağlayıcı/model biçiminde, örneğin {example}.",
-  "admin.enterprise.rec.description": "Denetim olaylarını ve asistan eylemlerini OpenTelemetry toplayıcına veya SIEM'ine akıtmak için {env} ayarla. Bunlar {tag} etiketiyle işaretlenir.",
+  "admin.enterprise.models.listDesc":
+    "Satır başına bir model, sağlayıcı/model biçiminde, örneğin {example}.",
+  "admin.enterprise.rec.description":
+    "Denetim olaylarını ve asistan eylemlerini OpenTelemetry toplayıcına veya SIEM'ine akıtmak için {env} ayarla. Bunlar {tag} etiketiyle işaretlenir.",
   "admin.enterprise.rec.title": "Kayıt ve dışa aktarma",
   "admin.enterprise.rec.action": "Action Recording",
-  "admin.enterprise.rec.actionOn": "Asistanların çalıştırdığı kabuk komutları sırlar çıkarılarak kaydedilir ve {days} gün saklanır.",
-  "admin.enterprise.rec.actionOff": "Kapalı. Komutlar yalnızca Denetim'de görünür.",
+  "admin.enterprise.rec.actionOn":
+    "Asistanların çalıştırdığı kabuk komutları sırlar çıkarılarak kaydedilir ve {days} gün saklanır.",
+  "admin.enterprise.rec.actionOff":
+    "Kapalı. Komutlar yalnızca Denetim'de görünür.",
   "admin.enterprise.rec.otel": "OpenTelemetry dışa aktarma",
   "admin.enterprise.rec.otelOn": "OTLP/HTTP üzerinden dışa aktarılıyor.",
   "admin.enterprise.rec.otelOff": "Kurulmadı. Sunucuda {env} ayarla.",
-  "admin.enterprise.comp.description": "Bir bilgisayarı durdurmak üzerinde çalışan asistanları sonlandırır ve diskini korur. Asistan bir sonraki oturumda yepyeni bir bilgisayar alır. Tek bir kişinin bilgisayarlarını durdurmak için Kişiler'e git.",
+  "admin.enterprise.comp.description":
+    "Bir bilgisayarı durdurmak üzerinde çalışan asistanları sonlandırır ve diskini korur. Asistan bir sonraki oturumda yepyeni bir bilgisayar alır. Tek bir kişinin bilgisayarlarını durdurmak için Kişiler'e git.",
   "admin.enterprise.comp.title": "Bilgisayarlar",
   "admin.enterprise.comp.stopInactive": "Etkin olmayan bilgisayarları durdur",
   "admin.enterprise.comp.afterDays": "{days} gün kullanılmadıktan sonra",
-  "admin.enterprise.usage.error": "Model kullanımı yüklenemedi. Sayfayı yenile.",
+  "admin.enterprise.usage.error":
+    "Model kullanımı yüklenemedi. Sayfayı yenile.",
   "admin.enterprise.usage.empty": "Son 30 günde asistan çalıştırması yok.",
-  "admin.enterprise.usage.runs": "30 günde {people} {who} tarafından {runs} çalıştırma",
+  "admin.enterprise.usage.runs":
+    "30 günde {people} {who} tarafından {runs} çalıştırma",
   "admin.enterprise.usage.person": "kişi",
   "admin.enterprise.usage.people": "kişi",
   "admin.enterprise.usage.refused": " · izin listesi dışında {count}",
-  "admin.enterprise.recorded.error": "Kaydedilen eylemler yüklenemedi. Sayfayı yenile.",
+  "admin.enterprise.recorded.error":
+    "Kaydedilen eylemler yüklenemedi. Sayfayı yenile.",
   "admin.enterprise.recorded.empty": "Henüz kaydedilmiş komut yok.",
   "admin.enterprise.recorded.local": "Üyenin makinesi",
   "admin.enterprise.recorded.bot": "Asistan {id}",
@@ -1547,8 +1571,10 @@ export const tr: Catalog<typeof EN> = {
   "admin.enterprise.ov.members": "Üyeler",
   "admin.enterprise.ov.group": "Grup: {name}",
   "admin.enterprise.ov.scope": "Kapsam",
-  "admin.enterprise.ov.groupNote": "Bir grup yalnızca ekleyebilir. Ver, kuruluş yeteneği kapalı tutsa bile üyelerine onu verir.",
-  "admin.enterprise.ov.roleNote": "Bir rolün ayarı, o role sahip herkes için kuruluş anahtarının yerini alır.",
+  "admin.enterprise.ov.groupNote":
+    "Bir grup yalnızca ekleyebilir. Ver, kuruluş yeteneği kapalı tutsa bile üyelerine onu verir.",
+  "admin.enterprise.ov.roleNote":
+    "Bir rolün ayarı, o role sahip herkes için kuruluş anahtarının yerini alır.",
   "admin.enterprise.ov.forScope": "{scope} için {title}",
   "admin.enterprise.ov.inherit": "Devral",
   "admin.enterprise.ov.grant": "Ver",
@@ -1557,18 +1583,24 @@ export const tr: Catalog<typeof EN> = {
   "admin.enterprise.netd.groupLabel": "Grup",
   "admin.enterprise.netd.mode": "Mod",
   "admin.enterprise.netd.allowlist": "İzin listesi",
-  "admin.enterprise.netd.help": "Satır başına bir tane. Bir alan adı alt alan adlarını da kapsar. *.ad yalnızca alt alan adlarını kapsar. Bir IP aralığı portları listeleyebilir. Varsayılanlar {first} ve {more} diğer paket ve kaynak ana bilgisayarıdır.",
-  "admin.enterprise.netd.lock": "Grupların bu politikanın yerini alamaması için kilitle",
+  "admin.enterprise.netd.help":
+    "Satır başına bir tane. Bir alan adı alt alan adlarını da kapsar. *.ad yalnızca alt alan adlarını kapsar. Bir IP aralığı portları listeleyebilir. Varsayılanlar {first} ve {more} diğer paket ve kaynak ana bilgisayarıdır.",
+  "admin.enterprise.netd.lock":
+    "Grupların bu politikanın yerini alamaması için kilitle",
   "admin.enterprise.netd.remove": "Politikayı kaldır",
   "admin.enterprise.days.label": "Kullanılmayan gün sayısı",
   "admin.enterprise.days.help": "0 kapatır. Saatlik denetlenir.",
   "admin.plugins.title": "Eklentiler",
-  "admin.plugins.description": "Bu kurulumun nelere ulaşabildiği ve hangi asistanların bunları kullanabildiği. Eklediğin bir eklenti herkes içindir. Hangi asistanların araçlarını alacağını eklentinin sayfasında seçersin.",
+  "admin.plugins.description":
+    "Bu kurulumun nelere ulaşabildiği ve hangi asistanların bunları kullanabildiği. Eklediğin bir eklenti herkes içindir. Hangi asistanların araçlarını alacağını eklentinin sayfasında seçersin.",
   "admin.plugins.loadError": "Eklentiler yüklenemedi. Sayfayı yenile.",
-  "admin.plugins.connected.description": "Herkes için eklendi. Kurmak ve hangi asistanların araçlarını alacağını seçmek için birini aç.",
+  "admin.plugins.connected.description":
+    "Herkes için eklendi. Kurmak ve hangi asistanların araçlarını alacağını seçmek için birini aç.",
   "admin.plugins.connected.title": "Bağlı",
-  "admin.plugins.connected.empty": "Henüz bağlı bir şey yok. Aşağıdaki listeden birini seç.",
-  "admin.plugins.explore.description": "İncelenmiş, birinci taraf sunucular. Eklemek için birini aç.",
+  "admin.plugins.connected.empty":
+    "Henüz bağlı bir şey yok. Aşağıdaki listeden birini seç.",
+  "admin.plugins.explore.description":
+    "İncelenmiş, birinci taraf sunucular. Eklemek için birini aç.",
   "admin.plugins.explore.title": "Eklentileri keşfet",
   "admin.plugins.explore.empty": "Katalogdaki her eklenti bağlı.",
   "admin.plugins.notAdded": "Eklenmedi",
@@ -1577,7 +1609,10 @@ export const tr: Catalog<typeof EN> = {
   "admin.plugins.sum.noTools": "Henüz araç yok",
   "admin.plugins.sum.tools": { one: "{count} araç", other: "{count} araç" },
   "admin.plugins.sum.toolsNoBots": "{tools} · asistan yok",
-  "admin.plugins.sum.bots": { one: "{count} asistan", other: "{count} asistan" },
+  "admin.plugins.sum.bots": {
+    one: "{count} asistan",
+    other: "{count} asistan",
+  },
   "admin.plugins.requests": { one: "{count} istek", other: "{count} istek" },
   "admin.plugins.key.grant.none": "Asistan yok",
   "admin.plugins.key.grant.one": "1 asistan",
@@ -1589,118 +1624,182 @@ export const tr: Catalog<typeof EN> = {
   "admin.plugins.key.held.some": "{total} araçtan {held}",
   "admin.plugins.key.notApproved": "Onaylanmadı",
   "admin.plugins.key.unreadableTitle": "Hesabın",
-  "admin.plugins.key.unreadable": "Burada bir hesap bağlayıp bağlamadığın yüklenemedi. Sayfayı yenile; sorun sürerse bu kurulumun günlüklerini kontrol et.",
-  "admin.plugins.key.noConsent": "{product} için geri bir onay bağlantısı gelmedi, bu yüzden hiçbir şey bağlanmadı. Tekrar dene; sorun sürerse bu bağlayıcının kurulumunu kontrol et.",
-  "admin.plugins.key.reassurance": "Kurulum onsuz da tamamdır ve yalnızca belgelerine ulaşır.",
-  "admin.plugins.key.notPlugin.description": "Bu adda ne burada ne de katalogda bir eklenti yok.",
+  "admin.plugins.key.unreadable":
+    "Burada bir hesap bağlayıp bağlamadığın yüklenemedi. Sayfayı yenile; sorun sürerse bu kurulumun günlüklerini kontrol et.",
+  "admin.plugins.key.noConsent":
+    "{product} için geri bir onay bağlantısı gelmedi, bu yüzden hiçbir şey bağlanmadı. Tekrar dene; sorun sürerse bu bağlayıcının kurulumunu kontrol et.",
+  "admin.plugins.key.reassurance":
+    "Kurulum onsuz da tamamdır ve yalnızca belgelerine ulaşır.",
+  "admin.plugins.key.notPlugin.description":
+    "Bu adda ne burada ne de katalogda bir eklenti yok.",
   "admin.plugins.key.notPlugin.title": "Bir eklenti değil",
   "admin.plugins.key.notPlugin.empty": "Yapılandırılacak bir şey yok.",
   "admin.plugins.key.enable.title": "Bu kurulum için etkinleştir",
-  "admin.plugins.key.enable.on": "Asistanlara araçları verilebilir. Bunu kapatmak eklentiyi kaldırır ve her asistanın araçlarına erişimini siler.",
-  "admin.plugins.key.enable.off": "Hiçbir asistan bu sağlayıcıya ulaşamaz. Kurmak ve asistanlara araçlarını vermek için aç.",
-  "admin.plugins.key.enable.aria": "{title} eklentisini bu kurulum için etkinleştir",
+  "admin.plugins.key.enable.on":
+    "Asistanlara araçları verilebilir. Bunu kapatmak eklentiyi kaldırır ve her asistanın araçlarına erişimini siler.",
+  "admin.plugins.key.enable.off":
+    "Hiçbir asistan bu sağlayıcıya ulaşamaz. Kurmak ve asistanlara araçlarını vermek için aç.",
+  "admin.plugins.key.enable.aria":
+    "{title} eklentisini bu kurulum için etkinleştir",
   "admin.plugins.key.whose.title": "Kimin hesabı",
   "admin.plugins.key.whose.shared": "Herkes için tek ortak hesap.",
   "admin.plugins.key.whose.personal": "Herkes kendi hesabını bağlar.",
   "admin.plugins.key.whose.makePersonal": "Kişisel yap",
   "admin.plugins.key.whose.makeShared": "Ortak yap",
-  "admin.plugins.key.conn.oauth": "Bu sağlayıcı, soran kişi olarak yanıt verir. Kurulum bir OAuth istemcisi kaydeder ve herkes kendi hesabını bağlar. Bir asistan yalnızca o kişinin görebildiğini görür.",
-  "admin.plugins.key.conn.secret": "Bu sağlayıcı, soran kişi olarak yanıt verir. Herkes kendi uygulama parolasını Bağlantılar sayfasına yapıştırır. Burada kaydedilecek bir şey yok ve kurulum kendine ait bir parola tutmaz.",
-  "admin.plugins.key.conn.builtin": "Bu kuruluma yerleşik. Ulaşılacak bir sağlayıcı ve saklanacak bir kimlik bilgisi yok. Bir çağrı, onu isteyen kişi olarak çalışır.",
-  "admin.plugins.key.conn.bearer": "Bu kurulumun sağlayıcıya gönderdiği. Herkes için tek bir kimlik bilgisi.",
+  "admin.plugins.key.conn.oauth":
+    "Bu sağlayıcı, soran kişi olarak yanıt verir. Kurulum bir OAuth istemcisi kaydeder ve herkes kendi hesabını bağlar. Bir asistan yalnızca o kişinin görebildiğini görür.",
+  "admin.plugins.key.conn.secret":
+    "Bu sağlayıcı, soran kişi olarak yanıt verir. Herkes kendi uygulama parolasını Bağlantılar sayfasına yapıştırır. Burada kaydedilecek bir şey yok ve kurulum kendine ait bir parola tutmaz.",
+  "admin.plugins.key.conn.builtin":
+    "Bu kuruluma yerleşik. Ulaşılacak bir sağlayıcı ve saklanacak bir kimlik bilgisi yok. Bir çağrı, onu isteyen kişi olarak çalışır.",
+  "admin.plugins.key.conn.bearer":
+    "Bu kurulumun sağlayıcıya gönderdiği. Herkes için tek bir kimlik bilgisi.",
   "admin.plugins.key.conn.title": "Bağlantı",
-  "admin.plugins.key.builtin.desc": "Kurulacak bir şey yok. Bu araçlar bu kurulumun içinde, kendi verileri üzerinde çalışır.",
+  "admin.plugins.key.builtin.desc":
+    "Kurulacak bir şey yok. Bu araçlar bu kurulumun içinde, kendi verileri üzerinde çalışır.",
   "admin.plugins.key.builtin.badge": "Yerleşik",
   "admin.plugins.key.secret.title": "Uygulama parolası",
-  "admin.plugins.key.secret.desc": "Herkes kendisininkini Google'da oluşturur ve Bağlantılar sayfasına yapıştırır. Posta kutusunun tamamına ulaşır, bu yüzden asistanların neler yapabileceğini aşağıda verdiğin araçlar belirler.",
+  "admin.plugins.key.secret.desc":
+    "Herkes kendisininkini Google'da oluşturur ve Bağlantılar sayfasına yapıştırır. Posta kutusunun tamamına ulaşır, bu yüzden asistanların neler yapabileceğini aşağıda verdiğin araçlar belirler.",
   "admin.plugins.key.secret.badge": "Kişi başına",
   "admin.plugins.key.reach.title": "Buna nasıl ulaşılır",
   "admin.plugins.key.token.title": "Erişim belirteci",
-  "admin.plugins.key.token.desc": "Bu sağlayıcıya yapılan her çağrıyla birlikte gönderilir.",
+  "admin.plugins.key.token.desc":
+    "Bu sağlayıcıya yapılan her çağrıyla birlikte gönderilir.",
   "admin.plugins.key.saved": "Kaydedildi",
   "admin.plugins.key.notSet": "Ayarlanmadı",
   "admin.plugins.key.client.title": "OAuth istemcisi",
-  "admin.plugins.key.client.selfDesc": "Bu kurulum, ilk bağlantıda kendini sağlayıcıya kaydeder. Yapıştırılacak bir şey yok.",
+  "admin.plugins.key.client.selfDesc":
+    "Bu kurulum, ilk bağlantıda kendini sağlayıcıya kaydeder. Yapıştırılacak bir şey yok.",
   "admin.plugins.key.client.selfBadge": "Kendini kaydeder",
-  "admin.plugins.key.client.desc": "Bu kurulumu sağlayıcıya tanıtır. Tek başına kimsenin belgelerine ulaşamaz.",
+  "admin.plugins.key.client.desc":
+    "Bu kurulumu sağlayıcıya tanıtır. Tek başına kimsenin belgelerine ulaşamaz.",
   "admin.plugins.key.client.registered": "Kayıtlı",
   "admin.plugins.key.client.notRegistered": "Kayıtlı değil",
-  "admin.plugins.key.team.connected": "Bağlı{who}. Bu araçlara sahip her asistan bu hesap olarak davranır.",
+  "admin.plugins.key.team.connected":
+    "Bağlı{who}. Bu araçlara sahip her asistan bu hesap olarak davranır.",
   "admin.plugins.key.team.as": " ({name} olarak)",
   "admin.plugins.key.team.by": " ({name} tarafından)",
-  "admin.plugins.key.team.disconnected": "Bağlı bir ekip hesabı yok. Bu araçlara sahip asistanlar reddedilir.",
+  "admin.plugins.key.team.disconnected":
+    "Bağlı bir ekip hesabı yok. Bu araçlara sahip asistanlar reddedilir.",
   "admin.plugins.key.team.heading": "Ekip hesabı",
-  "admin.plugins.key.team.notice": "Kendi hesabınla değil, ekip hesabıyla giriş yap.",
-  "admin.plugins.key.mine.connected": "Bağlı. Bu araçlara sahip bir asistan {title} hesabını sen olarak kullanır. {note}",
-  "admin.plugins.key.mine.tryConnect": "Bu bağlayıcıyı denemek için kendi hesabını bağla. {note}",
-  "admin.plugins.key.oauthAcct.connected": "Bağlı. Bu araçlara sahip bir asistan {title} hesabını sen olarak kullanır. Diğer herkes kendi hesabını bağlar.",
-  "admin.plugins.key.oauthAcct.connect": "Bu bağlayıcıyı denemek için kendi hesabını bağla. Kurulum onsuz da tamamdır ve yalnızca belgelerine ulaşır.",
+  "admin.plugins.key.team.notice":
+    "Kendi hesabınla değil, ekip hesabıyla giriş yap.",
+  "admin.plugins.key.mine.connected":
+    "Bağlı. Bu araçlara sahip bir asistan {title} hesabını sen olarak kullanır. {note}",
+  "admin.plugins.key.mine.tryConnect":
+    "Bu bağlayıcıyı denemek için kendi hesabını bağla. {note}",
+  "admin.plugins.key.oauthAcct.connected":
+    "Bağlı. Bu araçlara sahip bir asistan {title} hesabını sen olarak kullanır. Diğer herkes kendi hesabını bağlar.",
+  "admin.plugins.key.oauthAcct.connect":
+    "Bu bağlayıcıyı denemek için kendi hesabını bağla. Kurulum onsuz da tamamdır ve yalnızca belgelerine ulaşır.",
   "admin.plugins.key.connected": "Bağlı",
   "admin.plugins.key.connect": "Bağla",
   "admin.plugins.key.instance.title": "Örnek ana bilgisayarı",
-  "admin.plugins.key.instance.desc": "Bu sağlayıcı her müşteriye kendi ana bilgisayar adını verir. Kaydedilmeden önce sağlayıcının desenine göre denetlenir.",
+  "admin.plugins.key.instance.desc":
+    "Bu sağlayıcı her müşteriye kendi ana bilgisayar adını verir. Kaydedilmeden önce sağlayıcının desenine göre denetlenir.",
   "admin.plugins.key.docs.builtin": "Belgeler",
   "admin.plugins.key.docs.vendor": "Sağlayıcının belgeleri",
-  "admin.plugins.key.docs.builtinDesc": "Bu araçların neler sunduğu, onları sürdürenlerden.",
-  "admin.plugins.key.docs.vendorDesc": "Bu sunucunun neler sunduğu, onu sürdürenlerden.",
-  "admin.plugins.key.redirect.dynamic": "Kurulum yönlendirme URI'sini kendisi kaydeder. Sağlayıcıda eklenecek bir şey yok.",
-  "admin.plugins.key.redirect.manual": "Bunu sağlayıcıda istemcinin yetkili yönlendirme URI'lerine, tam olarak yazıldığı gibi ekle. Tek bir yanlış karakter orada hata verir ve hata {product} adını anmaz.",
-  "admin.plugins.key.redirect.noUrl": "Bu kurulumun herkese açık bir URL'si yok, bu yüzden kimse bağlantıyı tamamlayamaz. {env} ayarla.",
+  "admin.plugins.key.docs.builtinDesc":
+    "Bu araçların neler sunduğu, onları sürdürenlerden.",
+  "admin.plugins.key.docs.vendorDesc":
+    "Bu sunucunun neler sunduğu, onu sürdürenlerden.",
+  "admin.plugins.key.redirect.dynamic":
+    "Kurulum yönlendirme URI'sini kendisi kaydeder. Sağlayıcıda eklenecek bir şey yok.",
+  "admin.plugins.key.redirect.manual":
+    "Bunu sağlayıcıda istemcinin yetkili yönlendirme URI'lerine, tam olarak yazıldığı gibi ekle. Tek bir yanlış karakter orada hata verir ve hata {product} adını anmaz.",
+  "admin.plugins.key.redirect.noUrl":
+    "Bu kurulumun herkese açık bir URL'si yok, bu yüzden kimse bağlantıyı tamamlayamaz. {env} ayarla.",
   "admin.plugins.key.tools.refresh": "Araçları yenile",
   "admin.plugins.key.tools.grant": "Araç ver…",
-  "admin.plugins.key.tools.description": "Bir asistan yalnızca kendisine verilen araçları görür. Her çağrı gerçekleştiği anda denetlenir, bu yüzden bir erişimi kaldırmak bir sonraki çağrıdan itibaren geçerli olur.",
+  "admin.plugins.key.tools.description":
+    "Bir asistan yalnızca kendisine verilen araçları görür. Her çağrı gerçekleştiği anda denetlenir, bu yüzden bir erişimi kaldırmak bir sonraki çağrıdan itibaren geçerli olur.",
   "admin.plugins.key.tools.title": "Araçlar",
-  "admin.plugins.key.tools.empty": "Listelenen araç yok. Tekrar denetlemek için araçları yenile.",
+  "admin.plugins.key.tools.empty":
+    "Listelenen araç yok. Tekrar denetlemek için araçları yenile.",
   "admin.plugins.key.tools.writes": "değişiklik yapar",
   "admin.plugins.key.tools.reads": "okur",
   "admin.plugins.key.byBot": "Asistana göre",
-  "admin.plugins.key.byBot.hidden": "Listenden gizlendi. Bu uygulamanın eylemlerini tek tek aç veya kapat.",
-  "admin.plugins.key.byBot.shown": "Bu uygulamanın eylemlerini tek tek aç veya kapat.",
-  "admin.plugins.key.gone.description": "Bu sağlayıcı artık bunları listelemiyor. Hiçbir asistan bunları görmez ve hiçbiri çağıramaz. Erişim hâlâ kayıtlıdır ve sağlayıcı aracı yeniden listelerse geri gelir. Kaldırmak için asistanın kendi sayfasını kullan.",
+  "admin.plugins.key.byBot.hidden":
+    "Listenden gizlendi. Bu uygulamanın eylemlerini tek tek aç veya kapat.",
+  "admin.plugins.key.byBot.shown":
+    "Bu uygulamanın eylemlerini tek tek aç veya kapat.",
+  "admin.plugins.key.gone.description":
+    "Bu sağlayıcı artık bunları listelemiyor. Hiçbir asistan bunları görmez ve hiçbiri çağıramaz. Erişim hâlâ kayıtlıdır ve sağlayıcı aracı yeniden listelerse geri gelir. Kaldırmak için asistanın kendi sayfasını kullan.",
   "admin.plugins.key.gone.title": "Verilmiş ama artık listelenmiyor",
   "admin.plugins.key.gone.row": "{title} listelemiyor{asOf}.",
   "admin.plugins.key.gone.asOf": " (son yenilemeye göre)",
   "admin.plugins.key.dlg.client": "{title} için OAuth istemcisi",
   "admin.plugins.key.dlg.instance": "{title} için örnek ana bilgisayarı",
   "admin.plugins.key.dlg.token": "{title} için erişim belirteci",
-  "admin.plugins.key.dlg.clientDesc": "Sağlayıcının konsolundan. Sır, bu kurulumun kasasına kaydedilir ve bir daha asla gösterilmez.",
-  "admin.plugins.key.dlg.instanceDesc": "Bu sağlayıcıdaki kendi ana bilgisayar adın. Kaydedilmeden önce sağlayıcının desenine göre denetlenir.",
-  "admin.plugins.key.dlg.tokenDesc": "Bu kurulumun kasasına kaydedilir ve bir daha asla gösterilmez.",
+  "admin.plugins.key.dlg.clientDesc":
+    "Sağlayıcının konsolundan. Sır, bu kurulumun kasasına kaydedilir ve bir daha asla gösterilmez.",
+  "admin.plugins.key.dlg.instanceDesc":
+    "Bu sağlayıcıdaki kendi ana bilgisayar adın. Kaydedilmeden önce sağlayıcının desenine göre denetlenir.",
+  "admin.plugins.key.dlg.tokenDesc":
+    "Bu kurulumun kasasına kaydedilir ve bir daha asla gösterilmez.",
   "admin.plugins.key.dlg.clientId": "İstemci kimliği",
   "admin.plugins.key.dlg.clientSecret": "İstemci sırrı",
   "admin.plugins.key.gr.title": "Araç ver",
-  "admin.plugins.key.gr.description": "Her verme işlemi Denetim'de ayrı bir satırdır. Değişiklik yapan araçlar her çağrıda yine sınırlara göre denetlenir.",
+  "admin.plugins.key.gr.description":
+    "Her verme işlemi Denetim'de ayrı bir satırdır. Değişiklik yapan araçlar her çağrıda yine sınırlara göre denetlenir.",
   "admin.plugins.key.gr.to": "Kime",
   "admin.plugins.key.gr.reads": "Okur",
   "admin.plugins.key.gr.writes": "Değişiklik yapar",
   "admin.plugins.key.gr.selectAll": "Tümünü seç",
   "admin.plugins.key.gr.button": "Ver",
   "admin.plugins.key.gr.progress": "{total} araçtan {current} veriliyor…",
-  "admin.plugins.key.gr.summary": { one: "{names} için {count} araç ver.", other: "{names} için {count} araç ver." },
-  "admin.plugins.key.gr.changing": { one: "{count} tanesi değişiklik yapar.", other: "{count} tanesi değişiklik yapar." },
-  "admin.home.reach.desc": "Bir asistanın {product} dışında nelere dokunabileceği ve bunun sınırları.",
+  "admin.plugins.key.gr.summary": {
+    one: "{names} için {count} araç ver.",
+    other: "{names} için {count} araç ver.",
+  },
+  "admin.plugins.key.gr.changing": {
+    one: "{count} tanesi değişiklik yapar.",
+    other: "{count} tanesi değişiklik yapar.",
+  },
+  "admin.home.reach.desc":
+    "Bir asistanın {product} dışında nelere dokunabileceği ve bunun sınırları.",
   "admin.home.credentials.desc": "Bu kurulumun anahtarları ve belirteçleri.",
   "admin.home.boundaries.desc": "Hiçbir asistanın asla yapamayacağı şeyler.",
-  "admin.home.approvals.desc": "Üyelerin asistanlarının harekete geçmeden önce neyi sorması gerektiği.",
+  "admin.home.approvals.desc":
+    "Üyelerin asistanlarının harekete geçmeden önce neyi sorması gerektiği.",
   "admin.home.computers.desc": "Asistanların araçları çalıştırdığı makineler.",
-  "admin.home.do.desc": "Her asistanın kullanabileceği uygulamalar, beceriler ve arayüz parçaları.",
-  "admin.home.plugins.desc": "{product} ürününün ulaşabildiği hizmetler ve hangi asistanların bunları kullanabildiği.",
-  "admin.home.skills.desc": "Herkesin / ile çalıştırabileceği adlandırılmış yönergeler.",
-  "admin.home.learning.desc": "Biten konuşmalardan öğren ve önerdiği becerileri incele.",
-  "admin.home.components.desc": "Bir asistanın konuşmada çizebileceği özel parçalar.",
-  "admin.home.playground.desc": "Bir bileşen yaz ve yazarken nasıl çizildiğini izle.",
-  "admin.home.engines.desc": "Üyelerin üzerinde çalıştığı yapay zekâ motorları ve her birinin şu an yanıt verip veremediği.",
-  "admin.home.people.desc": "Giriş yapmış herkes, yöneticilerin kimler olduğu ve erişimi kaldırılanlar.",
-  "admin.home.enterprise.desc": "Roller ve gruplar, zorunlu SSO, SCIM, ağ politikası, MCP ve model izin listeleri, Action Recording.",
-  "admin.home.idp.desc": "Şirketinin SAML veya OpenID Connect sağlayıcısı, e-posta alan adına göre eşleştirilir.",
-  "admin.home.audit.desc": "{product} içinde yapılan her eylem ve onu kimin yaptığı.",
-  "admin.home.description": "Bu kurulumdaki herkes için ayarlar. Burada yapılan bir değişiklik her kişiyi ve her asistanı etkiler.",
-  "admin.plugins.directoryError": "Eklenti ayarları yüklenemedi. Sayfayı yenile.",
-  "admin.components.description": "Her asistanın neyle yanıt verebileceği. Yayımlanan her bileşen her asistan için açıktır. Birini kapatırsan o asistan onu hiç görmez. Değişiklikler ve reddedilenler Denetim'de görünür.",
+  "admin.home.do.desc":
+    "Her asistanın kullanabileceği uygulamalar, beceriler ve arayüz parçaları.",
+  "admin.home.plugins.desc":
+    "{product} ürününün ulaşabildiği hizmetler ve hangi asistanların bunları kullanabildiği.",
+  "admin.home.skills.desc":
+    "Herkesin / ile çalıştırabileceği adlandırılmış yönergeler.",
+  "admin.home.learning.desc":
+    "Biten konuşmalardan öğren ve önerdiği becerileri incele.",
+  "admin.home.components.desc":
+    "Bir asistanın konuşmada çizebileceği özel parçalar.",
+  "admin.home.playground.desc":
+    "Bir bileşen yaz ve yazarken nasıl çizildiğini izle.",
+  "admin.home.engines.desc":
+    "Üyelerin üzerinde çalıştığı yapay zekâ motorları ve her birinin şu an yanıt verip veremediği.",
+  "admin.home.people.desc":
+    "Giriş yapmış herkes, yöneticilerin kimler olduğu ve erişimi kaldırılanlar.",
+  "admin.home.enterprise.desc":
+    "Roller ve gruplar, zorunlu SSO, SCIM, ağ politikası, MCP ve model izin listeleri, Action Recording.",
+  "admin.home.idp.desc":
+    "Şirketinin SAML veya OpenID Connect sağlayıcısı, e-posta alan adına göre eşleştirilir.",
+  "admin.home.audit.desc":
+    "{product} içinde yapılan her eylem ve onu kimin yaptığı.",
+  "admin.home.description":
+    "Bu kurulumdaki herkes için ayarlar. Burada yapılan bir değişiklik her kişiyi ve her asistanı etkiler.",
+  "admin.plugins.directoryError":
+    "Eklenti ayarları yüklenemedi. Sayfayı yenile.",
+  "admin.components.description":
+    "Her asistanın neyle yanıt verebileceği. Yayımlanan her bileşen her asistan için açıktır. Birini kapatırsan o asistan onu hiç görmez. Değişiklikler ve reddedilenler Denetim'de görünür.",
   "admin.components.loadError": "Bileşenler yüklenemedi. Sayfayı yenile.",
   "admin.components.emptyTitle": "Henüz bileşen yok",
-  "admin.components.emptyDesc": "Asistanlarının kullanabileceği bileşenler burada görünür.",
+  "admin.components.emptyDesc":
+    "Asistanlarının kullanabileceği bileşenler burada görünür.",
   "admin.audit.silence.quiet": "{seconds} sn sessiz",
   "admin.audit.silence.nothing": "{quiet}, hiçbir şey söylemeden",
-  "admin.audit.silence.after": { one: "{quiet}, {count} parçadan sonra", other: "{quiet}, {count} parçadan sonra" },
+  "admin.audit.silence.after": {
+    one: "{quiet}, {count} parçadan sonra",
+    other: "{quiet}, {count} parçadan sonra",
+  },
 };
