@@ -945,28 +945,39 @@ export const zh: Catalog<typeof EN> = {
   "fullaccess.label.noPayments": "不含付款的 Full access",
   "fullaccess.label.full": "Full access",
   "fullaccess.off": "关闭",
-  "fullaccess.description": "默认安全：你的助理在发送、付款、签署、预订或删除之前会先询问。你可以为每位助理选择，让它不经询问就做这些事。",
+  "fullaccess.description":
+    "默认安全：你的助理在发送、付款、签署、预订或删除之前会先询问。你可以为每位助理选择，让它不经询问就做这些事。",
   "fullaccess.offTerm": "关闭：",
   "fullaccess.offText": "助理在发送、付款、签署、预订或删除之前会先询问。",
   "fullaccess.noPaymentsTerm": "不含付款的 Full access：",
-  "fullaccess.noPaymentsText": "不经询问就发送、签署、预订和删除。付款和购买仍会询问你。",
+  "fullaccess.noPaymentsText":
+    "不经询问就发送、签署、预订和删除。付款和购买仍会询问你。",
   "fullaccess.fullTerm": "Full access：",
-  "fullaccess.fullText": "也不经询问就付款和购买。在支出上限出现之前，金额没有限制（计划在 v0.4 推出）。",
+  "fullaccess.fullText":
+    "也不经询问就付款和购买。在支出上限出现之前，金额没有限制（计划在 v0.4 推出）。",
   "fullaccess.askTitle": "给 {name} 开启{label}？",
   "fullaccess.give": "开启{label}",
-  "fullaccess.full.p1": "{name} 将不先问你就发送、付款、签署、预订和删除。它可能根据所读到的内容（例如一封邮件或一个网页）采取行动，所以只有在你信任它这样做时才开启。",
-  "fullaccess.full.p2": "它可以支付的金额没有限制：支出上限目前还不存在（计划在 v0.4 推出）。如果想让付款和购买继续询问你，请改选不含付款的 Full access。",
-  "fullaccess.full.p3": "密码和安全设置仍然需要你。如果已设置自动审查员，它还会对该成员在其电脑上运行的每条命令和每个脚本读取一次，即使你已关闭审查员也是如此；如果没有设置，命令不会被读取。这适用于你在自己的聊天中提出的请求，不适用于例行任务或签到。你可以随时关闭，它会立即停止。",
-  "fullaccess.noPayments.p1": "{name} 将不先问你就发送、签署、预订和删除。付款和购买仍会询问你。它可能根据所读到的内容（例如一封邮件或一个网页）采取行动，所以只有在你信任它这样做时才开启。",
-  "fullaccess.noPayments.p2": "应用通过内置检查来识别付款，所以仅仅提到付款的消息也可能会询问，而措辞不寻常的付款可能不会被识别出来。密码和安全设置仍然需要你。如果已设置自动审查员，它还会对该成员在其电脑上为密码、安全设置或以这种方式进行的付款而运行的每条命令和每个脚本读取一次，即使你已关闭审查员也是如此；如果没有设置，命令不会被读取。这适用于你在自己的聊天中提出的请求，不适用于例行任务或签到。你可以随时关闭，它会立即停止。",
+  "fullaccess.full.p1":
+    "{name} 将不先问你就发送、付款、签署、预订和删除。它可能根据所读到的内容（例如一封邮件或一个网页）采取行动，所以只有在你信任它这样做时才开启。",
+  "fullaccess.full.p2":
+    "它可以支付的金额没有限制：支出上限目前还不存在（计划在 v0.4 推出）。如果想让付款和购买继续询问你，请改选不含付款的 Full access。",
+  "fullaccess.full.p3":
+    "密码和安全设置仍然需要你。如果已设置自动审查员，它还会对该成员在其电脑上运行的每条命令和每个脚本读取一次，即使你已关闭审查员也是如此；如果没有设置，命令不会被读取。这适用于你在自己的聊天中提出的请求，不适用于例行任务或签到。你可以随时关闭，它会立即停止。",
+  "fullaccess.noPayments.p1":
+    "{name} 将不先问你就发送、签署、预订和删除。付款和购买仍会询问你。它可能根据所读到的内容（例如一封邮件或一个网页）采取行动，所以只有在你信任它这样做时才开启。",
+  "fullaccess.noPayments.p2":
+    "应用通过内置检查来识别付款，所以仅仅提到付款的消息也可能会询问，而措辞不寻常的付款可能不会被识别出来。密码和安全设置仍然需要你。如果已设置自动审查员，它还会对该成员在其电脑上为密码、安全设置或以这种方式进行的付款而运行的每条命令和每个脚本读取一次，即使你已关闭审查员也是如此；如果没有设置，命令不会被读取。这适用于你在自己的聊天中提出的请求，不适用于例行任务或签到。你可以随时关闭，它会立即停止。",
   "fullaccess.noBots": "还没有助理。",
   "fullaccess.legend": "{name} 的权限",
   "fullaccess.radioAria": "{name} 的{label}",
   "fullaccess.summary.off": "在发送、付款、签署、预订或删除之前会先询问。",
-  "fullaccess.summary.noPayments": "不经询问就行动，但付款和购买仍会询问你。自 {since} 起。",
-  "fullaccess.summary.full": "不经询问就行动，包括付款，金额没有限制。自 {since} 起。",
+  "fullaccess.summary.noPayments":
+    "不经询问就行动，但付款和购买仍会询问你。自 {since} 起。",
+  "fullaccess.summary.full":
+    "不经询问就行动，包括付款，金额没有限制。自 {since} 起。",
   "fullaccess.doneTitle": "未经询问完成的事",
-  "fullaccess.doneDescription": "拥有 Full access 的助理在没有询问你的情况下做过的事，最新的在前。",
+  "fullaccess.doneDescription":
+    "拥有 Full access 的助理在没有询问你的情况下做过的事，最新的在前。",
   "fullaccess.nothingYet": "目前还没有。",
   "approvals.audience.owner": "仅其所有者",
   "approvals.audience.team": "所有人",
@@ -978,7 +989,8 @@ export const zh: Catalog<typeof EN> = {
   "access.req.title": "请求",
   "access.req.loadError": "无法加载访问请求。请刷新页面。",
   "access.req.descApp": "请求使用此应用的人。批准会立即执行他们的请求。",
-  "access.req.descAll": "请求开启应用、把应用交给某位助理或连接应用的人。批准会立即执行他们的请求。",
+  "access.req.descAll":
+    "请求开启应用、把应用交给某位助理或连接应用的人。批准会立即执行他们的请求。",
   "access.req.aBot": "一位助理",
   "access.req.theBot": "这位助理",
   "access.req.somebody": "有人",
@@ -993,10 +1005,21 @@ export const zh: Catalog<typeof EN> = {
   "access.req.toolRead": "{name}（只读）",
   "access.req.toolWrite": "{name}（会更改内容）",
   "access.req.gives": "批准只会给 {bot} 这些工具，不会给其他任何工具：{list}。",
-  "access.req.readOnly": "批准只会给 {bot} {app} 的只读操作。其他操作请在{page}中选择。",
-  "access.req.canSend": { one: "{names} 可以代表此人发送。", other: "{names} 各自都可以代表此人发送。" },
-  "access.req.unreviewed": { one: "没有经过审核的清单说明 {names} 在 {app} 中会做什么，所以它可能代表此人发送。", other: "没有经过审核的清单说明 {names} 在 {app} 中会做什么，所以它们各自都可能代表此人发送。" },
-  "access.req.neverGives": { one: "批准绝不会给这样的工具：请在设置中允许它，见{page}。", other: "批准绝不会给这样的工具：请在设置中允许它们，见{page}。" },
+  "access.req.readOnly":
+    "批准只会给 {bot} {app} 的只读操作。其他操作请在{page}中选择。",
+  "access.req.canSend": {
+    one: "{names} 可以代表此人发送。",
+    other: "{names} 各自都可以代表此人发送。",
+  },
+  "access.req.unreviewed": {
+    one: "没有经过审核的清单说明 {names} 在 {app} 中会做什么，所以它可能代表此人发送。",
+    other:
+      "没有经过审核的清单说明 {names} 在 {app} 中会做什么，所以它们各自都可能代表此人发送。",
+  },
+  "access.req.neverGives": {
+    one: "批准绝不会给这样的工具：请在设置中允许它，见{page}。",
+    other: "批准绝不会给这样的工具：请在设置中允许它们，见{page}。",
+  },
   "access.req.and": "{a}和{b}",
   "passwords.saveTo": "保存到密码",
   "responsibilities.run.waitKind.approval": "你的批准",
@@ -1004,11 +1027,13 @@ export const zh: Catalog<typeof EN> = {
   "responsibilities.run.waitKind.handoff": "你接手",
   "responsibilities.run.waitKind.signIn": "你登录",
   "responsibilities.run.waitKind.other": "你",
-  "responsibilities.new.description": "一个持续的目标。助理会在你选择的对话中处理它。",
+  "responsibilities.new.description":
+    "一个持续的目标。助理会在你选择的对话中处理它。",
   "responsibilities.new.chooseConversation": "选择一个对话",
   "responsibilities.new.loadMore": "加载更多对话",
   "responsibilities.new.titleExample": "让客户报告保持最新",
-  "responsibilities.new.criteriaExample": "报告包含当前季度的图表和一个来源链接。",
+  "responsibilities.new.criteriaExample":
+    "报告包含当前季度的图表和一个来源链接。",
   "responsibilities.new.eventSource": "事件来源",
   "responsibilities.new.source.none": "按需运行",
   "responsibilities.new.githubHelp": "事件来自你在{link}中连接的仓库。",
@@ -1016,13 +1041,19 @@ export const zh: Catalog<typeof EN> = {
   "responsibilities.new.creating": "正在创建…",
   "responsibilities.new.create": "创建职责",
   "triggers.kind.email": "邮件",
-  "triggers.help.webhook": "用 Authorization 头，或用 Standard Webhooks 签名头，向此 URL POST JSON。返回 200 表示已收到，并不表示运行已完成。",
-  "triggers.help.github": "在仓库的 Settings → Webhooks 中，把 payload URL 设为此 URL，content type 设为 application/json，secret 设为该密钥。",
-  "triggers.help.linear": "在 Linear 中，Settings → API → Webhooks：设置 URL，然后把 Linear 显示的 signing secret 粘贴到这里。",
-  "triggers.help.sentry": "在 Sentry 的内部集成中，设置 webhook URL，然后把该集成的 client secret 粘贴到这里。",
-  "triggers.help.pagerduty": "在 PagerDuty 中，Integrations → Generic Webhooks (v3)：设置 URL，然后把创建时显示的 secret 粘贴到这里。",
+  "triggers.help.webhook":
+    "用 Authorization 头，或用 Standard Webhooks 签名头，向此 URL POST JSON。返回 200 表示已收到，并不表示运行已完成。",
+  "triggers.help.github":
+    "在仓库的 Settings → Webhooks 中，把 payload URL 设为此 URL，content type 设为 application/json，secret 设为该密钥。",
+  "triggers.help.linear":
+    "在 Linear 中，Settings → API → Webhooks：设置 URL，然后把 Linear 显示的 signing secret 粘贴到这里。",
+  "triggers.help.sentry":
+    "在 Sentry 的内部集成中，设置 webhook URL，然后把该集成的 client secret 粘贴到这里。",
+  "triggers.help.pagerduty":
+    "在 PagerDuty 中，Integrations → Generic Webhooks (v3)：设置 URL，然后把创建时显示的 secret 粘贴到这里。",
   "triggers.help.email": "向此地址发送或转发邮件，即可启动一次运行。",
-  "triggers.help.slack": "由这位助理收到的 Slack 事件启动。添加触发器之前发送的消息会被忽略。",
+  "triggers.help.slack":
+    "由这位助理收到的 Slack 事件启动。添加触发器之前发送的消息会被忽略。",
   "triggers.slack.mention": "有人提到助理",
   "triggers.slack.phrase": "消息包含某个短语",
   "triggers.slack.reaction": "添加了表情回应",
@@ -1044,14 +1075,16 @@ export const zh: Catalog<typeof EN> = {
   "triggers.add": "添加触发器",
   "triggers.notActive.paused": "此职责已暂停。它的触发器不会启动它。",
   "triggers.notActive.completed": "此职责已完成。它的触发器不会启动它。",
-  "triggers.none": "没有触发器。你点“立即运行”时，或出现上面的事件时，它才会运行。",
+  "triggers.none":
+    "没有触发器。你点“立即运行”时，或出现上面的事件时，它才会运行。",
   "triggers.removeForGood": "永久移除",
   "triggers.keep": "保留",
   "triggers.runOnAria": "由这个{kind}触发器运行",
   "triggers.postTo": "POST 到",
   "triggers.copyUrl": "复制 URL",
   "triggers.copyAddress": "复制地址",
-  "triggers.emailOff": "{product} 尚未设置邮件，所以这个地址无法接收邮件。需要管理员先开启。",
+  "triggers.emailOff":
+    "{product} 尚未设置邮件，所以这个地址无法接收邮件。需要管理员先开启。",
   "triggers.key": "密钥",
   "triggers.copyKey": "复制密钥",
   "triggers.copyHeader": "复制头信息",
@@ -1078,21 +1111,28 @@ export const zh: Catalog<typeof EN> = {
   "triggers.adding": "正在添加…",
   "triggers.addKind": "添加{kind}触发器",
   "triggers.example.webhook": "deploy.finished（留空：任意）",
-  "routines.cal.intro": "接下来 {days} 天内，已开启的例行任务。时间使用你的时区。",
+  "routines.cal.intro":
+    "接下来 {days} 天内，已开启的例行任务。时间使用你的时区。",
   "routines.cal.none": "还没有例行任务，所以没有安排任何内容。",
   "routines.cal.noneOn": "这些例行任务都没有开启，所以都不会运行。",
   "routines.cal.nothing": "接下来 {days} 天内没有安排任何内容。",
   "routines.cal.truncated": "这 {days} 天里只列出了前 {max} 次运行。",
-  "routines.cal.paused": { one: "有 {count} 个例行任务已暂停，所以没有列在这里。开启一个就能看到它何时运行。", other: "有 {count} 个例行任务已暂停，所以没有列在这里。开启一个就能看到它何时运行。" },
+  "routines.cal.paused": {
+    one: "有 {count} 个例行任务已暂停，所以没有列在这里。开启一个就能看到它何时运行。",
+    other:
+      "有 {count} 个例行任务已暂停，所以没有列在这里。开启一个就能看到它何时运行。",
+  },
   "routines.week.nothing": "本周剩余时间没有安排任何内容。",
   "routines.week.label": "本周",
   "routines.week.today": "今天",
   "routines.week.now": "现在，{time}",
   "routines.week.next": "下一个：",
   "routines.week.nothingElse": "本周没有其他安排。",
-  "routines.week.truncated": "只列出了接下来几天的前几次运行，所以运行非常频繁的例行任务可能不会每天都显示。",
+  "routines.week.truncated":
+    "只列出了接下来几天的前几次运行，所以运行非常频繁的例行任务可能不会每天都显示。",
   "routines.week.historyError": "无法加载已经发生的运行，所以没有显示。",
-  "routines.week.note": "时间使用你的时区。运行频率高于每小时一次的例行任务，会合并成当天的一个区块。",
+  "routines.week.note":
+    "时间使用你的时区。运行频率高于每小时一次的例行任务，会合并成当天的一个区块。",
   "routines.week.summary": "{count} 次运行，约每 {minutes} 分钟一次",
   "routines.week.gone": "{label}，对话已删除",
   "routines.card.label": "例行任务",
@@ -1100,7 +1140,8 @@ export const zh: Catalog<typeof EN> = {
   "routines.card.readError": "无法读取此例行任务。",
   "routines.card.reading": "正在读取此例行任务…",
   "routines.card.gone": "此例行任务已不存在",
-  "routines.card.cannotSend": "此对话目前无法接收消息。请在下方的消息框中写下修改内容。",
+  "routines.card.cannotSend":
+    "此对话目前无法接收消息。请在下方的消息框中写下修改内容。",
   "routines.card.confirm": "取消此例行任务？",
   "routines.card.yes": "是，取消它",
   "routines.card.no": "否，保留",

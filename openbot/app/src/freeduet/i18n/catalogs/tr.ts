@@ -997,45 +997,64 @@ export const tr: Catalog<typeof EN> = {
   "fullaccess.label.noPayments": "Ödemesiz Full access",
   "fullaccess.label.full": "Full access",
   "fullaccess.off": "Kapalı",
-  "fullaccess.description": "Varsayılan olarak güvenli: asistanların göndermeden, ödeme yapmadan, imzalamadan, rezervasyon yapmadan veya silmeden önce sana sorar. Her asistan için bunları sormadan yapmasına izin vermeyi seçebilirsin.",
+  "fullaccess.description":
+    "Varsayılan olarak güvenli: asistanların göndermeden, ödeme yapmadan, imzalamadan, rezervasyon yapmadan veya silmeden önce sana sorar. Her asistan için bunları sormadan yapmasına izin vermeyi seçebilirsin.",
   "fullaccess.offTerm": "Kapalı:",
-  "fullaccess.offText": "asistan göndermeden, ödeme yapmadan, imzalamadan, rezervasyon yapmadan veya silmeden önce sorar.",
+  "fullaccess.offText":
+    "asistan göndermeden, ödeme yapmadan, imzalamadan, rezervasyon yapmadan veya silmeden önce sorar.",
   "fullaccess.noPaymentsTerm": "Ödemesiz Full access:",
-  "fullaccess.noPaymentsText": "sormadan gönderir, imzalar, rezervasyon yapar ve siler. Ödemeler ve satın almalar yine sana sorulur.",
+  "fullaccess.noPaymentsText":
+    "sormadan gönderir, imzalar, rezervasyon yapar ve siler. Ödemeler ve satın almalar yine sana sorulur.",
   "fullaccess.fullTerm": "Full access:",
-  "fullaccess.fullText": "ayrıca sormadan ödeme yapar ve satın alır. Harcama sınırları gelene kadar tutar için bir sınır yoktur (v0.4 için planlandı).",
+  "fullaccess.fullText":
+    "ayrıca sormadan ödeme yapar ve satın alır. Harcama sınırları gelene kadar tutar için bir sınır yoktur (v0.4 için planlandı).",
   "fullaccess.askTitle": "{name} için {label} verilsin mi?",
   "fullaccess.give": "{label} ver",
-  "fullaccess.full.p1": "{name} önce sana sormadan gönderecek, ödeme yapacak, imzalayacak, rezervasyon yapacak ve silecek. Bir e-posta ya da web sayfası gibi okuduklarına göre hareket edebilir; bu yüzden bunu yalnızca bu konuda ona güveniyorsan aç.",
-  "fullaccess.full.p2": "Ödeyebileceği tutarın bir sınırı yok: harcama sınırları henüz yok (v0.4 için planlandı). Ödemelerin ve satın almaların sana sormaya devam etmesi için bunun yerine Ödemesiz Full access'i seç.",
-  "fullaccess.full.p3": "Parolalar ve güvenlik ayarları yine sana ait. Otomatik bir gözden geçirici kuruluysa, gözden geçiriciyi kapatmış olsan bile üyenin kendi bilgisayarında çalıştırdığı her komutu ve betiği bir kez de o okur; hiçbiri kurulu değilse komutlar okunmaz. Bu, kendi sohbetlerinde istediklerin için geçerlidir; rutinler ve check-in'ler için geçerli değildir. İstediğin zaman kapatabilirsin ve hemen durur.",
-  "fullaccess.noPayments.p1": "{name} önce sana sormadan gönderecek, imzalayacak, rezervasyon yapacak ve silecek. Ödemeler ve satın almalar yine sana sorulur. Bir e-posta ya da web sayfası gibi okuduklarına göre hareket edebilir; bu yüzden bunu yalnızca bu konuda ona güveniyorsan aç.",
-  "fullaccess.noPayments.p2": "Uygulama bir ödemeyi yerleşik kontrolleriyle tanır; bu yüzden yalnızca bir ödemeden söz eden bir mesaj da sorabilir, olağandışı yazılmış bir ödeme ise yakalanmayabilir. Parolalar ve güvenlik ayarları yine sana ait. Otomatik bir gözden geçirici kuruluysa, gözden geçiriciyi kapatmış olsan bile üyenin kendi bilgisayarında bir parola, bir güvenlik ayarı ya da bu yolla yapılan bir ödeme için çalıştırdığı her komutu ve betiği bir kez de o okur; hiçbiri kurulu değilse komutlar okunmaz. Bu, kendi sohbetlerinde istediklerin için geçerlidir; rutinler ve check-in'ler için geçerli değildir. İstediğin zaman kapatabilirsin ve hemen durur.",
+  "fullaccess.full.p1":
+    "{name} önce sana sormadan gönderecek, ödeme yapacak, imzalayacak, rezervasyon yapacak ve silecek. Bir e-posta ya da web sayfası gibi okuduklarına göre hareket edebilir; bu yüzden bunu yalnızca bu konuda ona güveniyorsan aç.",
+  "fullaccess.full.p2":
+    "Ödeyebileceği tutarın bir sınırı yok: harcama sınırları henüz yok (v0.4 için planlandı). Ödemelerin ve satın almaların sana sormaya devam etmesi için bunun yerine Ödemesiz Full access'i seç.",
+  "fullaccess.full.p3":
+    "Parolalar ve güvenlik ayarları yine sana ait. Otomatik bir gözden geçirici kuruluysa, gözden geçiriciyi kapatmış olsan bile üyenin kendi bilgisayarında çalıştırdığı her komutu ve betiği bir kez de o okur; hiçbiri kurulu değilse komutlar okunmaz. Bu, kendi sohbetlerinde istediklerin için geçerlidir; rutinler ve check-in'ler için geçerli değildir. İstediğin zaman kapatabilirsin ve hemen durur.",
+  "fullaccess.noPayments.p1":
+    "{name} önce sana sormadan gönderecek, imzalayacak, rezervasyon yapacak ve silecek. Ödemeler ve satın almalar yine sana sorulur. Bir e-posta ya da web sayfası gibi okuduklarına göre hareket edebilir; bu yüzden bunu yalnızca bu konuda ona güveniyorsan aç.",
+  "fullaccess.noPayments.p2":
+    "Uygulama bir ödemeyi yerleşik kontrolleriyle tanır; bu yüzden yalnızca bir ödemeden söz eden bir mesaj da sorabilir, olağandışı yazılmış bir ödeme ise yakalanmayabilir. Parolalar ve güvenlik ayarları yine sana ait. Otomatik bir gözden geçirici kuruluysa, gözden geçiriciyi kapatmış olsan bile üyenin kendi bilgisayarında bir parola, bir güvenlik ayarı ya da bu yolla yapılan bir ödeme için çalıştırdığı her komutu ve betiği bir kez de o okur; hiçbiri kurulu değilse komutlar okunmaz. Bu, kendi sohbetlerinde istediklerin için geçerlidir; rutinler ve check-in'ler için geçerli değildir. İstediğin zaman kapatabilirsin ve hemen durur.",
   "fullaccess.noBots": "Henüz asistan yok.",
   "fullaccess.legend": "{name} için erişim",
   "fullaccess.radioAria": "{name} için {label}",
-  "fullaccess.summary.off": "Göndermeden, ödeme yapmadan, imzalamadan, rezervasyon yapmadan veya silmeden önce sorar.",
-  "fullaccess.summary.noPayments": "Sormadan hareket eder; yalnızca ödemeler ve satın almalar yine sana sorulur. {since} tarihinden beri.",
-  "fullaccess.summary.full": "Ödemeler dahil sormadan hareket eder, tutar için sınır yoktur. {since} tarihinden beri.",
+  "fullaccess.summary.off":
+    "Göndermeden, ödeme yapmadan, imzalamadan, rezervasyon yapmadan veya silmeden önce sorar.",
+  "fullaccess.summary.noPayments":
+    "Sormadan hareket eder; yalnızca ödemeler ve satın almalar yine sana sorulur. {since} tarihinden beri.",
+  "fullaccess.summary.full":
+    "Ödemeler dahil sormadan hareket eder, tutar için sınır yoktur. {since} tarihinden beri.",
   "fullaccess.doneTitle": "Sormadan yapılanlar",
-  "fullaccess.doneDescription": "Full access'i olan bir asistanın sana sormadan yaptıkları, en yeniden başlayarak.",
+  "fullaccess.doneDescription":
+    "Full access'i olan bir asistanın sana sormadan yaptıkları, en yeniden başlayarak.",
   "fullaccess.nothingYet": "Henüz yok.",
   "approvals.audience.owner": "Yalnızca sahibi",
   "approvals.audience.team": "Herkes",
   "approvals.audience.outside": ", ve dışarıdan gelen girdi",
   "approvals.audience.nobody": "Kimse belirtilmemiş",
-  "approvals.audience.groups": { one: "{names} grubu", other: "{names} grupları" },
+  "approvals.audience.groups": {
+    one: "{names} grubu",
+    other: "{names} grupları",
+  },
   "approvals.audience.people": { one: "{count} kişi", other: "{count} kişi" },
   "approvals.audience.join": "{a} ve {b}",
   "access.req.title": "İstekler",
   "access.req.loadError": "Erişim istekleri yüklenemedi. Sayfayı yenile.",
-  "access.req.descApp": "Bu uygulamayı isteyen kişiler. Onayla, istediklerini hemen yapar.",
-  "access.req.descAll": "Bir uygulamanın açılmasını, bir asistana verilmesini veya bağlanmasını isteyen kişiler. Onayla, istediklerini hemen yapar.",
+  "access.req.descApp":
+    "Bu uygulamayı isteyen kişiler. Onayla, istediklerini hemen yapar.",
+  "access.req.descAll":
+    "Bir uygulamanın açılmasını, bir asistana verilmesini veya bağlanmasını isteyen kişiler. Onayla, istediklerini hemen yapar.",
   "access.req.aBot": "bir asistan",
   "access.req.theBot": "asistan",
   "access.req.somebody": "Birisi",
   "access.req.enable": "{bot} için {app} uygulamasını aç",
-  "access.req.grantMore": "{bot} için {app} uygulamasından daha fazlasını ver: {list}",
+  "access.req.grantMore":
+    "{bot} için {app} uygulamasından daha fazlasını ver: {list}",
   "access.req.grant": "{bot} için {app} uygulamasını ver",
   "access.req.connectShared": "Paylaşılan {app} hesabını bağla",
   "access.req.asked": "{who} {when} istedi{forBot}.",
@@ -1044,11 +1063,24 @@ export const tr: Catalog<typeof EN> = {
   "access.req.botPage": "{app} altındaki asistan sayfası",
   "access.req.toolRead": "{name} (salt okunur)",
   "access.req.toolWrite": "{name} (bir şeyi değiştirir)",
-  "access.req.gives": "Onaylamak, {bot} için tam olarak şu araçları verir, başka hiçbir şey vermez: {list}.",
-  "access.req.readOnly": "Onaylamak, {bot} için yalnızca {app} uygulamasının salt okunur eylemlerini verir. Diğerlerini {page} sayfasında seç.",
-  "access.req.canSend": { one: "{names} kişinin adına gönderebilir.", other: "{names} her biri kişinin adına gönderebilir." },
-  "access.req.unreviewed": { one: "Gözden geçirilmiş hiçbir liste {names} aracının {app} içinde ne yaptığını söylemiyor; bu yüzden kişinin adına gönderebilir.", other: "Gözden geçirilmiş hiçbir liste {names} araçlarının {app} içinde ne yaptığını söylemiyor; bu yüzden her biri kişinin adına gönderebilir." },
-  "access.req.neverGives": { one: "Onaylamak asla böyle bir araç vermez: ayarlarda, {page} sayfasında izin ver.", other: "Onaylamak asla böyle araçlar vermez: ayarlarda, {page} sayfasında izin ver." },
+  "access.req.gives":
+    "Onaylamak, {bot} için tam olarak şu araçları verir, başka hiçbir şey vermez: {list}.",
+  "access.req.readOnly":
+    "Onaylamak, {bot} için yalnızca {app} uygulamasının salt okunur eylemlerini verir. Diğerlerini {page} sayfasında seç.",
+  "access.req.canSend": {
+    one: "{names} kişinin adına gönderebilir.",
+    other: "{names} her biri kişinin adına gönderebilir.",
+  },
+  "access.req.unreviewed": {
+    one: "Gözden geçirilmiş hiçbir liste {names} aracının {app} içinde ne yaptığını söylemiyor; bu yüzden kişinin adına gönderebilir.",
+    other:
+      "Gözden geçirilmiş hiçbir liste {names} araçlarının {app} içinde ne yaptığını söylemiyor; bu yüzden her biri kişinin adına gönderebilir.",
+  },
+  "access.req.neverGives": {
+    one: "Onaylamak asla böyle bir araç vermez: ayarlarda, {page} sayfasında izin ver.",
+    other:
+      "Onaylamak asla böyle araçlar vermez: ayarlarda, {page} sayfasında izin ver.",
+  },
   "access.req.and": "{a} ve {b}",
   "passwords.saveTo": "Parolalara Kaydet",
   "responsibilities.run.waitKind.approval": "Onayını",
@@ -1056,25 +1088,35 @@ export const tr: Catalog<typeof EN> = {
   "responsibilities.run.waitKind.handoff": "Devralmanı",
   "responsibilities.run.waitKind.signIn": "Oturum açmanı",
   "responsibilities.run.waitKind.other": "Seni",
-  "responsibilities.new.description": "Süren bir hedef. Asistan, seçtiğin konuşmada bunun üzerinde çalışır.",
+  "responsibilities.new.description":
+    "Süren bir hedef. Asistan, seçtiğin konuşmada bunun üzerinde çalışır.",
   "responsibilities.new.chooseConversation": "Bir konuşma seç",
   "responsibilities.new.loadMore": "Daha fazla konuşma yükle",
   "responsibilities.new.titleExample": "Müşteri raporunu güncel tut",
-  "responsibilities.new.criteriaExample": "Rapor, mevcut çeyreğin grafiğini ve bir kaynak bağlantısını içerir.",
+  "responsibilities.new.criteriaExample":
+    "Rapor, mevcut çeyreğin grafiğini ve bir kaynak bağlantısını içerir.",
   "responsibilities.new.eventSource": "Olay kaynağı",
   "responsibilities.new.source.none": "İstendiğinde çalıştır",
-  "responsibilities.new.githubHelp": "Olaylar, {link} içinde bağladığın depolardan gelir.",
+  "responsibilities.new.githubHelp":
+    "Olaylar, {link} içinde bağladığın depolardan gelir.",
   "responsibilities.new.eventType": "Olay türü",
   "responsibilities.new.creating": "Oluşturuluyor…",
   "responsibilities.new.create": "Sorumluluk oluştur",
   "triggers.kind.email": "E-posta",
-  "triggers.help.webhook": "Bu URL'ye Authorization başlığıyla ya da Standard Webhooks imza başlıklarıyla JSON olarak POST gönder. 200, alındığı anlamına gelir; çalıştırmanın bittiği anlamına gelmez.",
-  "triggers.help.github": "Deponun Settings → Webhooks bölümünde payload URL'yi bu URL, content type'ı application/json ve secret'ı anahtar olarak ayarla.",
-  "triggers.help.linear": "Linear'da Settings → API → Webhooks: URL'yi ayarla, sonra Linear'ın gösterdiği signing secret'ı buraya yapıştır.",
-  "triggers.help.sentry": "Bir Sentry iç entegrasyonunda webhook URL'sini ayarla, sonra entegrasyonun client secret'ını buraya yapıştır.",
-  "triggers.help.pagerduty": "PagerDuty'de Integrations → Generic Webhooks (v3): URL'yi ayarla, sonra oluşturulurken gösterilen secret'ı buraya yapıştır.",
-  "triggers.help.email": "Bir çalıştırmayı başlatmak için bu adrese posta gönder ya da ilet.",
-  "triggers.help.slack": "Bu asistanın aldığı Slack olaylarında başlar. Tetikleyiciyi eklemeden önce gönderilen mesajlar yok sayılır.",
+  "triggers.help.webhook":
+    "Bu URL'ye Authorization başlığıyla ya da Standard Webhooks imza başlıklarıyla JSON olarak POST gönder. 200, alındığı anlamına gelir; çalıştırmanın bittiği anlamına gelmez.",
+  "triggers.help.github":
+    "Deponun Settings → Webhooks bölümünde payload URL'yi bu URL, content type'ı application/json ve secret'ı anahtar olarak ayarla.",
+  "triggers.help.linear":
+    "Linear'da Settings → API → Webhooks: URL'yi ayarla, sonra Linear'ın gösterdiği signing secret'ı buraya yapıştır.",
+  "triggers.help.sentry":
+    "Bir Sentry iç entegrasyonunda webhook URL'sini ayarla, sonra entegrasyonun client secret'ını buraya yapıştır.",
+  "triggers.help.pagerduty":
+    "PagerDuty'de Integrations → Generic Webhooks (v3): URL'yi ayarla, sonra oluşturulurken gösterilen secret'ı buraya yapıştır.",
+  "triggers.help.email":
+    "Bir çalıştırmayı başlatmak için bu adrese posta gönder ya da ilet.",
+  "triggers.help.slack":
+    "Bu asistanın aldığı Slack olaylarında başlar. Tetikleyiciyi eklemeden önce gönderilen mesajlar yok sayılır.",
   "triggers.slack.mention": "Asistandan söz edilir",
   "triggers.slack.phrase": "Bir mesaj bir ifade içerir",
   "triggers.slack.reaction": "Bir tepki eklenir",
@@ -1094,16 +1136,20 @@ export const tr: Catalog<typeof EN> = {
   "triggers.f.fromSenders": "{senders} tarafından (doğrulanmış)",
   "triggers.title": "Tetikleyiciler",
   "triggers.add": "Tetikleyici ekle",
-  "triggers.notActive.paused": "Bu sorumluluk duraklatıldı. Tetikleyicileri onu başlatmaz.",
-  "triggers.notActive.completed": "Bu sorumluluk tamamlandı. Tetikleyicileri onu başlatmaz.",
-  "triggers.none": "Tetikleyici yok. Şimdi çalıştır'a bastığında ya da yukarıdaki olaylarda çalışır.",
+  "triggers.notActive.paused":
+    "Bu sorumluluk duraklatıldı. Tetikleyicileri onu başlatmaz.",
+  "triggers.notActive.completed":
+    "Bu sorumluluk tamamlandı. Tetikleyicileri onu başlatmaz.",
+  "triggers.none":
+    "Tetikleyici yok. Şimdi çalıştır'a bastığında ya da yukarıdaki olaylarda çalışır.",
   "triggers.removeForGood": "Kalıcı olarak kaldır",
   "triggers.keep": "Tut",
   "triggers.runOnAria": "Bu {kind} tetikleyicisinde çalıştır",
   "triggers.postTo": "POST gönderilecek adres",
   "triggers.copyUrl": "URL'yi kopyala",
   "triggers.copyAddress": "Adresi kopyala",
-  "triggers.emailOff": "E-posta {product} içinde henüz kurulmadı; bu yüzden bu adres posta alamaz. Bir yöneticinin bunu açması gerekir.",
+  "triggers.emailOff":
+    "E-posta {product} içinde henüz kurulmadı; bu yüzden bu adres posta alamaz. Bir yöneticinin bunu açması gerekir.",
   "triggers.key": "Anahtar",
   "triggers.copyKey": "Anahtarı kopyala",
   "triggers.copyHeader": "Başlığı kopyala",
@@ -1115,12 +1161,14 @@ export const tr: Catalog<typeof EN> = {
   "triggers.pasteNew": "Değiştirmek için yeni bir secret yapıştır",
   "triggers.paste": "Signing secret'ı yapıştır",
   "triggers.saveSecret": "Secret'ı kaydet",
-  "triggers.addDescription": "{product} dışında, bu sorumluluğu başlatan bir şey.",
+  "triggers.addDescription":
+    "{product} dışında, bu sorumluluğu başlatan bir şey.",
   "triggers.slackTeam": "Slack takım kimliği",
   "triggers.fireOn": "Tetikleme koşulu",
   "triggers.phrases": "İfadeler (virgülle ayrılmış)",
   "triggers.reactions": "Tepkiler (boş: hepsi)",
-  "triggers.channelIds": "Kanal kimlikleri (boş: asistanın bulunduğu tüm kanallar)",
+  "triggers.channelIds":
+    "Kanal kimlikleri (boş: asistanın bulunduğu tüm kanallar)",
   "triggers.eventTypes": "Olay türleri",
   "triggers.onlyWhen": "Yalnızca şu alan",
   "triggers.equals": "şuna eşitse",
@@ -1130,21 +1178,32 @@ export const tr: Catalog<typeof EN> = {
   "triggers.adding": "Ekleniyor…",
   "triggers.addKind": "{kind} tetikleyicisi ekle",
   "triggers.example.webhook": "deploy.finished (boş: hepsi)",
-  "routines.cal.intro": "Açık olan rutinler için önümüzdeki {days} gün. Saatler senin saat diliminde.",
+  "routines.cal.intro":
+    "Açık olan rutinler için önümüzdeki {days} gün. Saatler senin saat diliminde.",
   "routines.cal.none": "Henüz rutin yok, bu yüzden planlanmış bir şey yok.",
-  "routines.cal.noneOn": "Bu rutinlerin hiçbiri açık değil, bu yüzden hiçbiri çalışmayacak.",
+  "routines.cal.noneOn":
+    "Bu rutinlerin hiçbiri açık değil, bu yüzden hiçbiri çalışmayacak.",
   "routines.cal.nothing": "Önümüzdeki {days} günde planlanmış bir şey yok.",
-  "routines.cal.truncated": "Bu {days} günün yalnızca ilk {max} çalıştırması listelendi.",
-  "routines.cal.paused": { one: "{count} rutin duraklatıldı, bu yüzden burada listelenmedi. Ne zaman çalıştığını görmek için birini aç.", other: "{count} rutin duraklatıldı, bu yüzden burada listelenmedi. Ne zaman çalıştığını görmek için birini aç." },
-  "routines.week.nothing": "Bu haftanın geri kalanı için planlanmış bir şey yok.",
+  "routines.cal.truncated":
+    "Bu {days} günün yalnızca ilk {max} çalıştırması listelendi.",
+  "routines.cal.paused": {
+    one: "{count} rutin duraklatıldı, bu yüzden burada listelenmedi. Ne zaman çalıştığını görmek için birini aç.",
+    other:
+      "{count} rutin duraklatıldı, bu yüzden burada listelenmedi. Ne zaman çalıştığını görmek için birini aç.",
+  },
+  "routines.week.nothing":
+    "Bu haftanın geri kalanı için planlanmış bir şey yok.",
   "routines.week.label": "Bu hafta",
   "routines.week.today": "bugün",
   "routines.week.now": "Şimdi, {time}",
   "routines.week.next": "Sıradaki:",
   "routines.week.nothingElse": "Bu hafta başka planlanmış bir şey yok.",
-  "routines.week.truncated": "Önümüzdeki günlerin yalnızca ilk çalıştırmaları listelendi; bu yüzden çok sık çalışan bir rutin her gün görünmeyebilir.",
-  "routines.week.historyError": "Daha önce gerçekleşen çalıştırmalar yüklenemedi, bu yüzden gösterilmiyor.",
-  "routines.week.note": "Saatler senin saat diliminde. Saatte birden sık çalışan bir rutin, gün için tek bir blok olarak görünür.",
+  "routines.week.truncated":
+    "Önümüzdeki günlerin yalnızca ilk çalıştırmaları listelendi; bu yüzden çok sık çalışan bir rutin her gün görünmeyebilir.",
+  "routines.week.historyError":
+    "Daha önce gerçekleşen çalıştırmalar yüklenemedi, bu yüzden gösterilmiyor.",
+  "routines.week.note":
+    "Saatler senin saat diliminde. Saatte birden sık çalışan bir rutin, gün için tek bir blok olarak görünür.",
   "routines.week.summary": "{count} çalıştırma, her ~{minutes} dk",
   "routines.week.gone": "{label}, konuşma silindi",
   "routines.card.label": "Rutin",
@@ -1152,7 +1211,8 @@ export const tr: Catalog<typeof EN> = {
   "routines.card.readError": "Bu rutin okunamadı.",
   "routines.card.reading": "Bu rutin okunuyor…",
   "routines.card.gone": "Bu rutin artık yok",
-  "routines.card.cannotSend": "Bu konuşma şu anda mesaj kabul edemiyor. Değişikliği aşağıdaki mesaj kutusuna yaz.",
+  "routines.card.cannotSend":
+    "Bu konuşma şu anda mesaj kabul edemiyor. Değişikliği aşağıdaki mesaj kutusuna yaz.",
   "routines.card.confirm": "Bu rutin iptal edilsin mi?",
   "routines.card.yes": "Evet, iptal et",
   "routines.card.no": "Hayır, tut",

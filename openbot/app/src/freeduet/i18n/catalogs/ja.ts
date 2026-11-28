@@ -1030,40 +1030,58 @@ export const ja: Catalog<typeof EN> = {
   "fullaccess.label.noPayments": "支払いなしのFull access",
   "fullaccess.label.full": "Full access",
   "fullaccess.off": "オフ",
-  "fullaccess.description": "初期設定では安全です。アシスタントは、送信、支払い、署名、予約、削除の前に確認します。アシスタントごとに、確認なしでこれらを行うよう選べます。",
+  "fullaccess.description":
+    "初期設定では安全です。アシスタントは、送信、支払い、署名、予約、削除の前に確認します。アシスタントごとに、確認なしでこれらを行うよう選べます。",
   "fullaccess.offTerm": "オフ：",
-  "fullaccess.offText": "アシスタントは、送信、支払い、署名、予約、削除の前に確認します。",
+  "fullaccess.offText":
+    "アシスタントは、送信、支払い、署名、予約、削除の前に確認します。",
   "fullaccess.noPaymentsTerm": "支払いなしのFull access：",
-  "fullaccess.noPaymentsText": "確認なしで送信、署名、予約、削除を行います。支払いと購入は引き続きあなたに確認します。",
+  "fullaccess.noPaymentsText":
+    "確認なしで送信、署名、予約、削除を行います。支払いと購入は引き続きあなたに確認します。",
   "fullaccess.fullTerm": "Full access：",
-  "fullaccess.fullText": "支払いと購入も確認なしで行います。支出の上限ができるまで、金額に上限はありません（v0.4で予定）。",
+  "fullaccess.fullText":
+    "支払いと購入も確認なしで行います。支出の上限ができるまで、金額に上限はありません（v0.4で予定）。",
   "fullaccess.askTitle": "{name}に{label}を付与しますか？",
   "fullaccess.give": "{label}を付与",
-  "fullaccess.full.p1": "{name}は、事前にあなたに確認せずに、送信、支払い、署名、予約、削除を行います。メールやウェブページなど、読み取った内容に基づいて動くことがあるため、そのことを任せられると信頼できる場合にのみオンにしてください。",
-  "fullaccess.full.p2": "支払える金額に上限はありません。支出の上限はまだありません（v0.4で予定）。支払いと購入で引き続きあなたに確認させたい場合は、代わりに「支払いなしのFull access」を選んでください。",
-  "fullaccess.full.p3": "パスワードとセキュリティ設定は、引き続きあなたの確認が必要です。自動レビュアーが設定されている場合は、レビュアーをオフにしていても、メンバーが自分のコンピューターで実行するすべてのコマンドとスクリプトを、レビュアーが1回ずつ読みます。設定されていない場合、コマンドは読まれません。これは、あなた自身のチャットでの依頼に適用され、ルーティンやチェックインには適用されません。いつでもオフにでき、すぐに止まります。",
-  "fullaccess.noPayments.p1": "{name}は、事前にあなたに確認せずに、送信、署名、予約、削除を行います。支払いと購入は引き続きあなたに確認します。メールやウェブページなど、読み取った内容に基づいて動くことがあるため、そのことを任せられると信頼できる場合にのみオンにしてください。",
-  "fullaccess.noPayments.p2": "アプリは組み込みのチェックで支払いを見分けます。そのため、支払いに触れているだけのメッセージでも確認することがあり、通常と違う書き方の支払いは見逃される可能性があります。パスワードとセキュリティ設定は、引き続きあなたの確認が必要です。自動レビュアーが設定されている場合は、レビュアーをオフにしていても、パスワード、セキュリティ設定、またはこの方法で行う支払いのためにメンバーが自分のコンピューターで実行するすべてのコマンドとスクリプトを、レビュアーが1回ずつ読みます。設定されていない場合、コマンドは読まれません。これは、あなた自身のチャットでの依頼に適用され、ルーティンやチェックインには適用されません。いつでもオフにでき、すぐに止まります。",
+  "fullaccess.full.p1":
+    "{name}は、事前にあなたに確認せずに、送信、支払い、署名、予約、削除を行います。メールやウェブページなど、読み取った内容に基づいて動くことがあるため、そのことを任せられると信頼できる場合にのみオンにしてください。",
+  "fullaccess.full.p2":
+    "支払える金額に上限はありません。支出の上限はまだありません（v0.4で予定）。支払いと購入で引き続きあなたに確認させたい場合は、代わりに「支払いなしのFull access」を選んでください。",
+  "fullaccess.full.p3":
+    "パスワードとセキュリティ設定は、引き続きあなたの確認が必要です。自動レビュアーが設定されている場合は、レビュアーをオフにしていても、メンバーが自分のコンピューターで実行するすべてのコマンドとスクリプトを、レビュアーが1回ずつ読みます。設定されていない場合、コマンドは読まれません。これは、あなた自身のチャットでの依頼に適用され、ルーティンやチェックインには適用されません。いつでもオフにでき、すぐに止まります。",
+  "fullaccess.noPayments.p1":
+    "{name}は、事前にあなたに確認せずに、送信、署名、予約、削除を行います。支払いと購入は引き続きあなたに確認します。メールやウェブページなど、読み取った内容に基づいて動くことがあるため、そのことを任せられると信頼できる場合にのみオンにしてください。",
+  "fullaccess.noPayments.p2":
+    "アプリは組み込みのチェックで支払いを見分けます。そのため、支払いに触れているだけのメッセージでも確認することがあり、通常と違う書き方の支払いは見逃される可能性があります。パスワードとセキュリティ設定は、引き続きあなたの確認が必要です。自動レビュアーが設定されている場合は、レビュアーをオフにしていても、パスワード、セキュリティ設定、またはこの方法で行う支払いのためにメンバーが自分のコンピューターで実行するすべてのコマンドとスクリプトを、レビュアーが1回ずつ読みます。設定されていない場合、コマンドは読まれません。これは、あなた自身のチャットでの依頼に適用され、ルーティンやチェックインには適用されません。いつでもオフにでき、すぐに止まります。",
   "fullaccess.noBots": "アシスタントはまだいません。",
   "fullaccess.legend": "{name}のアクセス",
   "fullaccess.radioAria": "{name}の{label}",
   "fullaccess.summary.off": "送信、支払い、署名、予約、削除の前に確認します。",
-  "fullaccess.summary.noPayments": "確認なしで動きます。ただし支払いと購入は引き続きあなたに確認します。{since}から。",
-  "fullaccess.summary.full": "支払いを含め、確認なしで動き、金額に上限はありません。{since}から。",
+  "fullaccess.summary.noPayments":
+    "確認なしで動きます。ただし支払いと購入は引き続きあなたに確認します。{since}から。",
+  "fullaccess.summary.full":
+    "支払いを含め、確認なしで動き、金額に上限はありません。{since}から。",
   "fullaccess.doneTitle": "確認なしで行ったこと",
-  "fullaccess.doneDescription": "Full accessのアシスタントが、あなたに確認せずに行ったことです。新しい順に表示します。",
+  "fullaccess.doneDescription":
+    "Full accessのアシスタントが、あなたに確認せずに行ったことです。新しい順に表示します。",
   "fullaccess.nothingYet": "まだありません。",
   "approvals.audience.owner": "所有者のみ",
   "approvals.audience.team": "全員",
   "approvals.audience.outside": "、および外部からの入力",
   "approvals.audience.nobody": "指定なし",
-  "approvals.audience.groups": { one: "グループ：{names}", other: "グループ：{names}" },
+  "approvals.audience.groups": {
+    one: "グループ：{names}",
+    other: "グループ：{names}",
+  },
   "approvals.audience.people": { one: "{count}人", other: "{count}人" },
   "approvals.audience.join": "{a}と{b}",
   "access.req.title": "リクエスト",
-  "access.req.loadError": "アクセスリクエストを読み込めませんでした。ページを再読み込みしてください。",
-  "access.req.descApp": "このアプリを求めている人たちです。承認すると、求められたことをすぐに実行します。",
-  "access.req.descAll": "アプリのオン、アシスタントへの付与、または接続を求めている人たちです。承認すると、求められたことをすぐに実行します。",
+  "access.req.loadError":
+    "アクセスリクエストを読み込めませんでした。ページを再読み込みしてください。",
+  "access.req.descApp":
+    "このアプリを求めている人たちです。承認すると、求められたことをすぐに実行します。",
+  "access.req.descAll":
+    "アプリのオン、アシスタントへの付与、または接続を求めている人たちです。承認すると、求められたことをすぐに実行します。",
   "access.req.aBot": "アシスタント",
   "access.req.theBot": "アシスタント",
   "access.req.somebody": "だれか",
@@ -1077,11 +1095,24 @@ export const ja: Catalog<typeof EN> = {
   "access.req.botPage": "{app}のアシスタントのページ",
   "access.req.toolRead": "{name}（読み取り専用）",
   "access.req.toolWrite": "{name}（変更あり）",
-  "access.req.gives": "承認すると、{bot}には次のツールだけが付与され、ほかは付与されません：{list}。",
-  "access.req.readOnly": "承認すると、{bot}には{app}の読み取り専用の操作だけが付与されます。ほかの操作は{page}で選んでください。",
-  "access.req.canSend": { one: "{names}は、本人に代わって送信できます。", other: "{names}は、それぞれ本人に代わって送信できます。" },
-  "access.req.unreviewed": { one: "{names}が{app}で何をするかを示す確認済みの一覧がないため、本人に代わって送信する可能性があります。", other: "{names}が{app}で何をするかを示す確認済みの一覧がないため、それぞれが本人に代わって送信する可能性があります。" },
-  "access.req.neverGives": { one: "承認では、このようなツールは付与されません。設定で許可してください（{page}）。", other: "承認では、このようなツールは付与されません。設定で許可してください（{page}）。" },
+  "access.req.gives":
+    "承認すると、{bot}には次のツールだけが付与され、ほかは付与されません：{list}。",
+  "access.req.readOnly":
+    "承認すると、{bot}には{app}の読み取り専用の操作だけが付与されます。ほかの操作は{page}で選んでください。",
+  "access.req.canSend": {
+    one: "{names}は、本人に代わって送信できます。",
+    other: "{names}は、それぞれ本人に代わって送信できます。",
+  },
+  "access.req.unreviewed": {
+    one: "{names}が{app}で何をするかを示す確認済みの一覧がないため、本人に代わって送信する可能性があります。",
+    other:
+      "{names}が{app}で何をするかを示す確認済みの一覧がないため、それぞれが本人に代わって送信する可能性があります。",
+  },
+  "access.req.neverGives": {
+    one: "承認では、このようなツールは付与されません。設定で許可してください（{page}）。",
+    other:
+      "承認では、このようなツールは付与されません。設定で許可してください（{page}）。",
+  },
   "access.req.and": "{a}と{b}",
   "passwords.saveTo": "パスワードに保存",
   "responsibilities.run.waitKind.approval": "あなたの承認",
@@ -1089,25 +1120,35 @@ export const ja: Catalog<typeof EN> = {
   "responsibilities.run.waitKind.handoff": "あなたの引き継ぎ",
   "responsibilities.run.waitKind.signIn": "あなたのログイン",
   "responsibilities.run.waitKind.other": "あなた",
-  "responsibilities.new.description": "継続する目標です。アシスタントは、選んだ会話の中でこれに取り組みます。",
+  "responsibilities.new.description":
+    "継続する目標です。アシスタントは、選んだ会話の中でこれに取り組みます。",
   "responsibilities.new.chooseConversation": "会話を選択",
   "responsibilities.new.loadMore": "さらに会話を読み込む",
   "responsibilities.new.titleExample": "顧客向けレポートを最新に保つ",
-  "responsibilities.new.criteriaExample": "レポートに今四半期のグラフと出典へのリンクが含まれている。",
+  "responsibilities.new.criteriaExample":
+    "レポートに今四半期のグラフと出典へのリンクが含まれている。",
   "responsibilities.new.eventSource": "イベントの発生元",
   "responsibilities.new.source.none": "依頼されたときに実行",
-  "responsibilities.new.githubHelp": "イベントは、{link}で接続したリポジトリから届きます。",
+  "responsibilities.new.githubHelp":
+    "イベントは、{link}で接続したリポジトリから届きます。",
   "responsibilities.new.eventType": "イベントの種類",
   "responsibilities.new.creating": "作成しています…",
   "responsibilities.new.create": "担当業務を作成",
   "triggers.kind.email": "メール",
-  "triggers.help.webhook": "このURLに、Authorizationヘッダー、またはStandard Webhooksの署名ヘッダー付きでJSONをPOSTします。200は受信されたことを示し、実行が終わったことを示すわけではありません。",
-  "triggers.help.github": "リポジトリのSettings → Webhooksで、payload URLをこのURLに、content typeをapplication/jsonに、secretをこのキーに設定します。",
-  "triggers.help.linear": "LinearのSettings → API → Webhooksで、URLを設定し、Linearが表示するsigning secretをここに貼り付けます。",
-  "triggers.help.sentry": "Sentryの内部インテグレーションで、webhook URLを設定し、そのインテグレーションのclient secretをここに貼り付けます。",
-  "triggers.help.pagerduty": "PagerDutyのIntegrations → Generic Webhooks (v3)で、URLを設定し、作成時に表示されるsecretをここに貼り付けます。",
-  "triggers.help.email": "このアドレスにメールを送信または転送すると、実行が始まります。",
-  "triggers.help.slack": "このアシスタントが受け取るSlackのイベントで開始します。トリガーを追加する前に送られたメッセージは無視されます。",
+  "triggers.help.webhook":
+    "このURLに、Authorizationヘッダー、またはStandard Webhooksの署名ヘッダー付きでJSONをPOSTします。200は受信されたことを示し、実行が終わったことを示すわけではありません。",
+  "triggers.help.github":
+    "リポジトリのSettings → Webhooksで、payload URLをこのURLに、content typeをapplication/jsonに、secretをこのキーに設定します。",
+  "triggers.help.linear":
+    "LinearのSettings → API → Webhooksで、URLを設定し、Linearが表示するsigning secretをここに貼り付けます。",
+  "triggers.help.sentry":
+    "Sentryの内部インテグレーションで、webhook URLを設定し、そのインテグレーションのclient secretをここに貼り付けます。",
+  "triggers.help.pagerduty":
+    "PagerDutyのIntegrations → Generic Webhooks (v3)で、URLを設定し、作成時に表示されるsecretをここに貼り付けます。",
+  "triggers.help.email":
+    "このアドレスにメールを送信または転送すると、実行が始まります。",
+  "triggers.help.slack":
+    "このアシスタントが受け取るSlackのイベントで開始します。トリガーを追加する前に送られたメッセージは無視されます。",
   "triggers.slack.mention": "アシスタントがメンションされたとき",
   "triggers.slack.phrase": "メッセージにフレーズが含まれるとき",
   "triggers.slack.reaction": "リアクションが追加されたとき",
@@ -1127,16 +1168,20 @@ export const ja: Catalog<typeof EN> = {
   "triggers.f.fromSenders": "{senders}から（認証済み）",
   "triggers.title": "トリガー",
   "triggers.add": "トリガーを追加",
-  "triggers.notActive.paused": "この担当業務は一時停止中です。トリガーでは開始しません。",
-  "triggers.notActive.completed": "この担当業務は完了しています。トリガーでは開始しません。",
-  "triggers.none": "トリガーはありません。「今すぐ実行」を押したとき、または上のイベントで実行されます。",
+  "triggers.notActive.paused":
+    "この担当業務は一時停止中です。トリガーでは開始しません。",
+  "triggers.notActive.completed":
+    "この担当業務は完了しています。トリガーでは開始しません。",
+  "triggers.none":
+    "トリガーはありません。「今すぐ実行」を押したとき、または上のイベントで実行されます。",
   "triggers.removeForGood": "完全に削除",
   "triggers.keep": "残す",
   "triggers.runOnAria": "この{kind}トリガーで実行",
   "triggers.postTo": "POST先",
   "triggers.copyUrl": "URLをコピー",
   "triggers.copyAddress": "アドレスをコピー",
-  "triggers.emailOff": "{product}ではメールがまだ設定されていないため、このアドレスはメールを受信できません。管理者がオンにする必要があります。",
+  "triggers.emailOff":
+    "{product}ではメールがまだ設定されていないため、このアドレスはメールを受信できません。管理者がオンにする必要があります。",
   "triggers.key": "キー",
   "triggers.copyKey": "キーをコピー",
   "triggers.copyHeader": "ヘッダーをコピー",
@@ -1148,12 +1193,14 @@ export const ja: Catalog<typeof EN> = {
   "triggers.pasteNew": "置き換えるには新しいsecretを貼り付けます",
   "triggers.paste": "signing secretを貼り付け",
   "triggers.saveSecret": "secretを保存",
-  "triggers.addDescription": "{product}の外にある、この担当業務を開始するものです。",
+  "triggers.addDescription":
+    "{product}の外にある、この担当業務を開始するものです。",
   "triggers.slackTeam": "SlackのチームID",
   "triggers.fireOn": "実行する条件",
   "triggers.phrases": "フレーズ（カンマ区切り）",
   "triggers.reactions": "リアクション（空欄：すべて）",
-  "triggers.channelIds": "チャンネルID（空欄：アシスタントが参加しているすべて）",
+  "triggers.channelIds":
+    "チャンネルID（空欄：アシスタントが参加しているすべて）",
   "triggers.eventTypes": "イベントの種類",
   "triggers.onlyWhen": "次のフィールドが",
   "triggers.equals": "と等しいときのみ",
@@ -1163,21 +1210,31 @@ export const ja: Catalog<typeof EN> = {
   "triggers.adding": "追加しています…",
   "triggers.addKind": "{kind}トリガーを追加",
   "triggers.example.webhook": "deploy.finished（空欄：すべて）",
-  "routines.cal.intro": "オンになっているルーティンの、今後{days}日間の予定です。時刻はあなたのタイムゾーンです。",
+  "routines.cal.intro":
+    "オンになっているルーティンの、今後{days}日間の予定です。時刻はあなたのタイムゾーンです。",
   "routines.cal.none": "ルーティンがまだないため、予定はありません。",
-  "routines.cal.noneOn": "これらのルーティンはどれもオンになっていないため、実行されません。",
+  "routines.cal.noneOn":
+    "これらのルーティンはどれもオンになっていないため、実行されません。",
   "routines.cal.nothing": "今後{days}日間の予定はありません。",
-  "routines.cal.truncated": "この{days}日間の最初の{max}回の実行だけを表示しています。",
-  "routines.cal.paused": { one: "{count}件のルーティンが一時停止中のため、ここには表示されません。どれかをオンにすると、実行時刻を確認できます。", other: "{count}件のルーティンが一時停止中のため、ここには表示されません。どれかをオンにすると、実行時刻を確認できます。" },
+  "routines.cal.truncated":
+    "この{days}日間の最初の{max}回の実行だけを表示しています。",
+  "routines.cal.paused": {
+    one: "{count}件のルーティンが一時停止中のため、ここには表示されません。どれかをオンにすると、実行時刻を確認できます。",
+    other:
+      "{count}件のルーティンが一時停止中のため、ここには表示されません。どれかをオンにすると、実行時刻を確認できます。",
+  },
   "routines.week.nothing": "今週の残りの予定はありません。",
   "routines.week.label": "今週",
   "routines.week.today": "今日",
   "routines.week.now": "現在、{time}",
   "routines.week.next": "次：",
   "routines.week.nothingElse": "今週はほかに予定がありません。",
-  "routines.week.truncated": "今後の日数のうち最初の実行だけを表示しているため、非常に頻繁に動くルーティンはすべての日に表示されないことがあります。",
-  "routines.week.historyError": "すでに行われた実行を読み込めなかったため、表示されません。",
-  "routines.week.note": "時刻はあなたのタイムゾーンです。1時間より頻繁に実行されるルーティンは、その日の1つのブロックとして表示されます。",
+  "routines.week.truncated":
+    "今後の日数のうち最初の実行だけを表示しているため、非常に頻繁に動くルーティンはすべての日に表示されないことがあります。",
+  "routines.week.historyError":
+    "すでに行われた実行を読み込めなかったため、表示されません。",
+  "routines.week.note":
+    "時刻はあなたのタイムゾーンです。1時間より頻繁に実行されるルーティンは、その日の1つのブロックとして表示されます。",
   "routines.week.summary": "{count}回の実行、約{minutes}分ごと",
   "routines.week.gone": "{label}、会話は削除されました",
   "routines.card.label": "ルーティン",
@@ -1185,7 +1242,8 @@ export const ja: Catalog<typeof EN> = {
   "routines.card.readError": "このルーティンを読み取れませんでした。",
   "routines.card.reading": "このルーティンを読み取っています…",
   "routines.card.gone": "このルーティンはもう存在しません",
-  "routines.card.cannotSend": "この会話は今、メッセージを受け付けられません。変更内容は下のメッセージ欄に書いてください。",
+  "routines.card.cannotSend":
+    "この会話は今、メッセージを受け付けられません。変更内容は下のメッセージ欄に書いてください。",
   "routines.card.confirm": "このルーティンをキャンセルしますか？",
   "routines.card.yes": "はい、キャンセルする",
   "routines.card.no": "いいえ、残す",

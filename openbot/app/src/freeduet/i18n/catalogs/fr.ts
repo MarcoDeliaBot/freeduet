@@ -1070,40 +1070,64 @@ export const fr: Catalog<typeof EN> = {
   "fullaccess.label.noPayments": "Full access sans paiements",
   "fullaccess.label.full": "Full access",
   "fullaccess.off": "Désactivé",
-  "fullaccess.description": "Sûr par défaut : tes Bots demandent avant d'envoyer, de payer, de signer, de réserver ou de supprimer. Pour chaque Bot, tu peux choisir de le laisser faire cela sans demander.",
+  "fullaccess.description":
+    "Sûr par défaut : tes Bots demandent avant d'envoyer, de payer, de signer, de réserver ou de supprimer. Pour chaque Bot, tu peux choisir de le laisser faire cela sans demander.",
   "fullaccess.offTerm": "Désactivé :",
-  "fullaccess.offText": "le Bot demande avant d'envoyer, de payer, de signer, de réserver ou de supprimer.",
+  "fullaccess.offText":
+    "le Bot demande avant d'envoyer, de payer, de signer, de réserver ou de supprimer.",
   "fullaccess.noPaymentsTerm": "Full access sans paiements :",
-  "fullaccess.noPaymentsText": "il envoie, signe, réserve et supprime sans demander. Les paiements et les achats te sont toujours demandés.",
+  "fullaccess.noPaymentsText":
+    "il envoie, signe, réserve et supprime sans demander. Les paiements et les achats te sont toujours demandés.",
   "fullaccess.fullTerm": "Full access :",
-  "fullaccess.fullText": "il paie et achète aussi sans demander. Il n'y a pas de limite de montant tant que les plafonds de dépenses n'existent pas (prévus pour la v0.4).",
+  "fullaccess.fullText":
+    "il paie et achète aussi sans demander. Il n'y a pas de limite de montant tant que les plafonds de dépenses n'existent pas (prévus pour la v0.4).",
   "fullaccess.askTitle": "Donner {label} à {name} ?",
   "fullaccess.give": "Donner {label}",
-  "fullaccess.full.p1": "{name} enverra, paiera, signera, réservera et supprimera sans te demander d'abord. Il peut agir d'après ce qu'il lit, comme un e-mail ou une page web : n'active cette option que si tu lui fais confiance pour cela.",
-  "fullaccess.full.p2": "Il n'y a pas de limite sur le montant qu'il peut payer : les plafonds de dépenses n'existent pas encore (ils sont prévus pour la v0.4). Pour que les paiements et les achats te soient toujours demandés, choisis plutôt Full access sans paiements.",
-  "fullaccess.full.p3": "Les mots de passe et les réglages de sécurité te concernent toujours. Quand un relecteur automatique est configuré, il lit aussi, une fois, chaque commande et chaque script que le membre exécute sur son ordinateur, même si tu as désactivé le relecteur ; quand aucun n'est configuré, une commande n'est pas lue. Cela s'applique à ce que tu demandes dans tes propres chats, pas aux routines ni aux check-ins. Tu peux le désactiver à tout moment, et cela s'arrête aussitôt.",
-  "fullaccess.noPayments.p1": "{name} enverra, signera, réservera et supprimera sans te demander d'abord. Les paiements et les achats te sont toujours demandés. Il peut agir d'après ce qu'il lit, comme un e-mail ou une page web : n'active cette option que si tu lui fais confiance pour cela.",
-  "fullaccess.noPayments.p2": "L'app reconnaît un paiement grâce à ses contrôles intégrés : un message qui ne fait que mentionner un paiement peut donc aussi demander, et un paiement formulé de manière inhabituelle pourrait ne pas être repéré. Les mots de passe et les réglages de sécurité te concernent toujours. Quand un relecteur automatique est configuré, il lit aussi, une fois, chaque commande et chaque script que le membre exécute sur son ordinateur pour un mot de passe, un réglage de sécurité ou un paiement fait ainsi, même si tu as désactivé le relecteur ; quand aucun n'est configuré, une commande n'est pas lue. Cela s'applique à ce que tu demandes dans tes propres chats, pas aux routines ni aux check-ins. Tu peux le désactiver à tout moment, et cela s'arrête aussitôt.",
+  "fullaccess.full.p1":
+    "{name} enverra, paiera, signera, réservera et supprimera sans te demander d'abord. Il peut agir d'après ce qu'il lit, comme un e-mail ou une page web : n'active cette option que si tu lui fais confiance pour cela.",
+  "fullaccess.full.p2":
+    "Il n'y a pas de limite sur le montant qu'il peut payer : les plafonds de dépenses n'existent pas encore (ils sont prévus pour la v0.4). Pour que les paiements et les achats te soient toujours demandés, choisis plutôt Full access sans paiements.",
+  "fullaccess.full.p3":
+    "Les mots de passe et les réglages de sécurité te concernent toujours. Quand un relecteur automatique est configuré, il lit aussi, une fois, chaque commande et chaque script que le membre exécute sur son ordinateur, même si tu as désactivé le relecteur ; quand aucun n'est configuré, une commande n'est pas lue. Cela s'applique à ce que tu demandes dans tes propres chats, pas aux routines ni aux check-ins. Tu peux le désactiver à tout moment, et cela s'arrête aussitôt.",
+  "fullaccess.noPayments.p1":
+    "{name} enverra, signera, réservera et supprimera sans te demander d'abord. Les paiements et les achats te sont toujours demandés. Il peut agir d'après ce qu'il lit, comme un e-mail ou une page web : n'active cette option que si tu lui fais confiance pour cela.",
+  "fullaccess.noPayments.p2":
+    "L'app reconnaît un paiement grâce à ses contrôles intégrés : un message qui ne fait que mentionner un paiement peut donc aussi demander, et un paiement formulé de manière inhabituelle pourrait ne pas être repéré. Les mots de passe et les réglages de sécurité te concernent toujours. Quand un relecteur automatique est configuré, il lit aussi, une fois, chaque commande et chaque script que le membre exécute sur son ordinateur pour un mot de passe, un réglage de sécurité ou un paiement fait ainsi, même si tu as désactivé le relecteur ; quand aucun n'est configuré, une commande n'est pas lue. Cela s'applique à ce que tu demandes dans tes propres chats, pas aux routines ni aux check-ins. Tu peux le désactiver à tout moment, et cela s'arrête aussitôt.",
   "fullaccess.noBots": "Aucun Bot pour l'instant.",
   "fullaccess.legend": "Accès pour {name}",
   "fullaccess.radioAria": "{label} pour {name}",
-  "fullaccess.summary.off": "Demande avant d'envoyer, de payer, de signer, de réserver ou de supprimer.",
-  "fullaccess.summary.noPayments": "Agit sans demander, sauf que les paiements et les achats te sont toujours demandés. Depuis {since}.",
-  "fullaccess.summary.full": "Agit sans demander, paiements compris, sans limite de montant. Depuis {since}.",
+  "fullaccess.summary.off":
+    "Demande avant d'envoyer, de payer, de signer, de réserver ou de supprimer.",
+  "fullaccess.summary.noPayments":
+    "Agit sans demander, sauf que les paiements et les achats te sont toujours demandés. Depuis {since}.",
+  "fullaccess.summary.full":
+    "Agit sans demander, paiements compris, sans limite de montant. Depuis {since}.",
   "fullaccess.doneTitle": "Fait sans demander",
-  "fullaccess.doneDescription": "Ce qu'un Bot avec Full access a fait sans te demander, du plus récent au plus ancien.",
+  "fullaccess.doneDescription":
+    "Ce qu'un Bot avec Full access a fait sans te demander, du plus récent au plus ancien.",
   "fullaccess.nothingYet": "Rien pour l'instant.",
   "approvals.audience.owner": "Seulement son propriétaire",
   "approvals.audience.team": "Tout le monde",
   "approvals.audience.outside": ", et les entrées extérieures",
   "approvals.audience.nobody": "Personne de nommé",
-  "approvals.audience.groups": { one: "Le groupe {names}", other: "Les groupes {names}", many: "Les groupes {names}" },
-  "approvals.audience.people": { one: "{count} personne", other: "{count} personnes", many: "{count} de personnes" },
+  "approvals.audience.groups": {
+    one: "Le groupe {names}",
+    other: "Les groupes {names}",
+    many: "Les groupes {names}",
+  },
+  "approvals.audience.people": {
+    one: "{count} personne",
+    other: "{count} personnes",
+    many: "{count} de personnes",
+  },
   "approvals.audience.join": "{a} et {b}",
   "access.req.title": "Demandes",
-  "access.req.loadError": "Impossible de charger les demandes d'accès. Recharge la page.",
-  "access.req.descApp": "Des personnes demandent cette app. Approuver fait aussitôt ce qu'elles ont demandé.",
-  "access.req.descAll": "Des personnes demandent qu'une app soit activée, donnée à un Bot ou connectée. Approuver fait aussitôt ce qu'elles ont demandé.",
+  "access.req.loadError":
+    "Impossible de charger les demandes d'accès. Recharge la page.",
+  "access.req.descApp":
+    "Des personnes demandent cette app. Approuver fait aussitôt ce qu'elles ont demandé.",
+  "access.req.descAll":
+    "Des personnes demandent qu'une app soit activée, donnée à un Bot ou connectée. Approuver fait aussitôt ce qu'elles ont demandé.",
   "access.req.aBot": "un Bot",
   "access.req.theBot": "le Bot",
   "access.req.somebody": "Quelqu'un",
@@ -1117,11 +1141,27 @@ export const fr: Catalog<typeof EN> = {
   "access.req.botPage": "la page du Bot sous {app}",
   "access.req.toolRead": "{name} (lecture seule)",
   "access.req.toolWrite": "{name} (modifie quelque chose)",
-  "access.req.gives": "Approuver donne à {bot} exactement ces outils et rien d'autre : {list}.",
-  "access.req.readOnly": "Approuver donne à {bot} uniquement les actions en lecture seule de {app}. Choisis les autres dans {page}.",
-  "access.req.canSend": { one: "{names} peut envoyer au nom de la personne.", other: "{names} peuvent chacun envoyer au nom de la personne.", many: "{names} peuvent chacun envoyer au nom de la personne." },
-  "access.req.unreviewed": { one: "Aucune liste vérifiée n'indique ce que fait {names} dans {app} : il peut donc envoyer au nom de la personne.", other: "Aucune liste vérifiée n'indique ce que font {names} dans {app} : chacun peut donc envoyer au nom de la personne.", many: "Aucune liste vérifiée n'indique ce que font {names} dans {app} : chacun peut donc envoyer au nom de la personne." },
-  "access.req.neverGives": { one: "Approuver ne donne jamais un tel outil : autorise-le dans les réglages, dans {page}.", other: "Approuver ne donne jamais de tels outils : autorise-les dans les réglages, dans {page}.", many: "Approuver ne donne jamais de tels outils : autorise-les dans les réglages, dans {page}." },
+  "access.req.gives":
+    "Approuver donne à {bot} exactement ces outils et rien d'autre : {list}.",
+  "access.req.readOnly":
+    "Approuver donne à {bot} uniquement les actions en lecture seule de {app}. Choisis les autres dans {page}.",
+  "access.req.canSend": {
+    one: "{names} peut envoyer au nom de la personne.",
+    other: "{names} peuvent chacun envoyer au nom de la personne.",
+    many: "{names} peuvent chacun envoyer au nom de la personne.",
+  },
+  "access.req.unreviewed": {
+    one: "Aucune liste vérifiée n'indique ce que fait {names} dans {app} : il peut donc envoyer au nom de la personne.",
+    other:
+      "Aucune liste vérifiée n'indique ce que font {names} dans {app} : chacun peut donc envoyer au nom de la personne.",
+    many: "Aucune liste vérifiée n'indique ce que font {names} dans {app} : chacun peut donc envoyer au nom de la personne.",
+  },
+  "access.req.neverGives": {
+    one: "Approuver ne donne jamais un tel outil : autorise-le dans les réglages, dans {page}.",
+    other:
+      "Approuver ne donne jamais de tels outils : autorise-les dans les réglages, dans {page}.",
+    many: "Approuver ne donne jamais de tels outils : autorise-les dans les réglages, dans {page}.",
+  },
   "access.req.and": "{a} et {b}",
   "passwords.saveTo": "Enregistrer dans Mots de passe",
   "responsibilities.run.waitKind.approval": "ton approbation",
@@ -1129,25 +1169,35 @@ export const fr: Catalog<typeof EN> = {
   "responsibilities.run.waitKind.handoff": "que tu prennes le relais",
   "responsibilities.run.waitKind.signIn": "que tu te connectes",
   "responsibilities.run.waitKind.other": "toi",
-  "responsibilities.new.description": "Un objectif continu. Le Bot y travaille dans la conversation que tu choisis.",
+  "responsibilities.new.description":
+    "Un objectif continu. Le Bot y travaille dans la conversation que tu choisis.",
   "responsibilities.new.chooseConversation": "Choisis une conversation",
   "responsibilities.new.loadMore": "Charger plus de conversations",
   "responsibilities.new.titleExample": "Tenir à jour le rapport client",
-  "responsibilities.new.criteriaExample": "Le rapport contient le graphique du trimestre en cours et un lien vers la source.",
+  "responsibilities.new.criteriaExample":
+    "Le rapport contient le graphique du trimestre en cours et un lien vers la source.",
   "responsibilities.new.eventSource": "Source d'événements",
   "responsibilities.new.source.none": "Lancer sur demande",
-  "responsibilities.new.githubHelp": "Les événements viennent des dépôts que tu as connectés dans {link}.",
+  "responsibilities.new.githubHelp":
+    "Les événements viennent des dépôts que tu as connectés dans {link}.",
   "responsibilities.new.eventType": "Type d'événement",
   "responsibilities.new.creating": "Création…",
   "responsibilities.new.create": "Créer la responsabilité",
   "triggers.kind.email": "E-mail",
-  "triggers.help.webhook": "Envoie un POST JSON à cette URL avec l'en-tête Authorization, ou avec les en-têtes de signature Standard Webhooks. Un 200 signifie que c'est reçu, pas que l'exécution est terminée.",
-  "triggers.help.github": "Dans Settings → Webhooks du dépôt, mets cette URL comme payload URL, application/json comme content type, et la clé comme secret.",
-  "triggers.help.linear": "Dans Linear, Settings → API → Webhooks : indique l'URL, puis colle ici le signing secret que Linear affiche.",
-  "triggers.help.sentry": "Dans une intégration interne Sentry, indique l'URL du webhook, puis colle ici le client secret de l'intégration.",
-  "triggers.help.pagerduty": "Dans PagerDuty, Integrations → Generic Webhooks (v3) : indique l'URL, puis colle ici le secret affiché à la création.",
-  "triggers.help.email": "Envoie ou transfère un e-mail à cette adresse pour lancer une exécution.",
-  "triggers.help.slack": "Se lance sur les événements Slack que ce Bot reçoit. Les messages envoyés avant l'ajout du déclencheur sont ignorés.",
+  "triggers.help.webhook":
+    "Envoie un POST JSON à cette URL avec l'en-tête Authorization, ou avec les en-têtes de signature Standard Webhooks. Un 200 signifie que c'est reçu, pas que l'exécution est terminée.",
+  "triggers.help.github":
+    "Dans Settings → Webhooks du dépôt, mets cette URL comme payload URL, application/json comme content type, et la clé comme secret.",
+  "triggers.help.linear":
+    "Dans Linear, Settings → API → Webhooks : indique l'URL, puis colle ici le signing secret que Linear affiche.",
+  "triggers.help.sentry":
+    "Dans une intégration interne Sentry, indique l'URL du webhook, puis colle ici le client secret de l'intégration.",
+  "triggers.help.pagerduty":
+    "Dans PagerDuty, Integrations → Generic Webhooks (v3) : indique l'URL, puis colle ici le secret affiché à la création.",
+  "triggers.help.email":
+    "Envoie ou transfère un e-mail à cette adresse pour lancer une exécution.",
+  "triggers.help.slack":
+    "Se lance sur les événements Slack que ce Bot reçoit. Les messages envoyés avant l'ajout du déclencheur sont ignorés.",
   "triggers.slack.mention": "Le Bot est mentionné",
   "triggers.slack.phrase": "Un message contient une expression",
   "triggers.slack.reaction": "Une réaction est ajoutée",
@@ -1167,16 +1217,20 @@ export const fr: Catalog<typeof EN> = {
   "triggers.f.fromSenders": "de {senders} (authentifié)",
   "triggers.title": "Déclencheurs",
   "triggers.add": "Ajouter un déclencheur",
-  "triggers.notActive.paused": "Cette responsabilité est en pause. Ses déclencheurs ne la lanceront pas.",
-  "triggers.notActive.completed": "Cette responsabilité est terminée. Ses déclencheurs ne la lanceront pas.",
-  "triggers.none": "Aucun déclencheur. Elle s'exécute quand tu appuies sur Lancer maintenant, ou sur les événements ci-dessus.",
+  "triggers.notActive.paused":
+    "Cette responsabilité est en pause. Ses déclencheurs ne la lanceront pas.",
+  "triggers.notActive.completed":
+    "Cette responsabilité est terminée. Ses déclencheurs ne la lanceront pas.",
+  "triggers.none":
+    "Aucun déclencheur. Elle s'exécute quand tu appuies sur Lancer maintenant, ou sur les événements ci-dessus.",
   "triggers.removeForGood": "Supprimer définitivement",
   "triggers.keep": "Garder",
   "triggers.runOnAria": "Lancer sur ce déclencheur {kind}",
   "triggers.postTo": "POST vers",
   "triggers.copyUrl": "Copier l'URL",
   "triggers.copyAddress": "Copier l'adresse",
-  "triggers.emailOff": "L'e-mail n'est pas encore configuré sur {product} : cette adresse ne peut donc pas recevoir de messages. Un administrateur doit l'activer.",
+  "triggers.emailOff":
+    "L'e-mail n'est pas encore configuré sur {product} : cette adresse ne peut donc pas recevoir de messages. Un administrateur doit l'activer.",
   "triggers.key": "Clé",
   "triggers.copyKey": "Copier la clé",
   "triggers.copyHeader": "Copier l'en-tête",
@@ -1188,7 +1242,8 @@ export const fr: Catalog<typeof EN> = {
   "triggers.pasteNew": "Colle un nouveau secret pour le remplacer",
   "triggers.paste": "Colle le signing secret",
   "triggers.saveSecret": "Enregistrer le secret",
-  "triggers.addDescription": "Quelque chose d'extérieur à {product} qui lance cette responsabilité.",
+  "triggers.addDescription":
+    "Quelque chose d'extérieur à {product} qui lance cette responsabilité.",
   "triggers.slackTeam": "ID de l'équipe Slack",
   "triggers.fireOn": "Déclencher sur",
   "triggers.phrases": "Expressions (séparées par des virgules)",
@@ -1203,21 +1258,35 @@ export const fr: Catalog<typeof EN> = {
   "triggers.adding": "Ajout…",
   "triggers.addKind": "Ajouter un déclencheur {kind}",
   "triggers.example.webhook": "deploy.finished (vide : tous)",
-  "routines.cal.intro": "Les {days} prochains jours, pour les routines activées. Les heures sont dans ton fuseau horaire.",
-  "routines.cal.none": "Aucune routine pour l'instant : rien n'est donc planifié.",
-  "routines.cal.noneOn": "Aucune de ces routines n'est activée : aucune ne s'exécutera donc.",
-  "routines.cal.nothing": "Rien n'est planifié dans les {days} prochains jours.",
-  "routines.cal.truncated": "Seules les {max} premières exécutions de ces {days} jours sont listées.",
-  "routines.cal.paused": { one: "{count} routine en pause, donc non listée ici. Active-en une pour voir quand elle s'exécute.", other: "{count} routines en pause, donc non listées ici. Active-en une pour voir quand elle s'exécute.", many: "{count} de routines en pause, donc non listées ici. Active-en une pour voir quand elle s'exécute." },
-  "routines.week.nothing": "Rien n'est planifié pour le reste de cette semaine.",
+  "routines.cal.intro":
+    "Les {days} prochains jours, pour les routines activées. Les heures sont dans ton fuseau horaire.",
+  "routines.cal.none":
+    "Aucune routine pour l'instant : rien n'est donc planifié.",
+  "routines.cal.noneOn":
+    "Aucune de ces routines n'est activée : aucune ne s'exécutera donc.",
+  "routines.cal.nothing":
+    "Rien n'est planifié dans les {days} prochains jours.",
+  "routines.cal.truncated":
+    "Seules les {max} premières exécutions de ces {days} jours sont listées.",
+  "routines.cal.paused": {
+    one: "{count} routine en pause, donc non listée ici. Active-en une pour voir quand elle s'exécute.",
+    other:
+      "{count} routines en pause, donc non listées ici. Active-en une pour voir quand elle s'exécute.",
+    many: "{count} de routines en pause, donc non listées ici. Active-en une pour voir quand elle s'exécute.",
+  },
+  "routines.week.nothing":
+    "Rien n'est planifié pour le reste de cette semaine.",
   "routines.week.label": "Cette semaine",
   "routines.week.today": "aujourd'hui",
   "routines.week.now": "Maintenant, {time}",
   "routines.week.next": "Ensuite :",
   "routines.week.nothingElse": "Rien d'autre n'est planifié cette semaine.",
-  "routines.week.truncated": "Seules les premières exécutions des prochains jours sont listées : une routine très active peut donc ne pas apparaître tous les jours.",
-  "routines.week.historyError": "Les exécutions déjà passées n'ont pas pu être chargées : elles ne sont donc pas affichées.",
-  "routines.week.note": "Les heures sont dans ton fuseau horaire. Une routine qui s'exécute plus d'une fois par heure apparaît comme un seul bloc pour la journée.",
+  "routines.week.truncated":
+    "Seules les premières exécutions des prochains jours sont listées : une routine très active peut donc ne pas apparaître tous les jours.",
+  "routines.week.historyError":
+    "Les exécutions déjà passées n'ont pas pu être chargées : elles ne sont donc pas affichées.",
+  "routines.week.note":
+    "Les heures sont dans ton fuseau horaire. Une routine qui s'exécute plus d'une fois par heure apparaît comme un seul bloc pour la journée.",
   "routines.week.summary": "{count} exécutions, toutes les ~{minutes} min",
   "routines.week.gone": "{label}, conversation supprimée",
   "routines.card.label": "Routine",
@@ -1225,7 +1294,8 @@ export const fr: Catalog<typeof EN> = {
   "routines.card.readError": "Cette routine n'a pas pu être lue.",
   "routines.card.reading": "Lecture de cette routine…",
   "routines.card.gone": "Cette routine n'existe plus",
-  "routines.card.cannotSend": "Cette conversation ne peut pas recevoir de message pour le moment. Écris la modification dans la zone de message ci-dessous.",
+  "routines.card.cannotSend":
+    "Cette conversation ne peut pas recevoir de message pour le moment. Écris la modification dans la zone de message ci-dessous.",
   "routines.card.confirm": "Annuler cette routine ?",
   "routines.card.yes": "Oui, l'annuler",
   "routines.card.no": "Non, la garder",
@@ -1234,6 +1304,7 @@ export const fr: Catalog<typeof EN> = {
   "routines.card.edit": "Modifier",
   "routines.card.whatChange": "Qu'est-ce qui doit changer ?",
   "routines.card.send": "Envoyer la modification",
-  "routines.card.writeBelow": "Écris la modification dans la zone de message ci-dessous.",
+  "routines.card.writeBelow":
+    "Écris la modification dans la zone de message ci-dessous.",
   "routines.card.close": "Fermer",
 };

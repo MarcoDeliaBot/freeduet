@@ -1101,40 +1101,66 @@ export const pl: Catalog<typeof EN> = {
   "fullaccess.label.noPayments": "Full access bez płatności",
   "fullaccess.label.full": "Full access",
   "fullaccess.off": "Wyłączony",
-  "fullaccess.description": "Domyślnie bezpiecznie: Twoi asystenci pytają, zanim coś wyślą, zapłacą, podpiszą, zarezerwują lub usuną. Dla każdego asystenta możesz wybrać, że zrobi to bez pytania.",
+  "fullaccess.description":
+    "Domyślnie bezpiecznie: Twoi asystenci pytają, zanim coś wyślą, zapłacą, podpiszą, zarezerwują lub usuną. Dla każdego asystenta możesz wybrać, że zrobi to bez pytania.",
   "fullaccess.offTerm": "Wyłączony:",
-  "fullaccess.offText": "asystent pyta, zanim coś wyśle, zapłaci, podpisze, zarezerwuje lub usunie.",
+  "fullaccess.offText":
+    "asystent pyta, zanim coś wyśle, zapłaci, podpisze, zarezerwuje lub usunie.",
   "fullaccess.noPaymentsTerm": "Full access bez płatności:",
-  "fullaccess.noPaymentsText": "wysyła, podpisuje, rezerwuje i usuwa bez pytania. Płatności i zakupy nadal wymagają Twojego pytania.",
+  "fullaccess.noPaymentsText":
+    "wysyła, podpisuje, rezerwuje i usuwa bez pytania. Płatności i zakupy nadal wymagają Twojego pytania.",
   "fullaccess.fullTerm": "Full access:",
-  "fullaccess.fullText": "płaci i kupuje również bez pytania. Kwota nie ma limitu, dopóki nie pojawią się limity wydatków (planowane w v0.4).",
+  "fullaccess.fullText":
+    "płaci i kupuje również bez pytania. Kwota nie ma limitu, dopóki nie pojawią się limity wydatków (planowane w v0.4).",
   "fullaccess.askTitle": "Dać {name} {label}?",
   "fullaccess.give": "Daj {label}",
-  "fullaccess.full.p1": "{name} będzie wysyłać, płacić, podpisywać, rezerwować i usuwać bez pytania Cię wcześniej. Może działać na podstawie tego, co czyta, na przykład e-maila lub strony internetowej, więc włącz to tylko wtedy, gdy mu w tym ufasz.",
-  "fullaccess.full.p2": "Nie ma limitu kwoty, którą może zapłacić: limity wydatków jeszcze nie istnieją (są planowane w v0.4). Aby płatności i zakupy nadal pytały Ciebie, wybierz zamiast tego Full access bez płatności.",
-  "fullaccess.full.p3": "Hasła i ustawienia bezpieczeństwa nadal wymagają Ciebie. Gdy skonfigurowany jest automatyczny recenzent, czyta on też jednokrotnie każde polecenie i skrypt, które członek uruchamia na swoim komputerze, nawet jeśli wyłączyłeś recenzenta; gdy żaden nie jest skonfigurowany, polecenia nie są czytane. Dotyczy to tego, o co prosisz w swoich czatach, a nie rutyn ani check-inów. Możesz to wyłączyć w dowolnej chwili, a przestaje działać natychmiast.",
-  "fullaccess.noPayments.p1": "{name} będzie wysyłać, podpisywać, rezerwować i usuwać bez pytania Cię wcześniej. Płatności i zakupy nadal pytają Ciebie. Może działać na podstawie tego, co czyta, na przykład e-maila lub strony internetowej, więc włącz to tylko wtedy, gdy mu w tym ufasz.",
-  "fullaccess.noPayments.p2": "Aplikacja rozpoznaje płatność dzięki wbudowanym kontrolom, więc wiadomość, która tylko wspomina o płatności, też może pytać, a płatność sformułowana w nietypowy sposób może nie zostać wykryta. Hasła i ustawienia bezpieczeństwa nadal wymagają Ciebie. Gdy skonfigurowany jest automatyczny recenzent, czyta on też jednokrotnie każde polecenie i skrypt, które członek uruchamia na swoim komputerze w sprawie hasła, ustawienia bezpieczeństwa lub płatności wykonanej w ten sposób, nawet jeśli wyłączyłeś recenzenta; gdy żaden nie jest skonfigurowany, polecenia nie są czytane. Dotyczy to tego, o co prosisz w swoich czatach, a nie rutyn ani check-inów. Możesz to wyłączyć w dowolnej chwili, a przestaje działać natychmiast.",
+  "fullaccess.full.p1":
+    "{name} będzie wysyłać, płacić, podpisywać, rezerwować i usuwać bez pytania Cię wcześniej. Może działać na podstawie tego, co czyta, na przykład e-maila lub strony internetowej, więc włącz to tylko wtedy, gdy mu w tym ufasz.",
+  "fullaccess.full.p2":
+    "Nie ma limitu kwoty, którą może zapłacić: limity wydatków jeszcze nie istnieją (są planowane w v0.4). Aby płatności i zakupy nadal pytały Ciebie, wybierz zamiast tego Full access bez płatności.",
+  "fullaccess.full.p3":
+    "Hasła i ustawienia bezpieczeństwa nadal wymagają Ciebie. Gdy skonfigurowany jest automatyczny recenzent, czyta on też jednokrotnie każde polecenie i skrypt, które członek uruchamia na swoim komputerze, nawet jeśli wyłączyłeś recenzenta; gdy żaden nie jest skonfigurowany, polecenia nie są czytane. Dotyczy to tego, o co prosisz w swoich czatach, a nie rutyn ani check-inów. Możesz to wyłączyć w dowolnej chwili, a przestaje działać natychmiast.",
+  "fullaccess.noPayments.p1":
+    "{name} będzie wysyłać, podpisywać, rezerwować i usuwać bez pytania Cię wcześniej. Płatności i zakupy nadal pytają Ciebie. Może działać na podstawie tego, co czyta, na przykład e-maila lub strony internetowej, więc włącz to tylko wtedy, gdy mu w tym ufasz.",
+  "fullaccess.noPayments.p2":
+    "Aplikacja rozpoznaje płatność dzięki wbudowanym kontrolom, więc wiadomość, która tylko wspomina o płatności, też może pytać, a płatność sformułowana w nietypowy sposób może nie zostać wykryta. Hasła i ustawienia bezpieczeństwa nadal wymagają Ciebie. Gdy skonfigurowany jest automatyczny recenzent, czyta on też jednokrotnie każde polecenie i skrypt, które członek uruchamia na swoim komputerze w sprawie hasła, ustawienia bezpieczeństwa lub płatności wykonanej w ten sposób, nawet jeśli wyłączyłeś recenzenta; gdy żaden nie jest skonfigurowany, polecenia nie są czytane. Dotyczy to tego, o co prosisz w swoich czatach, a nie rutyn ani check-inów. Możesz to wyłączyć w dowolnej chwili, a przestaje działać natychmiast.",
   "fullaccess.noBots": "Nie ma jeszcze asystentów.",
   "fullaccess.legend": "Dostęp dla {name}",
   "fullaccess.radioAria": "{label} dla {name}",
-  "fullaccess.summary.off": "Pyta, zanim coś wyśle, zapłaci, podpisze, zarezerwuje lub usunie.",
-  "fullaccess.summary.noPayments": "Działa bez pytania, z tym że płatności i zakupy nadal pytają Ciebie. Od {since}.",
-  "fullaccess.summary.full": "Działa bez pytania, także przy płatnościach, bez limitu kwoty. Od {since}.",
+  "fullaccess.summary.off":
+    "Pyta, zanim coś wyśle, zapłaci, podpisze, zarezerwuje lub usunie.",
+  "fullaccess.summary.noPayments":
+    "Działa bez pytania, z tym że płatności i zakupy nadal pytają Ciebie. Od {since}.",
+  "fullaccess.summary.full":
+    "Działa bez pytania, także przy płatnościach, bez limitu kwoty. Od {since}.",
   "fullaccess.doneTitle": "Zrobione bez pytania",
-  "fullaccess.doneDescription": "Co asystent z Full access zrobił bez pytania Ciebie, od najnowszych.",
+  "fullaccess.doneDescription":
+    "Co asystent z Full access zrobił bez pytania Ciebie, od najnowszych.",
   "fullaccess.nothingYet": "Jeszcze nic.",
   "approvals.audience.owner": "Tylko jego właściciel",
   "approvals.audience.team": "Wszyscy",
   "approvals.audience.outside": ", i dane z zewnątrz",
   "approvals.audience.nobody": "Nikt nie wskazany",
-  "approvals.audience.groups": { one: "Grupa {names}", few: "Grupy {names}", many: "Grupy {names}", other: "Grupy {names}" },
-  "approvals.audience.people": { one: "{count} osoba", few: "{count} osoby", many: "{count} osób", other: "{count} osoby" },
+  "approvals.audience.groups": {
+    one: "Grupa {names}",
+    few: "Grupy {names}",
+    many: "Grupy {names}",
+    other: "Grupy {names}",
+  },
+  "approvals.audience.people": {
+    one: "{count} osoba",
+    few: "{count} osoby",
+    many: "{count} osób",
+    other: "{count} osoby",
+  },
   "approvals.audience.join": "{a} i {b}",
   "access.req.title": "Prośby",
-  "access.req.loadError": "Nie udało się wczytać próśb o dostęp. Odśwież stronę.",
-  "access.req.descApp": "Osoby proszące o tę aplikację. Zatwierdzenie od razu robi to, o co poprosiły.",
-  "access.req.descAll": "Osoby proszące o włączenie aplikacji, przekazanie jej asystentowi lub połączenie. Zatwierdzenie od razu robi to, o co poprosiły.",
+  "access.req.loadError":
+    "Nie udało się wczytać próśb o dostęp. Odśwież stronę.",
+  "access.req.descApp":
+    "Osoby proszące o tę aplikację. Zatwierdzenie od razu robi to, o co poprosiły.",
+  "access.req.descAll":
+    "Osoby proszące o włączenie aplikacji, przekazanie jej asystentowi lub połączenie. Zatwierdzenie od razu robi to, o co poprosiły.",
   "access.req.aBot": "asystenta",
   "access.req.theBot": "asystenta",
   "access.req.somebody": "Ktoś",
@@ -1148,11 +1174,30 @@ export const pl: Catalog<typeof EN> = {
   "access.req.botPage": "strona asystenta w {app}",
   "access.req.toolRead": "{name} (tylko odczyt)",
   "access.req.toolWrite": "{name} (coś zmienia)",
-  "access.req.gives": "Zatwierdzenie daje dla {bot} dokładnie te narzędzia i nic więcej: {list}.",
-  "access.req.readOnly": "Zatwierdzenie daje dla {bot} tylko akcje {app} wyłącznie do odczytu. Pozostałe wybierz w {page}.",
-  "access.req.canSend": { one: "{names} może wysyłać w imieniu osoby.", few: "{names} mogą wysyłać, każdy w imieniu osoby.", many: "{names} mogą wysyłać, każdy w imieniu osoby.", other: "{names} mogą wysyłać, każdy w imieniu osoby." },
-  "access.req.unreviewed": { one: "Żadna sprawdzona lista nie mówi, co {names} robi w {app}, więc może wysyłać w imieniu osoby.", few: "Żadna sprawdzona lista nie mówi, co robią {names} w {app}, więc każdy może wysyłać w imieniu osoby.", many: "Żadna sprawdzona lista nie mówi, co robią {names} w {app}, więc każdy może wysyłać w imieniu osoby.", other: "Żadna sprawdzona lista nie mówi, co robią {names} w {app}, więc każdy może wysyłać w imieniu osoby." },
-  "access.req.neverGives": { one: "Zatwierdzenie nigdy nie daje takiego narzędzia: zezwól na nie w ustawieniach, w {page}.", few: "Zatwierdzenie nigdy nie daje takich narzędzi: zezwól na nie w ustawieniach, w {page}.", many: "Zatwierdzenie nigdy nie daje takich narzędzi: zezwól na nie w ustawieniach, w {page}.", other: "Zatwierdzenie nigdy nie daje takich narzędzi: zezwól na nie w ustawieniach, w {page}." },
+  "access.req.gives":
+    "Zatwierdzenie daje dla {bot} dokładnie te narzędzia i nic więcej: {list}.",
+  "access.req.readOnly":
+    "Zatwierdzenie daje dla {bot} tylko akcje {app} wyłącznie do odczytu. Pozostałe wybierz w {page}.",
+  "access.req.canSend": {
+    one: "{names} może wysyłać w imieniu osoby.",
+    few: "{names} mogą wysyłać, każdy w imieniu osoby.",
+    many: "{names} mogą wysyłać, każdy w imieniu osoby.",
+    other: "{names} mogą wysyłać, każdy w imieniu osoby.",
+  },
+  "access.req.unreviewed": {
+    one: "Żadna sprawdzona lista nie mówi, co {names} robi w {app}, więc może wysyłać w imieniu osoby.",
+    few: "Żadna sprawdzona lista nie mówi, co robią {names} w {app}, więc każdy może wysyłać w imieniu osoby.",
+    many: "Żadna sprawdzona lista nie mówi, co robią {names} w {app}, więc każdy może wysyłać w imieniu osoby.",
+    other:
+      "Żadna sprawdzona lista nie mówi, co robią {names} w {app}, więc każdy może wysyłać w imieniu osoby.",
+  },
+  "access.req.neverGives": {
+    one: "Zatwierdzenie nigdy nie daje takiego narzędzia: zezwól na nie w ustawieniach, w {page}.",
+    few: "Zatwierdzenie nigdy nie daje takich narzędzi: zezwól na nie w ustawieniach, w {page}.",
+    many: "Zatwierdzenie nigdy nie daje takich narzędzi: zezwól na nie w ustawieniach, w {page}.",
+    other:
+      "Zatwierdzenie nigdy nie daje takich narzędzi: zezwól na nie w ustawieniach, w {page}.",
+  },
   "access.req.and": "{a} i {b}",
   "passwords.saveTo": "Zapisz w Hasłach",
   "responsibilities.run.waitKind.approval": "Twoje zatwierdzenie",
@@ -1160,25 +1205,35 @@ export const pl: Catalog<typeof EN> = {
   "responsibilities.run.waitKind.handoff": "Twoje przejęcie sprawy",
   "responsibilities.run.waitKind.signIn": "Twoje zalogowanie",
   "responsibilities.run.waitKind.other": "Ciebie",
-  "responsibilities.new.description": "Stały cel. Asystent pracuje nad nim w rozmowie, którą wybierzesz.",
+  "responsibilities.new.description":
+    "Stały cel. Asystent pracuje nad nim w rozmowie, którą wybierzesz.",
   "responsibilities.new.chooseConversation": "Wybierz rozmowę",
   "responsibilities.new.loadMore": "Wczytaj więcej rozmów",
   "responsibilities.new.titleExample": "Aktualizuj raport dla klientów",
-  "responsibilities.new.criteriaExample": "Raport zawiera wykres z bieżącego kwartału i link do źródła.",
+  "responsibilities.new.criteriaExample":
+    "Raport zawiera wykres z bieżącego kwartału i link do źródła.",
   "responsibilities.new.eventSource": "Źródło zdarzeń",
   "responsibilities.new.source.none": "Uruchom na życzenie",
-  "responsibilities.new.githubHelp": "Zdarzenia pochodzą z repozytoriów, które połączyłeś w {link}.",
+  "responsibilities.new.githubHelp":
+    "Zdarzenia pochodzą z repozytoriów, które połączyłeś w {link}.",
   "responsibilities.new.eventType": "Typ zdarzenia",
   "responsibilities.new.creating": "Tworzenie…",
   "responsibilities.new.create": "Utwórz obowiązek",
   "triggers.kind.email": "E-mail",
-  "triggers.help.webhook": "Wyślij POST z JSON na ten adres URL z nagłówkiem Authorization lub z nagłówkami podpisu Standard Webhooks. Odpowiedź 200 oznacza, że dotarło, a nie że uruchomienie się zakończyło.",
-  "triggers.help.github": "W Settings → Webhooks repozytorium ustaw payload URL na ten adres, content type na application/json, a secret na klucz.",
-  "triggers.help.linear": "W Linear, Settings → API → Webhooks: ustaw adres URL, a potem wklej tutaj signing secret, który pokazuje Linear.",
-  "triggers.help.sentry": "W wewnętrznej integracji Sentry ustaw adres URL webhooka, a potem wklej tutaj client secret integracji.",
-  "triggers.help.pagerduty": "W PagerDuty, Integrations → Generic Webhooks (v3): ustaw adres URL, a potem wklej tutaj secret pokazany przy tworzeniu.",
-  "triggers.help.email": "Wyślij lub przekaż pocztę na ten adres, aby rozpocząć uruchomienie.",
-  "triggers.help.slack": "Uruchamia się przy zdarzeniach Slacka, które odbiera ten asystent. Wiadomości wysłane przed dodaniem wyzwalacza są ignorowane.",
+  "triggers.help.webhook":
+    "Wyślij POST z JSON na ten adres URL z nagłówkiem Authorization lub z nagłówkami podpisu Standard Webhooks. Odpowiedź 200 oznacza, że dotarło, a nie że uruchomienie się zakończyło.",
+  "triggers.help.github":
+    "W Settings → Webhooks repozytorium ustaw payload URL na ten adres, content type na application/json, a secret na klucz.",
+  "triggers.help.linear":
+    "W Linear, Settings → API → Webhooks: ustaw adres URL, a potem wklej tutaj signing secret, który pokazuje Linear.",
+  "triggers.help.sentry":
+    "W wewnętrznej integracji Sentry ustaw adres URL webhooka, a potem wklej tutaj client secret integracji.",
+  "triggers.help.pagerduty":
+    "W PagerDuty, Integrations → Generic Webhooks (v3): ustaw adres URL, a potem wklej tutaj secret pokazany przy tworzeniu.",
+  "triggers.help.email":
+    "Wyślij lub przekaż pocztę na ten adres, aby rozpocząć uruchomienie.",
+  "triggers.help.slack":
+    "Uruchamia się przy zdarzeniach Slacka, które odbiera ten asystent. Wiadomości wysłane przed dodaniem wyzwalacza są ignorowane.",
   "triggers.slack.mention": "Asystent zostaje wspomniany",
   "triggers.slack.phrase": "Wiadomość zawiera frazę",
   "triggers.slack.reaction": "Dodano reakcję",
@@ -1198,16 +1253,20 @@ export const pl: Catalog<typeof EN> = {
   "triggers.f.fromSenders": "od {senders} (uwierzytelnione)",
   "triggers.title": "Wyzwalacze",
   "triggers.add": "Dodaj wyzwalacz",
-  "triggers.notActive.paused": "Ten obowiązek jest wstrzymany. Jego wyzwalacze go nie uruchomią.",
-  "triggers.notActive.completed": "Ten obowiązek jest ukończony. Jego wyzwalacze go nie uruchomią.",
-  "triggers.none": "Brak wyzwalaczy. Uruchamia się, gdy naciśniesz Uruchom teraz, albo przy zdarzeniach powyżej.",
+  "triggers.notActive.paused":
+    "Ten obowiązek jest wstrzymany. Jego wyzwalacze go nie uruchomią.",
+  "triggers.notActive.completed":
+    "Ten obowiązek jest ukończony. Jego wyzwalacze go nie uruchomią.",
+  "triggers.none":
+    "Brak wyzwalaczy. Uruchamia się, gdy naciśniesz Uruchom teraz, albo przy zdarzeniach powyżej.",
   "triggers.removeForGood": "Usuń na stałe",
   "triggers.keep": "Zachowaj",
   "triggers.runOnAria": "Uruchamiaj przy tym wyzwalaczu {kind}",
   "triggers.postTo": "POST na",
   "triggers.copyUrl": "Kopiuj URL",
   "triggers.copyAddress": "Kopiuj adres",
-  "triggers.emailOff": "E-mail nie jest jeszcze skonfigurowany w {product}, więc ten adres nie może odbierać poczty. Musi go włączyć administrator.",
+  "triggers.emailOff":
+    "E-mail nie jest jeszcze skonfigurowany w {product}, więc ten adres nie może odbierać poczty. Musi go włączyć administrator.",
   "triggers.key": "Klucz",
   "triggers.copyKey": "Kopiuj klucz",
   "triggers.copyHeader": "Kopiuj nagłówek",
@@ -1224,7 +1283,8 @@ export const pl: Catalog<typeof EN> = {
   "triggers.fireOn": "Uruchamiaj przy",
   "triggers.phrases": "Frazy (oddzielone przecinkami)",
   "triggers.reactions": "Reakcje (puste: dowolne)",
-  "triggers.channelIds": "ID kanałów (puste: wszystkie, w których jest asystent)",
+  "triggers.channelIds":
+    "ID kanałów (puste: wszystkie, w których jest asystent)",
   "triggers.eventTypes": "Typy zdarzeń",
   "triggers.onlyWhen": "Tylko gdy pole",
   "triggers.equals": "jest równe",
@@ -1234,21 +1294,35 @@ export const pl: Catalog<typeof EN> = {
   "triggers.adding": "Dodawanie…",
   "triggers.addKind": "Dodaj wyzwalacz {kind}",
   "triggers.example.webhook": "deploy.finished (puste: dowolne)",
-  "routines.cal.intro": "Następne {days} dni, dla włączonych rutyn. Godziny są w Twojej strefie czasowej.",
+  "routines.cal.intro":
+    "Następne {days} dni, dla włączonych rutyn. Godziny są w Twojej strefie czasowej.",
   "routines.cal.none": "Nie ma jeszcze rutyn, więc nic nie jest zaplanowane.",
-  "routines.cal.noneOn": "Żadna z tych rutyn nie jest włączona, więc żadna się nie uruchomi.",
-  "routines.cal.nothing": "W następnych {days} dniach nic nie jest zaplanowane.",
-  "routines.cal.truncated": "Wypisano tylko pierwsze {max} uruchomień z tych {days} dni.",
-  "routines.cal.paused": { one: "{count} rutyna wstrzymana, więc nie ma jej tutaj. Włącz jedną, aby zobaczyć, kiedy się uruchamia.", few: "{count} rutyny wstrzymane, więc nie ma ich tutaj. Włącz jedną, aby zobaczyć, kiedy się uruchamia.", many: "{count} rutyn wstrzymanych, więc nie ma ich tutaj. Włącz jedną, aby zobaczyć, kiedy się uruchamia.", other: "{count} rutyny wstrzymanej, więc nie ma jej tutaj. Włącz jedną, aby zobaczyć, kiedy się uruchamia." },
+  "routines.cal.noneOn":
+    "Żadna z tych rutyn nie jest włączona, więc żadna się nie uruchomi.",
+  "routines.cal.nothing":
+    "W następnych {days} dniach nic nie jest zaplanowane.",
+  "routines.cal.truncated":
+    "Wypisano tylko pierwsze {max} uruchomień z tych {days} dni.",
+  "routines.cal.paused": {
+    one: "{count} rutyna wstrzymana, więc nie ma jej tutaj. Włącz jedną, aby zobaczyć, kiedy się uruchamia.",
+    few: "{count} rutyny wstrzymane, więc nie ma ich tutaj. Włącz jedną, aby zobaczyć, kiedy się uruchamia.",
+    many: "{count} rutyn wstrzymanych, więc nie ma ich tutaj. Włącz jedną, aby zobaczyć, kiedy się uruchamia.",
+    other:
+      "{count} rutyny wstrzymanej, więc nie ma jej tutaj. Włącz jedną, aby zobaczyć, kiedy się uruchamia.",
+  },
   "routines.week.nothing": "Na resztę tego tygodnia nic nie jest zaplanowane.",
   "routines.week.label": "Ten tydzień",
   "routines.week.today": "dziś",
   "routines.week.now": "Teraz, {time}",
   "routines.week.next": "Następne:",
-  "routines.week.nothingElse": "Nic więcej nie jest zaplanowane na ten tydzień.",
-  "routines.week.truncated": "Wypisano tylko pierwsze uruchomienia z najbliższych dni, więc bardzo często uruchamiana rutyna może nie pokazać się każdego dnia.",
-  "routines.week.historyError": "Nie udało się wczytać uruchomień, które już się odbyły, więc ich nie pokazano.",
-  "routines.week.note": "Godziny są w Twojej strefie czasowej. Rutyna uruchamiana częściej niż co godzinę pojawia się jako jeden blok na dany dzień.",
+  "routines.week.nothingElse":
+    "Nic więcej nie jest zaplanowane na ten tydzień.",
+  "routines.week.truncated":
+    "Wypisano tylko pierwsze uruchomienia z najbliższych dni, więc bardzo często uruchamiana rutyna może nie pokazać się każdego dnia.",
+  "routines.week.historyError":
+    "Nie udało się wczytać uruchomień, które już się odbyły, więc ich nie pokazano.",
+  "routines.week.note":
+    "Godziny są w Twojej strefie czasowej. Rutyna uruchamiana częściej niż co godzinę pojawia się jako jeden blok na dany dzień.",
   "routines.week.summary": "{count} uruchomień, co ~{minutes} min",
   "routines.week.gone": "{label}, rozmowa usunięta",
   "routines.card.label": "Rutyna",
@@ -1256,7 +1330,8 @@ export const pl: Catalog<typeof EN> = {
   "routines.card.readError": "Nie udało się odczytać tej rutyny.",
   "routines.card.reading": "Odczytywanie tej rutyny…",
   "routines.card.gone": "Ta rutyna już nie istnieje",
-  "routines.card.cannotSend": "Ta rozmowa nie może teraz przyjąć wiadomości. Napisz zmianę w polu wiadomości poniżej.",
+  "routines.card.cannotSend":
+    "Ta rozmowa nie może teraz przyjąć wiadomości. Napisz zmianę w polu wiadomości poniżej.",
   "routines.card.confirm": "Anulować tę rutynę?",
   "routines.card.yes": "Tak, anuluj",
   "routines.card.no": "Nie, zachowaj",
