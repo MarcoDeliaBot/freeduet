@@ -2,24 +2,19 @@ import { Component, type ReactNode, useState } from "react";
 import { DuetCard } from "@/components/duet/kit";
 import { SERIES_COLOURS } from "@/components/gallery/palette";
 import { type EngineSummary, engineStateText } from "./engines-text";
+import { englishT, type T, useAppLanguage, useT } from "./i18n/provider";
 import {
-  BREAKDOWN_LABELS,
-  CHARTS_FAILED,
+  breakdownLabels,
   type Breakdown,
+  compactTokens,
   dayLabel,
-  LIMIT_NONE,
-  LIMIT_NOTE,
-  LIMIT_TITLE,
-  METRIC_LABELS,
+  metricLabels,
   type Metric,
   metricText,
   niceMax,
   percentText,
   REST_KEY,
   type TokenDay,
-  USAGE_NOTE,
-  USAGE_NOTHING,
-  USAGE_TITLE,
   type UsageView,
   usageView,
 } from "./engines-tokens-text";
@@ -46,6 +41,8 @@ function colourOf(view: UsageView, key: string): string {
 export function heldEngines(
   engines: Pick<EngineSummary, "id" | "name" | "state" | "until">[],
   now: Date = new Date(),
+  t: T = englishT,
+  language = "en",
 ): { id: string; text: string }[] {
   return engines
     .filter(
@@ -54,22 +51,25 @@ export function heldEngines(
     )
     .map((engine) => ({
       id: engine.id,
-      text: `${engine.name}: ${engineStateText(engine, now)}`,
+      text: `${engine.name}: ${engineStateText(engine, now, undefined, t, language)}`,
     }));
 }
 
 function LimitCard({ engines }: { engines: EngineSummary[] }) {
-  const held = heldEngines(engines);
+  const { t, language } = useAppLanguage();
+  const held = heldEngines(engines, new Date(), t, language);
   return (
     <DuetCard className="mt-4">
       <section
-        aria-label={LIMIT_TITLE}
+        aria-label={t("engines.usage.limitTitle")}
         className="px-4 py-4"
         data-testid="usage-limits"
       >
-        <h3 className="font-semibold text-sm">{LIMIT_TITLE}</h3>
+        <h3 className="font-semibold text-sm">
+          {t("engines.usage.limitTitle")}
+        </h3>
         {held.length === 0 ? (
-          <p className="mt-2 text-sm">{LIMIT_NONE}</p>
+          <p className="mt-2 text-sm">{t("engines.usage.limitNone")}</p>
         ) : (
           <ul className="mt-2 space-y-1 text-sm">
             {held.map((item) => (
@@ -79,7 +79,9 @@ function LimitCard({ engines }: { engines: EngineSummary[] }) {
             ))}
           </ul>
         )}
-        <p className="type-label mt-2 text-duet-ink-2">{LIMIT_NOTE}</p>
+        <p className="type-label mt-2 text-duet-ink-2">
+          {t("engines.usage.limitNote")}
+        </p>
       </section>
     </DuetCard>
   );
@@ -121,12 +123,15 @@ function Segmented<T extends string>({
 }
 
 function StackedBar({ view, metric }: { view: UsageView; metric: Metric }) {
+  const { t, language } = useAppLanguage();
   return (
     <>
       <div
         aria-label={view.parts
           .filter((part) => part.value > 0)
-          .map((part) => `${part.label} ${percentText(part.share)}`)
+          .map(
+            (part) => `${part.label} ${percentText(part.share, t, language)}`,
+          )
           .join(", ")}
         className="mt-4 flex h-4 w-full overflow-hidden rounded-full bg-duet-tile"
         data-testid="usage-bar"
@@ -142,7 +147,7 @@ function StackedBar({ view, metric }: { view: UsageView; metric: Metric }) {
                 background: colourOf(view, part.key),
                 borderRight: "2px solid var(--duet-card)",
               }}
-              title={`${part.label}: ${percentText(part.share)}, ${metricText(part.value, metric)}`}
+              title={`${part.label}: ${percentText(part.share, t, language)}, ${metricText(part.value, metric, t, language)}`}
             />
           ))}
       </div>
@@ -159,10 +164,10 @@ function StackedBar({ view, metric }: { view: UsageView; metric: Metric }) {
             />
             <span className="font-medium">{part.label}</span>
             <span className="ml-auto whitespace-nowrap tabular-nums">
-              {percentText(part.share)}
+              {percentText(part.share, t, language)}
               <span className="text-duet-ink-2">
                 {" · "}
-                {metricText(part.value, metric)}
+                {metricText(part.value, metric, t, language)}
               </span>
             </span>
           </li>
@@ -179,6 +184,8 @@ const TOP = 10;
 const BOTTOM = 26;
 
 function DailyChart({ view, metric }: { view: UsageView; metric: Metric }) {
+  const { t, language } = useAppLanguage();
+  const metricName = metricLabels(t)[metric];
   const peak = Math.max(0, ...view.days.map((day) => day.total));
   // Time is scaled in whole minutes, so the gridlines read "50 min", not "47 min".
   const top =
@@ -189,13 +196,16 @@ function DailyChart({ view, metric }: { view: UsageView; metric: Metric }) {
   const scale = (value: number) => (value / top) * plotHeight;
   const axis = (value: number) =>
     metric === "tokens"
-      ? metricText(value, "tokens").replace(" tokens", "")
-      : metricText(value, "time");
+      ? compactTokens(value, language)
+      : metricText(value, "time", t, language);
   const ticks = [0, top / 2, top];
   return (
     <div className="mt-5">
       <svg
-        aria-label={`${USAGE_TITLE}: ${METRIC_LABELS[metric]} per day`}
+        aria-label={t("engines.usage.perDay", {
+          title: t("engines.usage.title"),
+          metric: metricName,
+        })}
         className="h-auto w-full text-duet-ink-2"
         data-testid="usage-chart"
         role="img"
@@ -249,7 +259,7 @@ function DailyChart({ view, metric }: { view: UsageView; metric: Metric }) {
                     x={x}
                     y={y}
                   >
-                    <title>{`${dayLabel(day.day, index === view.days.length - 1)}, ${part.label}: ${metricText(value, metric)}`}</title>
+                    <title>{`${dayLabel(day.day, index === view.days.length - 1, t, language)}, ${part.label}: ${metricText(value, metric, t, language)}`}</title>
                   </rect>
                 );
               })}
@@ -260,17 +270,22 @@ function DailyChart({ view, metric }: { view: UsageView; metric: Metric }) {
                 x={x + barWidth / 2}
                 y={HEIGHT - 8}
               >
-                {dayLabel(day.day, index === view.days.length - 1)}
+                {dayLabel(day.day, index === view.days.length - 1, t, language)}
               </text>
             </g>
           );
         })}
       </svg>
       <table className="sr-only">
-        <caption>{`${USAGE_TITLE}: ${METRIC_LABELS[metric]} per day, UTC`}</caption>
+        <caption>
+          {t("engines.usage.perDayUtc", {
+            title: t("engines.usage.title"),
+            metric: metricName,
+          })}
+        </caption>
         <thead>
           <tr>
-            <th scope="col">Day</th>
+            <th scope="col">{t("engines.usage.day")}</th>
             {view.keys.map((part) => (
               <th key={part.key} scope="col">
                 {part.label}
@@ -282,11 +297,11 @@ function DailyChart({ view, metric }: { view: UsageView; metric: Metric }) {
           {view.days.map((day, index) => (
             <tr key={day.day}>
               <th scope="row">
-                {dayLabel(day.day, index === view.days.length - 1)}
+                {dayLabel(day.day, index === view.days.length - 1, t, language)}
               </th>
               {view.keys.map((part) => (
                 <td key={part.key}>
-                  {metricText(day.values[part.key] ?? 0, metric)}
+                  {metricText(day.values[part.key] ?? 0, metric, t, language)}
                 </td>
               ))}
             </tr>
@@ -294,6 +309,18 @@ function DailyChart({ view, metric }: { view: UsageView; metric: Metric }) {
         </tbody>
       </table>
     </div>
+  );
+}
+
+function ChartsFailed() {
+  const t = useT();
+  return (
+    <p
+      className="type-label mt-4 text-duet-ink-2"
+      data-testid="usage-charts-failed"
+    >
+      {t("engines.usage.chartsFailed")}
+    </p>
   );
 }
 
@@ -307,16 +334,7 @@ class ChartsBoundary extends Component<
     return { failed: true };
   }
   render() {
-    return this.state.failed ? (
-      <p
-        className="type-label mt-4 text-duet-ink-2"
-        data-testid="usage-charts-failed"
-      >
-        {CHARTS_FAILED}
-      </p>
-    ) : (
-      this.props.children
-    );
+    return this.state.failed ? <ChartsFailed /> : this.props.children;
   }
 }
 
@@ -341,9 +359,10 @@ function UsageChartsInner({
   engines: EngineSummary[];
   memberName: (id: string | null) => string;
 }) {
+  const { t, language } = useAppLanguage();
   const [breakdown, setBreakdown] = useState<Breakdown>("source");
   const [metric, setMetric] = useState<Metric>("tokens");
-  const view = usageView(daily, breakdown, metric, (id) => memberName(id));
+  const view = usageView(daily, breakdown, metric, (id) => memberName(id), t);
   if (daily.length === 0) return <LimitCard engines={engines} />;
   const first = daily[0]?.day;
   const last = daily[daily.length - 1]?.day;
@@ -352,31 +371,35 @@ function UsageChartsInner({
       <LimitCard engines={engines} />
       <DuetCard className="mt-4">
         <section
-          aria-label={USAGE_TITLE}
+          aria-label={t("engines.usage.title")}
           className="px-4 py-4"
           data-testid="usage-charts"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="font-semibold text-sm">{USAGE_TITLE}</h3>
+              <h3 className="font-semibold text-sm">
+                {t("engines.usage.title")}
+              </h3>
               {first && last ? (
                 <p className="type-label text-duet-ink-2">
-                  {dayLabel(first, false)} to{" "}
-                  {dayLabel(last, true).toLowerCase()}, UTC days
+                  {t("engines.usage.range", {
+                    from: dayLabel(first, false, t, language),
+                    to: dayLabel(last, true, t, language).toLowerCase(),
+                  })}
                 </p>
               ) : null}
             </div>
             <div className="flex flex-wrap gap-2">
               <Segmented
-                label="Split by"
-                labels={BREAKDOWN_LABELS}
+                label={t("engines.usage.splitBy")}
+                labels={breakdownLabels(t)}
                 onChange={setBreakdown}
                 options={["source", "member"] as const}
                 value={breakdown}
               />
               <Segmented
-                label="Measure"
-                labels={METRIC_LABELS}
+                label={t("engines.usage.measure")}
+                labels={metricLabels(t)}
                 onChange={setMetric}
                 options={["tokens", "time"] as const}
                 value={metric}
@@ -384,14 +407,16 @@ function UsageChartsInner({
             </div>
           </div>
           {view.total <= 0 ? (
-            <p className="mt-4 text-sm">{USAGE_NOTHING}</p>
+            <p className="mt-4 text-sm">{t("engines.usage.nothing")}</p>
           ) : (
             <>
               <StackedBar metric={metric} view={view} />
               <DailyChart metric={metric} view={view} />
             </>
           )}
-          <p className="type-label mt-3 text-duet-ink-2">{USAGE_NOTE}</p>
+          <p className="type-label mt-3 text-duet-ink-2">
+            {t("engines.usage.note")}
+          </p>
         </section>
       </DuetCard>
     </>
