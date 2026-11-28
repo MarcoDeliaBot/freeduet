@@ -372,7 +372,8 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
                         closing, who = cannot_guard.reminder(*found), found[1]
                     elif handoff_claim_guard.enabled():
                         claimed = handoff_claim_guard.applies(
-                            run.messages, story.messages, story.reply(), run.assertion, offered, member.id
+                            run.messages, story.messages, story.reply(), run.assertion, offered, member.id,
+                            server_open=run.open_handoffs.members() if run.open_handoffs is not None else None,
                         )
                         if claimed is not None:
                             kind, closing, who = "claim", handoff_claim_guard.reminder(*claimed), claimed[1]
