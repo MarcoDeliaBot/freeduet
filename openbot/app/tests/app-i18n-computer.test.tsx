@@ -99,8 +99,12 @@ async function signInLine(language: "it" | "en" | null) {
   return tree;
 }
 
-/** The panel mounts its polling sidebar and screen; under CI load the first paint can take longer than 1 s. */
+/**
+ * The panel mounts its polling sidebar and screen; under CI load the first paint can take longer than 1 s.
+ * Each wait may take up to 5 s, so the test itself gets more than bun's default 5 s (`PANEL_TEST_TIMEOUT`).
+ */
 const LONG_WAIT = { timeout: 5000 };
+const PANEL_TEST_TIMEOUT = 30_000;
 
 test("the sign-in line in chat reads Italian, English, and English with no provider", async () => {
   const it = await signInLine("it");
@@ -143,7 +147,7 @@ test("the computer panel reads the app language", async () => {
     undefined,
     LONG_WAIT,
   );
-});
+}, PANEL_TEST_TIMEOUT);
 
 test("a command's output notes read the app language, and keep the exit code", () => {
   const view = render(
