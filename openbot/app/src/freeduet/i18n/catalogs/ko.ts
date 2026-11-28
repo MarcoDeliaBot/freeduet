@@ -2910,4 +2910,24 @@ export const ko: Catalog<typeof EN> = {
   "computer.demo.couldntSave": "",
   "computer.demo.ready": "",
   // computer-end
+  // working-start (D188)
+  "working.region": "",
+  "working.nobody": "",
+  "working.for": "",
+  "working.underMinute": "",
+  "working.minutes": "",
+  "working.hours": "",
+  "working.hoursMinutes": "",
+  "working.seconds": "",
+  "working.signAgo": "",
+  "working.justStarted": "",
+  "working.lastStep": "",
+  "working.queued": "",
+  "working.waiting": "",
+  "working.stuck": "",
+  "working.didNotFinish": "",
+  "working.tryAgain": "",
+  "working.ringWaiting": "",
+  "working.ringStuck": "",
+  // working-end
 };

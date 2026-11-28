@@ -3048,4 +3048,25 @@ export const it: Catalog<typeof EN> = {
   "computer.demo.ready":
     "/{slug} è pronta su questo Bot. Scrivila nella conversazione con i tuoi input, oppure scegli «Esegui con una pianificazione» per farne una routine.",
   // computer-end
+  // working-start (D188)
+  "working.region": "Chi sta lavorando",
+  "working.nobody": "In lavoro adesso: nessuno",
+  "working.for": "lavora da {duration}",
+  "working.underMinute": "meno di un minuto",
+  "working.minutes": "{minutes} min",
+  "working.hours": "{hours} h",
+  "working.hoursMinutes": "{hours} h {minutes} min",
+  "working.seconds": "{seconds} s",
+  "working.signAgo": "ultimo segno di vita {duration} fa",
+  "working.justStarted": "appena iniziato",
+  "working.lastStep": "ultimo passo: {step}",
+  "working.queued": "in attesa di partire",
+  "working.waiting": "aspetta te",
+  "working.stuck": "bloccato: nessun segno di vita da {duration}",
+  "working.didNotFinish": "non ha finito",
+  "working.tryAgain": "Riprova",
+  "working.ringWaiting": "{name} aspetta un collega: {minutes} min",
+  "working.ringStuck":
+    "{name} aspetta un collega e sembra bloccato: {minutes} min",
+  // working-end
 };

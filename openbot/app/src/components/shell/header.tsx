@@ -19,6 +19,7 @@ import {
   useChatWorking,
   useUnownedServerWork,
 } from "./chat-presence";
+import { useIrisWait, WaitingRing } from "@/freeduet/work-status/work-strip";
 import { MemberOrb } from "./member-orb";
 import { usePageChromeState } from "./page-chrome";
 import { useT } from "@/freeduet/i18n/provider";
@@ -112,8 +113,17 @@ export function ShellHeader({
 export function ChatOrb({ size }: { size: number }) {
   const { state, keystrokes } = useChatOrb();
   const botId = useActiveBotId();
+  const iris = useIrisWait();
   if (mascotKeyOf(botId) !== null)
-    return <MemberOrb agentId={botId} size={size} state={state} />;
+    return (
+      <span className="relative inline-grid shrink-0">
+        <MemberOrb agentId={botId} size={size} state={state} />
+        {/* D188: Iris's own waiting ring, only while she has a hand-off open. */}
+        {botId === iris.irisId ? (
+          <WaitingRing name={iris.name} wait={iris.wait} />
+        ) : null}
+      </span>
+    );
   return <MicOrb keystrokes={keystrokes} size={size} state={state} />;
 }
 

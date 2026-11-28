@@ -2922,6 +2922,27 @@ export const EN = {
   "computer.demo.ready":
     "/{slug} is ready on this Bot. Type it in the conversation with your inputs, or choose Run on a schedule to make it a routine.",
   // computer-end
+  // working-start (D188)
+  "working.region": "Working now",
+  "working.nobody": "Working now: nobody",
+  "working.for": "working for {duration}",
+  "working.underMinute": "under a minute",
+  "working.minutes": "{minutes} min",
+  "working.hours": "{hours} h",
+  "working.hoursMinutes": "{hours} h {minutes} min",
+  "working.seconds": "{seconds} s",
+  "working.signAgo": "last sign of life {duration} ago",
+  "working.justStarted": "just started",
+  "working.lastStep": "last step: {step}",
+  "working.queued": "waiting to start",
+  "working.waiting": "waiting for you",
+  "working.stuck": "stuck: no sign of life for {duration}",
+  "working.didNotFinish": "did not finish",
+  "working.tryAgain": "Try again",
+  "working.ringWaiting": "{name} is waiting for a colleague: {minutes} min",
+  "working.ringStuck":
+    "{name} is waiting for a colleague and it looks stuck: {minutes} min",
+  // working-end
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;
