@@ -1289,6 +1289,56 @@ export const EN = {
   "admin.people.loading": "Loading…",
   "admin.people.showMore": "Show more",
   "admin.boundaries.and": "and",
+  "admin.credentials.title": "Credentials",
+  "admin.credentials.add": "Add credential",
+  "admin.credentials.desc":
+    "Keys and tokens for this deployment. {product} never shows a secret after it is saved.",
+  "admin.credentials.dialogDesc":
+    "Saved for this deployment. You won't see the secret again.",
+  "admin.credentials.type": "Type",
+  "admin.credentials.model": "Model",
+  "admin.credentials.connector": "Connector",
+  "admin.credentials.provider": "Provider",
+  "admin.credentials.keyId": "Key ID",
+  "admin.credentials.secret": "Secret",
+  "admin.credentials.replaces":
+    "This key already has an active credential. Saving replaces it and revokes the old one.",
+  "admin.credentials.saveError": "Couldn't save the credential. Try again.",
+  "admin.credentials.cancel": "Cancel",
+  "admin.credentials.saving": "Saving…",
+  "admin.credentials.save": "Save credential",
+  "admin.credentials.savedTitle": "Saved credentials",
+  "admin.credentials.loadError": "Couldn't load credentials. Reload the page.",
+  "admin.credentials.empty": "No credentials yet. Add one with Add credential.",
+  "admin.credentials.revoked": "revoked",
+  "admin.credentials.active": "active",
+  "admin.credentials.revoke": "Revoke",
+  "admin.idp.title": "Identity providers",
+  "admin.idp.add": "Add a provider",
+  "admin.idp.desc":
+    "Your company's own SAML or OpenID Connect provider. People sign in with their email, and its domain picks the provider.",
+  "admin.idp.registeredTitle": "Registered",
+  "admin.idp.registeredDesc":
+    "Google, Microsoft and Okta are set in the environment. They don't show here.",
+  "admin.idp.loadError": "Couldn't load identity providers. Reload the page.",
+  "admin.idp.empty":
+    "No identity providers yet. Add one with the metadata from your identity team.",
+  "admin.idp.remove": "Remove",
+  "admin.idp.dialogTitle": "Add an identity provider",
+  "admin.idp.name": "Name",
+  "admin.idp.domain": "Email domain",
+  "admin.idp.domainNote":
+    "Anybody with an address at this domain signs in here. Separate several with commas.",
+  "admin.idp.issuer": "Issuer",
+  "admin.idp.signOnUrl": "Sign-on URL",
+  "admin.idp.metadata": "Metadata XML",
+  "admin.idp.metadataNote":
+    "The file from your identity team. It includes the signing certificate.",
+  "admin.idp.clientId": "Client ID",
+  "admin.idp.clientSecret": "Client secret",
+  "admin.idp.cancel": "Cancel",
+  "admin.idp.adding": "Adding…",
+  "admin.idp.addShort": "Add",
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;

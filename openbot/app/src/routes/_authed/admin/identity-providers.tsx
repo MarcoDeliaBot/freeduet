@@ -30,6 +30,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import {
   deleteIdentityProviderMutationOptions,
   type IdentityProviderInput,
@@ -54,6 +55,7 @@ const EMPTY = {
 };
 
 function IdentityProvidersPage() {
+  const { t } = useAppLanguage();
   const providers = useQuery(identityProviderListQueryOptions());
   const register = useMutation(
     registerIdentityProviderMutationOptions(queryClient),
@@ -102,15 +104,15 @@ function IdentityProvidersPage() {
     <PageShell
       action={
         <Button onClick={() => setOpen(true)} size="lg">
-          Add a provider
+          {t("admin.idp.add")}
         </Button>
       }
-      description="Your company's own SAML or OpenID Connect provider. People sign in with their email, and its domain picks the provider."
-      title="Identity providers"
+      description={t("admin.idp.desc")}
+      title={t("admin.idp.title")}
     >
       <PageSection
-        description="Google, Microsoft and Okta are set in the environment. They don't show here."
-        title="Registered"
+        description={t("admin.idp.registeredDesc")}
+        title={t("admin.idp.registeredTitle")}
       >
         {failure ? (
           <p className="mt-4 text-destructive text-sm" role="alert">
@@ -119,13 +121,10 @@ function IdentityProvidersPage() {
         ) : null}
         {providers.isPending ? null : providers.error ? (
           <p className="mt-4 text-destructive text-sm" role="alert">
-            Couldn't load identity providers. Reload the page.
+            {t("admin.idp.loadError")}
           </p>
         ) : providers.data?.length === 0 ? (
-          <PageEmpty>
-            No identity providers yet. Add one with the metadata from your
-            identity team.
-          </PageEmpty>
+          <PageEmpty>{t("admin.idp.empty")}</PageEmpty>
         ) : (
           <PageRows>
             {providers.data?.map((provider, index) => (
@@ -149,7 +148,7 @@ function IdentityProvidersPage() {
                       variant="destructive"
                     >
                       <IconTrash />
-                      Remove
+                      {t("admin.idp.remove")}
                     </Button>
                   </ItemActions>
                 </Item>
@@ -163,7 +162,7 @@ function IdentityProvidersPage() {
       <Dialog onOpenChange={setOpen} open={open}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add an identity provider</DialogTitle>
+            <DialogTitle>{t("admin.idp.dialogTitle")}</DialogTitle>
           </DialogHeader>
           <DialogBody className="mt-4 space-y-4 overflow-y-auto">
             {/* The submit button is in the footer and reaches this form by id, so DialogBody stays a
@@ -186,7 +185,7 @@ function IdentityProvidersPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="providerId">Name</Label>
+                <Label htmlFor="providerId">{t("admin.idp.name")}</Label>
                 <Input
                   id="providerId"
                   onChange={(event) =>
@@ -199,7 +198,7 @@ function IdentityProvidersPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="domain">Email domain</Label>
+                <Label htmlFor="domain">{t("admin.idp.domain")}</Label>
                 <Input
                   id="domain"
                   onChange={(event) =>
@@ -211,13 +210,12 @@ function IdentityProvidersPage() {
                 />
                 {/* Said out loud because it is the field that decides who this applies to. */}
                 <p className="text-muted-foreground text-xs">
-                  Anybody with an address at this domain signs in here. Separate
-                  several with commas.
+                  {t("admin.idp.domainNote")}
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="issuer">Issuer</Label>
+                <Label htmlFor="issuer">{t("admin.idp.issuer")}</Label>
                 <Input
                   id="issuer"
                   onChange={(event) =>
@@ -233,7 +231,9 @@ function IdentityProvidersPage() {
               {draft.protocol === "saml" ? (
                 <>
                   <div className="space-y-1.5">
-                    <Label htmlFor="entryPoint">Sign-on URL</Label>
+                    <Label htmlFor="entryPoint">
+                      {t("admin.idp.signOnUrl")}
+                    </Label>
                     <Input
                       id="entryPoint"
                       onChange={(event) =>
@@ -246,7 +246,7 @@ function IdentityProvidersPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="metadata">Metadata XML</Label>
+                    <Label htmlFor="metadata">{t("admin.idp.metadata")}</Label>
                     <Textarea
                       className="font-mono text-xs"
                       id="metadata"
@@ -259,15 +259,14 @@ function IdentityProvidersPage() {
                       value={draft.metadata}
                     />
                     <p className="text-muted-foreground text-xs">
-                      The file from your identity team. It includes the signing
-                      certificate.
+                      {t("admin.idp.metadataNote")}
                     </p>
                   </div>
                 </>
               ) : (
                 <>
                   <div className="space-y-1.5">
-                    <Label htmlFor="clientId">Client ID</Label>
+                    <Label htmlFor="clientId">{t("admin.idp.clientId")}</Label>
                     <Input
                       id="clientId"
                       onChange={(event) =>
@@ -278,7 +277,9 @@ function IdentityProvidersPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="clientSecret">Client secret</Label>
+                    <Label htmlFor="clientSecret">
+                      {t("admin.idp.clientSecret")}
+                    </Label>
                     <Input
                       id="clientSecret"
                       onChange={(event) =>
@@ -310,7 +311,7 @@ function IdentityProvidersPage() {
               type="button"
               variant="outline"
             >
-              Cancel
+              {t("admin.idp.cancel")}
             </Button>
             <Button
               disabled={register.isPending}
@@ -318,7 +319,9 @@ function IdentityProvidersPage() {
               size="sm"
               type="submit"
             >
-              {register.isPending ? "Adding…" : "Add"}
+              {register.isPending
+                ? t("admin.idp.adding")
+                : t("admin.idp.addShort")}
             </Button>
           </DialogFooter>
         </DialogContent>

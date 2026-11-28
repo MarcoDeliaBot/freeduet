@@ -1336,4 +1336,58 @@ export const it: Catalog<typeof EN> = {
   "admin.people.loading": "Caricamento…",
   "admin.people.showMore": "Mostra altro",
   "admin.boundaries.and": "e",
+  "admin.credentials.title": "Credenziali",
+  "admin.credentials.add": "Aggiungi credenziale",
+  "admin.credentials.desc":
+    "Chiavi e token di questa installazione. {product} non mostra mai un segreto dopo che è stato salvato.",
+  "admin.credentials.dialogDesc":
+    "Salvata per questa installazione. Non vedrai più il segreto.",
+  "admin.credentials.type": "Tipo",
+  "admin.credentials.model": "Modello",
+  "admin.credentials.connector": "Connettore",
+  "admin.credentials.provider": "Provider",
+  "admin.credentials.keyId": "ID della chiave",
+  "admin.credentials.secret": "Segreto",
+  "admin.credentials.replaces":
+    "Questa chiave ha già una credenziale attiva. Salvando la sostituisci e quella vecchia viene revocata.",
+  "admin.credentials.saveError":
+    "Non è stato possibile salvare la credenziale. Riprova.",
+  "admin.credentials.cancel": "Annulla",
+  "admin.credentials.saving": "Salvataggio…",
+  "admin.credentials.save": "Salva la credenziale",
+  "admin.credentials.savedTitle": "Credenziali salvate",
+  "admin.credentials.loadError":
+    "Non è stato possibile caricare le credenziali. Ricarica la pagina.",
+  "admin.credentials.empty":
+    "Ancora nessuna credenziale. Aggiungine una con «Aggiungi credenziale».",
+  "admin.credentials.revoked": "revocata",
+  "admin.credentials.active": "attiva",
+  "admin.credentials.revoke": "Revoca",
+  "admin.idp.title": "Provider di identità",
+  "admin.idp.add": "Aggiungi un provider",
+  "admin.idp.desc":
+    "Il provider SAML o OpenID Connect della tua azienda. Le persone accedono con la loro email, e il dominio dell'email sceglie il provider.",
+  "admin.idp.registeredTitle": "Registrati",
+  "admin.idp.registeredDesc":
+    "Google, Microsoft e Okta si impostano nell'ambiente. Qui non compaiono.",
+  "admin.idp.loadError":
+    "Non è stato possibile caricare i provider di identità. Ricarica la pagina.",
+  "admin.idp.empty":
+    "Ancora nessun provider di identità. Aggiungine uno con i metadati che ti dà il tuo team di identità.",
+  "admin.idp.remove": "Rimuovi",
+  "admin.idp.dialogTitle": "Aggiungi un provider di identità",
+  "admin.idp.name": "Nome",
+  "admin.idp.domain": "Dominio email",
+  "admin.idp.domainNote":
+    "Chiunque abbia un indirizzo su questo dominio accede da qui. Separa più domini con delle virgole.",
+  "admin.idp.issuer": "Emittente",
+  "admin.idp.signOnUrl": "URL di accesso",
+  "admin.idp.metadata": "Metadati XML",
+  "admin.idp.metadataNote":
+    "Il file che ti dà il tuo team di identità. Include il certificato di firma.",
+  "admin.idp.clientId": "ID client",
+  "admin.idp.clientSecret": "Segreto del client",
+  "admin.idp.cancel": "Annulla",
+  "admin.idp.adding": "Aggiunta in corso…",
+  "admin.idp.addShort": "Aggiungi",
 };
