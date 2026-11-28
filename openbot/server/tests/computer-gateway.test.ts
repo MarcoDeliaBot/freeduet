@@ -929,6 +929,41 @@ describe("the computer gateway", () => {
       expect(denied.rows[0]?.payload.action).toBe("computer_download_file");
     });
 
+    test("a path rule and an extension rule hide the files a download would refuse, with one audit row", async () => {
+      const many = {
+        files: [
+          { path: "out/ok.txt", name: "ok.txt", bytes: 1, modifiedMs: 1 },
+          {
+            path: "out/secret/key.txt",
+            name: "key.txt",
+            bytes: 1,
+            modifiedMs: 1,
+          },
+          {
+            path: "out/report.pdf",
+            name: "report.pdf",
+            bytes: 1,
+            modifiedMs: 1,
+          },
+        ],
+        truncated: false,
+      };
+      const { gateway, rows } = await gatewayWith(
+        {
+          ...PERMISSIVE,
+          deny: [
+            'intent == "download_file" && contains(file.path, "out/secret/")',
+            'intent == "download_file" && file.extension == "pdf"',
+          ],
+        },
+        { routes: { "/files/finished": () => Response.json(many) } },
+      );
+      const answer = await gateway.listFinishedFiles("bot-1", ACTOR);
+      expect(answer.files.map((file) => file.path)).toEqual(["out/ok.txt"]);
+      expect(rows.length).toBe(1);
+      expect(rows[0]?.payload).toMatchObject({ file: "out" });
+    });
+
     test("an absent policy refuses it", async () => {
       const { gateway, requests } = await gatewayWith(undefined);
       await expect(gateway.listFinishedFiles("bot-1", ACTOR)).rejects.toThrow(

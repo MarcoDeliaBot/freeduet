@@ -291,6 +291,12 @@ export function createWorkspace(
       // A link at `out` itself must be seen before it is followed.
       const own = await lstat(folder).catch(() => null);
       if (!own) return { files: [], truncated: false };
+      // A link at `out`, even one that stays inside the workspace, is not the folder of finished work.
+      if (own.isSymbolicLink()) {
+        throw new WorkspacePathError(
+          `${FINISHED_FOLDER} is a link, not a folder inside your workspace.`,
+        );
+      }
       const realFolder = await realpath(folder).catch(() => null);
       if (!realFolder) return { files: [], truncated: false };
       assertInside(root, realFolder, FINISHED_FOLDER);
@@ -310,6 +316,9 @@ export function createWorkspace(
           if (item.name.startsWith(".")) continue;
           const full = `${dir}/${item.name}`;
           if (item.isDirectory()) {
+            // Looked at again just before going in: a folder swapped for a link since `readdir` is skipped.
+            const now = await lstat(full).catch(() => null);
+            if (!now?.isDirectory()) continue;
             if (depth < FINISHED_DEPTH) await walk(full, depth + 1);
             if (truncated) return;
             continue;

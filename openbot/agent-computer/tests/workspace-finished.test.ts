@@ -91,6 +91,16 @@ describe("listing the finished work", () => {
     );
   });
 
+  test("refuses an out folder that is a link even when it stays inside the workspace", async () => {
+    await rm(join(root, "out"), { recursive: true });
+    await mkdir(join(root, "other"), { recursive: true });
+    await writeFile(join(root, "other", "private.txt"), "x");
+    await symlink(join(root, "other"), join(root, "out"));
+    await expect(createWorkspace(root).listFinished()).rejects.toBeInstanceOf(
+      WorkspacePathError,
+    );
+  });
+
   test("stops at the cap and says more is not shown", async () => {
     for (let index = 0; index < 5; index += 1) {
       await writeFile(join(root, "out", `f${index}.txt`), "x");
