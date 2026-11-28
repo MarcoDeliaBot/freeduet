@@ -1599,8 +1599,9 @@ export const ru: Catalog<typeof EN> = {
   "admin.nav.audit": "Аудит",
   "admin.enterprise.mode.allow_all": "Разрешить любой доступ к сети",
   "admin.enterprise.mode.defaults_plus_allowlist":
-    "Значения по умолчанию плюс список разрешённых команды",
-  "admin.enterprise.mode.allowlist_only": "Только список разрешённых команды",
+    "Значения по умолчанию плюс список разрешённых адресов команды",
+  "admin.enterprise.mode.allowlist_only":
+    "Только список разрешённых адресов команды",
   "admin.enterprise.noPolicy":
     "Политики нет. Компьютеры помощников могут обращаться ко всему, что разрешает кластер",
   "admin.enterprise.locked": " · заблокировано",
@@ -1767,7 +1768,7 @@ export const ru: Catalog<typeof EN> = {
   "admin.plugins.key.noConsent":
     "{product} не получил обратно ссылку на согласие, поэтому ничего не подключено. Попробуй ещё раз или проверь настройку этого коннектора, если это повторяется.",
   "admin.plugins.key.reassurance":
-    "Настройка завершена и без него, и он доступен только твоим документам.",
+    "Настройка завершена и без него, и он получает доступ только к твоим документам.",
   "admin.plugins.key.notPlugin.description":
     "Плагина с таким именем нет ни здесь, ни в каталоге.",
   "admin.plugins.key.notPlugin.title": "Это не плагин",
@@ -1829,7 +1830,7 @@ export const ru: Catalog<typeof EN> = {
   "admin.plugins.key.oauthAcct.connected":
     "Подключено. Помощник с этими инструментами использует твой {title} от твоего имени. Все остальные подключают свой.",
   "admin.plugins.key.oauthAcct.connect":
-    "Подключи свой аккаунт, чтобы попробовать этот коннектор. Настройка завершена и без него, и он доступен только твоим документам.",
+    "Подключи свой аккаунт, чтобы попробовать этот коннектор. Настройка завершена и без него, и он получает доступ только к твоим документам.",
   "admin.plugins.key.connected": "Подключено",
   "admin.plugins.key.connect": "Подключить",
   "admin.plugins.key.instance.title": "Хост экземпляра",
