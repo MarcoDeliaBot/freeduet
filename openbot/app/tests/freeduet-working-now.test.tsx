@@ -2,10 +2,12 @@ import { afterAll, afterEach, beforeAll, expect, test } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render } from "@testing-library/react";
+import { readFileSync } from "node:fs";
 import { STUCK_AFTER_MS as SERVER_STUCK_AFTER_MS } from "../../server/src/freeduet/work-status";
 import { AppLanguageValue } from "@/freeduet/i18n/provider";
 import {
   clipTask,
+  STEP_KEYS,
   openHandoffs,
   ringFill,
   STUCK_AFTER_MS,
@@ -130,7 +132,7 @@ test("the strip reads Italian", () => {
   cleanup();
   const none = draw(<WorkStrip hops={[]} now={NOW} />, "it");
   expect(none.getByTestId("working-now-none").textContent).toBe(
-    "In lavoro adesso: nessuno",
+    "Al lavoro ora: nessuno",
   );
 });
 
@@ -177,4 +179,25 @@ test("the ring turns stuck when the server says stuck, and says the minutes", ()
   expect(calm.getAttribute("aria-label")).toBe(
     "Iris aspetta un collega: 2 min",
   );
+});
+
+test("the step is said in the app language, never as the server's English", () => {
+  const view = draw(<WorkStrip hops={[hop()]} now={NOW} />, "it");
+  const text = view.getByTestId("working-now").textContent ?? "";
+  expect(text).toContain("ultimo passo: scrivendo un file");
+  expect(text).not.toContain("writing a file");
+  expect(text).not.toContain("In lavoro adesso");
+});
+
+test("every label the server can send has a step word", () => {
+  const source = readFileSync(
+    new URL("../../server/src/freeduet/work-status.ts", import.meta.url),
+    "utf8",
+  );
+  const labels = [...source.matchAll(/\/,\s*"([a-z ]+)",?\s*\]/g)].map(
+    (m) => m[1],
+  );
+  expect(labels.length).toBeGreaterThan(10);
+  for (const label of [...labels, "working"])
+    expect(Object.keys(STEP_KEYS)).toContain(label);
 });

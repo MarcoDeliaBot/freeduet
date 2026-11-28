@@ -3002,5 +3002,18 @@ export const zh: Catalog<typeof EN> = {
   "working.tryAgain": "",
   "working.ringWaiting": "",
   "working.ringStuck": "",
+  "working.step.writing": "",
+  "working.step.reading": "",
+  "working.step.command": "",
+  "working.step.readPage": "",
+  "working.step.usePage": "",
+  "working.step.searching": "",
+  "working.step.mail": "",
+  "working.step.calendar": "",
+  "working.step.asking": "",
+  "working.step.notes": "",
+  "working.step.picture": "",
+  "working.step.video": "",
+  "working.step.working": "",
   // working-end
 };

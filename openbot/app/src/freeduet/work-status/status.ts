@@ -188,3 +188,20 @@ export function clipTask(title: string): string {
   const text = title.trim();
   return text.length <= TASK_CLIP ? text : `${text.slice(0, TASK_CLIP - 1)}…`;
 }
+
+/** The server's fixed step labels (`stepLabel` in server/src/freeduet/work-status.ts) and the catalogue key that says each in the app language. */
+export const STEP_KEYS = {
+  "writing a file": "working.step.writing",
+  "reading files": "working.step.reading",
+  "running a command": "working.step.command",
+  "reading a page": "working.step.readPage",
+  "using a page": "working.step.usePage",
+  searching: "working.step.searching",
+  "working on mail": "working.step.mail",
+  "checking the calendar": "working.step.calendar",
+  "asking a colleague": "working.step.asking",
+  "using its notes": "working.step.notes",
+  "working on a picture": "working.step.picture",
+  "working on a video": "working.step.video",
+  working: "working.step.working",
+} as const;

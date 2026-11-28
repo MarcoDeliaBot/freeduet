@@ -12,6 +12,7 @@ import {
   isActive,
   openHandoffs,
   ringFill,
+  STEP_KEYS,
   STUCK_AFTER_MS,
   type WorkHandoff,
   waitOf,
@@ -60,6 +61,14 @@ function ringState(state: WorkHandoff["state"]): DotState {
     : "idle";
 }
 
+/** The server's step label in the app language; a label this does not know is shown as sent. */
+export function stepText(label: string, t: T): string {
+  const key = (
+    STEP_KEYS as Record<string, (typeof STEP_KEYS)[keyof typeof STEP_KEYS]>
+  )[label];
+  return key ? t(key) : label;
+}
+
 /** The words after the name, for one hand-off. */
 export function stripWords(hop: WorkHandoff, now: number, say: Say): string {
   const { t } = say;
@@ -75,7 +84,7 @@ export function stripWords(hop: WorkHandoff, now: number, say: Say): string {
       return t("working.stuck", { duration: durationText(now - alive, say) });
     default: {
       const sign = hop.lastStep
-        ? t("working.lastStep", { step: hop.lastStep.label })
+        ? t("working.lastStep", { step: stepText(hop.lastStep.label, t) })
         : t("working.justStarted");
       return `${t("working.for", { duration: durationText(now - since, say) })} · ${hop.lastEventAt ? t("working.signAgo", { duration: agoText(now - alive, say) }) : sign}`;
     }
@@ -127,7 +136,9 @@ export function WorkStrip({
               ) : null}
               {hop.lastStep && hop.state === "working" ? (
                 <span className="fd-ws-strip-sub">
-                  {t("working.lastStep", { step: hop.lastStep.label })}
+                  {t("working.lastStep", {
+                    step: stepText(hop.lastStep.label, t),
+                  })}
                 </span>
               ) : null}
             </span>

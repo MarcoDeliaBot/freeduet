@@ -3382,8 +3382,8 @@ export const it: Catalog<typeof EN> = {
   "claude.copy": "Copia il comando",
   // onboarding-end
   // working-start (D188)
-  "working.region": "Chi sta lavorando",
-  "working.nobody": "In lavoro adesso: nessuno",
+  "working.region": "Al lavoro ora",
+  "working.nobody": "Al lavoro ora: nessuno",
   "working.for": "lavora da {duration}",
   "working.underMinute": "meno di un minuto",
   "working.minutes": { one: "{count} minuto", other: "{count} minuti" },
@@ -3401,5 +3401,18 @@ export const it: Catalog<typeof EN> = {
   "working.ringWaiting": "{name} aspetta un collega: {minutes} min",
   "working.ringStuck":
     "{name} aspetta un collega e sembra bloccato: {minutes} min",
+  "working.step.writing": "scrivendo un file",
+  "working.step.reading": "leggendo dei file",
+  "working.step.command": "eseguendo un comando",
+  "working.step.readPage": "leggendo una pagina",
+  "working.step.usePage": "usando una pagina",
+  "working.step.searching": "cercando",
+  "working.step.mail": "lavorando sulla posta",
+  "working.step.calendar": "controllando il calendario",
+  "working.step.asking": "chiedendo a un collega",
+  "working.step.notes": "usando i suoi appunti",
+  "working.step.picture": "lavorando su un'immagine",
+  "working.step.video": "lavorando su un video",
+  "working.step.working": "al lavoro",
   // working-end
 };

@@ -3250,6 +3250,19 @@ export const EN = {
   "working.ringWaiting": "{name} is waiting for a colleague: {minutes} min",
   "working.ringStuck":
     "{name} is waiting for a colleague and it looks stuck: {minutes} min",
+  "working.step.writing": "writing a file",
+  "working.step.reading": "reading files",
+  "working.step.command": "running a command",
+  "working.step.readPage": "reading a page",
+  "working.step.usePage": "using a page",
+  "working.step.searching": "searching",
+  "working.step.mail": "working on mail",
+  "working.step.calendar": "checking the calendar",
+  "working.step.asking": "asking a colleague",
+  "working.step.notes": "using its notes",
+  "working.step.picture": "working on a picture",
+  "working.step.video": "working on a video",
+  "working.step.working": "working",
   // working-end
 } satisfies Entries;
 
