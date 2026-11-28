@@ -99,6 +99,9 @@ async function signInLine(language: "it" | "en" | null) {
   return tree;
 }
 
+/** The panel mounts its polling sidebar and screen; under CI load the first paint can take longer than 1 s. */
+const LONG_WAIT = { timeout: 5000 };
+
 test("the sign-in line in chat reads Italian, English, and English with no provider", async () => {
   const it = await signInLine("it");
   await it.findByText("In attesa che tu acceda");
@@ -120,9 +123,13 @@ test("the computer panel reads the app language", async () => {
       <ComputerViewPanel agentId="bot-1" name="Leo" />
     </AppLanguageValue>,
   );
-  await it.findByLabelText("Barra laterale del Computer");
-  await it.findByText(/Ancora niente\. Qui compaiono i comandi/);
-  await it.findByText("In attesa dello schermo del Bot…");
+  await it.findByLabelText("Barra laterale del Computer", undefined, LONG_WAIT);
+  await it.findByText(
+    /Ancora niente\. Qui compaiono i comandi/,
+    undefined,
+    LONG_WAIT,
+  );
+  await it.findByText("In attesa dello schermo del Bot…", undefined, LONG_WAIT);
   cleanup();
 
   const en = render(
@@ -130,8 +137,12 @@ test("the computer panel reads the app language", async () => {
       <ComputerViewPanel agentId="bot-1" name="Leo" />
     </AppLanguageValue>,
   );
-  await en.findByLabelText("Computer sidebar");
-  await en.findByText(/Nothing yet\. Commands the Bot runs/);
+  await en.findByLabelText("Computer sidebar", undefined, LONG_WAIT);
+  await en.findByText(
+    /Nothing yet\. Commands the Bot runs/,
+    undefined,
+    LONG_WAIT,
+  );
 });
 
 test("a command's output notes read the app language, and keep the exit code", () => {
