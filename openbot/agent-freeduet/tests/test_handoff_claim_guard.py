@@ -29,6 +29,20 @@ PROMPTS = {
     "concierge": "You are Jules, the concierge.",
 }
 LIVE_CLAIM = "Ottimo, procedo con Kai.\nKai riceve il go e inizia.\n\nEsito: in corso"
+# The two replies of the live bug (27 November 2026), word for word but the colleague's name.
+LIVE_BUG_FIRST = (
+    "Ottimo, procedo con Kai confermando la scelta delle grafiche di Kai (poiché Lumi non ha ancora consegnato gli asset, "
+    "come Kai ha specificato). Per la build Android, assumo no poiché non è stata specificata.\n\n"
+    "Kai: via confermata — costruzione di Out Run stile arcade in un unico file HTML autonomo. Nessuna build Android.\n\n"
+    "- Esito: in corso\n- Fatto: Kai riceve il \"go\" con grafiche di Kai e senza build Android\n"
+    "- Non fatto e perché: build Android non specificata (assunta no)\n- Già: nulla\n"
+    "- Prossimo passo: Kai inizia la costruzione e riporta il file HTML e le prove dei test."
+)
+LIVE_BUG_SECOND = (
+    "Sì, Kai sta lavorando.\n\n- Outcome: in progress\n- Done:\n"
+    "- Evidence: ultima voce nel registro di Kai, alle 21:01: ha ricevuto il tuo \"via\".\n"
+    "- Next step: la prossima risposta di Kai sul file e sul test."
+)
 HANDOFF = tool("message_bot", {"bot": {"type": "string"}, "task": {"type": "string"}})
 
 
@@ -83,6 +97,8 @@ def claimed(reply):
 
 @pytest.mark.parametrize("reply, name", [
     (LIVE_CLAIM, "Kai"),
+    (LIVE_BUG_FIRST, "Kai"),  # the list is split at its colons and holds "non": read as report lines
+    (LIVE_BUG_SECOND, "Kai"),
     ("Si, Kai sta lavorando.", "Kai"),
     ("Gliel'ho passato: Kai ci sta lavorando.", "Kai"),
     ("Kai has the go and is working on it now.", "Kai"),
@@ -109,6 +125,7 @@ def test_a_claim_that_a_colleague_has_the_work_is_found(reply, name):
     "Ready when you are, I will pass it to Kai.",
     "Kai sta lavorando.".replace("Kai", "Iris"),  # the member itself is never the colleague
     "Che bel gioco, Out Run!",
+    "- Outcome: needs you\n- Done: Kai sent the read-back.",  # "i sent" inside "Kai sent" is not "I sent"
     "",
 ])
 def test_a_denial_a_question_a_condition_or_no_colleague_is_not_a_claim(reply):
@@ -138,7 +155,7 @@ def applies(reply, messages=None, story=(), offered=frozenset({"message_bot"}), 
 
 
 def test_the_claim_with_no_handoff_applies():
-    assert applies(LIVE_CLAIM) == ("game", "Kai")
+    assert applies(LIVE_CLAIM) == ("game", "Kai", False)
 
 
 def test_a_handoff_made_in_the_turn_does_not_apply():
@@ -152,7 +169,31 @@ def test_a_claim_with_an_open_handoff_does_not_apply():
 
 def test_a_claim_about_a_closed_handoff_applies_again():
     answer = {"id": "handoff-r2", "role": "user", "content": "You asked Kai to help with this: x\n\nIt answered:\n\ndone"}
-    assert applies(LIVE_CLAIM, messages=conversation(call_to("Kai"), result(), answer)) == ("game", "Kai")
+    assert applies(LIVE_CLAIM, messages=conversation(call_to("Kai"), result(), answer)) == ("game", "Kai", True)
+
+
+def test_the_reminder_after_an_answered_hand_off_asks_whether_it_was_an_answer():
+    # The live bug had one: the read-back hand-off to Kai had come back before the person's "via".
+    text = guard.reminder("game", "Kai", True)
+    assert "has already come back" in text and "call the message_bot tool now" in text
+    assert "an answer that came back and not work in progress" in text
+    assert "has received nothing" not in text and "has received nothing" in guard.reminder("game", "Kai")
+
+
+def test_an_outcome_line_alone_is_a_claim_about_the_colleague_it_names():
+    assert claimed("Kai: il gioco.\nEsito: in corso") == ["Kai"]
+    assert claimed("Kai: the game.\nOutcome: in progress") == ["Kai"]
+    assert claimed("- Outcome: in progress\n- Done: Kai has the brief") == ["Kai"]
+
+
+def test_a_report_of_an_answer_that_came_back_is_not_a_claim():
+    assert claimed("I asked Kai earlier and he answered: done.") == []
+    assert claimed("Ho chiesto a Kai e ha risposto: fatto.") == []
+
+
+def test_the_colleague_is_looked_for_in_the_same_sentence_first():
+    assert claimed("Kai answered. Now Jules is working on it.") == ["Jules"]
+    assert claimed("Kai has the brief. He is working on it.") == ["Kai"]  # no name here: the sentence before
 
 
 def test_other_conditions_do_not_apply():

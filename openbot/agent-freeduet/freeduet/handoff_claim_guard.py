@@ -74,21 +74,19 @@ def enabled(environment: dict[str, str] | None = None) -> bool:
 # list of wrong matches, and a wrong match costs one more turn, never a wrong action.
 _CLAIMS = (
     # English
-    r"(?:receives?|got|gets|has|have|received) (?:the|your) (?:go|green light|go-ahead|okay|ok)\b",
-    r"(?:i|i'?ve|i have) (?:just )?(?:passed|handed|sent|forwarded|given|delegated|briefed)\b",
+    r"(?:receives?|got|gets|has|have|received) (?:the|your) [\"'«»“”]?(?:go|green light|go-ahead|okay|ok)\b",
+    r"\b(?:i|i'?ve|i have) (?:just )?(?:passed|handed|sent|forwarded|given|delegated|briefed)\b",
     r"(?:passed|handed|sent|forwarded|delegated) (?:it|this|that|everything|the (?:work|task|brief|job)) (?:over )?to\b",
     r"(?:is|are) (?:now |already |currently )?(?:working|on it|building|writing|making|drafting|editing|started)\b",
     r"(?:has|have) (?:now |already )?(?:started|begun|taken (?:it|this) on)\b",
-    r"(?:i|i'?ve|i have) asked\b",
     r"\bproceeding with\b",
     # Italian
-    r"(?:riceve|ricevono|ha ricevuto) (?:il )?(?:via|go)\b",
-    r"\bha il (?:via|go)\b",
+    r"(?:riceve|ricevono|ha ricevuto) (?:il |tuo |il tuo )?[\"'«»“”]?(?:via|go)\b",
+    r"\bha il [\"'«»“”]?(?:via|go)\b",
     r"\b(?:sta|stanno) (?:gia |ora |adesso )?(?:lavorando|costruendo|scrivendo|preparando|montando)\b",
     r"\bci (?:sta|stanno) lavorando\b",
     r"\b(?:gliel|glielo|gliela|l)'?ho (?:passato|passata|girato|girata|affidato|affidata|inoltrato|inoltrata|dato|data)\b",
     r"\bho (?:passato|girato|affidato|inoltrato) (?:il lavoro|tutto|l'incarico|la richiesta|a)\b",
-    r"\bho chiesto a\b",
     r"\bprocedo con\b",
     r"\b(?:ha|hanno) (?:gia )?(?:iniziato|cominciato|preso in carico)\b",
     r"\be (?:gia )?al lavoro\b",
@@ -96,14 +94,13 @@ _CLAIMS = (
     r"\b(?:recibe|ha recibido) (?:el|la) (?:go|luz verde|visto bueno|via libre)\b",
     r"\b(?:esta|estan) (?:ya |ahora )?(?:trabajando|construyendo|escribiendo|preparando)\b",
     r"\b(?:se lo|lo|le|se la|la) he (?:pasado|dado|encargado|reenviado)\b",
-    r"\bhe (?:pasado|encargado|pedido a)\b",
+    r"\bhe (?:pasado|encargado)\b",
     r"\b(?:ha|han) (?:ya )?(?:empezado|comenzado)\b",
     # French
     r"\b(?:recoit|a recu) (?:le|la) (?:go|feu vert)\b",
     r"\best (?:deja |maintenant )?en train de\b",
     r"\btravaille (?:deja |maintenant )?(?:dessus|sur)\b",
     r"\b(?:je|j') ?(?:lui |le |l')?(?:ai|a) (?:transmis|passe|confie|donne)\b",
-    r"\bj'ai demande a\b",
     r"\ba (?:deja )?(?:commence|demarre)\b",
     # German
     r"\b(?:bekommt|erhalt|hat) (?:jetzt |schon )?(?:das|den|dein) (?:go|startschuss|okay|gruene licht)\b",
@@ -115,7 +112,6 @@ _CLAIMS = (
     r"\bestao? (?:ja |agora )?(?:trabalhando|a trabalhar|construindo|escrevendo)\b",
     r"\besta (?:ja |agora )?(?:trabalhando|a trabalhar)\b",
     r"\b(?:passei|repassei|entreguei|encaminhei) (?:o|a|isso|tudo|para|ao|a)\b",
-    r"\bpedi a\b",
     r"\b(?:comecou|iniciou)\b",
 )
 _CLAIM = re.compile("|".join(f"(?:{phrase})" for phrase in _CLAIMS))
@@ -171,16 +167,31 @@ def claimed_colleagues(reply: str, member_id: str, prompts: dict[str, str] | Non
     sentences = _sentences(folded)
     found: dict[str, str] = {}
     outcome_in_progress = _OUTCOME_IN_PROGRESS.search(folded) is not None
+    if outcome_in_progress:
+        # The report's outcome line is split at its colon like any sentence, so it is read here as a line: a colleague
+        # named in that line, in the line just before it, or in a later line of the same report, in a line that is not
+        # a denial, a question or a condition.
+        lines = [line.strip() for line in folded.split("\n") if line.strip()]
+        start = next((i for i, line in enumerate(lines) if _OUTCOME_IN_PROGRESS.search("\n" + line)), None)
+        if start is not None:
+            for line in lines[max(0, start - 1):]:
+                if line.endswith("?") or _NEGATION.search(line) or _NOT_NOW.search(line):
+                    continue
+                for name, other in names.items():
+                    if re.search(rf"(?<!\w){re.escape(name)}(?!\w)", line):
+                        found.setdefault(other, name)
     for index, sentence in enumerate(sentences):
         if sentence.endswith("?") or _NEGATION.search(sentence) or _NOT_NOW.search(sentence):
             continue
         if not (_CLAIM.search(sentence) or (outcome_in_progress and _OUTCOME_IN_PROGRESS.search(sentence))):
             continue
         # The colleague is named in this sentence or in the one before it ("Kai has it. He is working on it.").
-        near = " ".join(sentences[max(0, index - 1): index + 1])
-        for name, other in names.items():
-            if re.search(rf"(?<!\w){re.escape(name)}(?!\w)", near):
-                found.setdefault(other, name)
+        here = [(name, other) for name, other in names.items() if re.search(rf"(?<!\w){re.escape(name)}(?!\w)", sentence)]
+        if not here and index > 0:
+            before = sentences[index - 1]
+            here = [(name, other) for name, other in names.items() if re.search(rf"(?<!\w){re.escape(name)}(?!\w)", before)]
+        for name, other in here:
+            found.setdefault(other, name)
     display = {other: cannot_guard._name_of(prompts.get(other, "")) or name for other, name in found.items()}
     return [(other, display[other]) for other in found]
 
@@ -223,11 +234,20 @@ def _refused(result: dict | None) -> bool:
 def open_handoffs(messages: list[dict], member_id: str, prompts: dict[str, str] | None = None) -> set[str]:
     """Member ids with a hand-off open in this conversation's transcript: a message_bot call that was not refused
     and that no later envelope from that colleague closed (see the module text for why this is the source)."""
+    return handoff_states(messages, member_id, prompts)[0]
+
+
+def handoff_states(
+    messages: list[dict], member_id: str, prompts: dict[str, str] | None = None,
+) -> tuple[set[str], set[str]]:
+    """(open, answered): member ids with a hand-off still open, and member ids whose last hand-off in this
+    conversation an envelope already closed (it answered, or never answered and gave up)."""
     prompts = _prompts(prompts)
     names = _names_of(prompts)
     ids = {cannot_guard._fold(member): member for member in prompts}
     results = {m.get("toolCallId"): m for m in messages if m.get("role") == "tool"}
     opened: set[str] = set()
+    answered: set[str] = set()
     for position, message in enumerate(messages):
         for call in message.get("toolCalls") or []:
             target = _handoff_target(call)
@@ -250,9 +270,11 @@ def open_handoffs(messages: list[dict], member_id: str, prompts: dict[str, str] 
                 ):
                     closed = True
                     break
-            if not closed:
+            if closed:
+                answered.add(other)
+            else:
                 opened.add(other)
-    return opened
+    return opened, answered - opened
 
 
 # ── when it applies ──────────────────────────────────────────────────────────────────────────────
@@ -275,8 +297,9 @@ def is_live_person_turn(messages: list[dict], assertion: str) -> bool:
 def applies(
     messages: list[dict], story_messages: list[dict], reply: str, assertion: str, offered: set[str] | frozenset[str],
     member_id: str, prompts: dict[str, str] | None = None,
-) -> tuple[str, str] | None:
-    """(member id, name) of the colleague to name when the turn that ends with `reply` gets the retry, else None."""
+) -> tuple[str, str, bool] | None:
+    """(member id, name, answered) of the colleague to name when the turn that ends with `reply` gets the retry, else
+    None. `answered` is True when an earlier hand-off to that colleague in this conversation was already closed."""
     if not is_live_person_turn(messages, assertion) or HANDOFF_TOOL not in offered:
         return None
     latest = latest_user_message(messages)
@@ -289,15 +312,26 @@ def applies(
     claimed = claimed_colleagues(reply, member_id, prompts)
     if not claimed:
         return None
-    open_now = open_handoffs(messages, member_id, prompts)
+    open_now, answered = handoff_states(messages, member_id, prompts)
     for other, name in claimed:
         if other not in open_now:
-            return other, name
+            return other, name, other in answered
     return None
 
 
-def reminder(member_id: str, name: str) -> str:
-    """The last line of the retry's prompt (transcript.render, `closing`)."""
+def reminder(member_id: str, name: str, answered: bool = False) -> str:
+    """The last line of the retry's prompt (transcript.render, `closing`). When the colleague's last hand-off was
+    already answered, the reply may be reporting that answer, so the note asks which it is instead of saying that
+    the colleague received nothing."""
+    if answered:
+        return (
+            f"Your reply above says that {name} has the work now. But no {HANDOFF_TOOL} call was made in this turn, and "
+            f"the last hand-off to {name} in this conversation has already come back, so {name} is not working on "
+            f"anything from you now. If you meant to give {name} the go or new work, call the {HANDOFF_TOOL} tool now "
+            f"with bot \"{name}\" and the task, and say it has started only after the call has returned. If you were "
+            f"reporting {name}'s answer, say plainly, in the language of the person's last message, that it is an answer "
+            "that came back and not work in progress. Write nothing about this note."
+        )
     return (
         f"Your reply above says that {name} has the work. But no {HANDOFF_TOOL} call was made in this turn, and no "
         f"hand-off to {name} is open in this conversation, so {name} has received nothing. If you meant to hand the "
