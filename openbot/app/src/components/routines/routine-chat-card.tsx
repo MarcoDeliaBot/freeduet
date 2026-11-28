@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useConversationSend } from "@/components/channels/conversation-send";
-import { useT } from "@/freeduet/i18n/provider";
+import { useAppLanguage, useT } from "@/freeduet/i18n/provider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -51,11 +51,11 @@ export function RoutineChatCard({
   /** The browser's zone. The card reads it from the browser unless a caller names one. */
   deviceZone?: string | undefined;
 }) {
-  const t = useT();
+  const { t, language } = useAppLanguage();
   const queryClient = useQueryClient();
-  const routines = useQuery(routinesQueryOptions());
-  const setEnabled = useMutation(setRoutineEnabledMutationOptions(queryClient));
-  const remove = useMutation(deleteRoutineMutationOptions(queryClient));
+  const routines = useQuery(routinesQueryOptions(t));
+  const setEnabled = useMutation(setRoutineEnabledMutationOptions(queryClient, t));
+  const remove = useMutation(deleteRoutineMutationOptions(queryClient, t));
   const conversation = useConversationSend();
   const [confirming, setConfirming] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -131,6 +131,8 @@ export function RoutineChatCard({
               new Date(routine.nextRunAt),
               routine.timezone,
               deviceZone,
+              t,
+              language,
             )
           : t("bots.paused")}
       </p>

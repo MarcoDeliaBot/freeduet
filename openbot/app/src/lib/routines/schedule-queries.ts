@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
+import { englishT, type T } from "@/freeduet/i18n/provider";
 import { client } from "@/lib/client";
 
 /**
@@ -41,11 +42,14 @@ export type OwnedRunRecord = {
   missed: boolean;
 };
 
-export function routineCalendarQueryOptions(window: {
-  from: string;
-  to: string;
-  agentId?: string;
-}) {
+export function routineCalendarQueryOptions(
+  window: {
+    from: string;
+    to: string;
+    agentId?: string;
+  },
+  t: T = englishT,
+) {
   const params = new URLSearchParams({ from: window.from, to: window.to });
   if (window.agentId) params.set("agentId", window.agentId);
   return queryOptions({
@@ -60,21 +64,24 @@ export function routineCalendarQueryOptions(window: {
       // The whole body, not one key of it: `truncated` is part of the answer.
       const response = await client(
         `/api/routines/calendar?${params.toString()}`,
-        { fallback: "Your upcoming runs could not be loaded." },
+        { fallback: t("routines.err.calendar") },
       );
       return (await response.json()) as CalendarRecord;
     },
   });
 }
 
-export function routineHistoryQueryOptions(agentId?: string) {
+export function routineHistoryQueryOptions(
+  agentId?: string,
+  t: T = englishT,
+) {
   const params = new URLSearchParams({ limit: "100" });
   if (agentId) params.set("agentId", agentId);
   return queryOptions({
     queryKey: ["routines", "history", agentId ?? null] as const,
     queryFn: (): Promise<OwnedRunRecord[]> =>
       client(`/api/routines/runs?${params.toString()}`, "runs", {
-        fallback: "The run history could not be loaded.",
+        fallback: t("routines.err.history"),
       }),
     // A run in flight settles within minutes; poll while one is open, so "Running" becomes its outcome.
     refetchInterval: (query) =>

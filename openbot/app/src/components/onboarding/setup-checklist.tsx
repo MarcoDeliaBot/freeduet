@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, type ReactNode, useState } from "react";
 import { englishT, type T, useT } from "@/freeduet/i18n/provider";
-import { englishT, type T, useT } from "@/freeduet/i18n/provider";
 import { GmailLogo, GoogleCalendarLogo } from "@/components/duet/google-logos";
 import type { DuetIconName } from "@/components/duet/icons";
 import { DuetCard, OutcomePill, Tile } from "@/components/duet/kit";
@@ -64,7 +63,6 @@ export function SetupChecklist({
   /** Said above the list, such as a connection that came back failed. */
   notice?: string;
 }) {
-  const t = useT();
   const t = useT();
   const queryClient = useQueryClient();
   const checklist = useQuery(setupChecklistQueryOptions());

@@ -89,7 +89,7 @@ export function RoutineWeek({
     ...routineCalendarQueryOptions({ ...weekWindow(opened), agentId }),
     placeholderData: keepPreviousData,
   });
-  const history = useQuery(routineHistoryQueryOptions(agentId));
+  const history = useQuery(routineHistoryQueryOptions(agentId, t));
   const refetchHistory = history.refetch;
 
   const runs = useMemo<WeekRun[]>(() => {
@@ -293,11 +293,11 @@ export function RoutineWeek({
               {t("routines.week.next")}{" "}
             </span>
             <span className="font-medium">
-              {routineTitle(week.next.routine)}
+              {routineTitle(week.next.routine, undefined, t)}
             </span>
             <span className="text-muted-foreground">
               {" · "}
-              {dayAndClock(week.next.at, zone)}
+              {dayAndClock(week.next.at, zone, language)}
             </span>
           </>
         ) : (
@@ -334,7 +334,7 @@ function Block({
   memberName: string;
   zone: string;
 }) {
-  const t = useT();
+  const { t, language } = useAppLanguage();
   const hue = memberHue(block.agentId);
   const style = {
     top: ((block.startMin - firstHour * 60) / 60) * HOUR_PX,
@@ -345,7 +345,7 @@ function Block({
     "--cal-dark": `oklch(0.34 0.07 ${hue})`,
     "--cal-edge": `oklch(0.55 0.16 ${hue})`,
   } as CSSProperties;
-  const label = blockLabel(block, memberName, zone);
+  const label = blockLabel(block, memberName, zone, language, t);
   const className = cn(
     "absolute z-10 flex flex-col overflow-hidden rounded-md border-l-4 px-1.5 py-1 text-left text-xs leading-tight",
     "border-[var(--cal-edge)] bg-[var(--cal-light)] text-foreground dark:bg-[var(--cal-dark)]",
@@ -356,7 +356,7 @@ function Block({
   const body = (
     <>
       <span className="flex items-center gap-1 font-medium">
-        <span className="truncate">{routineTitle(block.routine, 40)}</span>
+        <span className="truncate">{routineTitle(block.routine, 40, t)}</span>
         {block.status === "done" ? (
           <IconCheck aria-hidden="true" className="ml-auto size-3 shrink-0" />
         ) : null}

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Fragment, useState } from "react";
 import { PageEmpty, PageRows } from "@/components/layout/page-shell";
-import { useT } from "@/freeduet/i18n/provider";
+import { useAppLanguage, useT } from "@/freeduet/i18n/provider";
 import { Separator } from "@/components/ui/separator";
 import type { RoutineRecord } from "@/lib/routines/queries";
 import { routineCalendarQueryOptions } from "@/lib/routines/schedule-queries";
@@ -31,11 +31,12 @@ export function RoutineCalendar({
   agentId?: string;
   routines: RoutineRecord[];
 }) {
-  const t = useT();
+  const { t, language } = useAppLanguage();
   const names = useBotNames();
   // Fixed when the view opens: a window that moved on every render would refetch on every render.
   const [range] = useState(() => calendarRange(new Date()));
-  const calendar = useQuery(routineCalendarQueryOptions({ ...range, agentId }));
+  const calendar = useQuery(routineCalendarQueryOptions({ ...range, agentId }, t),
+  );
   if (calendar.isPending) return null;
   if (calendar.error) {
     return (
@@ -48,7 +49,7 @@ export function RoutineCalendar({
   const rows = calendarRows(calendar.data.runs, routines);
   const paused = routines.filter((routine) => !routine.enabled).length;
   const switchedOn = routines.length - paused;
-  const groups = groupByDay(rows, (row) => row.at, now);
+  const groups = groupByDay(rows, (row) => row.at, now, t, language);
 
   return (
     <>
@@ -109,13 +110,18 @@ function CalendarItem({
   row: CalendarRow;
   memberName: string;
 }) {
-  const t = useT();
+  const { t, language } = useAppLanguage();
   // The routine's own clock, written out only where it differs from the person's.
-  const ownClock = ownClockNote(row.at, row.routine.timezone);
+  const ownClock = ownClockNote(
+    row.at,
+    row.routine.timezone,
+    undefined,
+    language,
+  );
   return (
     <div className="flex items-start gap-4 py-3">
       <div className="w-20 shrink-0 text-right">
-        <p className="font-medium text-sm tabular-nums">{clockOf(row.at)}</p>
+        <p className="font-medium text-sm tabular-nums">{clockOf(row.at, language)}</p>
         {ownClock ? (
           <p className="text-muted-foreground text-xs">{ownClock}</p>
         ) : null}
