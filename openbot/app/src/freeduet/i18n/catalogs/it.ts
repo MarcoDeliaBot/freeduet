@@ -1241,4 +1241,99 @@ export const it: Catalog<typeof EN> = {
   "routines.card.writeBelow":
     "Scrivi la modifica nella casella dei messaggi qui sotto.",
   "routines.card.close": "Chiudi",
+  "admin.boundaries.title": "Limiti",
+  "admin.boundaries.descLead":
+    "Che cosa può e non può fare un Bot con il suo computer. Ogni azione viene controllata prima che avvenga. I rifiuti compaiono in",
+  "admin.boundaries.descAudit": "Registro",
+  "admin.boundaries.descTail": "con la regola che li ha rifiutati.",
+  "admin.boundaries.whenTitle": "Quando una regola corrisponde",
+  "admin.boundaries.whenDesc":
+    "Blocca l'azione, oppure registrala e lasciala passare. Registrare ti permette di provare una regola sull'attività reale prima che rifiuti qualcosa.",
+  "admin.boundaries.modeEnforce": "Blocca l'azione",
+  "admin.boundaries.modeRecord": "Registrala e permettila",
+  "admin.boundaries.modeEnforceNote":
+    "Il Bot viene fermato e gli viene detto quale regola l'ha rifiutato.",
+  "admin.boundaries.modeRecordNote":
+    "Niente viene fermato. Ogni corrispondenza viene registrata come se fosse stata rifiutata.",
+  "admin.boundaries.neverTitle": "I Bot non possono mai",
+  "admin.boundaries.neverLead":
+    "Controllate per prime. Una corrispondenza ferma l'azione e al Bot viene detto quale regola l'ha rifiutata. Le regole sono in CEL. Possono controllare",
+  "admin.boundaries.neverMid1": ", l'elemento, il tasto",
+  "admin.boundaries.neverMid2": "premuto, il file, il",
+  "admin.boundaries.neverMid3": "eseguito, e",
+  "admin.boundaries.neverMid4": "per gli strumenti esterni.",
+  "admin.boundaries.neverMid5": "dice che cosa ha avviato l'esecuzione:",
+  "admin.boundaries.neverTail":
+    "Un'esecuzione programmata agisce come il suo proprietario, quindi",
+  "admin.boundaries.neverTail2":
+    "da solo non te lo dice. Una regola che non si può valutare conta come una corrispondenza. Un errore di battitura non lascia mai passare un'azione.",
+  "admin.boundaries.or": "oppure",
+  "admin.boundaries.noRules":
+    "Nessuna regola. Ogni azione è permessa e registrata.",
+  "admin.boundaries.remove": "Rimuovi",
+  "admin.boundaries.ruleLabel": "Una regola, scritta in CEL",
+  "admin.boundaries.testing": "Prova in corso…",
+  "admin.boundaries.testFirst": "Prova prima",
+  "admin.boundaries.addRule": "Aggiungi regola",
+  "admin.boundaries.preset.form": "Non inviare mai un modulo",
+  "admin.boundaries.preset.formCost":
+    "Impedisce al Bot di premere Invio anche altrove. Un modulo può partire da Invio in qualsiasi campo. Non copre la scelta in un menu o in un campo data, la cui modifica può inviare un modulo da sola.",
+  "admin.boundaries.preset.password": "Non scrivere mai in un campo password",
+  "admin.boundaries.preset.passwordCost":
+    "Un campo password con un'etichetta diversa non è coperto. La regola guarda l'etichetta.",
+  "admin.boundaries.preset.social": "Stai lontano dai social network",
+  "admin.boundaries.preset.socialCost":
+    "Solo questi due host. Un link che ci porta da un altro sito è permesso.",
+  "admin.boundaries.otherwiseTitle": "Altrimenti possono",
+  "admin.boundaries.otherwiseDesc":
+    "Vale per tutto ciò che l'elenco qui sopra non ha preso. Un elenco vuoto qui non permette nulla, e ogni azione viene rifiutata.",
+  "admin.boundaries.allowAll": "true, tutto ciò che non è rifiutato sopra",
+  "admin.boundaries.saved":
+    "Salvato. Vale dalla prossima azione di qualsiasi Bot.",
+  "admin.boundaries.footer":
+    "Le modifiche valgono dalla prossima azione di qualsiasi Bot. Restano dopo un riavvio.",
+  "admin.boundaries.dry.none":
+    "Non ci sono ancora azioni del computer registrate su cui provare. La regola è valida. Vedrai che cosa corrisponde quando i Bot avranno agito.",
+  "admin.boundaries.dry.zero":
+    "Provata sulle ultime {scanned} azioni registrate. Questa regola non ne avrebbe rifiutata nessuna. Potrebbe comunque corrispondere a quelle future.",
+  "admin.boundaries.dry.some":
+    "Provata sulle ultime {scanned} azioni registrate. Questa regola ne avrebbe rifiutate {refused}.",
+  "admin.boundaries.dry.wouldRefuse": "Rifiuterebbe",
+  "admin.boundaries.dry.wouldAllow": "Ora permetterebbe",
+  "admin.boundaries.dry.on": "su «{name}»",
+  "admin.boundaries.dry.running": "eseguendo",
+  "admin.boundaries.dry.touching": "toccando {file}",
+  "admin.boundaries.dry.first":
+    "Mostro i primi {shown}. Il conteggio qui sopra riguarda tutto ciò che è stato controllato.",
+  "admin.people.title": "Persone",
+  "admin.people.desc":
+    "Tutti quelli che hanno effettuato l'accesso. Gli amministratori possono aprire queste schermate. Tutti gli altri parlano con i Bot.",
+  "admin.people.whoTitle": "Chi c'è",
+  "admin.people.whoDesc":
+    "Gli indirizzi in INITIAL_ADMIN_EMAILS sono sempre amministratori. Qui non puoi modificarli.",
+  "admin.people.stopped": {
+    one: "Fermato {count} computer",
+    other: "Fermati {count} computer",
+  },
+  "admin.people.stoppedFailed": ". {failed} non si sono potuti fermare",
+  "admin.people.disksKept": ". I loro dischi vengono conservati.",
+  "admin.people.searchLabel": "Cerca persone",
+  "admin.people.searchPlaceholder": "Cerca per nome o indirizzo",
+  "admin.people.loadError":
+    "Non è stato possibile caricare le persone. Ricarica la pagina.",
+  "admin.people.noMatch": 'Nessuno corrisponde a "{query}".',
+  "admin.people.nobody":
+    "Nessuno ha ancora effettuato l'accesso. Le persone compariranno qui quando lo faranno.",
+  "admin.people.lastSignedIn": "ultimo accesso {date}",
+  "admin.people.neverSignedIn": "mai effettuato l'accesso",
+  "admin.people.noProvider": "nessun provider",
+  "admin.people.accessRemoved": "Accesso rimosso",
+  "admin.people.adminByConfig": "Amministratore per configurazione",
+  "admin.people.stopComputers": "Ferma i computer",
+  "admin.people.restore": "Ripristina",
+  "admin.people.remove": "Rimuovi",
+  "admin.people.adminSwitch": "Amministratore: {email}",
+  "admin.people.loading": "Caricamento…",
+  "admin.people.showMore": "Mostra altro",
+  "admin.boundaries.and": "e",
 };

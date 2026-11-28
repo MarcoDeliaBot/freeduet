@@ -1197,6 +1197,98 @@ export const EN = {
   "routines.card.send": "Send change",
   "routines.card.writeBelow": "Write the change in the message box below.",
   "routines.card.close": "Close",
+  "admin.boundaries.title": "Boundaries",
+  "admin.boundaries.descLead":
+    "What a Bot can and can't do with its computer. Every action is checked before it happens. Refusals show in",
+  "admin.boundaries.descAudit": "Audit",
+  "admin.boundaries.descTail": "with the rule that refused them.",
+  "admin.boundaries.whenTitle": "When a rule matches",
+  "admin.boundaries.whenDesc":
+    "Stop the action, or record it and let it through. Recording lets you try a rule on real activity before it refuses anything.",
+  "admin.boundaries.modeEnforce": "Stop the action",
+  "admin.boundaries.modeRecord": "Record it and allow it",
+  "admin.boundaries.modeEnforceNote":
+    "The Bot is stopped and told which rule refused it.",
+  "admin.boundaries.modeRecordNote":
+    "Nothing is stopped. Each match is recorded as if it had been refused.",
+  "admin.boundaries.neverTitle": "Bots may never",
+  "admin.boundaries.neverLead":
+    "Checked first. A match stops the action, and the Bot is told which rule refused it. Rules are CEL. They can check",
+  "admin.boundaries.neverMid1": ", the element, the",
+  "admin.boundaries.neverMid2": "pressed, the file, the",
+  "admin.boundaries.neverMid3": "run, and",
+  "admin.boundaries.neverMid4": "for outside tools.",
+  "admin.boundaries.neverMid5": "says what started the run:",
+  "admin.boundaries.neverTail": "A scheduled run acts as its owner, so",
+  "admin.boundaries.neverTail2":
+    "alone can't tell you that. A rule that can't be evaluated counts as a match. A typo never lets an action through.",
+  "admin.boundaries.or": "or",
+  "admin.boundaries.noRules": "No rules. Every action is allowed and recorded.",
+  "admin.boundaries.remove": "Remove",
+  "admin.boundaries.ruleLabel": "A rule, written in CEL",
+  "admin.boundaries.testing": "Testing…",
+  "admin.boundaries.testFirst": "Test first",
+  "admin.boundaries.addRule": "Add rule",
+  "admin.boundaries.preset.form": "Never submit a form",
+  "admin.boundaries.preset.formCost":
+    "Also stops the Bot pressing Enter anywhere else. A form can submit from Enter in any field. It does not cover choosing in a menu or a date field, whose change can submit a form by itself.",
+  "admin.boundaries.preset.password": "Never type into a password field",
+  "admin.boundaries.preset.passwordCost":
+    "A password box with a different label isn't covered. The rule matches the label.",
+  "admin.boundaries.preset.social": "Stay off social media",
+  "admin.boundaries.preset.socialCost":
+    "Only these two hosts. A link that redirects there from elsewhere is allowed.",
+  "admin.boundaries.otherwiseTitle": "Otherwise they may",
+  "admin.boundaries.otherwiseDesc":
+    "Applies to anything the list above didn't catch. An empty list here allows nothing, and every action is refused.",
+  "admin.boundaries.allowAll": "true, anything not refused above",
+  "admin.boundaries.saved":
+    "Saved. It applies to the next action any Bot takes.",
+  "admin.boundaries.footer":
+    "Changes apply to the next action any Bot takes. They stay after a restart.",
+  "admin.boundaries.dry.none":
+    "No recorded computer actions to test against yet. The rule is valid. You'll see what it matches once Bots have acted.",
+  "admin.boundaries.dry.zero":
+    "Tested on the last {scanned} recorded actions. This rule would have refused none. It may still match future ones.",
+  "admin.boundaries.dry.some":
+    "Tested on the last {scanned} recorded actions. This rule would have refused {refused}.",
+  "admin.boundaries.dry.wouldRefuse": "Would refuse",
+  "admin.boundaries.dry.wouldAllow": "Would now allow",
+  "admin.boundaries.dry.on": "on “{name}”",
+  "admin.boundaries.dry.running": "running",
+  "admin.boundaries.dry.touching": "touching {file}",
+  "admin.boundaries.dry.first":
+    "Showing the first {shown}. The count above covers everything checked.",
+  "admin.people.title": "People",
+  "admin.people.desc":
+    "Everybody who has signed in. Admins can open these screens. Everybody else talks to Bots.",
+  "admin.people.whoTitle": "Who is here",
+  "admin.people.whoDesc":
+    "Addresses in INITIAL_ADMIN_EMAILS are always admins. You can't change them here.",
+  "admin.people.stopped": {
+    one: "Stopped {count} computer",
+    other: "Stopped {count} computers",
+  },
+  "admin.people.stoppedFailed": ". {failed} couldn't be stopped",
+  "admin.people.disksKept": ". Their disks are kept.",
+  "admin.people.searchLabel": "Search people",
+  "admin.people.searchPlaceholder": "Search by name or address",
+  "admin.people.loadError": "Couldn't load people. Reload the page.",
+  "admin.people.noMatch": 'Nobody matches "{query}".',
+  "admin.people.nobody":
+    "Nobody has signed in yet. People show here once they do.",
+  "admin.people.lastSignedIn": "last signed in {date}",
+  "admin.people.neverSignedIn": "never signed in",
+  "admin.people.noProvider": "no provider",
+  "admin.people.accessRemoved": "Access removed",
+  "admin.people.adminByConfig": "Admin by configuration",
+  "admin.people.stopComputers": "Stop computers",
+  "admin.people.restore": "Restore",
+  "admin.people.remove": "Remove",
+  "admin.people.adminSwitch": "Admin: {email}",
+  "admin.people.loading": "Loading…",
+  "admin.people.showMore": "Show more",
+  "admin.boundaries.and": "and",
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;
