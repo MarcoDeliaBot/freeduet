@@ -1837,6 +1837,95 @@ export const EN = {
   "admin.computers.host.p.read": "Reading a file",
   "admin.computers.host.p.stop": "Stopping folder work",
   "admin.computers.host.p.default": "Folder access waiting for approval",
+  "admin.learning.description":
+    "Learn from finished conversations, review the skills Intelligence proposes, and give published skills to Bots.",
+  "admin.learning.auto.assigned":
+    '{product} assigned this Intelligence project\'s "{container}" container automatically. You can change it here.',
+  "admin.learning.auto.absent":
+    'This Intelligence project has no "{container}" Learning container yet. Nothing is collected.',
+  "admin.learning.auto.notEntitled":
+    "This Intelligence project's plan doesn't include Learning. No container was assigned.",
+  "admin.learning.auto.unavailable":
+    "Couldn't reach Intelligence to find this project's Learning container. {product} will try again.",
+  "admin.learning.target.container": "{label} container ID",
+  "admin.learning.target.revision": "Exact revision (optional)",
+  "admin.learning.target.revisionAria": "{label} revision",
+  "admin.learning.target.latest": "Latest published",
+  "admin.learning.create.busy": "Creating…",
+  "admin.learning.create.button": "Create the {container} container",
+  "admin.learning.create.note":
+    "Uses this deployment's credential, not the runtime key.",
+  "admin.learning.create.how": "To create it: ",
+  "admin.learning.part.title": "Participation",
+  "admin.learning.part.description":
+    "Container changes apply to new conversations. Existing ones keep their first container. Containers must already exist in the same Intelligence project. Until you save here, {product} uses that project's openbot container.",
+  "admin.learning.part.loading": "Loading Learning settings…",
+  "admin.learning.part.turnOn": "Turn on automatic learning and skill delivery",
+  "admin.learning.part.default": "Default",
+  "admin.learning.part.hint":
+    "With no default, Bots without their own container are left out. IDs are 1 to 64 lowercase letters, numbers and single hyphens. Leave revision empty to use the latest published skills.",
+  "admin.learning.part.perBot": "Per-Bot participation",
+  "admin.learning.part.botListError":
+    "Couldn't load the Bot list. Saved settings for each Bot are below.",
+  "admin.learning.part.botAria": "{name} participation",
+  "admin.learning.part.inherit": "Use deployment default",
+  "admin.learning.part.exclude": "Leave out of Learning",
+  "admin.learning.part.container": "Use a specific container",
+  "admin.learning.part.saving": "Saving…",
+  "admin.learning.part.save": "Save Learning settings",
+  "admin.learning.part.saved": "Settings saved.",
+  "admin.learning.rev.title": "Review and publish",
+  "admin.learning.rev.description":
+    "Intelligence studies finished conversations and proposes skills. Review and publish them in Intelligence. Bots only use published skills.",
+  "admin.learning.rev.showFor": "Show the container for",
+  "admin.learning.rev.default": "Deployment default",
+  "admin.learning.rev.checking": "Checking Intelligence…",
+  "admin.learning.rev.invalid":
+    "The selected container or its instrumentation isn't available.",
+  "admin.learning.rev.selection": "Choose a Bot, or set a default container.",
+  "admin.learning.rev.none": "No Learning container is assigned.",
+  "admin.learning.rev.threads": "Threads ready",
+  "admin.learning.rev.candidates": "Candidates to review",
+  "admin.learning.rev.published": "Published skills",
+  "admin.learning.rev.insights": "Insights",
+  "admin.learning.rev.running": "An analysis is running.",
+  "admin.learning.rev.latest": "Latest analysis: {status}.",
+  "admin.learning.rev.noRun": "No analysis has run yet.",
+  "admin.learning.rev.manage": "Manage Learning in Intelligence",
+  "admin.learning.rev.reviewCandidates": "Review skill candidates",
+  "admin.learning.rev.viewRuns": "View analysis runs",
+  "admin.learning.del.title": "Skill delivery",
+  "admin.learning.del.checking": "Checking delivery…",
+  "admin.learning.del.off": "Delivery is off for this Bot.",
+  "admin.learning.del.waiting":
+    "Waiting for the first verified skill snapshot.",
+  "admin.learning.del.stale":
+    "Using the last verified snapshot. A refresh is pending.",
+  "admin.learning.del.ok": "A verified snapshot is available.",
+  "admin.learning.del.revision": "Loaded revision: {revision}",
+  "admin.learning.del.lastChecked": "Last checked:",
+  "admin.learning.rev.refresh": "Refresh status",
+  "admin.learning.rev.footer":
+    "Managing Learning needs your Intelligence account and project access. {product} keeps project credentials on the server. Turning Learning off here keeps settings and conversation assignments. Schedules and publishing stay in Intelligence.",
+  "admin.skills.write": "Write a skill",
+  "admin.skills.description":
+    "Named instructions anybody can run with /. A skill adds no access. It can only ask a Bot to use what it already has.",
+  "admin.skills.installed.title": "Installed",
+  "admin.skills.installed.description":
+    "For everybody in this deployment. People write their own on their Skills page.",
+  "admin.skills.loadError": "Couldn't load skills. Reload the page.",
+  "admin.skills.empty": "No skills yet. Write one with Write a skill.",
+  "admin.skills.dlg.title": "Write a skill for everybody",
+  "admin.skills.dlg.description":
+    "People type the slug after /. The Bot then follows the instructions. Everybody can use it, and you choose which Bots have it.",
+  "admin.skills.slug": "Slug",
+  "admin.skills.title": "Title",
+  "admin.skills.summary": "Summary",
+  "admin.skills.summaryPlaceholder": "One line",
+  "admin.skills.instructions": "Instructions",
+  "admin.skills.instructionsPlaceholder":
+    "What the Bot should do when this skill is used.",
+  "admin.skills.install": "Install skill",
   // stage-2j end
 } satisfies Entries;
 

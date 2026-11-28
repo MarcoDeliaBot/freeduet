@@ -1920,5 +1920,98 @@ export const it: Catalog<typeof EN> = {
   "admin.computers.host.p.stop": "Interruzione del lavoro sulle cartelle",
   "admin.computers.host.p.default":
     "Accesso alle cartelle in attesa di approvazione",
+  "admin.learning.description":
+    "Impara dalle conversazioni concluse, rivedi le skill che Intelligence propone e dai ai Bot le skill pubblicate.",
+  "admin.learning.auto.assigned":
+    '{product} ha assegnato automaticamente il container "{container}" di questo progetto Intelligence. Puoi cambiarlo qui.',
+  "admin.learning.auto.absent":
+    'Questo progetto Intelligence non ha ancora un container Learning "{container}". Non viene raccolto nulla.',
+  "admin.learning.auto.notEntitled":
+    "Il piano di questo progetto Intelligence non include Learning. Non è stato assegnato alcun container.",
+  "admin.learning.auto.unavailable":
+    "Non è stato possibile raggiungere Intelligence per trovare il container Learning di questo progetto. {product} riproverà.",
+  "admin.learning.target.container": "ID del container: {label}",
+  "admin.learning.target.revision": "Revisione esatta (facoltativa)",
+  "admin.learning.target.revisionAria": "Revisione: {label}",
+  "admin.learning.target.latest": "Ultima pubblicata",
+  "admin.learning.create.busy": "Creo…",
+  "admin.learning.create.button": "Crea il container {container}",
+  "admin.learning.create.note":
+    "Usa la credenziale di questa installazione, non la chiave di esecuzione.",
+  "admin.learning.create.how": "Per crearlo: ",
+  "admin.learning.part.title": "Partecipazione",
+  "admin.learning.part.description":
+    "Le modifiche ai container valgono per le nuove conversazioni. Quelle esistenti tengono il primo container. I container devono esistere già nello stesso progetto Intelligence. Finché non salvi qui, {product} usa il container openbot di quel progetto.",
+  "admin.learning.part.loading": "Carico le impostazioni di Learning…",
+  "admin.learning.part.turnOn":
+    "Attiva l'apprendimento automatico e la consegna delle skill",
+  "admin.learning.part.default": "Predefinito",
+  "admin.learning.part.hint":
+    "Senza un predefinito, i Bot senza un container proprio restano esclusi. Gli ID sono da 1 a 64 lettere minuscole, numeri e trattini singoli. Lascia vuota la revisione per usare le ultime skill pubblicate.",
+  "admin.learning.part.perBot": "Partecipazione per Bot",
+  "admin.learning.part.botListError":
+    "Non è stato possibile caricare l'elenco dei Bot. Qui sotto trovi le impostazioni salvate per ogni Bot.",
+  "admin.learning.part.botAria": "Partecipazione di {name}",
+  "admin.learning.part.inherit": "Usa il predefinito dell'installazione",
+  "admin.learning.part.exclude": "Escludi da Learning",
+  "admin.learning.part.container": "Usa un container specifico",
+  "admin.learning.part.saving": "Salvo…",
+  "admin.learning.part.save": "Salva le impostazioni di Learning",
+  "admin.learning.part.saved": "Impostazioni salvate.",
+  "admin.learning.rev.title": "Rivedi e pubblica",
+  "admin.learning.rev.description":
+    "Intelligence studia le conversazioni concluse e propone skill. Rivedile e pubblicale in Intelligence. I Bot usano solo le skill pubblicate.",
+  "admin.learning.rev.showFor": "Mostra il container di",
+  "admin.learning.rev.default": "Predefinito dell'installazione",
+  "admin.learning.rev.checking": "Controllo Intelligence…",
+  "admin.learning.rev.invalid":
+    "Il container selezionato o la sua strumentazione non è disponibile.",
+  "admin.learning.rev.selection":
+    "Scegli un Bot oppure imposta un container predefinito.",
+  "admin.learning.rev.none": "Nessun container Learning assegnato.",
+  "admin.learning.rev.threads": "Conversazioni pronte",
+  "admin.learning.rev.candidates": "Candidate da rivedere",
+  "admin.learning.rev.published": "Skill pubblicate",
+  "admin.learning.rev.insights": "Approfondimenti",
+  "admin.learning.rev.running": "Un'analisi è in corso.",
+  "admin.learning.rev.latest": "Ultima analisi: {status}.",
+  "admin.learning.rev.noRun": "Nessuna analisi è ancora stata eseguita.",
+  "admin.learning.rev.manage": "Gestisci Learning in Intelligence",
+  "admin.learning.rev.reviewCandidates": "Rivedi le skill candidate",
+  "admin.learning.rev.viewRuns": "Vedi le analisi eseguite",
+  "admin.learning.del.title": "Consegna delle skill",
+  "admin.learning.del.checking": "Controllo la consegna…",
+  "admin.learning.del.off": "La consegna è disattivata per questo Bot.",
+  "admin.learning.del.waiting":
+    "In attesa del primo snapshot verificato delle skill.",
+  "admin.learning.del.stale":
+    "Uso l'ultimo snapshot verificato. Un aggiornamento è in attesa.",
+  "admin.learning.del.ok": "È disponibile uno snapshot verificato.",
+  "admin.learning.del.revision": "Revisione caricata: {revision}",
+  "admin.learning.del.lastChecked": "Ultimo controllo:",
+  "admin.learning.rev.refresh": "Aggiorna lo stato",
+  "admin.learning.rev.footer":
+    "Gestire Learning richiede il tuo account Intelligence e l'accesso al progetto. {product} tiene le credenziali del progetto sul server. Disattivare Learning qui conserva le impostazioni e le assegnazioni delle conversazioni. Pianificazioni e pubblicazione restano in Intelligence.",
+  "admin.skills.write": "Scrivi una skill",
+  "admin.skills.description":
+    "Istruzioni con un nome che chiunque può avviare con /. Una skill non aggiunge alcun accesso. Può solo chiedere a un Bot di usare ciò che ha già.",
+  "admin.skills.installed.title": "Installate",
+  "admin.skills.installed.description":
+    "Per tutti in questa installazione. Ognuno scrive le proprie nella sua pagina Skill.",
+  "admin.skills.loadError":
+    "Non è stato possibile caricare le skill. Ricarica la pagina.",
+  "admin.skills.empty":
+    "Ancora nessuna skill. Scrivine una con Scrivi una skill.",
+  "admin.skills.dlg.title": "Scrivi una skill per tutti",
+  "admin.skills.dlg.description":
+    "Le persone scrivono lo slug dopo /. Il Bot poi segue le istruzioni. Tutti possono usarla e tu scegli quali Bot ce l'hanno.",
+  "admin.skills.slug": "Slug",
+  "admin.skills.title": "Titolo",
+  "admin.skills.summary": "Riepilogo",
+  "admin.skills.summaryPlaceholder": "Una riga",
+  "admin.skills.instructions": "Istruzioni",
+  "admin.skills.instructionsPlaceholder":
+    "Che cosa deve fare il Bot quando questa skill viene usata.",
+  "admin.skills.install": "Installa la skill",
   // stage-2j end
 };
