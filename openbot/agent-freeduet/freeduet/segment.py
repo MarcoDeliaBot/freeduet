@@ -48,6 +48,11 @@ and a colleague has the capability, the cannot guard (cannot_guard.py, D128) ask
 same segment: a second turn of the same engine on the same bridge, with a reminder that names the colleague.
 `SegmentNotes.cannot_guard` tells the team log.
 
+When the final answer says a named colleague has the work and no message_bot call was made and no hand-off to that
+colleague is open, the hand-off claim guard (handoff_claim_guard.py, D184) asks once more in the same way, with a
+reminder that says nothing was handed over. The two guards share the one retry; `SegmentNotes.handoff_claim_guard`
+tells the team log.
+
 A turn never ends with no text for the person. When the final result comes with no words at all (the
 CLI ended its turn on a tool's error result and said nothing) and the guard adds nothing either, the
 segment streams report_guard.no_answer_text: one fixed sentence that says the member stopped and names
@@ -74,6 +79,7 @@ from . import (
     person_language,
     person_tone,
     cannot_guard,
+    handoff_claim_guard,
     report_guard,
     team_log,
     tool_notes,
@@ -103,6 +109,7 @@ class SegmentNotes:
 
     report_guard: str | None = None  # report_guard.ADDED or FAILED once the guard asked
     cannot_guard: str | None = None  # cannot_guard.UNCHANGED, RETRIED or FAILED once the cannot guard asked again
+    handoff_claim_guard: str | None = None  # the same three values once the hand-off claim guard (D184) asked again
 
 
 def _same(a: dict, b: dict) -> bool:
@@ -282,7 +289,8 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
     async def on_call(call: ipc.BridgeCall) -> None:
         await inbox.put(("call", call))
 
-    cannot_asked = False  # the cannot guard started its one second turn
+    cannot_asked = False  # the cannot guard or the hand-off claim guard started its one second turn (only one does)
+    asked_by = ""  # "cannot" or "claim": which of the two asked
 
     async def guard(story: report_guard.Story) -> tuple[str, str] | None:
         """The report lines to add to a turn that ends without a complete one, with the separator to
@@ -336,26 +344,42 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
 
             def mark_called() -> None:
                 """The second turn made a call (a hand-off, even one that then paused for the person)."""
-                if notes.cannot_guard == cannot_guard.UNCHANGED:
+                if asked_by == "claim":
+                    if notes.handoff_claim_guard == handoff_claim_guard.UNCHANGED:
+                        notes.handoff_claim_guard = handoff_claim_guard.RETRIED
+                elif notes.cannot_guard == cannot_guard.UNCHANGED:
                     notes.cannot_guard = cannot_guard.RETRIED
 
             def mark_failed() -> None:
-                notes.cannot_guard = cannot_guard.FAILED
+                if asked_by == "claim":
+                    notes.handoff_claim_guard = handoff_claim_guard.FAILED
+                else:
+                    notes.cannot_guard = cannot_guard.FAILED
 
             async def retry(story: report_guard.Story, generation: int) -> bool:
                 """The cannot guard (cannot_guard.py): start the one second turn when it applies. Never raises."""
-                nonlocal engine_task, cannot_asked
-                if cannot_asked or not cannot_guard.enabled():
+                nonlocal engine_task, cannot_asked, asked_by
+                if cannot_asked:
                     return False
                 try:
-                    found = cannot_guard.applies(
-                        run.messages, story.reply(), story.called, run.assertion, offered, member.id
+                    found = (
+                        cannot_guard.applies(run.messages, story.reply(), story.called, run.assertion, offered, member.id)
+                        if cannot_guard.enabled() else None
                     )
-                    if found is None:
+                    kind, closing, who = "cannot", None, None
+                    if found is not None:
+                        closing, who = cannot_guard.reminder(*found), found[1]
+                    elif handoff_claim_guard.enabled():
+                        claimed = handoff_claim_guard.applies(
+                            run.messages, story.messages, story.reply(), run.assertion, offered, member.id
+                        )
+                        if claimed is not None:
+                            kind, closing, who = "claim", handoff_claim_guard.reminder(*claimed), claimed[1]
+                    if closing is None:
                         return False
                     again = transcript.render(
                         member, [*run.messages, *story.messages], run.context, active_lessons, run_notes,
-                        closing=cannot_guard.reminder(*found), served=served, light=light, context_tokens=context_tokens,
+                        closing=closing, served=served, light=light, context_tokens=context_tokens,
                     )
                     previous = engine_task
                     if previous is not None:  # it has given its result: let it end, never hold the turn for it
@@ -377,18 +401,28 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
                         except asyncio.CancelledError:
                             raise
                         except Exception:  # noqa: BLE001 - the first answer stands
-                            log.warning("cannot guard: the second turn crashed", exc_info=True)
+                            log.warning("cannot guard: the second turn crashed" if kind == "cannot" else "hand-off claim guard: the second turn crashed", exc_info=True)
                             failed = True
                         if failed:
-                            notes.cannot_guard = cannot_guard.FAILED
+                            mark_failed()
                             await inbox.put(("retry_failed", generation))
 
                     cannot_asked = True
-                    notes.cannot_guard = cannot_guard.UNCHANGED
-                    log.info(
-                        "cannot guard: asked %s again for a refusal and named %s (thread %s, run %s)",
-                        member.id, found[1], run.thread_id, run.run_id,
-                    )
+                    asked_by = kind
+                    if kind == "claim":
+                        notes.handoff_claim_guard = handoff_claim_guard.UNCHANGED
+                    else:
+                        notes.cannot_guard = cannot_guard.UNCHANGED
+                    if kind == "claim":
+                        log.info(
+                            "hand-off claim guard: asked %s again for a claim and named %s (thread %s, run %s)",
+                            member.id, who, run.thread_id, run.run_id,
+                        )
+                    else:
+                        log.info(
+                            "cannot guard: asked %s again for a refusal and named %s (thread %s, run %s)",
+                            member.id, who, run.thread_id, run.run_id,
+                        )
                     engine_task = asyncio.create_task(run_again())
                     return True
                 except Exception:  # noqa: BLE001 - the guard never fails a turn
