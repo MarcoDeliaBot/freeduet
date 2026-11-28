@@ -1,4 +1,5 @@
 import { mutationOptions, type QueryClient } from "@tanstack/react-query";
+import { englishT, type T } from "@/freeduet/i18n/provider";
 import { client } from "@/lib/client";
 import { routineKeys } from "./queries";
 
@@ -10,31 +11,35 @@ import { routineKeys } from "./queries";
  * `server/src/routines/routes.ts` for the full reasoning.
  */
 
-const FALLBACK = "That routine could not be changed.";
-
 function invalidateRoutines(queryClient: QueryClient) {
   return queryClient.invalidateQueries({ queryKey: routineKeys.all });
 }
 
 /** Switch one routine on or off. Immediate; there is no save. */
-export function setRoutineEnabledMutationOptions(queryClient: QueryClient) {
+export function setRoutineEnabledMutationOptions(
+  queryClient: QueryClient,
+  t: T = englishT,
+) {
   return mutationOptions({
     mutationFn: (variables: { id: string; enabled: boolean }) =>
       client(`/api/routines/${encodeURIComponent(variables.id)}/enabled`, {
         method: "PUT",
         body: { enabled: variables.enabled },
-        fallback: FALLBACK,
+        fallback: t("routines.err.change"),
       }),
     onSuccess: () => invalidateRoutines(queryClient),
   });
 }
 
-export function deleteRoutineMutationOptions(queryClient: QueryClient) {
+export function deleteRoutineMutationOptions(
+  queryClient: QueryClient,
+  t: T = englishT,
+) {
   return mutationOptions({
     mutationFn: (id: string) =>
       client(`/api/routines/${encodeURIComponent(id)}`, {
         method: "DELETE",
-        fallback: FALLBACK,
+        fallback: t("routines.err.change"),
       }),
     onSuccess: () => invalidateRoutines(queryClient),
   });
@@ -44,12 +49,15 @@ export function deleteRoutineMutationOptions(queryClient: QueryClient) {
  * Run now — the Test button. This DOES REAL WORK: the Bot carries out the instruction in the
  * routine's channel exactly as a scheduled firing would. Refused for a paused routine.
  */
-export function runRoutineNowMutationOptions(queryClient: QueryClient) {
+export function runRoutineNowMutationOptions(
+  queryClient: QueryClient,
+  t: T = englishT,
+) {
   return mutationOptions({
     mutationFn: (id: string) =>
       client(`/api/routines/${encodeURIComponent(id)}/run`, {
         method: "POST",
-        fallback: "That routine could not be started.",
+        fallback: t("routines.err.start"),
       }),
     onSuccess: () => invalidateRoutines(queryClient),
   });

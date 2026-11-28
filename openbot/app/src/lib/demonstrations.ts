@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
+import { englishT, type T } from "@/freeduet/i18n/provider";
 import { client } from "@/lib/client";
 import type { SkillFormValues } from "@/lib/skills/form";
 export type DemonstrationDraft = SkillFormValues & {
@@ -38,46 +39,54 @@ export const demonstrationKeys = {
   all: ["demonstrations"] as const,
   bot: (botId: string) => ["demonstrations", botId] as const,
 };
-export const demonstrationsQueryOptions = (botId: string) =>
+export const demonstrationsQueryOptions = (botId: string, t: T = englishT) =>
   queryOptions({
     queryKey: demonstrationKeys.bot(botId),
     queryFn: (): Promise<Demonstration[]> =>
       client(
         `/api/demonstrations?botId=${encodeURIComponent(botId)}`,
         "demonstrations",
-        { fallback: "Could not load demonstrations" },
+        { fallback: t("demo.err.load") },
       ),
     refetchInterval: 2000,
   });
 export const startDemonstration = (
   botId: string,
   title: string,
+  t: T = englishT,
 ): Promise<Demonstration> =>
   client("/api/demonstrations", "demonstration", {
     method: "POST",
     body: { botId, title },
-    fallback: "Could not start recording",
+    fallback: t("demo.err.start"),
   });
-export const stopDemonstration = (id: string) =>
+export const stopDemonstration = (id: string, t: T = englishT) =>
   client(`/api/demonstrations/${encodeURIComponent(id)}/stop`, {
     method: "POST",
-    fallback: "Could not stop recording",
+    fallback: t("demo.err.stop"),
   });
-export const draftDemonstration = (id: string): Promise<DemonstrationDraft> =>
+export const draftDemonstration = (
+  id: string,
+  t: T = englishT,
+): Promise<DemonstrationDraft> =>
   client(`/api/demonstrations/${encodeURIComponent(id)}/draft`, "draft", {
     method: "POST",
-    fallback: "Could not draft a skill",
+    fallback: t("demo.err.draft"),
   });
-export const publishDemonstration = (id: string, slug: string) =>
+export const publishDemonstration = (
+  id: string,
+  slug: string,
+  t: T = englishT,
+) =>
   client(`/api/demonstrations/${encodeURIComponent(id)}/published`, {
     method: "POST",
     body: { slug },
-    fallback: "The skill was saved, but its demonstration could not be linked",
+    fallback: t("demo.err.publish"),
   });
-export const deleteDemonstration = (id: string) =>
+export const deleteDemonstration = (id: string, t: T = englishT) =>
   client(`/api/demonstrations/${encodeURIComponent(id)}`, {
     method: "DELETE",
-    fallback: "Could not delete the demonstration",
+    fallback: t("demo.err.delete"),
   });
 /** Run the demonstration's saved skill on a schedule, as an ordinary routine. */
 export const scheduleDemonstration = (
@@ -88,9 +97,10 @@ export const scheduleDemonstration = (
     channelId?: string;
     inputs?: string;
   },
+  t: T = englishT,
 ): Promise<DemonstrationRoutine> =>
   client(`/api/demonstrations/${encodeURIComponent(id)}/schedule`, "routine", {
     method: "POST",
     body: input,
-    fallback: "Could not schedule this skill",
+    fallback: t("demo.err.schedule"),
   });

@@ -1,3 +1,4 @@
+import { englishT, type T as Translate } from "@/freeduet/i18n/provider";
 import type { RoutineRecord } from "./queries";
 import type { UpcomingRunRecord } from "./schedule-queries";
 
@@ -33,33 +34,38 @@ export function localDayKey(date: Date): string {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
-const weekdayDate = new Intl.DateTimeFormat(undefined, {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-});
-const clockFormat = new Intl.DateTimeFormat(undefined, {
-  hour: "numeric",
-  minute: "2-digit",
-});
-const stampFormat = new Intl.DateTimeFormat(undefined, {
-  day: "numeric",
-  month: "short",
-  hour: "numeric",
-  minute: "2-digit",
-});
+/** A format in the app's language, or in the device's own when none is given (a plain call, a test). */
+function formatterFor(
+  language: string | undefined,
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
+  try {
+    return new Intl.DateTimeFormat(language, options);
+  } catch {
+    return new Intl.DateTimeFormat(undefined, options);
+  }
+}
 
 /** "Today", "Tomorrow", or the weekday and date: the heading over one day's runs. */
-export function dayHeading(day: Date, now: Date): string {
+export function dayHeading(
+  day: Date,
+  now: Date,
+  t: Translate = englishT,
+  language?: string,
+): string {
   const key = localDayKey(day);
-  if (key === localDayKey(now)) return "Today";
+  if (key === localDayKey(now)) return t("routines.day.today");
   const tomorrow = new Date(
     now.getFullYear(),
     now.getMonth(),
     now.getDate() + 1,
   );
-  if (key === localDayKey(tomorrow)) return "Tomorrow";
-  return weekdayDate.format(day);
+  if (key === localDayKey(tomorrow)) return t("routines.day.tomorrow");
+  return formatterFor(language, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(day);
 }
 
 export type DayGroup<T> = { key: string; heading: string; items: T[] };
@@ -69,6 +75,8 @@ export function groupByDay<T>(
   items: readonly T[],
   at: (item: T) => Date,
   now: Date,
+  t: Translate = englishT,
+  language?: string,
 ): DayGroup<T>[] {
   const groups: DayGroup<T>[] = [];
   for (const item of items) {
@@ -78,20 +86,32 @@ export function groupByDay<T>(
     if (last && last.key === key) {
       last.items.push(item);
     } else {
-      groups.push({ key, heading: dayHeading(when, now), items: [item] });
+      groups.push({
+        key,
+        heading: dayHeading(when, now, t, language),
+        items: [item],
+      });
     }
   }
   return groups;
 }
 
 /** A time of day in the device's zone: "9:00 AM", or "09:00" where the locale writes it so. */
-export function clockOf(at: Date): string {
-  return clockFormat.format(at);
+export function clockOf(at: Date, language?: string): string {
+  return formatterFor(language, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(at);
 }
 
 /** A date and time in the device's zone, for a history row: "16 Nov, 9:00 AM". */
-export function stampOf(at: Date): string {
-  return stampFormat.format(at);
+export function stampOf(at: Date, language?: string): string {
+  return formatterFor(language, {
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(at);
 }
 
 /** The device's IANA zone, or undefined where the platform does not say. */
@@ -111,10 +131,11 @@ export function ownClockNote(
   at: Date,
   zone: string,
   device: string | undefined = deviceTimeZone(),
+  language?: string,
 ): string | null {
   if (zone === device) return null;
   try {
-    const own = new Intl.DateTimeFormat(undefined, {
+    const own = new Intl.DateTimeFormat(language, {
       hour: "numeric",
       minute: "2-digit",
       timeZone: zone,
@@ -164,6 +185,6 @@ export function routinesById(
 }
 
 /** "1 routine" or "3 routines". */
-export function countRoutines(count: number): string {
-  return count === 1 ? "1 routine" : `${count} routines`;
+export function countRoutines(count: number, t: Translate = englishT): string {
+  return t("bot.settings.routineCount", { count });
 }

@@ -3,6 +3,7 @@ import {
   type QueryClient,
   queryOptions,
 } from "@tanstack/react-query";
+import { englishT, type T } from "@/freeduet/i18n/provider";
 import { client } from "@/lib/client";
 export type MemoryRecord = {
   id: string;
@@ -40,22 +41,25 @@ export const memoryKeys = {
   sources: ["memory", "sources"] as const,
   available: (id: string) => ["memory", "available", id] as const,
 };
-export const memoriesQueryOptions = () =>
+export const memoriesQueryOptions = (t: T = englishT) =>
   queryOptions({
     queryKey: memoryKeys.all,
     queryFn: (): Promise<MemoryRecord[]> =>
-      client("/api/memory", "memories", { fallback: "Could not load memory" }),
+      client("/api/memory", "memories", { fallback: t("memory.err.load") }),
   });
-export const memorySourcesQueryOptions = () =>
+export const memorySourcesQueryOptions = (t: T = englishT) =>
   queryOptions({
     queryKey: memoryKeys.sources,
     queryFn: (): Promise<MemorySource[]> =>
       client("/api/memory/sources", "sources", {
-        fallback: "Could not load memory sources",
+        fallback: t("memory.err.sources"),
       }),
     refetchInterval: 15_000,
   });
-export const availableMemorySourcesQueryOptions = (id: string) =>
+export const availableMemorySourcesQueryOptions = (
+  id: string,
+  t: T = englishT,
+) =>
   queryOptions({
     queryKey: memoryKeys.available(id),
     enabled: !!id,
@@ -63,43 +67,48 @@ export const availableMemorySourcesQueryOptions = (id: string) =>
       client(
         `/api/memory/sources/available/${encodeURIComponent(id)}`,
         "tools",
-        { fallback: "Could not load connected app actions" },
+        { fallback: t("memory.err.actions") },
       ),
   });
-export const createMemory = (content: string) =>
+export const createMemory = (content: string, t: T = englishT) =>
   client("/api/memory", {
     method: "POST",
     body: { content },
-    fallback: "Could not remember this fact",
+    fallback: t("memory.err.create"),
   });
 export const updateMemory = (
   id: string,
   input: { content?: string; enabled?: boolean; reviewState?: "confirmed" },
+  t: T = englishT,
 ) =>
   client(`/api/memory/${encodeURIComponent(id)}`, {
     method: "PATCH",
     body: input,
-    fallback: "Could not update memory",
+    fallback: t("memory.err.update"),
   });
-export const deleteMemory = (id: string) =>
+export const deleteMemory = (id: string, t: T = englishT) =>
   client(`/api/memory/${encodeURIComponent(id)}`, {
     method: "DELETE",
-    fallback: "Could not forget this memory",
+    fallback: t("memory.err.delete"),
   });
-export const addMemorySource = (input: {
-  agentId: string;
-  toolRef: string;
-  title: string;
-  args: Record<string, unknown>;
-}) =>
+export const addMemorySource = (
+  input: {
+    agentId: string;
+    toolRef: string;
+    title: string;
+    args: Record<string, unknown>;
+  },
+  t: T = englishT,
+) =>
   client("/api/memory/sources", {
     method: "POST",
     body: input,
-    fallback: "Could not add this source",
+    fallback: t("memory.err.addSource"),
   });
 export const memorySourceAction = (
   id: string,
   action: "sync" | "remove" | "enable" | "disable",
+  t: T = englishT,
 ) =>
   client(
     `/api/memory/sources/${encodeURIComponent(id)}${action === "sync" ? "/sync" : ""}`,
@@ -109,19 +118,25 @@ export const memorySourceAction = (
       ...(action === "enable" || action === "disable"
         ? { body: { enabled: action === "enable" } }
         : {}),
-      fallback: "Could not change this source",
+      fallback: t("memory.err.changeSource"),
     },
   );
 
 const settleMemory = (queryClient: QueryClient) => () =>
   queryClient.invalidateQueries({ queryKey: memoryKeys.all });
 
-export const createMemoryMutationOptions = (queryClient: QueryClient) =>
+export const createMemoryMutationOptions = (
+  queryClient: QueryClient,
+  t: T = englishT,
+) =>
   mutationOptions({
-    mutationFn: createMemory,
+    mutationFn: (content: string) => createMemory(content, t),
     onSettled: settleMemory(queryClient),
   });
-export const updateMemoryMutationOptions = (queryClient: QueryClient) =>
+export const updateMemoryMutationOptions = (
+  queryClient: QueryClient,
+  t: T = englishT,
+) =>
   mutationOptions({
     mutationFn: ({
       id,
@@ -129,24 +144,34 @@ export const updateMemoryMutationOptions = (queryClient: QueryClient) =>
     }: {
       id: string;
       input: { content?: string; enabled?: boolean; reviewState?: "confirmed" };
-    }) => updateMemory(id, input),
+    }) => updateMemory(id, input, t),
     onSettled: settleMemory(queryClient),
   });
-export const deleteMemoryMutationOptions = (queryClient: QueryClient) =>
+export const deleteMemoryMutationOptions = (
+  queryClient: QueryClient,
+  t: T = englishT,
+) =>
   mutationOptions({
-    mutationFn: deleteMemory,
+    mutationFn: (id: string) => deleteMemory(id, t),
     onSettled: settleMemory(queryClient),
   });
 
 /** Opt a Bot in to reading one of its connected apps' actions as a memory source. */
-export const addMemorySourceMutationOptions = (queryClient: QueryClient) =>
+export const addMemorySourceMutationOptions = (
+  queryClient: QueryClient,
+  t: T = englishT,
+) =>
   mutationOptions({
-    mutationFn: addMemorySource,
+    mutationFn: (input: Parameters<typeof addMemorySource>[0]) =>
+      addMemorySource(input, t),
     onSuccess: settleMemory(queryClient),
   });
 
 /** Sync, remove, enable or disable one memory source. */
-export const memorySourceActionMutationOptions = (queryClient: QueryClient) =>
+export const memorySourceActionMutationOptions = (
+  queryClient: QueryClient,
+  t: T = englishT,
+) =>
   mutationOptions({
     mutationFn: ({
       sourceId,
@@ -154,6 +179,6 @@ export const memorySourceActionMutationOptions = (queryClient: QueryClient) =>
     }: {
       sourceId: string;
       name: "sync" | "remove" | "enable" | "disable";
-    }) => memorySourceAction(sourceId, name),
+    }) => memorySourceAction(sourceId, name, t),
     onSuccess: settleMemory(queryClient),
   });
