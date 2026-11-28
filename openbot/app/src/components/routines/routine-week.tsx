@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { PageEmpty } from "@/components/layout/page-shell";
+import { useAppLanguage, useT } from "@/freeduet/i18n/provider";
 import type { RoutineRecord } from "@/lib/routines/queries";
 import {
   routineCalendarQueryOptions,
@@ -60,6 +61,7 @@ export function RoutineWeek({
   now?: Date;
   zone?: string;
 }) {
+  const { t, language } = useAppLanguage();
   const names = useBotNames();
   const zone = fixedZone ?? deviceZone();
   // The clock moves each minute (and when the tab comes back); the window asked for only moves when the
@@ -158,10 +160,10 @@ export function RoutineWeek({
     return (
       <PageEmpty>
         {routines.length === 0
-          ? "No routines yet, so nothing is scheduled."
+          ? t("routines.cal.none")
           : switchedOn === 0
-            ? "None of these routines is switched on, so none will run."
-            : "Nothing is scheduled for the rest of this week."}
+            ? t("routines.cal.noneOn")
+            : t("routines.week.nothing")}
       </PageEmpty>
     );
   }
@@ -177,7 +179,7 @@ export function RoutineWeek({
   const gridCols = `3rem repeat(${columns.length}, minmax(5.5rem, 1fr))`;
 
   return (
-    <section aria-label="This week" className="mt-4">
+    <section aria-label={t("routines.week.label")} className="mt-4">
       <div className="overflow-x-auto rounded-lg border border-border">
         <div className="min-w-[36rem]">
           <div
@@ -195,7 +197,7 @@ export function RoutineWeek({
                 )}
                 key={column.key}
               >
-                {new Intl.DateTimeFormat(undefined, {
+                {new Intl.DateTimeFormat(language, {
                   weekday: "short",
                   timeZone: "UTC",
                 }).format(
@@ -216,7 +218,7 @@ export function RoutineWeek({
                   {column.civil.day}
                 </span>
                 {column.isToday ? (
-                  <span className="sr-only"> (today)</span>
+                  <span className="sr-only"> ({t("routines.week.today")})</span>
                 ) : null}
               </div>
             ))}
@@ -255,7 +257,9 @@ export function RoutineWeek({
                 ))}
                 {column.isToday ? (
                   <div
-                    aria-label={`Now, ${minuteLabel(week.nowMin)}`}
+                    aria-label={t("routines.week.now", {
+                      time: minuteLabel(week.nowMin),
+                    })}
                     className="absolute inset-x-0 z-20 border-red-500 border-t-2"
                     data-now="true"
                     role="img"
@@ -271,7 +275,9 @@ export function RoutineWeek({
                     block={block}
                     firstHour={week.firstHour}
                     key={block.id}
-                    memberName={names.get(block.agentId) ?? "A Bot"}
+                    memberName={
+                      names.get(block.agentId) ?? t("routines.history.aBot")
+                    }
                     zone={zone}
                   />
                 ))}
@@ -283,7 +289,9 @@ export function RoutineWeek({
       <p className="mt-3 text-sm" data-next="true">
         {week.next ? (
           <>
-            <span className="text-muted-foreground">Next: </span>
+            <span className="text-muted-foreground">
+              {t("routines.week.next")}{" "}
+            </span>
             <span className="font-medium">
               {routineTitle(week.next.routine)}
             </span>
@@ -294,24 +302,22 @@ export function RoutineWeek({
           </>
         ) : (
           <span className="text-muted-foreground">
-            Nothing else is scheduled this week.
+            {t("routines.week.nothingElse")}
           </span>
         )}
       </p>
       {calendar.data?.truncated ? (
         <p className="mt-1 text-muted-foreground text-xs">
-          Only the first runs in the next days are listed, so a very busy
-          routine may not show every day.
+          {t("routines.week.truncated")}
         </p>
       ) : null}
       {history.error ? (
         <p className="mt-1 text-muted-foreground text-xs" role="status">
-          Runs that already happened could not be loaded, so they are not shown.
+          {t("routines.week.historyError")}
         </p>
       ) : null}
       <p className="mt-1 text-muted-foreground text-xs">
-        Times are in your time zone. A routine that runs more often than hourly
-        shows as one block for the day.
+        {t("routines.week.note")}
       </p>
     </section>
   );
@@ -328,6 +334,7 @@ function Block({
   memberName: string;
   zone: string;
 }) {
+  const t = useT();
   const hue = memberHue(block.agentId);
   const style = {
     top: ((block.startMin - firstHour * 60) / 60) * HOUR_PX,
@@ -363,7 +370,10 @@ function Block({
       <span className="truncate text-muted-foreground">{memberName}</span>
       {block.kind === "summary" ? (
         <span className="text-muted-foreground">
-          {block.count} runs, every ~{block.everyMinutes} min
+          {t("routines.week.summary", {
+            count: block.count ?? 0,
+            minutes: block.everyMinutes,
+          })}
         </span>
       ) : null}
     </>
@@ -371,7 +381,7 @@ function Block({
   if (block.routine.channel.gone) {
     return (
       <button
-        aria-label={`${label}, conversation deleted`}
+        aria-label={t("routines.week.gone", { label })}
         className={className}
         disabled
         style={style}

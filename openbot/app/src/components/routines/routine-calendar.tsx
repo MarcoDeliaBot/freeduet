@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Fragment, useState } from "react";
 import { PageEmpty, PageRows } from "@/components/layout/page-shell";
+import { useT } from "@/freeduet/i18n/provider";
 import { Separator } from "@/components/ui/separator";
 import type { RoutineRecord } from "@/lib/routines/queries";
 import { routineCalendarQueryOptions } from "@/lib/routines/schedule-queries";
@@ -12,7 +13,6 @@ import {
   calendarRange,
   calendarRows,
   clockOf,
-  countRoutines,
   groupByDay,
   ownClockNote,
 } from "@/lib/routines/schedule-view";
@@ -31,6 +31,7 @@ export function RoutineCalendar({
   agentId?: string;
   routines: RoutineRecord[];
 }) {
+  const t = useT();
   const names = useBotNames();
   // Fixed when the view opens: a window that moved on every render would refetch on every render.
   const [range] = useState(() => calendarRange(new Date()));
@@ -52,16 +53,15 @@ export function RoutineCalendar({
   return (
     <>
       <p className="mt-4 text-muted-foreground text-sm">
-        The next {CALENDAR_DAYS} days, for the routines that are switched on.
-        Times are in your time zone.
+        {t("routines.cal.intro", { days: CALENDAR_DAYS })}
       </p>
       {rows.length === 0 ? (
         <PageEmpty>
           {routines.length === 0
-            ? "No routines yet, so nothing is scheduled."
+            ? t("routines.cal.none")
             : switchedOn === 0
-              ? "None of these routines is switched on, so none will run."
-              : `Nothing is scheduled in the next ${CALENDAR_DAYS} days.`}
+              ? t("routines.cal.noneOn")
+              : t("routines.cal.nothing", { days: CALENDAR_DAYS })}
         </PageEmpty>
       ) : (
         groups.map((group) => (
@@ -74,7 +74,9 @@ export function RoutineCalendar({
                 <Fragment key={`${row.routineId}-${row.at.getTime()}`}>
                   {index > 0 ? <Separator /> : null}
                   <CalendarItem
-                    memberName={names.get(row.agentId) ?? "A Bot"}
+                    memberName={
+                      names.get(row.agentId) ?? t("routines.history.aBot")
+                    }
                     row={row}
                   />
                 </Fragment>
@@ -85,14 +87,15 @@ export function RoutineCalendar({
       )}
       {calendar.data.truncated ? (
         <p className="mt-4 text-muted-foreground text-xs">
-          Only the first {CALENDAR_MAX_RUNS} runs in these {CALENDAR_DAYS} days
-          are listed.
+          {t("routines.cal.truncated", {
+            max: CALENDAR_MAX_RUNS,
+            days: CALENDAR_DAYS,
+          })}
         </p>
       ) : null}
       {paused > 0 ? (
         <p className="mt-4 text-muted-foreground text-xs">
-          {countRoutines(paused)} paused, so not listed here. Switch one on to
-          see when it runs.
+          {t("routines.cal.paused", { count: paused })}
         </p>
       ) : null}
     </>
@@ -106,6 +109,7 @@ function CalendarItem({
   row: CalendarRow;
   memberName: string;
 }) {
+  const t = useT();
   // The routine's own clock, written out only where it differs from the person's.
   const ownClock = ownClockNote(row.at, row.routine.timezone);
   return (
@@ -134,7 +138,7 @@ function CalendarItem({
           params={{ channelId: row.routine.channel.id }}
           to="/channel/$channelId"
         >
-          Open conversation
+          {t("stalled.open")}
         </Link>
       )}
     </div>

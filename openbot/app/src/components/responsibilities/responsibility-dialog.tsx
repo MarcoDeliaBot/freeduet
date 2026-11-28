@@ -117,7 +117,7 @@ export function summaryFor(
       .filter((trigger) => trigger.enabled)
       .map((trigger) =>
         t("responsibilities.summary.trigger", {
-          kind: KIND_LABEL[trigger.kind],
+          kind: t(KIND_LABEL[trigger.kind]),
         }),
       ),
   ];
@@ -423,6 +423,18 @@ const RUN_LABEL: Record<string, MessageId> = {
   failed: "routines.status.failed",
   skipped: "routines.status.skipped",
 };
+/**
+ * What a run waits for, by the kind the server reports: each known kind has its own words, any other
+ * reads as "you".
+ */
+const WAIT_KIND: Record<string, MessageId> = {
+  approval: "responsibilities.run.waitKind.approval",
+  person_question: "responsibilities.run.waitKind.question",
+  computer_handoff: "responsibilities.run.waitKind.handoff",
+  computer_sign_in: "responsibilities.run.waitKind.signIn",
+};
+const waitingKindId = (kind: string): MessageId =>
+  WAIT_KIND[kind] ?? "responsibilities.run.waitKind.other";
 function runStatusClass(status: string) {
   return status === "failed"
     ? "text-destructive"
@@ -498,7 +510,7 @@ function Runs({
                     {run.waiting && (
                       <p>
                         {t("responsibilities.run.waiting", {
-                          kind: run.waiting.kind,
+                          kind: t(waitingKindId(run.waiting.kind)),
                         })}
                       </p>
                     )}

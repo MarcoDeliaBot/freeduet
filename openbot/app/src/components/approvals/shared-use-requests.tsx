@@ -72,12 +72,12 @@ export function SharedUseRequests() {
                 <p className="text-sm">
                   {t("approvals.shared.now")}{" "}
                   {request.current
-                    ? describeApproval(request.current)
+                    ? describeApproval(request.current, t)
                     : t("approvals.shared.notApproved")}
                 </p>
                 <p className="text-sm">
                   {t("approvals.shared.asked")}{" "}
-                  {describeApproval(request.proposed)}
+                  {describeApproval(request.proposed, t)}
                 </p>
               </ItemContent>
               <ItemFooter className="justify-start">
