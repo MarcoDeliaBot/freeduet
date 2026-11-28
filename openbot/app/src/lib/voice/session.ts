@@ -1,4 +1,5 @@
 import type { SaveVoiceSessionInput } from "@openbot/shared/voice-session";
+import { englishT, type T } from "@/freeduet/i18n/provider";
 import { closingOf, openingOf } from "./cut";
 import { VOICE_CONTEXT_ITEM_ID, VoiceTranscript } from "./transcript";
 import type { ConnectVoice, VoiceConnection, VoiceEvent } from "./types";
@@ -61,8 +62,14 @@ export class VoiceSession {
       context(): string | Promise<string>;
       anchorMessageId?(): string | null;
       onEnd?(call: SaveVoiceSessionInput): void;
+      /** The app's translator for the words the call shows the person (D181). English when none is given. */
+      t?: T;
     },
   ) {}
+
+  private get t(): T {
+    return this.deps.t ?? englishT;
+  }
 
   getSnapshot = () => this.state;
   subscribe = (listener: () => void) => {
@@ -116,10 +123,7 @@ export class VoiceSession {
     this.abort = abort;
     this.update({ phase: "connecting" });
     this.deadline = setTimeout(() => {
-      if (current())
-        this.fail(
-          "The call took too long to connect. Check microphone permission and try again.",
-        );
+      if (current()) this.fail(this.t("voice.session.slow"));
     }, 30_000);
     try {
       const context = await this.deps.context();
@@ -127,6 +131,7 @@ export class VoiceSession {
       const connection = await this.deps.connect({
         channelId: this.deps.channelId,
         signal: abort.signal,
+        t: this.t,
         onEvent: (event) => {
           if (current()) this.event(event, generation);
         },
@@ -174,9 +179,7 @@ export class VoiceSession {
         if (!current()) return;
         const seconds = Math.floor((Date.now() - started) / 1000);
         if (seconds >= 15 * 60) {
-          this.fail(
-            "This call reached its 15-minute limit. You can start a new call.",
-          );
+          this.fail(this.t("voice.session.timeLimit"));
           return;
         }
         this.update({ seconds });
@@ -186,7 +189,7 @@ export class VoiceSession {
         this.fail(
           error instanceof Error
             ? error.message
-            : "Could not start the voice call.",
+            : this.t("voice.session.startFailed"),
         );
     }
   };
@@ -198,7 +201,7 @@ export class VoiceSession {
       this.connection.mute(muted);
       this.update({ muted, listening: muted ? false : this.state.listening });
     } catch {
-      this.fail("The microphone could not be changed. Please call again.");
+      this.fail(this.t("voice.session.muteFailed"));
     }
   };
 
@@ -209,9 +212,7 @@ export class VoiceSession {
       return true;
     } catch (error) {
       this.fail(
-        error instanceof Error
-          ? error.message
-          : "The voice connection was lost.",
+        error instanceof Error ? error.message : this.t("voice.session.lost"),
       );
       return false;
     }
@@ -232,9 +233,7 @@ export class VoiceSession {
   private event(event: VoiceEvent, generation: number) {
     this.transcript.receive(event);
     if (this.transcript.full) {
-      this.fail(
-        "This call reached its transcript limit. Start a new call to continue.",
-      );
+      this.fail(this.t("voice.session.transcriptLimit"));
       return;
     }
     switch (event.type) {
@@ -276,9 +275,7 @@ export class VoiceSession {
         this.responseActive = false;
         const response = object(event.response);
         if (response?.status === "failed") {
-          this.fail(
-            "The voice service could not complete its response. Please call again.",
-          );
+          this.fail(this.t("voice.session.responseFailed"));
           return;
         }
         if (Array.isArray(response?.output)) {
@@ -299,9 +296,7 @@ export class VoiceSession {
           this.responsePending = true;
           return;
         }
-        this.fail(
-          "The voice service reported an error. Please end the call and try again.",
-        );
+        this.fail(this.t("voice.session.serviceError"));
         break;
       }
     }

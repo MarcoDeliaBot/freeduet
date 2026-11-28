@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useT } from "@/freeduet/i18n/provider";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { deploymentCapabilitiesQueryOptions } from "@/lib/deployment/queries";
 import {
@@ -25,12 +26,18 @@ export function useDictation(
   const { data: user } = useCurrentUser();
   const onTranscriptRef = useRef(onTranscript);
   onTranscriptRef.current = onTranscript;
+  // The words the composer shows follow the app language (D181), read at the time each one is shown.
+  const t = useT();
+  const translate = useRef(t);
+  translate.current = t;
   const [session] = useState(
     () =>
       new DictationSession({
-        record: startRecording,
-        transcribe: transcribeRecording,
+        record: (onError) => startRecording(onError, translate.current),
+        transcribe: (audio, signal) =>
+          transcribeRecording(audio, signal, translate.current),
         onTranscript: (text, intent) => onTranscriptRef.current(text, intent),
+        t: (id, params) => translate.current(id, params),
       }),
   );
   const state = useSyncExternalStore(

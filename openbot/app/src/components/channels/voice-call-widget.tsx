@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LiveWaveform } from "@/components/ui/live-waveform";
+import { useT } from "@/freeduet/i18n/provider";
 import { currentUserQueryOptions } from "@/lib/auth/queries";
 import { EASE_OUT, ENTRANCE_SECONDS } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,7 @@ export function VoiceCallWidget({
   taskRunning: boolean;
 }) {
   const { state, session, minimized, setMinimized } = call;
+  const t = useT();
   const { data: user } = useQuery(currentUserQueryOptions(), queryClient);
   const [failedImage, setFailedImage] = useState<string | null>(null);
   const initials =
@@ -61,18 +63,18 @@ export function VoiceCallWidget({
   const connecting = state.phase === "connecting";
   const failed = state.phase === "error";
   const status = failed
-    ? "Call unavailable"
+    ? t("voice.widget.unavailable")
     : connecting
-      ? "Connecting…"
+      ? t("voice.widget.connecting")
       : state.speaking
-        ? `${name} is speaking`
+        ? t("voice.widget.speaking", { name })
         : taskRunning
-          ? "Working on your request"
+          ? t("voice.widget.working")
           : state.muted
-            ? "Your microphone is muted"
+            ? t("voice.widget.muted")
             : state.listening
-              ? "Listening to you"
-              : "Ready when you are";
+              ? t("voice.widget.listening")
+              : t("voice.widget.ready");
   const duration = `${Math.floor(state.seconds / 60)}:${String(state.seconds % 60).padStart(2, "0")}`;
   const transition = {
     duration: reduceMotion ? 0 : ENTRANCE_SECONDS,
@@ -80,7 +82,7 @@ export function VoiceCallWidget({
   };
   return (
     <motion.section
-      aria-label={`Voice call with ${name}`}
+      aria-label={t("voice.widget.label", { name })}
       initial={{ opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={transition}
@@ -93,7 +95,7 @@ export function VoiceCallWidget({
         <span
           className="shrink-0 tabular-nums"
           role="timer"
-          aria-label="Call duration"
+          aria-label={t("voice.widget.duration")}
         >
           {duration}
         </span>
@@ -108,8 +110,8 @@ export function VoiceCallWidget({
           />
           <span className="min-w-0 flex-1 truncate text-sm">{name}</span>
           <Button
-            aria-label="Expand voice call"
-            title="Expand call"
+            aria-label={t("voice.widget.expand")}
+            title={t("voice.widget.expandTitle")}
             variant="ghost"
             size="icon-sm"
             onClick={() => setMinimized(false)}
@@ -117,8 +119,8 @@ export function VoiceCallWidget({
             <IconWaveform className="size-4" />
           </Button>
           <Button
-            aria-label="End voice call"
-            title="End call"
+            aria-label={t("voice.widget.end")}
+            title={t("voice.widget.endTitle")}
             variant="destructive"
             size="icon-sm"
             className="rounded-full"
@@ -162,7 +164,9 @@ export function VoiceCallWidget({
               )}
             </div>
             <div
-              title={state.muted ? "You · microphone muted" : "You"}
+              title={
+                state.muted ? t("voice.widget.youMuted") : t("voice.widget.you")
+              }
               className={cn(
                 "relative flex size-[40px] shrink-0 items-center justify-center rounded-full bg-background ring-2 ring-transparent ring-offset-2 ring-offset-muted transition-shadow motion-reduce:transition-none",
                 state.listening && !state.muted && "ring-primary/40",
@@ -171,14 +175,18 @@ export function VoiceCallWidget({
               {user?.image && user.image !== failedImage ? (
                 <img
                   src={user.image}
-                  alt="You"
+                  alt={t("voice.widget.you")}
                   className="size-full rounded-full object-cover"
                   onError={() => setFailedImage(user.image ?? null)}
                 />
               ) : (
                 <span
                   role="img"
-                  aria-label={user?.name ? `${user.name} (you)` : "You"}
+                  aria-label={
+                    user?.name
+                      ? t("voice.widget.youNamed", { name: user.name })
+                      : t("voice.widget.you")
+                  }
                   className="text-sm font-medium text-foreground/70"
                 >
                   {initials}
@@ -187,7 +195,7 @@ export function VoiceCallWidget({
               {state.muted && (
                 <span className="absolute -bottom-1 -right-1 rounded-full bg-card p-1">
                   <IconMicrophoneOff className="size-2.5" />
-                  <span className="sr-only">Your microphone is muted</span>
+                  <span className="sr-only">{t("voice.widget.muted")}</span>
                 </span>
               )}
             </div>
@@ -197,8 +205,8 @@ export function VoiceCallWidget({
               <DropdownMenuTrigger
                 render={
                   <Button
-                    aria-label="Call settings"
-                    title="Call settings"
+                    aria-label={t("voice.widget.settings")}
+                    title={t("voice.widget.settings")}
                     variant="secondary"
                     size="icon"
                     className="size-12 rounded-full"
@@ -212,13 +220,13 @@ export function VoiceCallWidget({
                   checked={captions}
                   onCheckedChange={setCaptions}
                 >
-                  Show live captions
+                  {t("voice.widget.captions")}
                 </DropdownMenuCheckboxItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <Button
-              aria-label="Return to chat"
-              title="Return to chat · keep call open"
+              aria-label={t("voice.widget.returnChat")}
+              title={t("voice.widget.returnChatTitle")}
               variant="secondary"
               size="icon"
               className="size-12 rounded-full"
@@ -228,14 +236,14 @@ export function VoiceCallWidget({
             </Button>
             <Button
               aria-label={
-                state.muted ? "Unmute your microphone" : "Mute your microphone"
+                state.muted ? t("voice.widget.unmute") : t("voice.widget.mute")
               }
               aria-pressed={state.muted}
               disabled={connecting || failed}
               title={
                 state.muted
-                  ? "Unmute your microphone"
-                  : "Mute your microphone · you’ll still hear the Bot"
+                  ? t("voice.widget.unmute")
+                  : t("voice.widget.muteTitle")
               }
               variant="secondary"
               size="icon"
@@ -257,8 +265,8 @@ export function VoiceCallWidget({
               size="icon"
               className="size-12 rounded-full bg-rose-500 text-white hover:bg-rose-600 dark:bg-rose-500 dark:hover:bg-rose-600"
               onClick={session.end}
-              aria-label="End voice call"
-              title="End call"
+              aria-label={t("voice.widget.end")}
+              title={t("voice.widget.endTitle")}
             >
               <IconX className="size-5" />
             </Button>
@@ -276,7 +284,7 @@ export function VoiceCallWidget({
                 <div className="mt-3 h-16 overflow-y-auto rounded-xl bg-muted/40 p-2 text-xs leading-relaxed text-muted-foreground">
                   {state.reply ||
                     state.transcript ||
-                    "Speak when you’re ready. This call is part of this conversation."}
+                    t("voice.widget.captionsEmpty")}
                 </div>
               </motion.div>
             )}
@@ -292,7 +300,7 @@ export function VoiceCallWidget({
                 className="mt-2"
                 onClick={() => void session.start()}
               >
-                Try again
+                {t("stalled.retry")}
               </Button>
             </div>
           )}
