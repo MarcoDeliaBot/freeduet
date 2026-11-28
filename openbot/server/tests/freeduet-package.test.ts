@@ -2475,9 +2475,7 @@ describe("D192: builders hand files over, never a path in their computer", () =>
   const cannotOpen =
     "The person cannot open a path in your workspace, so never tell them to fetch a file from a path or a folder of your computer";
   const sentences: Record<string, string[]> = {
-    gamedev: [
-      `${cannotOpen}, and in your report name the file, not its path.`,
-    ],
+    gamedev: [`${cannotOpen}, and in your report name the file, not its path.`],
     designer: [
       `${cannotOpen}, and in your report name the file, not its path.`,
     ],
@@ -2512,9 +2510,10 @@ describe("D192: builders hand files over, never a path in their computer", () =>
       const flat = String(
         rows.find((row) => row.id === id)?.system_prompt ?? "",
       ).replace(/\s+/g, " ");
-      expect({ id, asks: flat.includes("where it is in your workspace") }).toEqual(
-        { id, asks: false },
-      );
+      expect({
+        id,
+        asks: flat.includes("where it is in your workspace"),
+      }).toEqual({ id, asks: false });
     }
   });
 });
