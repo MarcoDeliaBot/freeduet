@@ -5,6 +5,7 @@ import {
   hasActiveHandoff,
   type PendingHandoff,
 } from "@/lib/computers/handoff";
+import { englishT, type T } from "@/freeduet/i18n/provider";
 import { newId } from "@/lib/new-id";
 import { repairUnansweredToolCalls } from "./repair-history";
 
@@ -82,26 +83,22 @@ export async function resumeHandoffTask(
   agent: HandoffAgent,
   run: () => Promise<unknown>,
   signal?: AbortSignal,
+  t: T = englishT,
 ) {
   const hasCall = agent.messages.some(
     (m) =>
       m.role === "assistant" &&
       m.toolCalls?.some((c) => c.id === pending.toolCallId),
   );
-  if (!hasCall)
-    throw new Error("The handoff's tool call is not in this conversation.");
+  if (!hasCall) throw new Error(t("computer.handoff.noCall"));
   if (!findPendingTool(agent.messages, pending))
-    throw new Error("This tool call is already answered.");
+    throw new Error(t("computer.handoff.answered"));
   if (agent.isRunning || hasActiveHandoff(botId, pending.requestId))
-    throw new Error("This task is already running.");
+    throw new Error(t("computer.handoff.running"));
   const result = await awaitHandoff(botId, pending.requestId, signal);
   if (signal?.aborted) return;
   if (result.reconnecting || result.snapshotRequired)
-    throw new Error(
-      String(
-        result.reason ?? "The computer could not be reached. Retry to resume.",
-      ),
-    );
+    throw new Error(String(result.reason ?? t("computer.handoff.unreachable")));
   // Another handler/tab may have supplied the result while we waited. Keep accepted work accepted.
   if (!findPendingTool(agent.messages, pending)) return;
   const messages = agent.messages.filter(

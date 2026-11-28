@@ -12,6 +12,8 @@
  */
 import { IconFile, IconFolder, IconTerminal2 } from "@tabler/icons-react";
 import { useSyncExternalStore } from "react";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import {
   activityFor,
@@ -28,22 +30,18 @@ const ICONS = {
 } as const;
 
 /** What the line says was done. The subject beside it says what it was done to. */
-const LABELS = {
-  command: "Ran",
-  read_file: "Read",
-  write_file: "Saved",
-  list_files: "Listed",
-} as const;
+const LABELS: Record<ComputerActivity["kind"], MessageId> = {
+  command: "computer.activity.ran",
+  read_file: "computer.activity.read",
+  write_file: "computer.activity.saved",
+  list_files: "computer.activity.listed",
+};
 
-function timeOf(at: number): string {
-  return new Date(at).toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-}
+/** The subject `list_files` records for a listing of the whole workspace (written by computer-tools). */
+const WORKSPACE_SUBJECT = "the workspace";
 
 function Entry({ entry }: { entry: ComputerActivity }) {
+  const { t, date } = useAppLanguage();
   const Icon = ICONS[entry.kind];
   const failed =
     entry.refused === true ||
@@ -59,7 +57,7 @@ function Entry({ entry }: { entry: ComputerActivity }) {
           }`}
         />
         <span className="shrink-0 text-muted-foreground text-xs">
-          {LABELS[entry.kind]}
+          {t(LABELS[entry.kind])}
         </span>
         {/*
           The command wraps rather than truncating. In the transcript one line per call is what keeps
@@ -67,16 +65,22 @@ function Entry({ entry }: { entry: ComputerActivity }) {
           middle cut out is the one thing this pane must not do.
         */}
         <code className="min-w-0 break-all font-mono text-xs">
-          {entry.subject}
+          {entry.kind === "list_files" && entry.subject === WORKSPACE_SUBJECT
+            ? t("computer.activity.workspace")
+            : entry.subject}
         </code>
         <span className="ml-auto shrink-0 text-[10px] text-muted-foreground tabular-nums">
-          {timeOf(entry.at)}
+          {date(entry.at, {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })}
         </span>
       </div>
 
       {entry.refused === true ? (
         <p className="mt-1 pl-5 text-destructive text-xs">
-          {entry.output || "A boundary refused it."}
+          {entry.output || t("computer.activity.refused")}
         </p>
       ) : (
         <div className="mt-1 max-h-64 overflow-auto pl-5">
@@ -95,6 +99,7 @@ function Entry({ entry }: { entry: ComputerActivity }) {
 }
 
 export function ActivityLog({ computerId }: { computerId: string }) {
+  const { t } = useAppLanguage();
   const entries = useSyncExternalStore(
     subscribeToActivity,
     () => activityFor(computerId),
@@ -106,7 +111,7 @@ export function ActivityLog({ computerId }: { computerId: string }) {
       <Empty className="h-[180px] border border-dashed">
         <EmptyHeader>
           <EmptyTitle className="text-muted-foreground">
-            Nothing yet. Commands the Bot runs and files it reads appear here.
+            {t("computer.activity.empty")}
           </EmptyTitle>
         </EmptyHeader>
       </Empty>

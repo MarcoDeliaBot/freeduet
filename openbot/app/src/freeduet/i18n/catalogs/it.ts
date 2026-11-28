@@ -2896,4 +2896,156 @@ export const it: Catalog<typeof EN> = {
   "connections.row.noNeeds":
     "Non sono riuscito a scoprire di cosa ha bisogno questa app. Chiudi e riprova.",
   // connections-end
+  // computer-begin
+  "computer.tool.readPage": "Ha letto la pagina",
+  "computer.tool.readPageCount": {
+    one: "{count} elemento su cui può agire",
+    other: "{count} elementi su cui può agire",
+  },
+  "computer.tool.filledIn": "Ha compilato",
+  "computer.tool.choseIn": "Ha scelto in",
+  "computer.tool.clicked": "Ha cliccato",
+  "computer.tool.pressed": "Ha premuto",
+  "computer.tool.listedFiles": "Ha elencato i file",
+  "computer.tool.itemsInWorkspace": {
+    one: "{count} elemento nello spazio di lavoro",
+    other: "{count} elementi nello spazio di lavoro",
+  },
+  "computer.tool.nothingSaved": "ancora nulla di salvato",
+  "computer.tool.readFile": "Ha letto il file",
+  "computer.tool.ranCommand": "Ha eseguito un comando",
+  "computer.tool.addedToFile": "Ha aggiunto al file",
+  "computer.tool.savedFile": "Ha salvato il file",
+  "computer.tool.scrolled": "Ha fatto scorrere la pagina",
+  "computer.signIn.waiting": "In attesa che tu acceda",
+  "computer.signIn.signedIn": "Accesso eseguito",
+  "computer.signIn.failed": "L'accesso non è andato a buon fine",
+  "computer.signIn.open": "Apri l'accesso privato",
+  "computer.signIn.dialogTitle": "Accedi a {site}",
+  "computer.signIn.dialogBody":
+    "Va al browser del tuo Bot, non in questa conversazione.",
+  "computer.output.truncated":
+    "L'output era troppo lungo. Questa è la parte finale.",
+  "computer.output.nothing": "Non ha stampato nulla.",
+  "computer.output.timedOut": "È durato troppo ed è stato fermato.",
+  "computer.output.exitCode": "Codice di uscita {code}.",
+  "computer.activity.ran": "Eseguito",
+  "computer.activity.read": "Letto",
+  "computer.activity.saved": "Salvato",
+  "computer.activity.listed": "Elencato",
+  "computer.activity.workspace": "lo spazio di lavoro",
+  "computer.activity.refused": "Un limite l'ha rifiutato.",
+  "computer.activity.empty":
+    "Ancora niente. Qui compaiono i comandi che il Bot esegue e i file che legge.",
+  "computer.control.handBack": "Restituisci al Bot",
+  "computer.control.take": "Prendi il controllo",
+  "computer.control.finishing": "Sto finendo l'azione in corso…",
+  "computer.control.close": "Chiudi il Computer",
+  "computer.control.open": "Apri il Computer",
+  "computer.panel.sidebar": "Barra laterale del Computer",
+  "computer.live.cantShow": "Non sono riuscito a mostrare lo schermo.",
+  "computer.live.drivingLabel":
+    "Lo schermo del Bot. Hai il controllo. Clicca e scrivi qui.",
+  "computer.live.label": "Lo schermo del Bot, in diretta",
+  "computer.view.aPage": "Una pagina",
+  "computer.view.openedDuring":
+    "Aperta durante questo turno. Da allora lo schermo è cambiato.",
+  "computer.view.noPage": "In questo turno non è stata aperta nessuna pagina.",
+  "computer.view.cantShow": "Al momento non posso mostrare lo schermo",
+  "computer.view.cantShowHelp":
+    "Il Bot potrebbe star ancora lavorando. Se continua a succedere, chiedi a un amministratore di controllare il suo Computer.",
+  "computer.view.blank": "Il Bot non ha ancora aperto nessuna pagina.",
+  "computer.view.waiting": "In attesa dello schermo del Bot…",
+  "computer.view.unavailable": "Lo schermo non è disponibile al momento.",
+  "computer.view.alt": "Quello che il Bot sta guardando",
+  "computer.view.open": "Apri lo schermo del Bot a schermo intero",
+  "computer.view.youHaveControl": "Hai il controllo",
+  "computer.view.botNeedsYou": "Il Bot ha bisogno di te.",
+  "computer.view.cancelRequest": "Annulla la richiesta",
+  "computer.view.finishingBot":
+    "Il Bot sta finendo l'azione in corso prima di darti il controllo…",
+  "computer.view.recovery":
+    "Il Computer si è fermato mentre avevi il controllo. Prendi il controllo per controllare la pagina, poi restituiscilo al Bot.",
+  "computer.view.interrupted":
+    "Il Computer si è fermato prima che qualcuno prendesse il controllo. Il Bot lo chiederà di nuovo se ha ancora bisogno di te.",
+  "computer.view.secretNeedsHost": "{host} richiede: {what}",
+  "computer.view.secretNeedsPage": "La pagina richiede: {what}",
+  "computer.view.secretType": "Scrivilo qui e va dentro la pagina.",
+  "computer.view.secretPlaceholder": "Non viene mai mostrato al Bot",
+  "computer.view.secretGoesHost":
+    "Va direttamente a {host}. {product} non lo vede mai.",
+  "computer.view.secretGoesPage":
+    "Va direttamente alla pagina. {product} non lo vede mai.",
+  "computer.view.sending": "Invio…",
+  "computer.view.send": "Invia alla pagina",
+  "computer.view.checking": "Controllo chi ha il controllo…",
+  "computer.view.drivingOpen":
+    "Hai il controllo. Apri lo schermo per cliccare e scrivere.",
+  "computer.view.botHas": "Il controllo è del Bot.",
+  "computer.view.dialog": "Lo schermo del Bot",
+  "computer.view.close": "Chiudi lo schermo del Bot",
+  "computer.view.turnAlt": "Quello che questo turno aveva aperto",
+  "computer.view.finishingYou":
+    "Sto finendo l'azione in corso prima di darti il controllo…",
+  "computer.view.drivingClick":
+    "Hai il controllo. Clicca e scrivi sulla pagina.",
+  "computer.handoff.noCall":
+    "La chiamata dello strumento di questo passaggio di mano non è in questa conversazione.",
+  "computer.handoff.answered":
+    "A questa chiamata dello strumento è già stata data risposta.",
+  "computer.handoff.running": "Questa attività è già in corso.",
+  "computer.handoff.unreachable":
+    "Non è stato possibile raggiungere il computer. Riprova per riprendere.",
+  "computer.handoff.couldntResume":
+    "Non sono riuscito a riprendere l'attività.",
+  "computer.handoff.waiting":
+    "In attesa che finisca il passaggio di mano del browser.",
+  "computer.handoff.paused":
+    "In questa conversazione c'è un'attività del browser in pausa.",
+  "computer.handoff.stopWaiting": "Smetti di aspettare",
+  "computer.handoff.resume": "Riprendi l'attività",
+  "computer.demo.everyWeekday": "Ogni giorno feriale alle 09:00",
+  "computer.demo.everyDay": "Ogni giorno alle 09:00",
+  "computer.demo.everyMonday": "Ogni lunedì alle 09:00",
+  "computer.demo.everyHour": "Ogni ora",
+  "computer.demo.scheduled":
+    "Pianificato. /{slug} verrà eseguita la prossima volta {when}.",
+  "computer.demo.seeRoutines": "Vedi le routine",
+  "computer.demo.when": "Quando viene eseguita ({timezone})",
+  "computer.demo.custom": "Espressione cron personalizzata",
+  "computer.demo.cron": "Cron (minuto ora giorno mese giorno della settimana)",
+  "computer.demo.reportIn": "Riferisci in",
+  "computer.demo.onlyConversation": "L'unica conversazione di questo Bot",
+  "computer.demo.inputs": "Input per ogni esecuzione (facoltativo)",
+  "computer.demo.title": "Insegna un flusso di lavoro nel browser",
+  "computer.demo.intro":
+    "Prendi il controllo, registra i passaggi, poi controlla la skill che ne viene fuori. I valori digitati e le immagini non vengono registrati. La registrazione si ferma dopo dieci minuti.",
+  "computer.demo.recording": {
+    one: "Registrazione di {title} · {count} passaggio",
+    other: "Registrazione di {title} · {count} passaggi",
+  },
+  "computer.demo.left": "{time} rimasti",
+  "computer.demo.limitReached": "Limite di tempo raggiunto. Mi fermo…",
+  "computer.demo.stop": "Ferma la registrazione",
+  "computer.demo.name": "Nome del flusso di lavoro",
+  "computer.demo.namePlaceholder": "Trovare una fattura",
+  "computer.demo.record": "Registra i tuoi passaggi",
+  "computer.demo.takeControl":
+    "Prendi il controllo del browser per iniziare a registrare.",
+  "computer.demo.entry": {
+    one: "{title} · {count} passaggio",
+    other: "{title} · {count} passaggi",
+  },
+  "computer.demo.stoppedAtLimit": "fermata al limite di dieci minuti",
+  "computer.demo.edit": "Modifica /{slug}",
+  "computer.demo.runSchedule": "Esegui con una pianificazione",
+  "computer.demo.reviewDraft": "Controlla la bozza della skill",
+  "computer.demo.reviewTitle": "Controlla e modifica la skill",
+  "computer.demo.reviewHelp":
+    "Rinomina gli input e di' quale deve essere il risultato.",
+  "computer.demo.saveUse": "Salva e usa con questo Bot",
+  "computer.demo.couldntSave": "Non sono riuscito a salvare la skill.",
+  "computer.demo.ready":
+    "/{slug} è pronta su questo Bot. Scrivila nella conversazione con i tuoi input, oppure scegli «Esegui con una pianificazione» per farne una routine.",
+  // computer-end
 };

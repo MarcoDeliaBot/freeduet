@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/freeduet/i18n/provider";
 import { readControl } from "@/lib/computers/control";
 import {
   forgetHandoff,
@@ -25,6 +26,7 @@ export function HandoffResumeNotice({
   ready: boolean;
   run: () => Promise<unknown>;
 }) {
+  const t = useT();
   const [pending, setPending] = useState<PendingHandoff | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -78,10 +80,12 @@ export function HandoffResumeNotice({
     setBusy(true);
     setProblem(null);
     try {
-      await resumeHandoffTask(botId, pending, agent, run, abort.signal);
+      await resumeHandoffTask(botId, pending, agent, run, abort.signal, t);
     } catch (error) {
       setProblem(
-        error instanceof Error ? error.message : "Couldn't resume the task.",
+        error instanceof Error
+          ? error.message
+          : t("computer.handoff.couldntResume"),
       );
     } finally {
       setBusy(false);
@@ -96,9 +100,7 @@ export function HandoffResumeNotice({
     >
       <span>
         {problem ??
-          (busy
-            ? "Waiting for this browser handoff to finish."
-            : "A browser task is paused in this conversation.")}
+          (busy ? t("computer.handoff.waiting") : t("computer.handoff.paused"))}
       </span>
       {busy ? (
         <button
@@ -106,7 +108,7 @@ export function HandoffResumeNotice({
           className="underline"
           onClick={() => controller.current?.abort()}
         >
-          Stop waiting
+          {t("computer.handoff.stopWaiting")}
         </button>
       ) : (
         <button
@@ -115,7 +117,7 @@ export function HandoffResumeNotice({
           disabled={!pending || agent.isRunning}
           onClick={() => void resume()}
         >
-          Resume task
+          {t("computer.handoff.resume")}
         </button>
       )}
     </div>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useT } from "@/freeduet/i18n/provider";
 import { readControl } from "@/lib/computers/control";
 import {
   connectScreen,
@@ -107,6 +108,10 @@ export function LiveScreen({
   onProblem,
   retryKey = 0,
 }: Props) {
+  const t = useT();
+  /** Read by the socket handler, so a change of language does not reconnect the screen. */
+  const tRef = useRef(t);
+  tRef.current = t;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   /** Keydowns handled locally whose matching keyup must not leak to the remote browser. */
@@ -200,7 +205,7 @@ export function LiveScreen({
       };
       if (typeof message.type !== "string") return;
       if (message.type === "error") {
-        onProblem?.(message.error ?? "Couldn't show the screen.");
+        onProblem?.(message.error ?? tRef.current("computer.live.cantShow"));
         return;
       }
       if (message.type !== "frame" || !message.data) return;
@@ -495,9 +500,7 @@ export function LiveScreen({
           }
         : {})}
       aria-label={
-        driving
-          ? "The Bot's screen. You have control. Click and type here."
-          : "The Bot's screen, live"
+        driving ? t("computer.live.drivingLabel") : t("computer.live.label")
       }
       data-connected={connected}
     />

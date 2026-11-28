@@ -1,3 +1,4 @@
+import { useT } from "@/freeduet/i18n/provider";
 import { ActivityLog } from "./activity-log";
 import { ComputerView } from "./computer-view";
 
@@ -9,11 +10,12 @@ export function ComputerViewPanel({
   agentId: string;
   name?: string;
 }) {
+  const t = useT();
   return (
-    <section aria-label="Computer sidebar" className="p-4">
+    <section aria-label={t("computer.panel.sidebar")} className="p-4">
       <ComputerView active computerId={agentId} name={name} minWidth={0} />
       <div className="mt-8">
-        <h3 className="mb-2 font-medium text-sm">Activity</h3>
+        <h3 className="mb-2 font-medium text-sm">{t("bot.activity.title")}</h3>
         <ActivityLog computerId={agentId} />
       </div>
     </section>
