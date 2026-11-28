@@ -3232,9 +3232,12 @@ export const EN = {
   // onboarding-end
   // files-start
   "files.title": "Files",
-  "files.lead": "Finished work {name} saved to its out folder. You can only read and download it here.",
-  "files.rowDescription": "The finished work {name} saved, with a Download for each file",
-  "files.empty": "Nothing here yet. Finished work appears here when {name} saves it to its out folder.",
+  "files.lead":
+    "Finished work {name} saved to its out folder. You can only read and download it here.",
+  "files.rowDescription":
+    "The finished work {name} saved, with a Download for each file",
+  "files.empty":
+    "Nothing here yet. Finished work appears here when {name} saves it to its out folder.",
   "files.refresh": "Refresh",
   "files.refreshing": "Refreshing…",
   "files.download": "Download",

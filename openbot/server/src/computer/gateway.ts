@@ -1378,11 +1378,7 @@ export function createComputerGateway(
      * general listing: the panel exists only to lead to a Download, so whoever a rule keeps from
      * downloading is kept from the list too, never the reverse. Names, sizes and times only.
      */
-    listFinishedFiles(
-      botId: string,
-      actor: ActionActor,
-      signal?: AbortSignal,
-    ) {
+    listFinishedFiles(botId: string, actor: ActionActor, signal?: AbortSignal) {
       return govern(
         "computer_download_file",
         botId,

@@ -884,9 +884,7 @@ describe("the computer gateway", () => {
 
   describe("the finished-work listing (D194)", () => {
     const FINISHED = {
-      files: [
-        { path: "out/a.pdf", name: "a.pdf", bytes: 3, modifiedMs: 5 },
-      ],
+      files: [{ path: "out/a.pdf", name: "a.pdf", bytes: 3, modifiedMs: 5 }],
       truncated: false,
     };
 
@@ -896,9 +894,9 @@ describe("the computer gateway", () => {
         routes: { "/files/finished": () => Response.json(FINISHED) },
       });
 
-      await expect(
-        gateway.listFinishedFiles("bot-1", ACTOR),
-      ).resolves.toEqual(FINISHED);
+      await expect(gateway.listFinishedFiles("bot-1", ACTOR)).resolves.toEqual(
+        FINISHED,
+      );
 
       expect(rows[0]?.eventType).toBe("computer.action_allowed");
       expect(rows[0]?.payload).toMatchObject({
@@ -936,9 +934,9 @@ describe("the computer gateway", () => {
       await expect(gateway.listFinishedFiles("bot-1", ACTOR)).rejects.toThrow(
         ActionRefusedError,
       );
-      expect(
-        requests.some(({ url }) => url.includes("/files/finished")),
-      ).toBe(false);
+      expect(requests.some(({ url }) => url.includes("/files/finished"))).toBe(
+        false,
+      );
     });
   });
 

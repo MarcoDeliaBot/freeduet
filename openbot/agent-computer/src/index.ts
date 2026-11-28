@@ -1669,7 +1669,9 @@ serve<StreamData>({
           return json(await workspace.listFinished());
         } catch (error) {
           return json(
-            { error: describe(error, "The finished work could not be listed.") },
+            {
+              error: describe(error, "The finished work could not be listed."),
+            },
             fileStatus(error),
           );
         }

@@ -114,7 +114,7 @@ describe("the finished-work listing route", () => {
 
   test("a refusal by the deployment's policy is the gateway's answer, not a list", async () => {
     const { hono } = appFor("owner", async () => {
-      throw new ActionRefusedError("Downloads are not allowed here.");
+      throw new ActionRefusedError("Downloads are not allowed here.", null);
     });
     const response = await hono.request("/api/computers/ada/files/finished");
     expect(response.status).toBeGreaterThanOrEqual(400);

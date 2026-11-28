@@ -230,7 +230,10 @@ export function BotProfile({
             <Separator />
             <Item
               render={
-                <Link params={{ agentId: agent.id }} to="/bots/$agentId/files" />
+                <Link
+                  params={{ agentId: agent.id }}
+                  to="/bots/$agentId/files"
+                />
               }
               size="sm"
             >

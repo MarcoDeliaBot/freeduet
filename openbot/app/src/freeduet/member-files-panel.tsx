@@ -4,7 +4,7 @@ import { useState } from "react";
 import { DuetCard, Tile } from "@/components/duet/kit";
 import { client } from "@/lib/client";
 import { useAppLanguage } from "./i18n/provider";
-import { fileSizeText, save } from "./member-file-card";
+import { save } from "./member-file-card";
 import "./light/tokens.css";
 
 /*
@@ -53,8 +53,26 @@ export function finishedFilesQueryOptions(botId: string) {
   };
 }
 
+/** "512 B", "1.2 MB": one decimal below ten of a unit, in the app language's own digits. */
+function sizeText(
+  bytes: number,
+  number: (value: number, options?: Intl.NumberFormatOptions) => string,
+): string {
+  const digits = (value: number) =>
+    number(value, { maximumFractionDigits: value < 10 ? 1 : 0 });
+  if (bytes < 1024) return `${digits(bytes)} B`;
+  const units = ["KB", "MB", "GB"];
+  let value = bytes / 1024;
+  let unit = 0;
+  while (Math.round(value) >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${digits(value)} ${units[unit]}`;
+}
+
 function FileRow({ botId, file }: { botId: string; file: FinishedFile }) {
-  const { t, language, date } = useAppLanguage();
+  const { t, number, date } = useAppLanguage();
   const [state, setState] = useState<"idle" | "busy">("idle");
   const [error, setError] = useState<string | null>(null);
   const offerable = isFinishedPath(file.path);
@@ -87,7 +105,7 @@ function FileRow({ botId, file }: { botId: string; file: FinishedFile }) {
             {file.name}
           </p>
           <p className="type-label text-duet-ink-3">
-            {t("files.size", { size: fileSizeText(file.bytes, language) })}
+            {t("files.size", { size: sizeText(file.bytes, number) })}
             {" · "}
             {t("files.modified", {
               when: date(new Date(file.modifiedMs), {
