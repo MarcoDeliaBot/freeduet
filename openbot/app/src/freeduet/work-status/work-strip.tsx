@@ -244,6 +244,8 @@ export function WaitingRing({
 }: {
   name: string;
   wait: { elapsedMs: number; stuck: boolean } | null;
+  /** No conversation is known, so the hand-off may be from another one. */
+  anyThread?: boolean;
 }) {
   const { t, number } = useAppLanguage();
   if (!wait) return null;
