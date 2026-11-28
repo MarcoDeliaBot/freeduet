@@ -34,6 +34,7 @@ import {
   completeOnboardingMutationOptions,
 } from "@/lib/onboarding/mutations";
 import { cn } from "@/lib/utils";
+import { useT } from "@/freeduet/i18n/provider";
 import { queryClient } from "@/query-client";
 
 /**
@@ -152,15 +153,16 @@ export const Route = createFileRoute("/_authed/onboarding")({
 });
 
 function WelcomeStep() {
+  const t = useT();
   return (
     <div className="w-full flex flex-col items-center justify-center">
       <h1 className="text-3xl font-semibold tracking-tight max-w-md text-center [overflow-wrap:anywhere]">
-        Welcome to {appConfig.brand.productName}
+        {t("onboarding.welcome", { product: appConfig.brand.productName })}
       </h1>
       <div className="h-8" />
       <IllustrationFrame
         className="flex min-w-0 flex-col items-center px-4 pt-12 pb-8"
-        label="A message box where you hand off tasks to your Bots"
+        label={t("onboarding.welcomeLabel")}
       >
         <MicOrb size={72} />
         {/*
@@ -184,7 +186,7 @@ function WelcomeStep() {
             compact
             className="min-w-0"
             editorClassName="text-base"
-            initialValue="Hand off tasks to your team of Bots"
+            initialValue={t("onboarding.welcomeHandOff")}
           />
         </div>
       </IllustrationFrame>
@@ -193,10 +195,11 @@ function WelcomeStep() {
 }
 
 function ComputerUseStep() {
+  const t = useT();
   return (
     <div className="w-full flex flex-col items-center justify-center">
       <h1 className="text-3xl font-semibold tracking-tight max-w-md text-center [overflow-wrap:anywhere]">
-        Each Bot has its own computer
+        {t("onboarding.computerTitle")}
       </h1>
       <div className="h-8" />
       <CapabilityDemo kind="search" />
@@ -226,6 +229,7 @@ const AGENTS_PLACEHOLDER: RosterCard[] = [
 ];
 
 function RosterStep() {
+  const t = useT();
   const { data: agents } = useQuery(agentListQueryOptions());
   const explore =
     agents?.filter((a) => !a.mine && a.visibility === "public") ?? [];
@@ -248,12 +252,19 @@ function RosterStep() {
   return (
     <div className="w-full flex flex-col items-center justify-center">
       <h1 className="text-3xl font-semibold tracking-tight max-w-md text-center [overflow-wrap:anywhere]">
-        Pick a Bot or make your own
+        {t("onboarding.rosterTitle")}
       </h1>
       <div className="h-8" />
       <IllustrationFrame
         className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4"
-        label={`Bot roster: ${roster.map((a) => `${a.name} (${a.example ? "example" : "available"})`).join(", ")}, and one of your own`}
+        label={t("onboarding.rosterLabel", {
+          list: roster
+            .map(
+              (a) =>
+                `${a.name} (${a.example ? t("onboarding.rosterExample") : t("onboarding.rosterAvailable")})`,
+            )
+            .join(", "),
+        })}
       >
         {roster.map((a) => {
           return (
@@ -273,7 +284,9 @@ function RosterStep() {
                   {a.name}
                 </h3>
                 {a.example ? (
-                  <span className="text-xs text-muted-foreground">Example</span>
+                  <span className="text-xs text-muted-foreground">
+                    {t("onboarding.exampleTag")}
+                  </span>
                 ) : null}
               </div>
             </div>
@@ -282,7 +295,7 @@ function RosterStep() {
         <div className="bg-card p-4 rounded-lg flex flex-row gap-4 items-center">
           <div className="rounded-full size-[40px] border border-foreground/30 border-dashed" />
           <h3 className="line-clamp-1 text-base font-medium tracking-tight text-foreground/70">
-            Your own Bot
+            {t("onboarding.ownBot")}
           </h3>
         </div>
       </IllustrationFrame>
@@ -334,23 +347,23 @@ function LocalStep({
   intelligence: boolean;
   telemetryOff: boolean;
 }) {
+  const t = useT();
   // The sentence about conversations and memory follows the server's answer (see the comment above).
   const kept = intelligence
-    ? "Conversations and memory are kept in CopilotKit Intelligence, in CopilotKit's cloud unless you host it yourself."
-    : "Conversations and memory stay in that same database. Nothing is sent to a hosted memory service.";
+    ? t("onboarding.localKeptIntelligence")
+    : t("onboarding.localKeptDatabase");
   return (
     <div className="w-full flex flex-col items-center justify-center">
       <h1 className="text-3xl font-semibold tracking-tight max-w-md text-center [overflow-wrap:anywhere]">
-        Where your data lives
+        {t("onboarding.localTitle")}
       </h1>
       <p className="mt-3 max-w-md text-center text-muted-foreground">
-        Your Bots and settings stay in this install's database. {kept} What you
-        ask goes to your AI model.
+        {t("onboarding.localBody", { kept })}
       </p>
       <p className="type-caption mt-3 max-w-md text-center text-duet-ink-3">
         {telemetryOff
-          ? "CopilotKit gets no usage events from this install, because telemetry is switched off here."
-          : "CopilotKit also receives usage events. Set DO_NOT_TRACK=1 to turn them off."}
+          ? t("onboarding.telemetryOff")
+          : t("onboarding.telemetryOn")}
       </p>
       <div className="h-8" />
       <CapabilityDemo kind="approval" />
@@ -362,19 +375,22 @@ function LocalStep({
 const FRAMEWORKS = WEB_HARNESSES.filter((harness) => harness.id !== "byo-url");
 
 function AgentsStep() {
+  const t = useT();
   return (
     <div className="w-full flex flex-col items-center justify-center">
       <h1 className="text-3xl font-semibold tracking-tight max-w-md text-center [overflow-wrap:anywhere]">
-        Bring the agents you already have
+        {t("onboarding.agentsTitle")}
       </h1>
       <p className="mt-3 max-w-md text-center text-muted-foreground">
-        Any AG-UI agent can join as a Bot. Add one from Bots, then New Bot.
+        {t("onboarding.agentsBody")}
       </p>
       <div className="h-8" />
       <CapabilityDemo kind="brief" />
       <IllustrationFrame
         className="mt-4 flex flex-wrap justify-center gap-2 p-4"
-        label={`Frameworks that work as Bots: ${FRAMEWORKS.map((harness) => harness.name).join(", ")}`}
+        label={t("onboarding.frameworksLabel", {
+          list: FRAMEWORKS.map((harness) => harness.name).join(", "),
+        })}
       >
         {FRAMEWORKS.map((harness) => (
           <span
@@ -399,31 +415,30 @@ function AgentsStep() {
 const MORE_FROM_COPILOTKIT = [
   {
     name: "OpenBot",
-    line: `The self-hosted assistant ${appConfig.brand.productName} is built on.`,
+    line: "onboarding.moreOpenBot",
     href: "https://www.copilotkit.ai/openbot?ref=openduet_onboarding",
   },
   {
     name: "OpenMuse",
-    line: "A personal agent with its own browser and files, on iOS, Android and web.",
+    line: "onboarding.moreOpenMuse",
     href: "https://www.copilotkit.ai/openmuse?ref=openduet_onboarding",
   },
   {
     name: "OpenDots",
-    line: "Always-on coworkers for text, calls and Slack.",
+    line: "onboarding.moreOpenDots",
     href: "https://www.copilotkit.ai/opendots?ref=openduet_onboarding",
   },
 ] as const;
 
 function OrganizationStep() {
+  const t = useT();
   return (
     <div className="w-full flex flex-col items-center justify-center">
       <h1 className="text-3xl font-semibold tracking-tight max-w-md text-center [overflow-wrap:anywhere]">
-        Deploy it for your organization
+        {t("onboarding.orgTitle")}
       </h1>
       <p className="mt-3 max-w-md text-center text-muted-foreground">
-        Run one container image, or a Helm chart for EKS, GKE or AKS. Your
-        people sign in with Google, Microsoft or Okta. Enterprise deployments
-        are available now in early access.
+        {t("onboarding.orgBody")}
       </p>
       <div className="h-8" />
       <CapabilityDemo kind="task" />
@@ -440,7 +455,7 @@ function OrganizationStep() {
         rel="noopener noreferrer"
         target="_blank"
       >
-        Get early access
+        {t("onboarding.earlyAccess")}
       </a>
       <section
         aria-labelledby="more-from-copilotkit"
@@ -450,7 +465,7 @@ function OrganizationStep() {
           className="type-sub px-1 font-medium text-duet-ink-2"
           id="more-from-copilotkit"
         >
-          More from CopilotKit
+          {t("onboarding.moreFrom")}
         </h2>
         <ul className="mt-2 overflow-hidden rounded-2xl border border-border">
           {MORE_FROM_COPILOTKIT.map((product, index) => (
@@ -469,7 +484,7 @@ function OrganizationStep() {
                     {product.name}
                   </span>
                   <span className="type-sub block text-duet-ink-2">
-                    {product.line}
+                    {t(product.line, { product: appConfig.brand.productName })}
                   </span>
                 </span>
                 <span aria-hidden className="text-duet-ink-3">
@@ -501,13 +516,14 @@ function SetupStep({
   leaveFor: (url: string) => void;
   notice?: string;
 }) {
+  const t = useT();
   return (
     <div className="mx-auto flex w-full max-w-md flex-col items-center">
       <h1 className="type-big text-center font-semibold text-duet-ink">
-        Check your setup
+        {t("onboarding.setupTitle")}
       </h1>
       <p className="type-sub mt-2.5 max-w-sm text-center text-duet-ink-2">
-        See what's ready and what needs setting up.
+        {t("onboarding.setupBody")}
       </p>
       <div className="my-6" data-onboarding-finish={finished ? "" : undefined}>
         <MicOrb size={56} state={finished ? "finished" : "idle"} />
@@ -529,6 +545,7 @@ const STEPS: OnboardingStep[] = [
 ];
 
 function RouteComponent() {
+  const t = useT();
   const navigate = useNavigate();
   const router = useRouter();
   const location = useLocation();
@@ -683,8 +700,8 @@ function RouteComponent() {
           leaveFor={(url) => leaveForConsent("apps", url)}
         />
       ),
-      primaryLabel: "Continue",
-      secondary: { label: "Not now" },
+      primaryLabel: t("onboarding.continue"),
+      secondary: { label: t("onboarding.notNow") },
       optional: true,
     },
     notify,
@@ -694,9 +711,7 @@ function RouteComponent() {
         <SetupStep
           finished={finishedTo !== null}
           notice={
-            failedOn === "setup"
-              ? "Couldn't connect your Gmail and Calendar. Try again."
-              : undefined
+            failedOn === "setup" ? t("onboarding.gmailFailed") : undefined
           }
           // Onboarding cannot stay open behind another page, so opening one finishes it first.
           openPage={(path) => finish(path)}
@@ -748,7 +763,9 @@ function RouteComponent() {
     >
       {waiting ? null : (
         <OnboardingWizard
-          finishLabel={`Start using ${appConfig.brand.productName}`}
+          finishLabel={t("onboarding.start", {
+            product: appConfig.brand.productName,
+          })}
           finishing={complete.isPending || finishedTo !== null}
           onMove={move}
           stepId={current}

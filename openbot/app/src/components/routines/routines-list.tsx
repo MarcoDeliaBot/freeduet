@@ -159,7 +159,7 @@ function Chip({
 /** Every firing of one routine, newest first, each linking to the thread it ran in. */
 function RoutineRuns({ routine }: { routine: RoutineRecord }) {
   const { t, language } = useAppLanguage();
-  const runs = useQuery(routineRunsQueryOptions(routine.id));
+  const runs = useQuery(routineRunsQueryOptions(routine.id, t));
   // Pending renders nothing: "No runs yet." would otherwise flash for the fetch.
   if (runs.isPending) return null;
   if (runs.error)
@@ -246,10 +246,14 @@ export function RoutinesList({
   embedded?: boolean;
 } = {}) {
   const { t, language } = useAppLanguage();
-  const routines = useQuery(routinesQueryOptions());
-  const setEnabled = useMutation(setRoutineEnabledMutationOptions(queryClient));
-  const deleteRoutine = useMutation(deleteRoutineMutationOptions(queryClient));
-  const runNow = useMutation(runRoutineNowMutationOptions(queryClient));
+  const routines = useQuery(routinesQueryOptions(t));
+  const setEnabled = useMutation(
+    setRoutineEnabledMutationOptions(queryClient, t),
+  );
+  const deleteRoutine = useMutation(
+    deleteRoutineMutationOptions(queryClient, t),
+  );
+  const runNow = useMutation(runRoutineNowMutationOptions(queryClient, t));
   /** Which routine's run history is open. One at a time keeps the list scannable. */
   const [historyId, setHistoryId] = useState<string | null>(null);
   /** The routine a delete is being confirmed for, or null. Its own dialog rather than one per row. */

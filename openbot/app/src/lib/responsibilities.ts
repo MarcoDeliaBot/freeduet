@@ -3,6 +3,7 @@ import {
   type QueryClient,
   queryOptions,
 } from "@tanstack/react-query";
+import { englishT, type T } from "@/freeduet/i18n/provider";
 import { client } from "@/lib/client";
 import { sharedUseKeys } from "@/lib/plugins/shared-use";
 
@@ -56,87 +57,96 @@ export const responsibilityKeys = {
   bindings: ["responsibilities", "github-bindings"] as const,
   triggers: (id: string) => ["responsibilities", id, "triggers"] as const,
 };
-export function responsibilitiesQueryOptions() {
+export function responsibilitiesQueryOptions(t: T = englishT) {
   return queryOptions({
     queryKey: responsibilityKeys.all,
     queryFn: (): Promise<ResponsibilityRecord[]> =>
       client("/api/responsibilities", "responsibilities", {
-        fallback: "Could not load responsibilities",
+        fallback: t("resp.err.load"),
       }),
     refetchInterval: 10_000,
   });
 }
-export function responsibilityRunsQueryOptions(id: string) {
+export function responsibilityRunsQueryOptions(id: string, t: T = englishT) {
   return queryOptions({
     queryKey: responsibilityKeys.runs(id),
     queryFn: (): Promise<ResponsibilityRunRecord[]> =>
       client(`/api/responsibilities/${encodeURIComponent(id)}/runs`, "runs", {
-        fallback: "Could not load responsibility runs",
+        fallback: t("resp.err.runs"),
       }),
     refetchInterval: 10_000,
   });
 }
-export function githubBindingsQueryOptions() {
+export function githubBindingsQueryOptions(t: T = englishT) {
   return queryOptions({
     queryKey: responsibilityKeys.bindings,
     queryFn: (): Promise<GithubBindingRecord[]> =>
       client("/api/responsibilities/sources/github", "bindings", {
-        fallback: "Could not load GitHub event sources",
+        fallback: t("resp.err.github"),
       }),
   });
 }
-export function createResponsibility(input: {
-  agentId: string;
-  channelId: string;
-  title: string;
-  instruction: string;
-  successCriteria: string;
-  subscriptions: ResponsibilityRecord["subscriptions"];
-}) {
+export function createResponsibility(
+  input: {
+    agentId: string;
+    channelId: string;
+    title: string;
+    instruction: string;
+    successCriteria: string;
+    subscriptions: ResponsibilityRecord["subscriptions"];
+  },
+  t: T = englishT,
+) {
   return client<ResponsibilityRecord>(
     "/api/responsibilities",
     "responsibility",
     {
       method: "POST",
       body: input,
-      fallback: "Could not create responsibility",
+      fallback: t("resp.err.create"),
     },
   );
 }
 export function updateResponsibility(
   id: string,
   patch: { title: string; instruction: string; successCriteria: string },
+  t: T = englishT,
 ) {
   return client(`/api/responsibilities/${encodeURIComponent(id)}`, {
     method: "PATCH",
     body: patch,
-    fallback: "Could not update responsibility",
+    fallback: t("resp.err.update"),
   });
 }
 export function responsibilityAction(
   id: string,
   action: "pause" | "resume" | "complete" | "run",
+  t: T = englishT,
 ) {
   return client(`/api/responsibilities/${encodeURIComponent(id)}/${action}`, {
     method: "POST",
-    fallback: "Could not change responsibility",
+    fallback: t("resp.err.change"),
   });
 }
-export function createGithubBinding(repository: string, secret: string) {
+export function createGithubBinding(
+  repository: string,
+  secret: string,
+  t: T = englishT,
+) {
   return client<GithubBindingRecord>(
     "/api/responsibilities/sources/github",
     "binding",
     {
       method: "POST",
       body: { repository, secret },
-      fallback: "Could not connect GitHub events",
+      fallback: t("resp.err.connectGithub"),
     },
   );
 }
-export function removeGithubBinding(id: string) {
+export function removeGithubBinding(id: string, t: T = englishT) {
   return client(
     `/api/responsibilities/sources/github/${encodeURIComponent(id)}`,
-    { method: "DELETE", fallback: "Could not disconnect GitHub events" },
+    { method: "DELETE", fallback: t("resp.err.disconnectGithub") },
   );
 }
 
@@ -182,24 +192,25 @@ export type TriggerRecord = {
   emailConfigured?: boolean;
   createdAt: string;
 };
-export function triggersQueryOptions(id: string) {
+export function triggersQueryOptions(id: string, t: T = englishT) {
   return queryOptions({
     queryKey: responsibilityKeys.triggers(id),
     queryFn: (): Promise<TriggerRecord[]> =>
       client(
         `/api/responsibilities/${encodeURIComponent(id)}/triggers`,
         "triggers",
-        { fallback: "Could not load triggers" },
+        { fallback: t("resp.err.triggers") },
       ),
   });
 }
 export async function createTrigger(
   responsibilityId: string,
   input: { config: TriggerConfig; secret?: string },
+  t: T = englishT,
 ) {
   const response = await client(
     `/api/responsibilities/${encodeURIComponent(responsibilityId)}/triggers`,
-    { method: "POST", body: input, fallback: "Could not add the trigger" },
+    { method: "POST", body: input, fallback: t("resp.err.addTrigger") },
   );
   return (await response.json()) as {
     trigger: TriggerRecord;
@@ -207,13 +218,17 @@ export async function createTrigger(
   };
 }
 /** Rotate a generated secret, or store the provider's newly pasted one. */
-export async function setTriggerSecret(triggerId: string, secret?: string) {
+export async function setTriggerSecret(
+  triggerId: string,
+  secret?: string,
+  t: T = englishT,
+) {
   const response = await client(
     `/api/responsibilities/triggers/${encodeURIComponent(triggerId)}/secret`,
     {
       method: "POST",
       body: secret ? { secret } : {},
-      fallback: "Could not change the trigger secret",
+      fallback: t("resp.err.secretChange"),
     },
   );
   return (await response.json()) as {
@@ -221,27 +236,31 @@ export async function setTriggerSecret(triggerId: string, secret?: string) {
     secret: string | null;
   };
 }
-export function revealTriggerSecret(triggerId: string) {
+export function revealTriggerSecret(triggerId: string, t: T = englishT) {
   return client<string>(
     `/api/responsibilities/triggers/${encodeURIComponent(triggerId)}/secret`,
     "secret",
-    { fallback: "Could not read the trigger secret" },
+    { fallback: t("resp.err.secretRead") },
   );
 }
-export function removeTrigger(triggerId: string) {
+export function removeTrigger(triggerId: string, t: T = englishT) {
   return client(
     `/api/responsibilities/triggers/${encodeURIComponent(triggerId)}`,
-    { method: "DELETE", fallback: "Could not remove the trigger" },
+    { method: "DELETE", fallback: t("resp.err.removeTrigger") },
   );
 }
 
-export function setTriggerEnabled(triggerId: string, enabled: boolean) {
+export function setTriggerEnabled(
+  triggerId: string,
+  enabled: boolean,
+  t: T = englishT,
+) {
   return client(
     `/api/responsibilities/triggers/${encodeURIComponent(triggerId)}/enabled`,
     {
       method: "PUT",
       body: { enabled },
-      fallback: "Could not change the trigger",
+      fallback: t("resp.err.changeTrigger"),
     },
   );
 }
@@ -249,7 +268,10 @@ export function setTriggerEnabled(triggerId: string, enabled: boolean) {
 const settleGithub = (queryClient: QueryClient) => () =>
   queryClient.invalidateQueries({ queryKey: responsibilityKeys.bindings });
 
-export function createGithubBindingMutationOptions(queryClient: QueryClient) {
+export function createGithubBindingMutationOptions(
+  queryClient: QueryClient,
+  t: T = englishT,
+) {
   return mutationOptions({
     mutationFn: ({
       repository,
@@ -257,13 +279,16 @@ export function createGithubBindingMutationOptions(queryClient: QueryClient) {
     }: {
       repository: string;
       secret: string;
-    }) => createGithubBinding(repository, secret),
+    }) => createGithubBinding(repository, secret, t),
     onSettled: settleGithub(queryClient),
   });
 }
-export function removeGithubBindingMutationOptions(queryClient: QueryClient) {
+export function removeGithubBindingMutationOptions(
+  queryClient: QueryClient,
+  t: T = englishT,
+) {
   return mutationOptions({
-    mutationFn: removeGithubBinding,
+    mutationFn: (id: string) => removeGithubBinding(id, t),
     onSettled: settleGithub(queryClient),
   });
 }
@@ -271,14 +296,21 @@ export function removeGithubBindingMutationOptions(queryClient: QueryClient) {
 const settleResponsibilities = (queryClient: QueryClient) => () =>
   queryClient.invalidateQueries({ queryKey: responsibilityKeys.all });
 
-export function createResponsibilityMutationOptions(queryClient: QueryClient) {
+export function createResponsibilityMutationOptions(
+  queryClient: QueryClient,
+  t: T = englishT,
+) {
   return mutationOptions({
-    mutationFn: createResponsibility,
+    mutationFn: (input: Parameters<typeof createResponsibility>[0]) =>
+      createResponsibility(input, t),
     onSuccess: settleResponsibilities(queryClient),
   });
 }
 
-export function updateResponsibilityMutationOptions(queryClient: QueryClient) {
+export function updateResponsibilityMutationOptions(
+  queryClient: QueryClient,
+  t: T = englishT,
+) {
   return mutationOptions({
     mutationFn: ({
       id,
@@ -286,13 +318,16 @@ export function updateResponsibilityMutationOptions(queryClient: QueryClient) {
     }: {
       id: string;
       patch: { title: string; instruction: string; successCriteria: string };
-    }) => updateResponsibility(id, patch),
+    }) => updateResponsibility(id, patch, t),
     onSuccess: settleResponsibilities(queryClient),
   });
 }
 
 /** Pause, resume, complete or run a responsibility now. */
-export function responsibilityActionMutationOptions(queryClient: QueryClient) {
+export function responsibilityActionMutationOptions(
+  queryClient: QueryClient,
+  t: T = englishT,
+) {
   return mutationOptions({
     mutationFn: ({
       id,
@@ -300,7 +335,7 @@ export function responsibilityActionMutationOptions(queryClient: QueryClient) {
     }: {
       id: string;
       action: "pause" | "resume" | "complete" | "run";
-    }) => responsibilityAction(id, action),
+    }) => responsibilityAction(id, action, t),
     onSuccess: settleResponsibilities(queryClient),
   });
 }
@@ -314,7 +349,10 @@ const settleTriggers = (queryClient: QueryClient, responsibilityId: string) =>
  * Add a trigger. A new trigger is a new way a shared app gets called, so the approval it needs may
  * have changed: the shared-use requests are refreshed alongside the triggers.
  */
-export function createTriggerMutationOptions(queryClient: QueryClient) {
+export function createTriggerMutationOptions(
+  queryClient: QueryClient,
+  t: T = englishT,
+) {
   return mutationOptions({
     mutationFn: ({
       responsibilityId,
@@ -322,7 +360,7 @@ export function createTriggerMutationOptions(queryClient: QueryClient) {
     }: {
       responsibilityId: string;
       input: { config: TriggerConfig; secret?: string };
-    }) => createTrigger(responsibilityId, input),
+    }) => createTrigger(responsibilityId, input, t),
     onSuccess: async (_created, { responsibilityId }) => {
       await settleTriggers(queryClient, responsibilityId);
       await queryClient.invalidateQueries({
@@ -337,12 +375,17 @@ export function createTriggerMutationOptions(queryClient: QueryClient) {
  * nothing and caches nothing, so there is nothing to invalidate, and the secret lives only in the
  * row that asked for it.
  */
-export function revealTriggerSecretMutationOptions() {
-  return mutationOptions({ mutationFn: revealTriggerSecret });
+export function revealTriggerSecretMutationOptions(t: T = englishT) {
+  return mutationOptions({
+    mutationFn: (triggerId: string) => revealTriggerSecret(triggerId, t),
+  });
 }
 
 /** Rotate a generated secret, or store the provider's newly pasted one. */
-export function setTriggerSecretMutationOptions(queryClient: QueryClient) {
+export function setTriggerSecretMutationOptions(
+  queryClient: QueryClient,
+  t: T = englishT,
+) {
   return mutationOptions({
     mutationFn: ({
       trigger,
@@ -350,23 +393,29 @@ export function setTriggerSecretMutationOptions(queryClient: QueryClient) {
     }: {
       trigger: Pick<TriggerRecord, "id" | "responsibilityId">;
       secret?: string;
-    }) => setTriggerSecret(trigger.id, secret),
+    }) => setTriggerSecret(trigger.id, secret, t),
     onSuccess: (_result, { trigger }) =>
       settleTriggers(queryClient, trigger.responsibilityId),
   });
 }
 
-export function removeTriggerMutationOptions(queryClient: QueryClient) {
+export function removeTriggerMutationOptions(
+  queryClient: QueryClient,
+  t: T = englishT,
+) {
   return mutationOptions({
     mutationFn: (trigger: Pick<TriggerRecord, "id" | "responsibilityId">) =>
-      removeTrigger(trigger.id),
+      removeTrigger(trigger.id, t),
     onSuccess: (_result, trigger) =>
       settleTriggers(queryClient, trigger.responsibilityId),
   });
 }
 
 /** Switch a trigger on or off; a paused trigger acknowledges deliveries but never starts a run. */
-export function setTriggerEnabledMutationOptions(queryClient: QueryClient) {
+export function setTriggerEnabledMutationOptions(
+  queryClient: QueryClient,
+  t: T = englishT,
+) {
   return mutationOptions({
     mutationFn: ({
       trigger,
@@ -374,7 +423,7 @@ export function setTriggerEnabledMutationOptions(queryClient: QueryClient) {
     }: {
       trigger: Pick<TriggerRecord, "id" | "responsibilityId">;
       enabled: boolean;
-    }) => setTriggerEnabled(trigger.id, enabled),
+    }) => setTriggerEnabled(trigger.id, enabled, t),
     onSuccess: (_result, { trigger }) =>
       settleTriggers(queryClient, trigger.responsibilityId),
   });

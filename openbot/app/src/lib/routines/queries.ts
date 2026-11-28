@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
+import { englishT, type T } from "@/freeduet/i18n/provider";
 import { client } from "@/lib/client";
 
 /**
@@ -71,12 +72,12 @@ export type RoutineRunRecord = {
   missed: boolean;
 };
 
-export function routineRunsQueryOptions(id: string) {
+export function routineRunsQueryOptions(id: string, t: T = englishT) {
   return queryOptions({
     queryKey: routineKeys.runs(id),
     queryFn: (): Promise<RoutineRunRecord[]> =>
       client(`/api/routines/${encodeURIComponent(id)}/runs`, "runs", {
-        fallback: "This routine's runs could not be loaded.",
+        fallback: t("routines.err.runs"),
       }),
     // A run in flight settles within minutes; poll so Running turns into its outcome.
     refetchInterval: 5_000,
@@ -89,12 +90,12 @@ export function routineRunsQueryOptions(id: string) {
  * Owner-scoped by the server on every read; there is no version of this that takes an owner id,
  * the same way `connectionsQueryOptions` answers only for whoever is asking.
  */
-export function routinesQueryOptions() {
+export function routinesQueryOptions(t: T = englishT) {
   return queryOptions({
     queryKey: routineKeys.list(),
     queryFn: async (): Promise<RoutinesPage> => {
       const response = await client("/api/routines", {
-        fallback: "Your routines could not be loaded.",
+        fallback: t("routines.err.list"),
       });
       const body = (await response.json()) as Partial<RoutinesPage>;
       return {

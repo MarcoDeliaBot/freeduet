@@ -1,16 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { DuetCard } from "@/components/duet/kit";
+import { useT } from "@/freeduet/i18n/provider";
 import { deploymentCapabilitiesQueryOptions } from "@/lib/deployment/queries";
 import { tryClient } from "@/lib/client";
 import {
-  CARD_WORDS,
+  cardWordsOf,
   type CheckAnswer,
   type CheckOutcome,
   checkOutcome,
   type ClaudeProblem,
   OUTCOME_TONE,
-  OUTCOME_WORDS,
+  outcomeWordsOf,
 } from "./claude-connect";
 
 /*
@@ -46,6 +47,7 @@ export function ClaudeConnectCard({
   problem: ClaudeProblem;
   reason: string;
 }) {
+  const t = useT();
   const capabilities = useQuery(deploymentCapabilitiesQueryOptions());
   const [checking, setChecking] = useState(false);
   const [outcome, setOutcome] = useState<CheckOutcome | null>(null);
@@ -54,7 +56,7 @@ export function ClaudeConnectCard({
   if (!capabilities.data || capabilities.data.deployment === "hosted")
     return <Plain reason={reason} />;
 
-  const words = CARD_WORDS[problem];
+  const words = cardWordsOf(problem, t);
 
   const checkAgain = async () => {
     setChecking(true);
@@ -87,7 +89,7 @@ export function ClaudeConnectCard({
 
   return (
     <DuetCard
-      aria-label="Connect your Claude plan"
+      aria-label={t("claude.aria")}
       className="px-4 py-3"
       data-testid="claude-connect-card"
       role="region"
@@ -107,14 +109,14 @@ export function ClaudeConnectCard({
           onClick={checkAgain}
           type="button"
         >
-          {checking ? "Checking" : "Check again"}
+          {checking ? t("claude.checking") : t("claude.checkAgain")}
         </button>
         <button
           className={`${BUTTON} bg-duet-black/5 text-duet-ink hover:brightness-95`}
           onClick={copy}
           type="button"
         >
-          {copied ? "Copied" : "Copy the command"}
+          {copied ? t("claude.copied") : t("claude.copy")}
         </button>
       </div>
       {outcome ? (
@@ -122,7 +124,7 @@ export function ClaudeConnectCard({
           className={`type-label mt-2 font-semibold ${OUTCOME_TONE[outcome]}`}
           role="status"
         >
-          {OUTCOME_WORDS[outcome]}
+          {outcomeWordsOf(outcome, t)}
         </p>
       ) : null}
     </DuetCard>

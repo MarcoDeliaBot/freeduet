@@ -1,0 +1,2 @@
+# site/app holds the source of the English page (built to /index.html) and is not a page, so /app/ goes to the home page.
+/app/*  /  301
