@@ -7,6 +7,9 @@
  * Claude is installed and signed in and nothing else.
  */
 
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { englishT, type T } from "@/freeduet/i18n/provider";
+
 /** What the failed turn's sentence says about Claude: not connected, not installed, or neither (null). */
 export type ClaudeProblem = "not_connected" | "not_installed";
 
@@ -40,6 +43,24 @@ export const CARD_WORDS = {
   },
 } as const;
 
+/** The card's words in the app's language; `CARD_WORDS` is the same text in English. */
+export function cardWordsOf(problem: ClaudeProblem, t: T = englishT) {
+  const base = CARD_WORDS[problem];
+  return {
+    title: t(
+      problem === "not_connected"
+        ? "claude.notConnected.title"
+        : "claude.notInstalled.title",
+    ),
+    body: t(
+      problem === "not_connected"
+        ? "claude.notConnected.body"
+        : "claude.notInstalled.body",
+    ),
+    command: base.command,
+  };
+}
+
 export type CheckAnswer = {
   reason: "off" | "not_set_up" | "unreachable" | null;
   installed: boolean | null;
@@ -68,6 +89,21 @@ export function checkOutcome(
   if (body.signedIn === true) return "connected";
   if (body.signedIn === false) return "not_connected";
   return "waiting";
+}
+
+const OUTCOME_IDS: Record<CheckOutcome, MessageId> = {
+  connected: "claude.outcome.connected",
+  not_connected: "claude.outcome.notConnected",
+  not_installed: "claude.outcome.notInstalled",
+  waiting: "claude.outcome.waiting",
+  elsewhere: "claude.outcome.elsewhere",
+  hosted: "claude.outcome.hosted",
+  no_engine: "claude.outcome.noEngine",
+};
+
+/** The sentence after Check again, in the app's language; `OUTCOME_WORDS` is the same text in English. */
+export function outcomeWordsOf(outcome: CheckOutcome, t: T = englishT): string {
+  return t(OUTCOME_IDS[outcome]);
 }
 
 /**

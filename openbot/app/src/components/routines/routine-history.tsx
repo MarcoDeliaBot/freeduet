@@ -4,7 +4,7 @@ import { Fragment } from "react";
 import { PageEmpty, PageRows } from "@/components/layout/page-shell";
 import { Separator } from "@/components/ui/separator";
 import type { MessageId } from "@/freeduet/i18n/catalogs";
-import { useT } from "@/freeduet/i18n/provider";
+import { useAppLanguage, useT } from "@/freeduet/i18n/provider";
 import type { RoutineRecord, RoutineRunRecord } from "@/lib/routines/queries";
 import {
   type OwnedRunRecord,
@@ -92,7 +92,7 @@ export function RoutineHistory({
 }) {
   const t = useT();
   const names = useBotNames();
-  const history = useQuery(routineHistoryQueryOptions(agentId));
+  const history = useQuery(routineHistoryQueryOptions(agentId, t));
   if (history.isPending) return null;
   if (history.error) {
     return (
@@ -138,7 +138,7 @@ function HistoryRow({
   routine: RoutineRecord | undefined;
   memberName: string;
 }) {
-  const t = useT();
+  const { t, language } = useAppLanguage();
   const status = runStatusOf(run);
   return (
     <div className="flex flex-col gap-1 py-3">
@@ -150,8 +150,8 @@ function HistoryRow({
           {t(status.key)}
         </span>
         <span className="text-muted-foreground">
-          {stampOf(new Date(run.startedAt))} · {t(SOURCE_KEY[run.source])} ·{" "}
-          {memberName}
+          {stampOf(new Date(run.startedAt), language)} ·{" "}
+          {t(SOURCE_KEY[run.source])} · {memberName}
         </span>
       </div>
       {routine ? (

@@ -1,3 +1,5 @@
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { englishT, type T } from "@/freeduet/i18n/provider";
 import type { RoutineRecord } from "./queries";
 
 /**
@@ -152,9 +154,10 @@ export function weekDays(now: Date, zone: string): WeekDay[] {
 export function routineTitle(
   routine: Pick<RoutineRecord, "instruction">,
   limit = 28,
+  t: T = englishT,
 ): string {
   const line = (routine.instruction.split("\n")[0] ?? "").trim();
-  if (line === "") return "Routine";
+  if (line === "") return t("routines.untitled");
   return line.length <= limit ? line : `${line.slice(0, limit - 1).trimEnd()}…`;
 }
 
@@ -411,13 +414,13 @@ export function dayAndClock(at: Date, zone: string, locale?: string): string {
   return `${day} ${clock}`;
 }
 
-const STATUS_WORDS: Record<RunStatus, string> = {
-  upcoming: "",
-  done: "done",
-  failed: "failed",
-  running: "running now",
-  pending: "due, not yet recorded",
-  missed: "missed",
+const STATUS_WORDS: Record<RunStatus, MessageId | null> = {
+  upcoming: null,
+  done: "routines.blk.done",
+  failed: "routines.blk.failed",
+  running: "routines.blk.running",
+  pending: "routines.blk.pending",
+  missed: "routines.blk.missed",
 };
 
 /**
@@ -429,11 +432,16 @@ export function blockLabel(
   memberName: string,
   zone: string,
   locale?: string,
+  t: T = englishT,
 ): string {
-  const parts = [routineTitle(block.routine), memberName];
+  const parts = [routineTitle(block.routine, undefined, t), memberName];
   if (block.kind === "summary") {
     parts.push(
-      `${block.count} runs on ${dayAndClock(block.at, zone, locale).split(" ")[0]}, about every ${block.everyMinutes} minutes`,
+      t("routines.blk.summary", {
+        count: block.count,
+        day: dayAndClock(block.at, zone, locale).split(" ")[0] ?? "",
+        minutes: block.everyMinutes ?? 0,
+      }),
     );
   } else {
     parts.push(dayAndClock(block.at, zone, locale));
@@ -442,9 +450,14 @@ export function blockLabel(
   const status =
     block.kind === "summary"
       ? block.doneCount > 0
-        ? `${block.doneCount} of ${block.count} done`
+        ? t("routines.blk.doneOf", {
+            done: block.doneCount,
+            count: block.count,
+          })
         : ""
-      : STATUS_WORDS[block.status];
+      : STATUS_WORDS[block.status]
+        ? t(STATUS_WORDS[block.status] as MessageId)
+        : "";
   if (status) parts.push(status);
   return parts.join(", ");
 }

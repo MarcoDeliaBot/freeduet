@@ -2,6 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { DuetIcon } from "@/components/duet/icons";
+import { englishT, type T, useT } from "@/freeduet/i18n/provider";
 import { ChannelTagOf } from "@/components/duet/channel-tag";
 import { DuetCard, Tile } from "@/components/duet/kit";
 import type { AgentProfile } from "@/lib/agents/queries";
@@ -72,13 +73,14 @@ export function UpNextView({
   order: SortOrder;
   query: string;
 }) {
-  const suggestions = useQuery(proactiveSuggestionsQueryOptions());
-  const settings = useQuery(proactiveSettingsQueryOptions());
+  const t = useT();
+  const suggestions = useQuery(proactiveSuggestionsQueryOptions(t));
+  const settings = useQuery(proactiveSettingsQueryOptions(t));
   const activity = useQuery({
     ...botActivityQueryOptions(bot?.id ?? ""),
     enabled: Boolean(bot),
   });
-  const act = useMutation(resolveSuggestionMutationOptions(queryClient));
+  const act = useMutation(resolveSuggestionMutationOptions(queryClient, t));
   const reduced = useReducedMotionPreference();
   const cancel = useMutation(cancelFollowUpMutationOptions(queryClient));
   // Who took the last started suggestion, said once it has gone from the list.
@@ -97,7 +99,7 @@ export function UpNextView({
     : undefined;
   const researchOff = Boolean(bot && settings.data && !setting?.enabled);
   const botName = (id: string) =>
-    agents?.find((agent) => agent.id === id)?.name ?? "Your Bot";
+    agents?.find((agent) => agent.id === id)?.name ?? t("upnext.yourBot");
 
   if (suggestions.isPending) return null;
   const open = suggestions.data ?? [];
@@ -116,10 +118,10 @@ export function UpNextView({
         control: item.cancellable ? (
           <RowButton
             busy={cancel.isPending && cancel.variables?.id === item.id}
-            label={`Cancel ${item.title}`}
+            label={t("upnext.cancelNamed", { title: item.title })}
             onClick={() => cancel.mutate({ agentId: bot.id, id: item.id })}
           >
-            Cancel
+            {t("upnext.cancel")}
           </RowButton>
         ) : undefined,
       }))
@@ -150,7 +152,7 @@ export function UpNextView({
     <div className="flex flex-col gap-5">
       {suggestions.error ? (
         <p className="type-sub px-1 text-duet-red" role="alert">
-          Couldn't load Up next. Reload the page.
+          {t("upnext.loadError")}
         </p>
       ) : null}
       {open.length === 0 && !suggestions.error ? (
@@ -159,10 +161,10 @@ export function UpNextView({
         ) : null
       ) : shown.length === 0 && query.trim() ? (
         <p className="type-sub px-1 text-duet-ink-2" role="status">
-          Nothing matches “{query.trim()}”.
+          {t("upnext.noMatch", { query: query.trim() })}
         </p>
       ) : (
-        <section aria-label="Up next">
+        <section aria-label={t("upnext.aria")}>
           {/*
            * Positioned, so a card on its way out can be lifted out of the list's flow. Drawn afresh
            * for each search, so typing narrows the list at once rather than fading every card that
@@ -213,7 +215,7 @@ export function UpNextView({
           role="status"
           transition={{ duration: DURATION.swap, ease: EASE_OUT }}
         >
-          Started. {started} is on it.
+          {t("upnext.started", { name: started })}
         </motion.p>
       ) : null}
       {researchOff && bot && open.length > 0 ? (
@@ -223,7 +225,7 @@ export function UpNextView({
       ) : null}
       {activity.error && bot ? (
         <p className="type-sub px-1 text-duet-red" role="alert">
-          Couldn't load what {bot.name} has lined up. Reload the page.
+          {t("upnext.activityError", { name: bot.name })}
         </p>
       ) : null}
       {cancel.error ? (
@@ -232,7 +234,11 @@ export function UpNextView({
         </p>
       ) : null}
       {upcoming.length ? (
-        <ActivityCard rows={upcoming} showTime={false} title="Coming up" />
+        <ActivityCard
+          rows={upcoming}
+          showTime={false}
+          title={t("upnext.comingUp")}
+        />
       ) : null}
     </div>
   );
@@ -256,9 +262,12 @@ function UpNextCard({
   error: string | null;
   onAnswer: AnswerSuggestion;
 }) {
+  const t = useT();
   const app =
     suggestion.sourceApp || suggestion.sourceLink
-      ? `From ${suggestion.sourceApp ?? "a connected app"}`
+      ? t("upnext.fromApp", {
+          app: suggestion.sourceApp ?? t("upnext.aConnectedApp"),
+        })
       : null;
   const source = suggestion.sourceLink ? (
     <a
@@ -273,7 +282,7 @@ function UpNextCard({
     app
   );
   const tag = [
-    personAsked(suggestion) ? "You asked" : null,
+    personAsked(suggestion) ? t("upnext.youAsked") : null,
     from,
     source,
   ].filter(Boolean);
@@ -310,19 +319,19 @@ function UpNextCard({
         ) : null}
         <div className="mt-2.5 flex gap-2">
           <SmallPill
-            aria-label={`Hide ${suggestion.title}`}
+            aria-label={t("upnext.hideNamed", { title: suggestion.title })}
             disabled={busy}
             onClick={() => onAnswer("dismiss")}
           >
-            Hide
+            {t("upnext.hide")}
           </SmallPill>
           <SmallPill
-            aria-label={`Start ${suggestion.title}`}
+            aria-label={t("upnext.startNamed", { title: suggestion.title })}
             disabled={busy}
             onClick={() => onAnswer("start")}
             primary
           >
-            Start
+            {t("upnext.start")}
           </SmallPill>
         </div>
       </DuetCard>
@@ -335,7 +344,7 @@ function UpNextCard({
  * Tasks lands where they already talk to it. With none yet, one is started, as Chat's first message
  * would.
  */
-function useChatChannel(bot: AgentProfile) {
+function useChatChannel(bot: AgentProfile, t: T = englishT) {
   const channels = useInfiniteQuery(channelListQueryOptions());
   const createChannel = useMutation(createChannelMutationOptions(queryClient));
   const find = async () => {
@@ -354,7 +363,7 @@ function useChatChannel(bot: AgentProfile) {
     if (found) return found.id;
     // Starting a second conversation would take Chat's place, so only start one knowing there is none.
     if (!roster.data || roster.isFetchNextPageError)
-      throw new Error("Couldn't load your conversations. Reload the page.");
+      throw new Error(t("upnext.conversationsError"));
     return (await createChannel.mutateAsync([bot.id])).id;
   };
   return { find, pending: channels.isPending };
@@ -374,17 +383,18 @@ type Look =
  * take this card's place.
  */
 function TakeOffYourPlate({ bot }: { bot: AgentProfile }) {
+  const t = useT();
   const [look, setLook] = useState<Look | null>(null);
   const looking = look?.kind === "looking" ? look : null;
   const poll = looking ? { refetchInterval: LOOKING_POLL_MS } : {};
-  const settings = useQuery({ ...proactiveSettingsQueryOptions(), ...poll });
+  const settings = useQuery({ ...proactiveSettingsQueryOptions(t), ...poll });
   // Read as often while looking, so suggestions that arrive replace this card at once.
-  useQuery({ ...proactiveSuggestionsQueryOptions(), ...poll });
-  const turnOn = useMutation(turnOnResearchMutationOptions(queryClient));
+  useQuery({ ...proactiveSuggestionsQueryOptions(t), ...poll });
+  const turnOn = useMutation(turnOnResearchMutationOptions(queryClient, t));
   const change = useMutation(
-    changeProactiveSettingMutationOptions(queryClient),
+    changeProactiveSettingMutationOptions(queryClient, t),
   );
-  const chat = useChatChannel(bot);
+  const chat = useChatChannel(bot, t);
   const setting = settings.data?.find((row) => row.agentId === bot.id);
 
   // The check-in started after Show me and has finished: say what came of it.
@@ -435,16 +445,14 @@ function TakeOffYourPlate({ bot }: { bot: AgentProfile }) {
 
   return (
     <section
-      aria-label="Up next"
+      aria-label={t("upnext.aria")}
       className="flex flex-col items-center px-6 pt-10 text-center"
     >
       <h2 className="type-title font-semibold text-duet-ink">
-        What can I take off your plate?
+        {t("upnext.plateTitle")}
       </h2>
-      <p className="type-sub mt-1.5 text-duet-ink-2">
-        I'll look through your mail and calendar for things I can handle.
-      </p>
-      <ul aria-label="What it checks" className="mt-5 flex gap-3">
+      <p className="type-sub mt-1.5 text-duet-ink-2">{t("upnext.plateBody")}</p>
+      <ul aria-label={t("upnext.checks")} className="mt-5 flex gap-3">
         <AppMark icon="mail" name="Gmail" tone="red" />
         <AppMark icon="calendar" name="Calendar" tone="blue" />
       </ul>
@@ -454,7 +462,7 @@ function TakeOffYourPlate({ bot }: { bot: AgentProfile }) {
             className="type-row flex h-[46px] items-center font-semibold text-duet-ink-2"
             role="status"
           >
-            <span className="tool-line-running">Looking…</span>
+            <span className="tool-line-running">{t("upnext.looking")}</span>
           </p>
         ) : (
           <button
@@ -463,7 +471,7 @@ function TakeOffYourPlate({ bot }: { bot: AgentProfile }) {
             onClick={showMe}
             type="button"
           >
-            Show me
+            {t("upnext.showMe")}
             <DuetIcon name="arrowRight" size={18} stroke={2.4} />
           </button>
         )}
@@ -473,15 +481,15 @@ function TakeOffYourPlate({ bot }: { bot: AgentProfile }) {
           </p>
         ) : look?.kind === "nothing" ? (
           <p className="type-label text-duet-ink-2" role="status">
-            Nothing new right now. I'll keep checking.
+            {t("upnext.nothingNew")}
           </p>
         ) : look?.kind === "failed" ? (
           <p className="type-label text-duet-red" role="alert">
-            Couldn't check just now. Try again.
+            {t("upnext.checkFailed")}
           </p>
         ) : look?.kind === "slow" ? (
           <p className="type-label text-duet-ink-2" role="status">
-            This is taking a while. New tasks show up here.
+            {t("upnext.slow")}
           </p>
         ) : null}
       </div>
@@ -519,19 +527,17 @@ function ResearchOptIn({
   bot: AgentProfile;
   setting: ProactiveSetting | undefined;
 }) {
-  const chat = useChatChannel(bot);
-  const turnOn = useMutation(turnOnResearchMutationOptions(queryClient));
+  const t = useT();
+  const chat = useChatChannel(bot, t);
+  const turnOn = useMutation(turnOnResearchMutationOptions(queryClient, t));
   return (
     <div className="flex gap-[13px] px-4 py-3">
       <Tile icon="bulb" tone="violet" />
       <div className="min-w-0 flex-1">
         <p className="type-row font-semibold text-duet-ink">
-          Let {bot.name} suggest tasks
+          {t("upnext.suggestTitle", { name: bot.name })}
         </p>
-        <p className="type-sub text-duet-ink-2">
-          It checks your connected apps every hour and writes to you when
-          something needs you. It can only read.
-        </p>
+        <p className="type-sub text-duet-ink-2">{t("upnext.suggestBody")}</p>
         {turnOn.error ? (
           <p className="type-label mt-1 text-duet-red" role="alert">
             {turnOn.error.message}
@@ -540,7 +546,7 @@ function ResearchOptIn({
         <div className="mt-2.5 flex">
           <RowButton
             busy={turnOn.isPending || chat.pending}
-            label="Turn on"
+            label={t("upnext.turnOn")}
             onClick={() =>
               turnOn.mutate({
                 setting,
@@ -551,7 +557,7 @@ function ResearchOptIn({
             }
             primary
           >
-            Turn on
+            {t("upnext.turnOn")}
           </RowButton>
         </div>
       </div>

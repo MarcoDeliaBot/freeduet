@@ -7,6 +7,8 @@ import { DuetIcon, type DuetIconName } from "@/components/duet/icons";
 import { DuetCard } from "@/components/duet/kit";
 import { PageCard, previewKind } from "@/components/duet/page-card";
 import { TaskStatusPill } from "@/components/duet/task-card";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { useT } from "@/freeduet/i18n/provider";
 import { primaryBot } from "@/lib/agents/primary-bot";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import {
@@ -33,37 +35,65 @@ import { ScreenScroll, ScreenTitle } from "./screen";
 export const MAKE_KINDS: readonly {
   id: PageKind;
   label: string;
+  /** The same words in the catalogue, for what the person reads. */
+  labelId: MessageId;
+  /** The kind named inside a sentence, in lower case. */
+  plainId: MessageId;
+  starterId: MessageId;
   icon: DuetIconName;
   starter: string;
 }[] = [
   {
     id: "design-system",
     label: "Design System",
+    labelId: "make.kind.design-system",
+    plainId: "make.plain.design-system",
+    starterId: "make.starter.design-system",
     icon: "sparkle",
     starter: "Make a design system for …",
   },
   {
     id: "design",
     label: "Design",
+    labelId: "make.kind.design",
+    plainId: "make.plain.design",
+    starterId: "make.starter.design",
     icon: "layout",
     starter: "Make a design for …",
   },
   {
     id: "dashboard",
     label: "Dashboard",
+    labelId: "make.kind.dashboard",
+    plainId: "make.plain.dashboard",
+    starterId: "make.starter.dashboard",
     icon: "dashboard",
     starter: "Make a dashboard of …",
   },
   {
     id: "slides",
     label: "Slides",
+    labelId: "make.kind.slides",
+    plainId: "make.plain.slides",
+    starterId: "make.starter.slides",
     icon: "deck",
     starter: "Make a deck about …",
   },
-  { id: "doc", label: "Docs", icon: "page", starter: "Write a doc about …" },
+  {
+    id: "doc",
+    label: "Docs",
+    labelId: "make.kind.doc",
+    plainId: "make.plain.doc",
+    starterId: "make.starter.doc",
+    icon: "page",
+    starter: "Write a doc about …",
+  },
   {
     id: "page",
     label: "Web page",
+    labelId: "make.kind.page",
+    plainId: "make.plain.page",
+    starterId: "make.starter.page",
     icon: "globe",
     starter: "Make a web page about …",
   },
@@ -72,9 +102,19 @@ export type MakeKind = (typeof MAKE_KINDS)[number];
 
 /** The chips over the grid: everything, or one kind. A doc is a page, so Pages holds both. */
 export type MakeFilter = "all" | ReturnType<typeof previewKind>;
-export const MAKE_FILTERS: readonly { id: MakeFilter; label: string }[] = [
-  { id: "all", label: "All" },
-  ...MAKE_KINDS.map(({ id, label }) => ({ id, label })),
+export const MAKE_FILTERS: readonly {
+  id: MakeFilter;
+  label: string;
+  labelId: MessageId;
+  plainId: MessageId | null;
+}[] = [
+  { id: "all", label: "All", labelId: "make.all", plainId: null },
+  ...MAKE_KINDS.map(({ id, label, labelId, plainId }) => ({
+    id,
+    label,
+    labelId,
+    plainId,
+  })),
 ];
 
 /** The pages a chip shows, in the order given. */
@@ -146,6 +186,7 @@ export function stillBeingMade(
 }
 
 export function MakeScreen() {
+  const t = useT();
   const queryClient = useQueryClient();
   const agents = useQuery(agentListQueryOptions());
   const bot = primaryBot(agents.data);
@@ -309,24 +350,23 @@ export function MakeScreen() {
         ) : null
       }
     >
-      <ScreenTitle title="Make">
-        {name ? `What ${name} made for you.` : "What your Bots made for you."}
+      <ScreenTitle title={t("tab.make")}>
+        {name ? t("make.byName", { name }) : t("make.byBots")}
       </ScreenTitle>
       {saved ? (
         <p className="type-sub mb-3 px-1 text-duet-ink-2" role="status">
-          Saved for Up next on Tasks.
+          {t("make.savedUpNext")}
         </p>
       ) : null}
       {pages.isPending ? null : pages.error ? (
         <p className="type-sub px-1 text-duet-red" role="alert">
-          Couldn't load what was made. Reload the page.
+          {t("make.loadError")}
         </p>
       ) : pages.data.length === 0 && making.length === 0 ? (
         <DuetCard className="px-4 py-4">
-          <p className="type-row font-semibold">Nothing made yet.</p>
+          <p className="type-row font-semibold">{t("make.empty")}</p>
           <p className="type-sub mt-0.5 text-duet-ink-2">
-            Tap + to choose what to make. What {name ?? "your Bot"} makes shows
-            up here.
+            {t("make.emptyHelp", { name: name ?? t("make.yourBot") })}
           </p>
         </DuetCard>
       ) : (
@@ -334,14 +374,18 @@ export function MakeScreen() {
           <MakeFilters current={filter} onPick={setFilter} />
           {shown.length === 0 && making.length === 0 ? (
             <p className="type-sub px-1 pt-2 text-duet-ink-2">
-              No{" "}
-              {MAKE_FILTERS.find(
-                (entry) => entry.id === filter,
-              )?.label.toLowerCase()}{" "}
-              yet. Tap + to make one.
+              {t("make.noneOfKind", {
+                kind: t(
+                  MAKE_FILTERS.find((entry) => entry.id === filter)?.plainId ??
+                    "make.all",
+                ),
+              })}
             </p>
           ) : (
-            <ul aria-label="Made for you" className="grid grid-cols-2 gap-3">
+            <ul
+              aria-label={t("make.listAria")}
+              className="grid grid-cols-2 gap-3"
+            >
               {making.map((entry) => (
                 <motion.li key={entry.id} layout={!reduced}>
                   <MakingCard
@@ -386,7 +430,7 @@ export function MakeScreen() {
             setStarted((current) => [
               {
                 id: task.id,
-                label: kind.label.toLowerCase(),
+                label: t(kind.plainId),
                 known: pages.data
                   ? new Set(pages.data.map((page) => page.id))
                   : undefined,
@@ -395,8 +439,8 @@ export function MakeScreen() {
             ]);
           }}
           onClose={() => setKind(null)}
-          question={`What should ${bot.name} make?`}
-          starter={kind.starter}
+          question={t("make.question", { name: bot.name })}
+          starter={t(kind.starterId)}
         />
       ) : null}
     </ScreenScroll>
@@ -411,10 +455,11 @@ function MakeFilters({
   current: MakeFilter;
   onPick: (filter: MakeFilter) => void;
 }) {
+  const t = useT();
   return (
     // biome-ignore lint/a11y/useSemanticElements: a row of toggle chips, not a form's fieldset.
     <div
-      aria-label="Show"
+      aria-label={t("make.show")}
       className="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]"
       role="group"
     >
@@ -433,7 +478,7 @@ function MakeFilters({
             onClick={() => onPick(entry.id)}
             type="button"
           >
-            {entry.label}
+            {t(entry.labelId)}
           </button>
         );
       })}
@@ -454,6 +499,7 @@ function MakingCard({
   task: TaskRecord | undefined;
   label: string;
 }) {
+  const t = useT();
   return (
     <Link
       className="group block w-full rounded-[20px] outline-none focus-visible:ring-3 focus-visible:ring-duet-violet/40"
@@ -473,7 +519,7 @@ function MakingCard({
         </div>
         <div className="min-h-[64px] px-3 pt-2.5 pb-3">
           <p className="line-clamp-2 font-semibold text-[15px] text-duet-ink leading-[19px] tracking-[-0.01em]">
-            {task?.title ?? `Making your ${label}`}
+            {task?.title ?? t("make.making", { kind: label })}
           </p>
           <span className="mt-1 flex">
             {task ? (
@@ -483,7 +529,9 @@ function MakingCard({
                 }
               />
             ) : (
-              <span className="type-label text-duet-ink-3">Starting…</span>
+              <span className="type-label text-duet-ink-3">
+                {t("make.starting")}
+              </span>
             )}
           </span>
         </div>
@@ -511,6 +559,7 @@ function MakeFan({
   onToggle: (fanned: boolean) => void;
   onPick: (kind: MakeKind) => void;
 }) {
+  const t = useT();
   const reduced = useReducedMotionPreference();
   // Still drawn while the pills fold away; hidden once the last one has gone.
   const [folding, setFolding] = useState(false);
@@ -535,7 +584,7 @@ function MakeFan({
         {fanned ? (
           <motion.button
             animate={{ opacity: 1 }}
-            aria-label="Close"
+            aria-label={t("make.close")}
             className="absolute inset-0 z-20 cursor-default bg-duet-surface/70 backdrop-blur-[3px]"
             exit={{ opacity: 0 }}
             initial={{ opacity: 0 }}
@@ -548,7 +597,7 @@ function MakeFan({
         ) : null}
       </AnimatePresence>
       <ul
-        aria-label="What to make"
+        aria-label={t("make.whatToMake")}
         // The 16px padding contains the rise animation and focus rings without moving the pills.
         // Cap the stack above the +; this overlay cannot use the screen body's scroll container.
         className="absolute right-[calc(1rem-16px)] bottom-[calc(var(--duet-tab-space,0px)+var(--make-plus-size)+10px)] z-30 flex max-h-[calc(100%-var(--duet-tab-space,0px)-var(--make-plus-size)-18px)] max-w-[calc(100%-2rem+32px)] flex-col items-end gap-2.5 overflow-y-auto overscroll-contain p-[16px] [scroll-padding:16px]"
@@ -597,7 +646,7 @@ function MakeFan({
                     }
                   >
                     <button
-                      aria-label={`Make a ${kind.label.toLowerCase()}`}
+                      aria-label={t("make.makeKind", { kind: t(kind.plainId) })}
                       className="type-row flex min-h-11 max-w-full items-center gap-2.5 rounded-full py-1.5 pr-5 pl-1.5 text-left font-semibold text-duet-ink shadow-duet-glass transition-transform focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-duet-violet/40 active:scale-95"
                       data-kind={kind.id}
                       style={{
@@ -612,7 +661,7 @@ function MakeFan({
                       >
                         <DuetIcon name={kind.icon} size={19} stroke={1.9} />
                       </span>
-                      {kind.label}
+                      {t(kind.labelId)}
                     </button>
                   </motion.li>
                 );
@@ -623,7 +672,7 @@ function MakeFan({
       <button
         aria-controls="make-kinds"
         aria-expanded={fanned}
-        aria-label={fanned ? "Close" : "Make something"}
+        aria-label={fanned ? t("make.close") : t("make.something")}
         className="absolute right-4 bottom-[calc(var(--duet-tab-space,0px)+14px)] z-30 grid size-[var(--make-plus-size)] place-items-center rounded-full bg-duet-black text-duet-on-black shadow-duet-raised transition-[filter,transform] hover:brightness-125 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-duet-violet/40 active:scale-95"
         onClick={() => onToggle(!fanned)}
         type="button"
