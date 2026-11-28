@@ -717,6 +717,38 @@ describe("Mark, the marketer", () => {
     ).toEqual(["marketer"]);
   });
 
+  // D183 step 1: the five social sites go through Mark's own browser and the private sign-in, never through Agent Reach.
+  test("Mark's prompt sends X, Reddit, Instagram, Facebook and LinkedIn through his own browser and the private sign-in, read only", async () => {
+    const rows = await memberRows();
+    const prompt = String(
+      rows.find((row) => row.id === "marketer")?.system_prompt,
+    ).replace(/\s+/g, " ");
+    for (const sentence of [
+      "X, Reddit, Instagram, Facebook and LinkedIn you read with your own browser (computer_navigate, computer_read_pages), never with Agent Reach",
+      "call computer_request_sign_in for it",
+      "the secondary account they made for you, never their main account unless they say so",
+      "you never type, ask for or repeat a password or code",
+      "never post, like, follow, comment, message or change the account without the approval card",
+      "an outreach address still comes only from a public business page",
+      "just its seven commands with no login",
+    ])
+      expect({ sentence, said: prompt.includes(sentence) }).toEqual({
+        sentence,
+        said: true,
+      });
+    const tenantPackage = await loadWith(MODES.remote);
+    const skill = tenantPackage.skills.find(
+      (candidate) => candidate.slug === "agent-reach-readonly",
+    );
+    const body = (skill?.instructions ?? "").replace(/\s+/g, " ");
+    expect(body).toContain(
+      "are not read with this tool: Mark reads them with his own browser (computer_navigate, computer_read_pages) after the person signs in with the secondary account through computer_request_sign_in (D183)",
+    );
+    // The forbidden list still keeps every Agent Reach browser channel and login.
+    expect(body).toContain("Reddit, Instagram, Facebook, LinkedIn");
+    expect(body).toContain("login, logout, setup, add, remove");
+  });
+
   // D182: Mark's read-only Agent Reach pilot. Text only (no tools); the allowed list and the forbidden list
   // are in the skill, one line in Mark's prompt points at it, and only Mark holds it.
   test("the Agent Reach skill is text only, lists the allowed commands and the forbidden ones, and only Mark holds it", async () => {
