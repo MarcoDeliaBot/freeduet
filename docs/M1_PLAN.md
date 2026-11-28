@@ -2908,6 +2908,14 @@ Built: the skill paragraph and the prompt sentence (the nine points in full); `N
 
 **Not verified.** Not run live with Mark (the install is proved in a container, not yet through Mark's approval cards); the prompt line and the skill are text a model reads and are not yet run live.
 
+## 140. Mark reads the social sites with secondary accounts (D183)
+
+**Decision D183 (the maintainer, 28 November 2026, 08:57, his words: "rimetti X, Reddit, Instagram, Facebook, LinkedIn e quindi anche gli account secondari").** It corrects section 138 (D182). His answer of 27 November ("solo con i canali senza login e gli account secondari? SI") meant the channels without a login and, in addition, the secondary accounts; the coordinator read it as excluding them and narrowed the pilot without saying so as its own line. The five browser channels of Agent Reach (X, Reddit, Instagram, Facebook, LinkedIn) come back for Mark alone, with secondary accounts the person creates.
+
+**What stays, because it is not a choice of the session.** The person creates each account and types each password himself, in the private box under the live browser view or at the keyboard of the member's computer; the members' prompts tell them never to type one (a prompt rule; the code refuses only fields the page marks). The review of section 138 found no command in Agent Reach that posts, likes, follows or sends on these sites, so Mark reads only; Mark's rule that publishing waits for an approval card is unchanged.
+
+**To design and build (not started).** How the person signs in to Agent Reach's own browser profile on Mark's computer, with `session_reuse` kept from copying a login out of another browser profile; where the sessions are kept and how they are removed; the allowed commands per channel; evals; the live test. A Sonnet executor and an independent review, after D184.
+
 ## 139. Iris cannot say a colleague has the work without handing it over (D184)
 
 **Problem (live, the maintainer's installation, v0.2.3 f60d7bb1, 27 and 28 November 2026).** After Kai's read-back for an "Out Run" game the person said "via". Iris answered that Kai received the go and that the outcome was in progress, but made no `message_bot` call. Asked "sicuro che stia lavorando?", she said Kai was working and quoted "ultima voce nel registro di Kai: ha ricevuto il tuo via", which was her own claim and not Kai's work. Only when pressed again did she say she had never called the tool. No card, no ring and no hand-off existed (the D168 work card and the D180 ring were right; her words were not). Her prompt already said that the work has started only after "go": a prompt is not a guarantee, and no code checked it.
