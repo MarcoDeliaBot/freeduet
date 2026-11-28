@@ -2223,7 +2223,7 @@ export const pt: Catalog<typeof EN> = {
   "admin.shared.sentence.read":
     "Qualquer pessoa que possa usar este assistente pode ler o que esta conta pode ler.",
   "admin.shared.owner": "Só o dono dele",
-  "admin.shared.named": "Nomeadas: {who}",
+  "admin.shared.named": "Nomeados: {who}",
   "admin.shared.team": "Todos",
   "admin.shared.legend":
     "Quem pode usar a conta compartilhada por meio deste assistente",
