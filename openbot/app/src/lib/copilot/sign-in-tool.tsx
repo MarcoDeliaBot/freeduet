@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { z } from "zod";
 import { ToolLine } from "@/components/channels/tool-line";
+import { useT } from "@/freeduet/i18n/provider";
 import { SignInForm } from "@/components/passwords/sign-in-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -156,6 +157,7 @@ function SignInCard({
   running: boolean;
   outcome: Outcome;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   // While the call waits there is no result to carry the id, so the open request that this call
   // asked for is looked up instead, polled until the handler has opened it.
@@ -178,10 +180,10 @@ function SignInCard({
       <ToolLine
         label={
           running
-            ? "Waiting for you to sign in"
+            ? t("computer.signIn.waiting")
             : outcome.signedIn
-              ? "Signed in"
-              : "Sign-in did not complete"
+              ? t("computer.signIn.signedIn")
+              : t("computer.signIn.failed")
         }
         detail={site}
         running={running}
@@ -198,14 +200,16 @@ function SignInCard({
         <div>
           <Button size="sm" onClick={() => setOpen(true)}>
             <IconLock />
-            Open private sign-in
+            {t("computer.signIn.open")}
           </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Sign in to {site}</DialogTitle>
+                <DialogTitle>
+                  {t("computer.signIn.dialogTitle", { site })}
+                </DialogTitle>
                 <DialogDescription>
-                  Goes to your Bot's browser, not into this conversation.
+                  {t("computer.signIn.dialogBody")}
                 </DialogDescription>
               </DialogHeader>
               <DialogBody className="mt-4 overflow-y-auto">

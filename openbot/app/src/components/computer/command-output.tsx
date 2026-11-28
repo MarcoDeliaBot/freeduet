@@ -1,3 +1,5 @@
+import { useT } from "@/freeduet/i18n/provider";
+
 /**
  * What a command printed.
  *
@@ -22,13 +24,14 @@ export function CommandOutput({
   /** The command ran too long and was stopped, so what is here is not the whole story. */
   timedOut?: boolean;
 }) {
+  const t = useT();
   const failed = typeof exitCode === "number" && exitCode !== 0;
 
   return (
     <div className="space-y-1.5">
       {truncated ? (
         <p className="text-muted-foreground text-xs">
-          The output was too long. This is the end of it.
+          {t("computer.output.truncated")}
         </p>
       ) : null}
       {output ? (
@@ -37,17 +40,17 @@ export function CommandOutput({
         </pre>
       ) : (
         <p className="text-muted-foreground text-xs italic">
-          It printed nothing.
+          {t("computer.output.nothing")}
         </p>
       )}
       {timedOut ? (
         <p className="text-destructive text-xs">
-          It ran too long and was stopped.
+          {t("computer.output.timedOut")}
         </p>
       ) : null}
       {failed ? (
         <p className="text-amber-600 text-xs dark:text-amber-500">
-          Exit code {exitCode}.
+          {t("computer.output.exitCode", { code: exitCode ?? 0 })}
         </p>
       ) : null}
     </div>
