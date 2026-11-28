@@ -19159,6 +19159,7 @@ skills:
       - Any other agent-reach command: login, logout, setup, add, remove, update, configure, doctor, check, browser, skill, uninstall, read <url> (use web read), and any --backend option.
       - youtube transcribe (it needs a key and uploads audio).
       - The channels X (twitter), Reddit, Instagram, Facebook, LinkedIn and every other browser or login channel, and any secondary or other account.
+      The five sites X, Reddit, Instagram, Facebook and LinkedIn are not read with this tool: Mark reads them with his own browser (computer_navigate, computer_read_pages) after the person signs in with the secondary account through computer_request_sign_in (D183).
       - The tools it uses, by hand: opencli, bili, gh, yt-dlp, curl.
       - Posting, messages, following, liking, commenting; entering any key or password.
       When the person asks for one of these, refuse in one sentence, call no tool, and offer the allowed way (for example the page's public text, or a draft for the person to post).
