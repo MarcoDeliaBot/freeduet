@@ -25,6 +25,7 @@ import {
   ItemMedia,
   ItemTitle,
 } from "@/components/ui/item";
+import { useT } from "@/freeduet/i18n/provider";
 import { IDENTITY_SUMMARIES, isBrokeredGithub } from "@/lib/connections/rows";
 import { linkedAccountsQueryOptions } from "@/lib/identity/queries";
 import {
@@ -51,6 +52,7 @@ export function IdentityConnectionPage({
   linked: string | undefined;
   provider: LinkableProvider;
 }) {
+  const t = useT();
   const title = linkableProviderTitle(provider);
   const [arrival] = useState(() => linkedNotice(linked));
   const links = useQuery(linkedAccountsQueryOptions());
@@ -71,7 +73,10 @@ export function IdentityConnectionPage({
 
   return (
     <PageShell
-      backButton={{ label: "Connections", linkProps: { to: "/connections" } }}
+      backButton={{
+        label: t("nav.connections"),
+        linkProps: { to: "/connections" },
+      }}
       description={IDENTITY_SUMMARIES[provider]}
       title={title}
     >
@@ -104,6 +109,7 @@ export function IdentityConnectionPage({
  * which makes this the way to it.
  */
 function GithubTools() {
+  const t = useT();
   const plugins = useQuery(pluginsPageQueryOptions());
   const connections = useQuery(connectionsQueryOptions());
   const app = plugins.data?.composioConfigured
@@ -117,8 +123,8 @@ function GithubTools() {
   ).some((row) => row.serverId === app.id);
   return (
     <PageSection
-      description="Lets your Bots read and change your repositories as you. You connect this separately from your account above."
-      title="Tools"
+      description={t("connections.identity.toolsDesc")}
+      title={t("connections.identity.tools")}
     >
       <PageRows>
         <Item
@@ -129,9 +135,11 @@ function GithubTools() {
             <IconBrandGithub />
           </ItemMedia>
           <ItemContent>
-            <ItemTitle>GitHub tools</ItemTitle>
+            <ItemTitle>{t("connections.identity.githubTools")}</ItemTitle>
             <ItemDescription>
-              {connected ? "Connected" : "Not connected"}
+              {connected
+                ? t("connections.connected")
+                : t("connections.identity.notConnected")}
             </ItemDescription>
           </ItemContent>
           <ItemActions>

@@ -13,6 +13,7 @@ import {
   accountModePreview,
   setAccountModeMutationOptions,
 } from "@/lib/plugins/mutations";
+import { useT } from "@/freeduet/i18n/provider";
 import { describeApproval } from "@/lib/plugins/shared-use";
 
 /**
@@ -37,6 +38,7 @@ export function AccountModeDialog({
   onOpenChange: (open: boolean) => void;
   names?: Record<string, string>;
 }) {
+  const t = useT();
   const queryClient = useQueryClient();
   /**
    * Kept out of the `["plugins", …]` family on purpose. `invalidatePlugins` — which every plugin
@@ -58,30 +60,35 @@ export function AccountModeDialog({
   const goes =
     preview.data?.wouldRevoke.holder === "deployment"
       ? count > 0
-        ? "The shared account will be disconnected."
-        : "No shared account is connected."
-      : `${count} personal ${count === 1 ? "account" : "accounts"} will be disconnected.`;
-  const action =
-    target === "shared" ? `Make ${title} shared` : `Make ${title} personal`;
+        ? t("connections.mode.goesShared")
+        : t("connections.mode.goesNoShared")
+      : t("connections.mode.goesPersonal", { count });
+  const action = t(
+    target === "shared"
+      ? "connections.mode.makeShared"
+      : "connections.mode.makePersonal",
+    { title },
+  );
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {target === "shared"
-              ? `Share one ${title} account?`
-              : `Give everyone their own ${title} account?`}
+            {t(
+              target === "shared"
+                ? "connections.mode.titleShared"
+                : "connections.mode.titlePersonal",
+              { title },
+            )}
           </DialogTitle>
           <DialogDescription>
-            {preview.data ? goes : "Checking what this would change…"}
+            {preview.data ? goes : t("connections.mode.checking")}
           </DialogDescription>
         </DialogHeader>
         {target === "shared" ? (
           <div className="mt-4 space-y-3 text-sm">
-            <p>
-              Everyone using a Bot with this app will act as this one account.
-            </p>
+            <p>{t("connections.mode.everyone")}</p>
             {preview.data?.bots.length ? (
               <ul className="space-y-1">
                 {preview.data.bots.map((bot) => (
@@ -89,7 +96,7 @@ export function AccountModeDialog({
                     <span className="font-medium">
                       {names[bot.botId] ?? bot.botId}
                     </span>
-                    : {describeApproval(bot.exposure)}
+                    : {describeApproval(bot.exposure, t)}
                   </li>
                 ))}
               </ul>
@@ -107,7 +114,7 @@ export function AccountModeDialog({
             size="sm"
             variant="outline"
           >
-            Cancel
+            {t("connections.cancel")}
           </Button>
           <Button
             disabled={!preview.data || change.isPending}

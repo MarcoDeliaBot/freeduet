@@ -22,6 +22,7 @@ import {
   ItemDescription,
   ItemTitle,
 } from "@/components/ui/item";
+import { useT } from "@/freeduet/i18n/provider";
 import { useBotNames } from "@/components/routines/bot-names";
 import { appConfig } from "@/lib/generated/application-config";
 import { disconnectHeldMutationOptions } from "@/lib/plugins/mutations";
@@ -65,6 +66,7 @@ export function SecretConnectionPage({
   enabled: boolean;
   back: { label: string; linkProps: { to: "/connections" } };
 }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const status = useQuery({
     ...secretConnectionQueryOptions(entry.key, bot),
@@ -81,7 +83,7 @@ export function SecretConnectionPage({
   // Said only when the server agrees this member may use the app: a crafted `?bot=` claims nothing.
   const eligibleBot = bot && status.data?.botEligible === true ? bot : null;
   const memberName = eligibleBot
-    ? (botNames.get(eligibleBot) ?? "A member")
+    ? (botNames.get(eligibleBot) ?? t("connections.secret.aMember"))
     : null;
 
   const connect = useMutation({
@@ -96,14 +98,20 @@ export function SecretConnectionPage({
       setCalendarUrl("");
       setNotice(null);
       setReplacing(false);
+      const withCalendar = calendarUrl.trim() !== "";
       setDone(
         memberName
-          ? `Connected. ${memberName} can now read your mail${
-              calendarUrl.trim() ? " and calendar" : ""
-            } as you.`
-          : `Connected. Bots you allow can now read your mail${
-              calendarUrl.trim() ? " and calendar" : ""
-            } as you.`,
+          ? t(
+              withCalendar
+                ? "connections.secret.doneMemberCal"
+                : "connections.secret.doneMember",
+              { name: memberName },
+            )
+          : t(
+              withCalendar
+                ? "connections.secret.doneBotsCal"
+                : "connections.secret.doneBots",
+            ),
       );
     },
   });
@@ -116,9 +124,7 @@ export function SecretConnectionPage({
         description={entry.summary}
         title={entry.title}
       >
-        <PageEmpty>
-          Not available yet. An admin has to turn this on first.
-        </PageEmpty>
+        <PageEmpty>{t("connections.secret.notAvailable")}</PageEmpty>
       </PageShell>
     );
   }
@@ -139,8 +145,7 @@ export function SecretConnectionPage({
       ) : null}
       {status.isError ? (
         <p className="text-destructive text-sm" role="alert">
-          Couldn't load whether you've connected this. Reload the page, or ask
-          an admin if it keeps happening.
+          {t("connections.secret.statusError")}
         </p>
       ) : null}
       {done ? (
@@ -153,15 +158,16 @@ export function SecretConnectionPage({
         <PageRows className="mt-0">
           <Item size="sm">
             <ItemContent>
-              <ItemTitle>Your account</ItemTitle>
+              <ItemTitle>{t("connections.secret.yourAccount")}</ItemTitle>
               <ItemDescription className="line-clamp-none">
                 {connected
-                  ? `Connected as ${connected.address}. ${
+                  ? t(
                       connected.calendar
-                        ? "Your calendar is connected too."
-                        : "No calendar is connected."
-                    } Bots you allow use this as you.`
-                  : "No Bot can use this as you. Paste an app password below to connect your Gmail."}
+                        ? "connections.secret.connectedCal"
+                        : "connections.secret.connectedNoCal",
+                      { address: connected.address },
+                    )
+                  : t("connections.secret.notConnected")}
               </ItemDescription>
             </ItemContent>
             <ItemActions>
@@ -179,7 +185,7 @@ export function SecretConnectionPage({
                           aria-hidden="true"
                           className="size-1.5 rounded-full bg-emerald-500"
                         />
-                        Connected
+                        {t("connections.connected")}
                         <IconChevronDown />
                       </Button>
                     }
@@ -192,7 +198,7 @@ export function SecretConnectionPage({
                         setReplacing(true);
                       }}
                     >
-                      Use a different app password
+                      {t("connections.secret.useDifferent")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       disabled={disconnect.isPending}
@@ -203,7 +209,10 @@ export function SecretConnectionPage({
                           onSuccess: () => {
                             setReplacing(false);
                             setDone(
-                              `Disconnected. ${PRODUCT} can't read your mail or calendar any more. To be sure the app password stops working, delete it at ${APP_PASSWORDS_URL} too.`,
+                              t("connections.secret.disconnected", {
+                                product: PRODUCT,
+                                url: APP_PASSWORDS_URL,
+                              }),
                             );
                           },
                           onError: (thrown: Error) => setNotice(thrown.message),
@@ -211,7 +220,9 @@ export function SecretConnectionPage({
                       }}
                       variant="destructive"
                     >
-                      {disconnect.isPending ? "Disconnecting…" : "Disconnect"}
+                      {disconnect.isPending
+                        ? t("connections.disconnecting")
+                        : t("connections.disconnect")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -223,21 +234,24 @@ export function SecretConnectionPage({
 
       {showForm ? (
         <PageSection
-          description="Two steps at Google, then paste what they give you. Nothing is saved unless Gmail accepts it."
-          title={connected ? "Use a different app password" : "Connect"}
+          description={t("connections.secret.formDesc")}
+          title={
+            connected
+              ? t("connections.secret.useDifferent")
+              : t("connections.secret.connectTitle")
+          }
         >
           {memberName ? (
             <p
               className="mb-4 text-sm"
               data-connect-member={eligibleBot ?? undefined}
             >
-              {memberName} will use this mailbox.
+              {t("connections.secret.memberWillUse", { name: memberName })}
             </p>
           ) : null}
           <ol className="mb-4 list-decimal space-y-2 pl-5 text-muted-foreground text-sm">
             <li>
-              Turn on 2-Step Verification for your Google account, then make an
-              app password at{" "}
+              {t("connections.secret.step1Lead")}{" "}
               <a
                 className="underline underline-offset-2"
                 href={APP_PASSWORDS_URL}
@@ -246,20 +260,19 @@ export function SecretConnectionPage({
               >
                 myaccount.google.com/apppasswords
               </a>
-              . Name it {PRODUCT} and copy the sixteen letters.
+              {t("connections.secret.step1Tail", { product: PRODUCT })}
             </li>
             <li>
-              To let your Bots see your calendar too: in Google Calendar, open
-              Settings, choose your calendar, and copy its{" "}
+              {t("connections.secret.step2Lead")}{" "}
               <a
                 className="underline underline-offset-2"
                 href={CALENDAR_HELP_URL}
                 rel="noreferrer"
                 target="_blank"
               >
-                Secret address in iCal format
+                {t("connections.secret.step2Link")}
               </a>
-              . This one is optional.
+              {t("connections.secret.step2Tail")}
             </li>
           </ol>
           <form
@@ -280,7 +293,9 @@ export function SecretConnectionPage({
             <Item variant="muted">
               <ItemContent>
                 <ItemTitle>
-                  <label htmlFor={`${ids}-address`}>Your Gmail address</label>
+                  <label htmlFor={`${ids}-address`}>
+                    {t("connections.secret.address")}
+                  </label>
                 </ItemTitle>
                 <Input
                   autoCapitalize="off"
@@ -297,11 +312,12 @@ export function SecretConnectionPage({
             <Item variant="muted">
               <ItemContent>
                 <ItemTitle>
-                  <label htmlFor={`${ids}-password`}>App password</label>
+                  <label htmlFor={`${ids}-password`}>
+                    {t("connections.secret.password")}
+                  </label>
                 </ItemTitle>
                 <ItemDescription className="line-clamp-none">
-                  The sixteen letters from Google, with or without the spaces.
-                  Not your usual password.
+                  {t("connections.secret.passwordHint")}
                 </ItemDescription>
                 <Input
                   autoCapitalize="off"
@@ -319,12 +335,11 @@ export function SecretConnectionPage({
               <ItemContent>
                 <ItemTitle>
                   <label htmlFor={`${ids}-calendar`}>
-                    Calendar secret address (optional)
+                    {t("connections.secret.calendar")}
                   </label>
                 </ItemTitle>
                 <ItemDescription className="line-clamp-none">
-                  Anyone with this address can read your calendar, so it is kept
-                  as carefully as the password.
+                  {t("connections.secret.calendarHint")}
                 </ItemDescription>
                 <Input
                   autoCapitalize="off"
@@ -348,11 +363,13 @@ export function SecretConnectionPage({
                   type="button"
                   variant="ghost"
                 >
-                  Cancel
+                  {t("connections.cancel")}
                 </Button>
               ) : null}
               <Button disabled={connect.isPending} size="sm" type="submit">
-                {connect.isPending ? "Checking with Gmail…" : "Connect"}
+                {connect.isPending
+                  ? t("connections.secret.checking")
+                  : t("connections.secret.connectTitle")}
               </Button>
             </div>
           </form>
@@ -360,18 +377,14 @@ export function SecretConnectionPage({
       ) : null}
 
       <PageSection
-        description="An app password opens your whole mailbox, so it is worth knowing what this does."
-        title="What this lets your Bots do"
+        description={t("connections.secret.canDoDesc")}
+        title={t("connections.secret.canDoTitle")}
       >
         <PageRows>
           <Item size="sm">
             <ItemContent>
               <ItemDescription className="line-clamp-none">
-                Your Bots can search and read your mail and look at your
-                calendar. They cannot delete, move or label anything. A reply
-                goes out only after you approve it, and only to people already
-                on the message. You can disconnect at any time, and you can
-                delete the app password at Google whenever you like.
+                {t("connections.secret.canDo")}
               </ItemDescription>
             </ItemContent>
           </Item>

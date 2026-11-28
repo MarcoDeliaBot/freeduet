@@ -18,6 +18,12 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import {
+  englishT,
+  type T,
+  useAppLanguage,
+  useT,
+} from "@/freeduet/i18n/provider";
+import {
   type PluginsProvider,
   brokeredKeyMissing,
 } from "@/lib/plugins/provider-vocabulary";
@@ -303,6 +309,7 @@ export function useBrokeredAccount(input: {
    */
   report: (message: string | null) => void;
 }): BrokeredAccount {
+  const t = useT();
   const queryClient = useQueryClient();
   const {
     authScheme,
@@ -418,9 +425,7 @@ export function useBrokeredAccount(input: {
        * the state, which is a reload against a deployment whose app has caught up.
        */
       if (authorizationUrl === null) {
-        report(
-          "This app connects with a key, not a sign-in page, so nothing was connected. Reload the page and press Connect again.",
-        );
+        report(t("connections.row.connectKey"));
         return;
       }
       window.location.href = authorizationUrl;
@@ -688,8 +693,8 @@ export function useBrokeredAccount(input: {
  * A day rather than "2 hours ago": the point of the sentence is that the check is a past tense that
  * keeps receding, and a relative phrase recomputed on every render reads as a fact about now.
  */
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString();
+function formatDate(iso: string, locale?: string): string {
+  return new Date(iso).toLocaleDateString(locale);
 }
 
 /**
@@ -712,7 +717,10 @@ function accountSentence(input: {
   disconnectedDescription: string;
   disconnectedReassurance: string | undefined;
   provider: PluginsProvider;
+  t?: T;
+  locale?: string;
 }): string {
+  const t = input.t ?? englishT;
   const {
     account,
     connectedDescription,
@@ -723,7 +731,7 @@ function accountSentence(input: {
   } = input;
 
   if (!account.configured) {
-    return brokeredKeyMissing(provider);
+    return brokeredKeyMissing(provider, t);
   }
 
   if (account.kind === "no-auth") {
@@ -731,13 +739,17 @@ function accountSentence(input: {
      * Neither screen's own sentence fits: both are about an account, and there is none to have.
      * Capitalised because this is the one position the name opens a sentence in.
      */
-    return `${title.charAt(0).toUpperCase()}${title.slice(1)} doesn't need an account. Bots that have it can use it as it is.`;
+    return t("connections.row.noAuth", {
+      title: `${title.charAt(0).toUpperCase()}${title.slice(1)}`,
+    });
   }
 
   if (account.kind === "fields") {
     if (account.connected) {
       if (account.verified && account.verifiedAt) {
-        return `Connected with your key. Last checked ${formatDate(account.verifiedAt)}.`;
+        return t("connections.row.verified", {
+          date: formatDate(account.verifiedAt, input.locale),
+        });
       }
       /*
        * A CHECK WAS SPENT AND DID NOT COME BACK CLEAN, and the account it was spent in is still
@@ -763,7 +775,7 @@ function accountSentence(input: {
        * is worth a second press rather than a second connection.
        */
       if (account.probe && !account.verified) {
-        return `Your key didn't pass a check with ${title}. That may be the key, or ${title} itself. Your account is still connected. Press Re-check to try again, or disconnect and connect with a new key.`;
+        return t("connections.row.failedCheck", { title });
       }
       /*
        * NOTHING WAS SPENT ON IT, WHICH IS A FACT ABOUT THE CHECK AND ABOUT THE APP AT THE TIME. The
@@ -784,7 +796,7 @@ function accountSentence(input: {
        * today.
        */
       if (account.probe === null) {
-        return `Connected with your key. It hasn't been checked with ${title}. At the time, ${title} had no safe way to check a key. That's about the app, not your key.`;
+        return t("connections.row.noSafeCheck", { title });
       }
       /*
        * AND NOTHING HAS SAID WHICH, which is no longer the page load: the connections read carries
@@ -794,7 +806,7 @@ function accountSentence(input: {
        * two things a record can say; this is what stands where there is no record, and it must not
        * borrow either.
        */
-      return `Connected with your key. It hasn't been checked with ${title}.`;
+      return t("connections.row.unchecked", { title });
     }
     /*
      * WHAT DISCONNECTING DID NOT DO. The account ends at Composio and the key does not end
@@ -803,7 +815,7 @@ function accountSentence(input: {
      * have live, so the row names the step this deployment cannot take for them.
      */
     if (account.disconnected) {
-      return `Disconnected. Your key still works at ${title}. Change it there to stop all access.`;
+      return t("connections.row.keyStillWorks", { title });
     }
     /*
      * NOT THE SCREEN'S OWN SENTENCE, which is written for the kind that leaves: one of the two says
@@ -816,7 +828,9 @@ function accountSentence(input: {
      * way this app is connected, and a row that replaced the whole line took it away with the trip
      * it was right to drop.
      */
-    const asked = `${title.charAt(0).toUpperCase()}${title.slice(1)} connects with a key you already have. Connect asks for it.`;
+    const asked = t("connections.row.asksForKey", {
+      title: `${title.charAt(0).toUpperCase()}${title.slice(1)}`,
+    });
     return disconnectedReassurance
       ? `${asked} ${disconnectedReassurance}`
       : asked;
@@ -828,7 +842,10 @@ function accountSentence(input: {
    * mail is an argument, not a branch — see this file's opening comment.
    */
   return account.connected
-    ? `Signed in with ${title}. ${connectedDescription}`
+    ? t("connections.row.signedIn", {
+        title,
+        description: connectedDescription,
+      })
     : disconnectedDescription;
 }
 
@@ -903,6 +920,7 @@ export function BrokeredAccountRow({
    * into the row. What goes in those fields is asked for when this opens and is held by the form
    * itself — see `connection-fields.tsx` — so closing this forgets it.
    */
+  const { t, language } = useAppLanguage();
   const [asking, setAsking] = useState(false);
 
   /*
@@ -921,7 +939,7 @@ export function BrokeredAccountRow({
         <ItemContent>
           {/* Not "Connect your account": the row is also the connected state, and a title has to
               read for both. */}
-          <ItemTitle>{heading ?? "Your account"}</ItemTitle>
+          <ItemTitle>{heading ?? t("connections.row.yourAccount")}</ItemTitle>
           {/* Unclamped where the key is missing: that sentence is the only place the setting is
               named, so it is the point rather than a hint. */}
           <ItemDescription
@@ -934,6 +952,8 @@ export function BrokeredAccountRow({
               disconnectedReassurance,
               provider,
               title,
+              t,
+              locale: language,
             })}
           </ItemDescription>
           {/* A fact about the row itself rather than about the connection, so it holds under
@@ -961,7 +981,9 @@ export function BrokeredAccountRow({
                * at it twice. A button that cannot work is worse than no button — it invites the
                * second press that files a record of an act that did not happen.
                */
-              <span className="text-muted-foreground text-xs">Key missing</span>
+              <span className="text-muted-foreground text-xs">
+                {t("connections.row.keyMissing")}
+              </span>
             ) : account.connected ? (
               <>
                 {/* Decorative: the word beside it already says which. */}
@@ -970,7 +992,9 @@ export function BrokeredAccountRow({
                   className="size-1.5 rounded-full bg-emerald-500"
                 />
                 {/* The same word for both kinds. The line beneath says what it rests on. */}
-                <span className="text-muted-foreground text-xs">Connected</span>
+                <span className="text-muted-foreground text-xs">
+                  {t("connections.connected")}
+                </span>
                 {/*
                  * OFFERED ONLY ON A KEY APP, BECAUSE THAT IS THE ONLY KIND A RE-CHECK IS AN ACT ON.
                  * A consent connection is written verified by the confirm, with no probe behind it,
@@ -1005,7 +1029,9 @@ export function BrokeredAccountRow({
                     type="button"
                     variant="outline"
                   >
-                    {account.rechecking ? "Checking…" : "Re-check"}
+                    {account.rechecking
+                      ? t("connections.row.rechecking")
+                      : t("connections.row.recheck")}
                   </Button>
                 ) : null}
                 <Button
@@ -1015,7 +1041,7 @@ export function BrokeredAccountRow({
                   type="button"
                   variant="outline"
                 >
-                  Disconnect
+                  {t("connections.disconnect")}
                 </Button>
               </>
             ) : account.authorizesPerAction ? (
@@ -1033,7 +1059,7 @@ export function BrokeredAccountRow({
                * state is the branch above, which this one is reached only by failing.
                */
               <span className="text-muted-foreground text-xs">
-                Approved per action
+                {t("connections.row.perAction")}
               </span>
             ) : (
               /* The arrow says this leaves OpenBot for the vendor's consent page. It does. */
@@ -1056,7 +1082,7 @@ export function BrokeredAccountRow({
                 type="button"
                 variant="outline"
               >
-                Connect
+                {t("connections.connect")}
                 <IconArrowUpRight />
               </Button>
             )}
@@ -1069,7 +1095,7 @@ export function BrokeredAccountRow({
           <DialogHeader>
             {/* The title the row above cannot have: this exists only while the account is not
                 connected, so it is free to name the act rather than the subject. */}
-            <DialogTitle>Connect your account</DialogTitle>
+            <DialogTitle>{t("connections.row.connectYour")}</DialogTitle>
           </DialogHeader>
           <DialogBody className="mt-4">
             {/*
@@ -1108,7 +1134,7 @@ export function BrokeredAccountRow({
               />
             ) : account.requestingFields ? (
               <p className="text-muted-foreground text-sm">
-                Checking what the app needs…
+                {t("connections.row.checkingNeeds")}
               </p>
             ) : (
               /*
@@ -1120,7 +1146,7 @@ export function BrokeredAccountRow({
                * on a second open and not only on a first.
                */
               <p className="text-muted-foreground text-sm">
-                Couldn't find out what this app needs. Close this and try again.
+                {t("connections.row.noNeeds")}
               </p>
             )}
             {/*

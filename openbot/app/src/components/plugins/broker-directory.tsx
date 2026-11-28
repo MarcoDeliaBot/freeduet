@@ -18,6 +18,7 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
+import { useT } from "@/freeduet/i18n/provider";
 import {
   consentBreadth,
   coverageWarning,
@@ -57,7 +58,8 @@ import { queryClient } from "@/query-client";
  * mistake wearing a conditional.
  */
 export function BrokerDirectory({ provider }: { provider: PluginsProvider }) {
-  const { name, directoryLabel } = providerVocabulary(provider);
+  const t = useT();
+  const { name, directoryLabel } = providerVocabulary(provider, t);
   const [search, setSearch] = React.useState("");
   /*
    * Debounced, as on People, and for a stronger reason: every distinct term is a cache key of its
@@ -124,13 +126,16 @@ export function BrokerDirectory({ provider }: { provider: PluginsProvider }) {
 
   return (
     <PageShell
-      backButton={{ label: "Plugins", linkProps: { to: "/admin/plugins" } }}
-      description={`${name}'s app directory. Add an app to make its tools available to Bots. Each person still connects their own account before it reads anything.`}
+      backButton={{
+        label: t("admin.plugins.title"),
+        linkProps: { to: "/admin/plugins" },
+      }}
+      description={t("connections.dir.description", { name })}
       title={directoryLabel}
     >
       <PageSection
-        description="Search by name. Nobody here has reviewed these apps."
-        title="Apps"
+        description={t("connections.dir.appsDesc")}
+        title={t("connections.dir.appsTitle")}
       >
         {enableError ? (
           <p className="mt-4 text-destructive text-sm" role="alert">
@@ -139,10 +144,10 @@ export function BrokerDirectory({ provider }: { provider: PluginsProvider }) {
         ) : null}
 
         <Input
-          aria-label={`Search ${name} apps`}
+          aria-label={t("connections.dir.searchAria", { name })}
           className="mt-4"
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search by app name"
+          placeholder={t("connections.dir.searchPlaceholder")}
           value={search}
         />
 
@@ -155,13 +160,13 @@ export function BrokerDirectory({ provider }: { provider: PluginsProvider }) {
              * the single thing an operator who reached this URL needs to read; the derived line
              * stays as the fallback for a failure that arrived carrying no message of its own.
              */}
-            {apps.error.message || directoryReadFailure(provider)}
+            {apps.error.message || directoryReadFailure(provider, t)}
           </p>
         ) : listed.length === 0 ? (
           <PageEmpty>
             {query
-              ? `No ${name} app matches "${query}".`
-              : `${name} returned no apps.`}
+              ? t("connections.dir.noMatch", { name, query })
+              : t("connections.dir.none", { name })}
           </PageEmpty>
         ) : (
           <PageRows>
@@ -194,7 +199,9 @@ export function BrokerDirectory({ provider }: { provider: PluginsProvider }) {
                       {/* The size of the decision, stated before it is made: an app is not one
                           tool, and "167 actions" is what says so. */}
                       <span className="text-muted-foreground text-xs">
-                        {entry.actionCount} actions
+                        {t("connections.dir.actions", {
+                          count: entry.actionCount,
+                        })}
                       </span>
                       {/*
                        * An app this deployment already has says so rather than offering Add again.
@@ -203,7 +210,7 @@ export function BrokerDirectory({ provider }: { provider: PluginsProvider }) {
                        */}
                       {entry.enabled ? (
                         <span className="text-muted-foreground text-xs">
-                          Added
+                          {t("connections.dir.added")}
                         </span>
                       ) : (
                         <Button
@@ -212,7 +219,9 @@ export function BrokerDirectory({ provider }: { provider: PluginsProvider }) {
                           size="sm"
                           variant="outline"
                         >
-                          {isAdding ? "Adding…" : "Add"}
+                          {isAdding
+                            ? t("connections.dir.adding")
+                            : t("connections.dir.add")}
                         </Button>
                       )}
                     </ItemActions>
