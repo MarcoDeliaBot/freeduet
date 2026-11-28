@@ -65,30 +65,70 @@ beforeAll(async () => {
   ]);
   const lease = new Date(Date.now() + 10 * 60_000);
   await database.insert(workItems).values([
-    hop("a-kai", alice, threadA, "gamedev", "SECRET task words", {}, {
-      claimedBy: "w",
-      leaseUntil: lease,
-    }),
+    hop(
+      "a-kai",
+      alice,
+      threadA,
+      "gamedev",
+      "SECRET task words",
+      {},
+      {
+        claimedBy: "w",
+        leaseUntil: lease,
+      },
+    ),
     hop("a-leo", alice, threadA, "creator"),
-    hop("a-b", alice, threadB, "marketer", "other thread", {}, {
-      claimedBy: "w",
-      leaseUntil: lease,
-    }),
-    hop("a-done", alice, threadA, "researcher", "done one", {}, {
-      finishedAt: new Date(),
-    }),
+    hop(
+      "a-b",
+      alice,
+      threadB,
+      "marketer",
+      "other thread",
+      {},
+      {
+        claimedBy: "w",
+        leaseUntil: lease,
+      },
+    ),
+    hop(
+      "a-done",
+      alice,
+      threadA,
+      "researcher",
+      "done one",
+      {},
+      {
+        finishedAt: new Date(),
+      },
+    ),
     hop("a-answer", alice, threadA, "analyst", "a reply leg", {
       answerIn: threadA,
     }),
-    hop("b-kai", bob, bobThread, "gamedev", "bob task", {}, {
-      claimedBy: "w",
-      leaseUntil: lease,
-    }),
+    hop(
+      "b-kai",
+      bob,
+      bobThread,
+      "gamedev",
+      "bob task",
+      {},
+      {
+        claimedBy: "w",
+        leaseUntil: lease,
+      },
+    ),
     // Bob's hop on a thread id that equals Alice's: still not Alice's.
-    hop("b-same-thread", bob, threadA, "designer", "bob same id", {}, {
-      claimedBy: "w",
-      leaseUntil: lease,
-    }),
+    hop(
+      "b-same-thread",
+      bob,
+      threadA,
+      "designer",
+      "bob same id",
+      {},
+      {
+        claimedBy: "w",
+        leaseUntil: lease,
+      },
+    ),
   ] as never);
 });
 
@@ -200,18 +240,16 @@ describe("OpenHandoffsMiddleware", () => {
 
   test("a conversation with none open says an empty list, not absence", async () => {
     const props = await sent("freeduet", async () => []);
-    expect((props[OPEN_HANDOFFS_PROP] as { handoffs: unknown[] }).handoffs).toEqual(
-      [],
-    );
+    expect(
+      (props[OPEN_HANDOFFS_PROP] as { handoffs: unknown[] }).handoffs,
+    ).toEqual([]);
   });
 
   test("a caller's own value is dropped, for Iris and for every other member", async () => {
     const forged = { version: 1, handoffs: [{ to: "gamedev" }] };
     const other = await sent(
       "creator",
-      async () => [
-        { to: "x", state: "working", since: "s", lastEventAt: "s" },
-      ],
+      async () => [{ to: "x", state: "working", since: "s", lastEventAt: "s" }],
       input({ [OPEN_HANDOFFS_PROP]: forged, keep: 1 }),
     );
     expect(other[OPEN_HANDOFFS_PROP]).toBeUndefined();
