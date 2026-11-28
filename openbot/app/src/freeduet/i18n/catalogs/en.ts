@@ -901,6 +901,7 @@ export const EN = {
   "routines.deleteDescription":
     "This routine stops for good. You can't undo this.",
   "routines.week": "Week",
+  "routines.list": "List",
   "routines.nextRuns": "Next runs",
   "routines.viewAria": "View",
   "summary.nothingGranted": "Nothing granted",

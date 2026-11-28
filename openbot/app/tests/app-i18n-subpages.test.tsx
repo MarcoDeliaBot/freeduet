@@ -11,6 +11,7 @@ import {
 } from "@tanstack/react-router";
 import { cleanup, render } from "@testing-library/react";
 import { RoutinesList } from "@/components/routines/routines-list";
+import { CATALOGS, SOURCE } from "@/freeduet/i18n/catalogs";
 import { AppLanguageValue } from "@/freeduet/i18n/provider";
 import { relativeTime } from "@/lib/relative-time";
 import { settleReactWork } from "./settle-react-work";
@@ -103,4 +104,24 @@ test("the routines list and its relative times read Italian with the language se
   const en = drawList("en");
   expect(await en.findByText("Ran 2 minutes ago")).toBeTruthy();
   expect(en.getByText("Next runs")).toBeTruthy();
+});
+
+test("the first view tab reads List in English and Elenco in Italian, and the page title still reads Routines", async () => {
+  serveRoutines();
+  const en = drawList("en");
+  expect(await en.findByText("Ran 2 minutes ago")).toBeTruthy();
+  expect(
+    en.getByRole("button", { name: "List" }).getAttribute("aria-pressed"),
+  ).toBe("true");
+  expect(en.queryByRole("button", { name: "Routines" })).toBeNull();
+  expect(SOURCE["nav.routines"]).toBe("Routines");
+  cleanup();
+
+  serveRoutines();
+  const it = drawList("it");
+  expect(await it.findByText("Eseguita 2 minuti fa")).toBeTruthy();
+  expect(
+    it.getByRole("button", { name: "Elenco" }).getAttribute("aria-pressed"),
+  ).toBe("true");
+  expect(CATALOGS.it?.["nav.routines"]).toBe("Routine");
 });

@@ -2990,7 +2990,7 @@ The retry's last line says that the member wrote that <colleague> has the work, 
 | D193 | A new landing page, preview first: A stronger home page for freeduet.com, prepared on a branch and shown to the maintainer before it goes online (the old preview, PR #271, is closed). | Decided; to prepare |
 | D194 | The files of each colleague, in the app: A read-only panel per member lists the folder of finished work in that member's computer, with Download, so the person never needs a path. | Decided; to build (Sonnet and a review) |
 | D195 | Night evals on the local model only: A scheduled run at night uses only the local Qwen model, which costs no tokens; Haiku 5.5 may grade or read the results. | Decided; to set up |
-| D196 | The routines tab is called List: The routines page's first tab reads "List" ("Elenco" in Italian) beside "Week". | Decided; to build |
+| D196 | The routines tab is called List: The routines page's first tab reads "List" ("Elenco" in Italian) beside "Week". | Built (PR #656) |
 | D197 | Signing in to a site without pasting a password: The first of the improvements from the OpenBot comparison of 25 November 2026, with a preview first. | Decided; to design |
 | D198 | A local streaming speech engine, after v0.3: Live words while the person speaks, from a local engine; planned after v0.3. | Decided; later |
 | D199 | Backups also on a second disk: Besides the copy on the installation's own disk, backups go to a second disk or place the person picks, in a folder whose name says what it is. | Decided; on the maintainer's PC it waits for a disk in D: |

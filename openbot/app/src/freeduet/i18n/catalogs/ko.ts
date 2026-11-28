@@ -893,6 +893,7 @@ export const ko: Catalog<typeof EN> = {
   "routines.deleteDescription":
     "이 루틴은 완전히 멈춥니다. 이 작업은 되돌릴 수 없습니다.",
   "routines.week": "주",
+  "routines.list": "목록",
   "routines.nextRuns": "다음 실행",
   "routines.viewAria": "보기",
   "summary.nothingGranted": "허용한 것 없음",
