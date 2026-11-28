@@ -77,7 +77,7 @@ beforeAll(async () => {
         leaseUntil: lease,
       },
     ),
-    hop("a-leo", alice, threadA, "creator"),
+    hop("a-leo", alice, threadA, "creator", "a new colleague"),
     hop(
       "a-b",
       alice,
