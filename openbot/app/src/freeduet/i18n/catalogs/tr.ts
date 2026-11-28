@@ -716,7 +716,7 @@ export const tr: Catalog<typeof EN> = {
     "Şu an öneri yok. Arka plan araştırması açık asistanlar sonraki adımları burada önerir.",
   "suggestions.turnOnResearch": "Araştırmayı aç",
   "suggestions.researchDescription":
-    "Bu asistan için sen açana kadar kapalıdır; yöneticin herkes için açtıysa o başka. Açıkken dört saatte bir zaten okuyabildiği uygulamalara göz atar, gözden geçirmen için anılar oluşturur ve sonraki adımları önerir. Yalnızca okuyabilir: mesaj gönderemez, bir uygulamada hiçbir şeyi değiştiremez, tarayıcı ya da bilgisayar kullanamaz. Kapatırsan veya kaldırırsan öyle kalır.",
+    "Bu asistan için sen açana kadar kapalıdır, yöneticin onu herkes için açmış olmadıkça. Açıkken dört saatte bir zaten okuyabildiği uygulamalara göz atar, gözden geçirmen için anılar oluşturur ve sonraki adımları önerir. Yalnızca okuyabilir: mesaj gönderemez, bir uygulamada hiçbir şeyi değiştiremez, tarayıcı ya da bilgisayar kullanamaz. Kapatırsan veya kaldırırsan öyle kalır.",
   "suggestions.researchTitle": "Arka plan araştırması",
   "suggestions.researchOff": "Arka plan araştırması kapalı.",
   "suggestions.turnOnDialog": "Arka plan araştırmasını aç",
