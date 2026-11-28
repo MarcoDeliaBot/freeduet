@@ -99,7 +99,6 @@ async function signInLine(language: "it" | "en" | null) {
   return tree;
 }
 
-
 /** The panel mounts its polling sidebar and screen; under CI load the first paint can take longer than 1 s. */
 const LONG_WAIT = { timeout: 5000 };
 
@@ -125,7 +124,11 @@ test("the computer panel reads the app language", async () => {
     </AppLanguageValue>,
   );
   await it.findByLabelText("Barra laterale del Computer", undefined, LONG_WAIT);
-  await it.findByText(/Ancora niente\. Qui compaiono i comandi/, undefined, LONG_WAIT);
+  await it.findByText(
+    /Ancora niente\. Qui compaiono i comandi/,
+    undefined,
+    LONG_WAIT,
+  );
   await it.findByText("In attesa dello schermo del Bot…", undefined, LONG_WAIT);
   cleanup();
 
@@ -135,7 +138,11 @@ test("the computer panel reads the app language", async () => {
     </AppLanguageValue>,
   );
   await en.findByLabelText("Computer sidebar", undefined, LONG_WAIT);
-  await en.findByText(/Nothing yet\. Commands the Bot runs/, undefined, LONG_WAIT);
+  await en.findByText(
+    /Nothing yet\. Commands the Bot runs/,
+    undefined,
+    LONG_WAIT,
+  );
 });
 
 test("a command's output notes read the app language, and keep the exit code", () => {
