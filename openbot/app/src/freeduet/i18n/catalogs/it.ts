@@ -862,4 +862,151 @@ export const it: Catalog<typeof EN> = {
     other: "{count} sett. fa",
   },
   "time.recently": "di recente",
+  // Stage 2f (D181): the approval rules, the responsibility dialog, the routine history, Passwords.
+  "approvals.behaviour.allow": "Agisci senza chiedere",
+  "approvals.behaviour.preApproved": "Agisci se è già approvato in anticipo",
+  "approvals.behaviour.ask": "Chiedi prima di agire",
+  "approvals.behaviour.handOff": "Passa a te",
+  "approvals.host.ask": "Chiedi ogni volta",
+  "approvals.host.allow": "Consenti sempre",
+  "approvals.host.never": "Mai",
+  "approvals.teamRule": "{label} (regola del team)",
+  "approvals.matchOn": "su {scope}",
+  "approvals.matchFor": "per {bot}",
+  "approvals.locked": "Bloccata",
+  "approvals.behaviourFor": "Comportamento per {tool}",
+  "approvals.formLead":
+    "Uno strumento o un'app, e che cosa fa un Bot prima di usarli.",
+  "approvals.formHelp":
+    "Usa * per indicare qualsiasi valore. mcp/gmail/* indica ogni strumento di Gmail. Una destinazione *.example.com indica ogni pagina di quel sito.",
+  "approvals.field.tool": "Strumento o app",
+  "approvals.field.toolHint": "mcp/gmail/*, computer_click, host/*",
+  "approvals.field.effect": "Tipo di azione",
+  "approvals.field.effectHint": "* , write, read, delegate",
+  "approvals.field.scope": "Destinazione",
+  "approvals.field.scopeHint": "*, un sito, una cartella, il nome di un Bot",
+  "approvals.field.bot": "Bot",
+  "approvals.field.botHint": "* per ogni Bot",
+  "approvals.field.behaviour": "Comportamento",
+  "approvals.saveRule": "Salva la regola",
+  "approvals.addRule": "Aggiungi una regola",
+  "approvals.rulesOff":
+    "Un amministratore ha disattivato le regole personali. Le tue restano salvate ma non si applicano.",
+  "approvals.bot.lead":
+    "Vince la regola più restrittiva tra quelle che corrispondono. Una regola «chiedi» prevale su una regola «consenti». Le regole per tutti i Bot sono in",
+  "approvals.bot.settingsLink": "Impostazioni → Approvazioni",
+  "approvals.bot.title": "Regole",
+  "approvals.bot.empty": "Nessuna regola per questo Bot.",
+  "approvals.adminLead":
+    "Le impostazioni del team e le richieste di account condivisi sono in",
+  "approvals.adminLink": "Amministrazione → Approvazioni",
+  "approvals.before.title": "Prima che un Bot agisca",
+  "approvals.before.askTitle": "Chiedi prima di fare modifiche",
+  "approvals.before.askLine":
+    "Controlli tu le modifiche di un Bot a siti web, app collegate e file.",
+  "approvals.before.autoTitle": "Revisione automatica",
+  "approvals.before.autoEnforced": "Un amministratore lo richiede.",
+  "approvals.before.autoLine":
+    "Prima che un Bot faccia qualcosa che potrebbe toccare i tuoi account o condividere informazioni, {product} la confronta con la tua richiesta e le tue regole. Se non riesce a stabilirlo, lo chiede a te.",
+  "approvals.before.hostTitle": "Comandi sul tuo computer",
+  "approvals.before.hostLimited":
+    "Un amministratore limita questa opzione a «{limit}».",
+  "approvals.before.hostLine":
+    "L'app desktop di {product} ti mostra comunque ogni comando prima che venga eseguito.",
+  "approvals.every.lead":
+    "Vince la regola più restrittiva tra quelle che corrispondono. Una regola «chiedi» prevale su una regola «consenti». Le regole del team sono bloccate. Password e impostazioni di sicurezza passano sempre a te, e così i pagamenti, a meno che tu non attivi l'accesso completo per un Bot qui sotto. Le regole per un solo Bot sono su",
+  "approvals.every.botPage": "la pagina di quel Bot",
+  "approvals.every.title": "Regole per ogni Bot",
+  "approvals.every.empty": "Ancora nessuna regola.",
+  "approvals.other.lead":
+    "Queste non corrispondono a nessun Bot che puoi aprire. Valgono comunque per ogni Bot a cui corrispondono. Rimuovi quelle che non vuoi.",
+  "approvals.other.title": "Regole per altri Bot",
+  "approvals.page.description":
+    "Scegli quando i tuoi Bot chiedono prima di cambiare qualcosa. Le regole qui valgono per tutti.",
+  "approvals.admin.description":
+    "Che cosa devono chiedere i Bot dei membri prima di agire, le regole per tutti e le richieste di usare account condivisi.",
+  "approvals.team.title": "Impostazioni del team",
+  "approvals.team.enforce": "Richiedi la revisione automatica per tutti",
+  "approvals.team.custom": "Lascia che i membri impostino regole personali",
+  "approvals.team.hostTitle": "Comandi sui computer dei membri, al massimo",
+  "approvals.team.hostLine":
+    "L'impostazione più restrittiva di un membro vale comunque.",
+  "approvals.team.rulesLead":
+    "Valgono per i Bot di ogni membro. I membri non possono cambiarle.",
+  "approvals.team.rulesTitle": "Regole del team",
+  "approvals.team.empty": "Nessuna regola del team.",
+  "approvals.team.addRule": "Aggiungi una regola del team",
+  "approvals.shared.title": "Richieste di account condivisi",
+  "approvals.shared.wants": "{bot} vuole l'account condiviso {account}",
+  "approvals.shared.why.refusedCall":
+    "Un'azione è stata bloccata. Questo Bot raggiunge più persone di quelle approvate.",
+  "approvals.shared.why.publish":
+    "Il suo proprietario ha esteso chi può raggiungerlo.",
+  "approvals.shared.why.trigger":
+    "Il suo proprietario ha aggiunto un trigger che permette a messaggi esterni di guidarlo.",
+  "approvals.shared.why.grant": "Gli sono state date le azioni dell'app.",
+  "approvals.shared.now": "Ora:",
+  "approvals.shared.notApproved": "Non approvato",
+  "approvals.shared.asked": "Richiesto:",
+  "approvals.shared.approve": "Approva",
+  "approvals.shared.decline": "Rifiuta",
+  "tasks.updated": "Aggiornato {ago}",
+  "routines.status.running": "In corso",
+  "routines.status.succeeded": "Riuscita",
+  "routines.status.failed": "Non riuscita",
+  "routines.status.skipped": "Saltata",
+  "routines.status.waiting": "In attesa di te",
+  "routines.status.missed": "Persa",
+  "routines.history.empty":
+    "Ancora nessuna esecuzione. Una esecuzione compare qui quando una routine è partita, o dopo che premi Esegui ora.",
+  "routines.history.aBot": "Un Bot",
+  "routines.history.latest": {
+    one: "Mostro l'ultima esecuzione.",
+    other: "Mostro le ultime {count} esecuzioni.",
+  },
+  "routines.history.deleted": "Una routine che nel frattempo è stata eliminata",
+  "routines.history.waitingNote":
+    "In attesa della tua approvazione. Apri la conversazione per rispondere.",
+  "responsibilities.status.completed": "Completato",
+  "responsibilities.summary.paused": "Niente la avvia finché non la riprendi",
+  "responsibilities.summary.trigger": "trigger {kind}",
+  "responsibilities.summary.starts": "Parte con {starts}",
+  "responsibilities.summary.asked": "Parte quando glielo chiedi",
+  "responsibilities.source.manual": "Manuale",
+  "responsibilities.source.schedule": "Pianificazione",
+  "responsibilities.source.connector": "App collegata",
+  "responsibilities.progress": "Avanzamento",
+  "responsibilities.lastResult": "Ultimo risultato",
+  "responsibilities.activeOn": "I suoi eventi e trigger la avviano.",
+  "responsibilities.activeOff": "In pausa. I suoi trigger non la avviano.",
+  "responsibilities.runNowLine":
+    "La esegue ora, per davvero. Il Bot fa il lavoro e può pubblicare e compiere azioni.",
+  "responsibilities.complete": "Completa",
+  "responsibilities.completeLine":
+    "Segnala come fatta. Dopo, niente la avvia più.",
+  "responsibilities.field.title": "Titolo",
+  "responsibilities.field.instruction": "Istruzione",
+  "responsibilities.field.criteria": "Criteri di riuscita",
+  "responsibilities.events": "Eventi",
+  "responsibilities.saving": "Salvataggio…",
+  "responsibilities.run.queued": "In coda",
+  "responsibilities.run.waiting":
+    "In attesa di {kind}. Rispondi in cima alla pagina di questo Bot o nella conversazione.",
+  "responsibilities.runs": "Esecuzioni",
+  "responsibilities.viewRuns": "Mostra le esecuzioni",
+  "responsibilities.hideRuns": "Nascondi le esecuzioni",
+  "passwords.description":
+    "Gli accessi che hai salvato quando hai fatto entrare un Bot in un sito. I Bot non li vedono mai, e confermi tu ogni uso.",
+  "passwords.saved": "Accessi salvati",
+  "passwords.loadError":
+    "Non sono riuscito a caricare le tue password. Ricarica la pagina.",
+  "passwords.off":
+    "Un amministratore ha disattivato le password salvate. I tuoi accessi restano salvati ma non verranno proposti.",
+  "passwords.empty":
+    "Nessun accesso salvato. Scegli Salva in Password quando fai entrare un Bot in un sito.",
+  "passwords.lastUsed": "ultimo uso {date}",
+  "passwords.neverUsed": "mai usato",
+  "passwords.deleteAria": "Elimina l'accesso per {origin}",
+  "settings.notificationsPage":
+    "Dove ti raggiungono gli aggiornamenti dei tuoi Bot quando non ci sei. Quanto invia ogni Bot lo imposti nella sua pagina.",
 };

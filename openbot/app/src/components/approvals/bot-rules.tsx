@@ -14,6 +14,7 @@ import {
   ruleCoversBot,
   updateApprovalRuleMutationOptions,
 } from "@/lib/approvals";
+import { useT } from "@/freeduet/i18n/provider";
 import { queryClient } from "@/query-client";
 import { RuleForm, RuleRow } from "./rules";
 
@@ -23,6 +24,7 @@ import { RuleForm, RuleRow } from "./rules";
  * `botId` is the Bot's id, or a pattern covering it.
  */
 export function BotApprovalRules({ agentId }: { agentId: string }) {
+  const t = useT();
   const inbox = useQuery(approvalInboxOptions());
   const addRule = useMutation(createApprovalRuleMutationOptions(queryClient));
   const changeRule = useMutation(
@@ -46,28 +48,24 @@ export function BotApprovalRules({ agentId }: { agentId: string }) {
     <PageSection
       description={
         <>
-          The strictest matching rule wins. An "ask" rule beats an "allow" rule.
-          Rules for every Bot are in{" "}
+          {t("approvals.bot.lead")}{" "}
           <Link
             className="underline underline-offset-4"
             to="/settings/approvals"
           >
-            Settings → Approvals
+            {t("approvals.bot.settingsLink")}
           </Link>
-          .
-          {rulesOff
-            ? " An admin has turned off personal rules. Yours are kept but don't apply."
-            : ""}
+          .{rulesOff ? ` ${t("approvals.rulesOff")}` : ""}
         </>
       }
-      title="Rules"
+      title={t("approvals.bot.title")}
     >
       {error ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
           {error.message}
         </p>
       ) : null}
-      {saved === 0 ? <PageEmpty>No rules for this Bot.</PageEmpty> : null}
+      {saved === 0 ? <PageEmpty>{t("approvals.bot.empty")}</PageEmpty> : null}
       {saved > 0 || canAdd ? (
         <PageRows>
           {team.map((rule, index) => (
@@ -103,7 +101,7 @@ export function BotApprovalRules({ agentId }: { agentId: string }) {
               <RuleForm
                 botField={false}
                 forBot={agentId}
-                label="Add a rule"
+                label={t("approvals.addRule")}
                 save={addRule}
               />
             </>

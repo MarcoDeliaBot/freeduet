@@ -188,7 +188,7 @@ function RoutineRuns({ routine }: { routine: RoutineRecord }) {
               )}
             >
               <span className={cn("size-1.5 rounded-full", status.dot)} />
-              {status.text}
+              {t(status.key)}
             </span>
             <span className="text-muted-foreground">
               {run.source === "run_now"

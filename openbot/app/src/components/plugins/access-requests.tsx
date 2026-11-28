@@ -23,6 +23,7 @@ import {
   type AppWant,
   appAccessInboxQueryOptions,
 } from "@/lib/app-access/queries";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import { relativeTime } from "@/lib/relative-time";
 import { queryClient } from "@/query-client";
 
@@ -115,6 +116,7 @@ function AccessRequestRow({ request }: { request: AppAccessRequest }) {
   const dismiss = useMutation(
     dismissAppAccessRequestMutationOptions(queryClient),
   );
+  const { language } = useAppLanguage();
   const busy = approve.isPending || dismiss.isPending;
   const error = approve.error ?? dismiss.error;
   const who = request.requesterName ?? request.requesterEmail ?? "Somebody";
@@ -130,7 +132,7 @@ function AccessRequestRow({ request }: { request: AppAccessRequest }) {
       <ItemContent>
         <ItemTitle>{askedFor(request)}</ItemTitle>
         <ItemDescription className="line-clamp-none">
-          {who} asked {relativeTime(request.createdAt)}
+          {who} asked {relativeTime(request.createdAt, language)}
           {request.kind === "connect_shared" && request.botName
             ? `, for ${request.botName}`
             : ""}

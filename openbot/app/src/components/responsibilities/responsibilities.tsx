@@ -111,6 +111,7 @@ function ResponsibilityRow({
   goal: ResponsibilityRecord;
   onOpen: () => void;
 }) {
+  const t = useT();
   const triggers = useQuery(triggersQueryOptions(goal.id));
   const Icon = STATUS[goal.status].icon;
   return (
@@ -120,7 +121,7 @@ function ResponsibilityRow({
       </ItemMedia>
       <ItemContent>
         <ItemTitle>{goal.title}</ItemTitle>
-        <ItemDescription>{summaryFor(goal, triggers.data)}</ItemDescription>
+        <ItemDescription>{summaryFor(goal, triggers.data, t)}</ItemDescription>
       </ItemContent>
       <ItemActions>
         <IconChevronRight className="size-4 text-muted-foreground" />

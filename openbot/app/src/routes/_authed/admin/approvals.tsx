@@ -1,16 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { TeamApprovalSettings } from "@/components/approvals/team-settings";
 import { PageShell } from "@/components/layout/page-shell";
+import { useT } from "@/freeduet/i18n/provider";
 
 export const Route = createFileRoute("/_authed/admin/approvals")({
   component: AdminApprovalsPage,
 });
 
 function AdminApprovalsPage() {
+  const t = useT();
   return (
     <PageShell
-      description="What members' Bots must ask before they act, rules for everyone, and requests to use shared accounts."
-      title="Approvals"
+      description={t("approvals.admin.description")}
+      title={t("settings.approvals")}
     >
       <TeamApprovalSettings />
     </PageShell>

@@ -33,19 +33,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useT } from "@/freeduet/i18n/provider";
 import {
   type ApprovalRuleInput,
   type ApprovalRuleRow,
-  BEHAVIOUR_LABELS,
   type HostCommandPolicy,
   type RuleBehaviour,
 } from "@/lib/approvals";
 
-export const HOST_LABELS: Record<HostCommandPolicy, string> = {
-  ask: "Ask every time",
-  allow: "Always allow",
-  never: "Never",
-};
+/** What a rule's behaviour is called, in the app's language (D181 stage 2f). The keys are the values the server stores. */
+export function useBehaviourLabels(): Record<RuleBehaviour, string> {
+  const t = useT();
+  return {
+    allow: t("approvals.behaviour.allow"),
+    pre_approved: t("approvals.behaviour.preApproved"),
+    ask: t("approvals.behaviour.ask"),
+    hand_off: t("approvals.behaviour.handOff"),
+  };
+}
+
+/** How commands on a person's computer are handled, in the app's language. */
+export function useHostLabels(): Record<HostCommandPolicy, string> {
+  const t = useT();
+  return {
+    ask: t("approvals.host.ask"),
+    allow: t("approvals.host.allow"),
+    never: t("approvals.host.never"),
+  };
+}
 
 /**
  * One value from a fixed set of labelled choices: a rule's behaviour, or how commands on a computer
@@ -90,12 +105,15 @@ export function LabelSelect<T extends string>({
 }
 
 /** The behaviours a team rule is offered under, each saying it is the team's. */
-const TEAM_BEHAVIOUR_LABELS = Object.fromEntries(
-  Object.entries(BEHAVIOUR_LABELS).map(([key, label]) => [
-    key,
-    `${label} (team rule)`,
-  ]),
-) as Record<RuleBehaviour, string>;
+function useTeamBehaviourLabels(): Record<RuleBehaviour, string> {
+  const t = useT();
+  return Object.fromEntries(
+    Object.entries(useBehaviourLabels()).map(([key, label]) => [
+      key,
+      t("approvals.teamRule", { label }),
+    ]),
+  ) as Record<RuleBehaviour, string>;
+}
 
 /**
  * One saved rule, as a row: what it matches, and what a Bot does about it. A locked rule — a team
@@ -117,13 +135,16 @@ export function RuleRow({
   onRevoke: () => void;
   onChange: (behaviour: RuleBehaviour) => void;
 }) {
-  const labels = team ? TEAM_BEHAVIOUR_LABELS : BEHAVIOUR_LABELS;
+  const t = useT();
+  const own = useBehaviourLabels();
+  const teamOwn = useTeamBehaviourLabels();
+  const labels = team ? teamOwn : own;
   // The tool is the title; the rest of what the rule matches is the line beneath, never clamped,
   // since two rules for one tool differ only there.
   const match = [
     rule.effect !== "*" ? rule.effect : null,
-    rule.scope !== "*" ? `on ${rule.scope}` : null,
-    rule.botId !== "*" ? `for ${rule.botId}` : null,
+    rule.scope !== "*" ? t("approvals.matchOn", { scope: rule.scope }) : null,
+    rule.botId !== "*" ? t("approvals.matchFor", { bot: rule.botId }) : null,
   ]
     .filter(Boolean)
     .join(" ");
@@ -139,7 +160,9 @@ export function RuleRow({
             {match}
           </ItemDescription>
         ) : null}
-        {locked ? <ItemDescription>Locked</ItemDescription> : null}
+        {locked ? (
+          <ItemDescription>{t("approvals.locked")}</ItemDescription>
+        ) : null}
       </ItemContent>
       <ItemActions>
         {locked ? (
@@ -150,7 +173,7 @@ export function RuleRow({
           <>
             <LabelSelect
               disabled={disabled}
-              label={`Behaviour for ${rule.toolRef}`}
+              label={t("approvals.behaviourFor", { tool: rule.toolRef })}
               labels={labels}
               onChange={onChange}
               value={rule.behaviour}
@@ -161,7 +184,7 @@ export function RuleRow({
               size="sm"
               variant="outline"
             >
-              Remove
+              {t("chat.remove")}
             </Button>
           </>
         )}
@@ -196,6 +219,8 @@ export function RuleForm({
   /** The Bot every rule from this form is for, already known from the page it is on. */
   forBot?: string;
 }) {
+  const t = useT();
+  const behaviourLabels = useBehaviourLabels();
   const blank = forBot ? { ...EMPTY_RULE, botId: forBot } : EMPTY_RULE;
   const [rule, setRule] = useState<ApprovalRuleInput>(blank);
   const [open, setOpen] = useState(false);
@@ -233,9 +258,7 @@ export function RuleForm({
         </ItemMedia>
         <ItemContent>
           <ItemTitle>{label}</ItemTitle>
-          <ItemDescription>
-            A tool or app, and what a Bot does before using it.
-          </ItemDescription>
+          <ItemDescription>{t("approvals.formLead")}</ItemDescription>
         </ItemContent>
         <ItemActions>
           <IconChevronRight className="size-4 text-muted-foreground" />
@@ -245,10 +268,7 @@ export function RuleForm({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{label}</DialogTitle>
-            <DialogDescription>
-              Use * to match anything. mcp/gmail/* means every Gmail tool. A
-              target of *.example.com means every page on that site.
-            </DialogDescription>
+            <DialogDescription>{t("approvals.formHelp")}</DialogDescription>
           </DialogHeader>
           <DialogBody className="mt-4">
             {/* The submit button is in the footer and reaches this form by id, so DialogBody stays a
@@ -264,17 +284,33 @@ export function RuleForm({
               <FieldGroup>
                 {field(
                   "toolRef",
-                  "Tool or app",
-                  "mcp/gmail/*, computer_click, host/*",
+                  t("approvals.field.tool"),
+                  t("approvals.field.toolHint"),
                 )}
-                {field("effect", "Kind of action", "* , write, read, delegate")}
-                {field("scope", "Target", "*, a site, a folder, a Bot name")}
-                {botField ? field("botId", "Bot", "* for every Bot") : null}
+                {field(
+                  "effect",
+                  t("approvals.field.effect"),
+                  t("approvals.field.effectHint"),
+                )}
+                {field(
+                  "scope",
+                  t("approvals.field.scope"),
+                  t("approvals.field.scopeHint"),
+                )}
+                {botField
+                  ? field(
+                      "botId",
+                      t("approvals.field.bot"),
+                      t("approvals.field.botHint"),
+                    )
+                  : null}
                 <Field>
-                  <FieldLabel htmlFor={`${id}-behaviour`}>Behaviour</FieldLabel>
+                  <FieldLabel htmlFor={`${id}-behaviour`}>
+                    {t("approvals.field.behaviour")}
+                  </FieldLabel>
                   <LabelSelect
                     id={`${id}-behaviour`}
-                    labels={BEHAVIOUR_LABELS}
+                    labels={behaviourLabels}
                     onChange={(behaviour) =>
                       setRule((prior) => ({ ...prior, behaviour }))
                     }
@@ -291,7 +327,7 @@ export function RuleForm({
           </DialogBody>
           <DialogFooter className="mt-4">
             <Button onClick={close} size="sm" variant="outline">
-              Cancel
+              {t("settings.cancel")}
             </Button>
             <Button
               disabled={save.isPending || !rule.toolRef.trim()}
@@ -299,7 +335,7 @@ export function RuleForm({
               size="sm"
               type="submit"
             >
-              Save rule
+              {t("approvals.saveRule")}
             </Button>
           </DialogFooter>
         </DialogContent>
