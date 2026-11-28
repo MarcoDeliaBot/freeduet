@@ -1,0 +1,2988 @@
+import type { Catalog } from "../translate";
+import type { EN } from "./en";
+
+/*
+ * Japanese (D181, stage 2): polite (です・ます) where a sentence needs it, and short labels without a
+ * pronoun. The words are the ones the site's Japanese pages use: アシスタント for Bot (their word for
+ * the members), メンバー for member, チーム for team, 引き継ぎ for hand-off, ルーティン for routine,
+ * エンジン for engine, 承認 for approval. Full access and FreeDuet stay as they are. The approval
+ * cards (openbot/shared/approval-text-ja.ts) still say Bot, and this file does not change them.
+ * Japanese has one plural form, so `one` and `other` hold the same text: Intl.PluralRules("ja")
+ * selects only "other". Not yet checked by a person who reads Japanese.
+ */
+export const ja: Catalog<typeof EN> = {
+  "sign.title": "{product} にログイン",
+  "sign.continueWith": "{provider}で続行",
+  "sign.opening": "{provider}を開いています…",
+  "sign.openError":
+    "{provider}のログインを開けませんでした。もう一度お試しください。",
+  "sign.ssoRequired":
+    "組織の方針により、会社のアカウントでログインする必要があります。",
+  "sign.pairLead":
+    "このブラウザはまだ{product}とペアリングされていません。{product}が動いているコンピューターで",
+  "sign.pairTail":
+    "を実行してください。{product}がここで開き、すぐに使えます。",
+  "sign.notSetUp":
+    "ログインはまだ設定されていません。先に管理者が設定する必要があります。",
+  "sign.or": "または",
+  "sign.emailPlaceholder": "you@company.com",
+  "sign.openingCompany": "開いています…",
+  "sign.continueCompany": "会社のアカウントで続行",
+  "sign.adminSignIn": "管理者のログイン",
+  "sign.noCompany": "このアドレスには会社のログインが設定されていません。",
+  "shell.menu": "メニュー",
+  "shell.everything": "すべて",
+  "shell.everythingLine": "すべてのチャンネルにまたがるチャットの内容",
+  "shell.channelsError":
+    "チャンネルを読み込めませんでした。ページを再読み込みしてください。",
+  "shell.channels": "チャンネル",
+  "shell.newChannel": "新しいチャンネル",
+  "shell.archived": "アーカイブ済み",
+  "shell.archivedChannels": "アーカイブ済みのチャンネル",
+  "shell.unarchive": "アーカイブを解除",
+  "shell.unarchiveNamed": "{name}のアーカイブを解除",
+  "shell.earlier": "以前の会話",
+  "shell.manage": "管理",
+  "shell.signOut": "ログアウト",
+  "nav.bots": "アシスタント",
+  "nav.connections": "接続",
+  "nav.capabilities": "機能",
+  "nav.routines": "ルーティン",
+  "nav.approvalRules": "承認ルール",
+  "nav.admin": "管理",
+  "nav.dashboard": "ダッシュボード",
+  "nav.settings": "設定",
+  "tab.main": "メイン",
+  "tab.chat": "チャット",
+  "tab.tasks": "タスク",
+  "tab.make": "作成",
+  "tab.waiting": "{tab}、{badge}件待機中",
+  "header.chat": "{product}のチャット",
+  "header.settings": "あなたの設定",
+  "header.back": "戻る",
+  "header.more": "その他",
+  "composer.ask": "何でも聞いてください",
+  "composer.message": "メッセージ",
+  "composer.queue": "メッセージをキューに入れる",
+  "composer.send": "メッセージを送信",
+  "composer.stop": "アシスタントを停止",
+  "composer.showCall": "音声通話を表示",
+  "composer.startCall": "音声通話を開始",
+  "composer.callBot": "このアシスタントと通話",
+  "composer.callUnsupported":
+    "音声通話には、マイクと安全な（HTTPS）接続が必要です",
+  "composer.speak": "音声でメッセージを入力",
+  "composer.dictateTitle": "やることを、すべて話してください",
+  "composer.attach": "ファイルを添付",
+  "composer.moreUnavailable": "メッセージのその他の操作は使えません",
+  "composer.messageNamed": "{name}へのメッセージ",
+  "chat.botsError":
+    "アシスタントを読み込めませんでした。ページを再読み込みしてください。",
+  "chat.noBots": "まだアシスタントがいません。",
+  "chat.conversationError":
+    "会話を読み込めませんでした。ページを再読み込みしてください。",
+  "chat.stillStarting":
+    "会話をまだ開始しています。少し待ってから、もう一度お試しください。",
+  "chat.startError": "会話を開始できませんでした。もう一度お試しください。",
+  "attention.questions": {
+    one: "{count}件の質問",
+    other: "{count}件の質問",
+  },
+  "attention.approvals": {
+    one: "{count}件の承認待ち",
+    other: "{count}件の承認待ち",
+  },
+  "attention.handoffs": {
+    one: "{count}件の止まった引き継ぎ",
+    other: "{count}件の止まった引き継ぎ",
+  },
+  "attention.unread": {
+    one: "{count}件の未読の会話",
+    other: "{count}件の未読の会話",
+  },
+  "attention.needYou": {
+    one: "あなたの対応が必要なことが{count}件あります",
+    other: "あなたの対応が必要なことが{count}件あります",
+  },
+  "attention.open": "{summary}。アシスタントを開いて対応してください。",
+  "attention.unreadMessages": "未読のメッセージ",
+  "bots.new": "新しいアシスタント",
+  "bots.purpose":
+    "あなたのアシスタントと、あなたと共有されたアシスタントです。それぞれが何をしていて、あなたに何が必要かを確認できます。",
+  "bots.loadError":
+    "アシスタントを読み込めませんでした。ページを再読み込みしてください。",
+  "bots.needsYou": "対応が必要",
+  "bots.pinned": "ピン留め",
+  "bots.yours": "あなたのアシスタント",
+  "bots.shared": "共有されたアシスタント",
+  "bots.allPinned": "あなたのアシスタントは、すべて上にピン留めされています。",
+  "bots.allNeedYou":
+    "あなたのアシスタントは、すべて「対応が必要」の下にあります。",
+  "bots.none":
+    "まだアシスタントがいません。「新しいアシスタント」から作成できます。",
+  "bots.nobodyShared": "まだ、アシスタントを共有してくれた人はいません。",
+  "bots.hide": "非表示にする",
+  "bots.show": "表示する",
+  "bots.hidden": "非表示",
+  "bots.hiddenDescription": {
+    one: "非表示にしたアシスタントが{count}人います。変わるのは一覧だけです。",
+    other:
+      "非表示にしたアシスタントが{count}人います。変わるのは一覧だけです。",
+  },
+  "bots.paused": "一時停止中",
+  "bots.message": "メッセージ",
+  "bots.wroteIn": {
+    one: "{name}が、まだ読んでいない会話{count}件に書き込みました。",
+    other: "{name}が、まだ読んでいない会話{count}件に書き込みました。",
+  },
+  "bots.readNewest": "最新を読む",
+  "bots.resuming": "再開しています…",
+  "bots.pausedResume": "一時停止中。再開",
+  "botPage.purpose":
+    "このアシスタントがあなたのために何をしているか、どのように設定されているか。",
+  "botPage.fallbackTitle": "アシスタント",
+  "botPage.openError":
+    "このアシスタントを開けませんでした。あなたと共有されていない可能性があります。",
+  "profile.forYou": "あなたのため",
+  "profile.settingsError":
+    "このアシスタントの設定を読み込めませんでした。ページを再読み込みしてください。",
+  "profile.active": "稼働中",
+  "profile.pausedDescription":
+    "一時停止中です。オンに戻すまで、あなたのために何も動きません。",
+  "profile.activeDescription":
+    "ルーティン、担当業務、引き継ぎ、フォローアップを、あなたのために実行します。",
+  "profile.notifications": "通知",
+  "profile.notifyDescription":
+    "{level}。サイドバーのバッジは、いつも表示されます。",
+  "profile.notify.all": "すべて",
+  "profile.notify.needsInput": "対応が必要なときだけ",
+  "profile.notify.none": "なし（バッジのみ）",
+  "profile.browserNotifications": "ブラウザーの通知",
+  "profile.browserOff":
+    "このブラウザーではオフです。オンにすると、アシスタントに対応が必要なときに知らせます。",
+  "profile.turnOn": "オンにする",
+  "profile.startConversation": "会話を始めてください。",
+  "stalled.what": "{name}は完了しませんでした：{task}",
+  "stalled.why": "理由：{reason}。",
+  "stalled.retryError":
+    "もう一度試せませんでした。すでに実行中の可能性があります。",
+  "stalled.dismissError":
+    "閉じられませんでした。すでに実行中の可能性があります。",
+  "stalled.dismissing": "閉じています…",
+  "stalled.dismissed": "閉じました",
+  "stalled.dismiss": "閉じる",
+  "stalled.retrying": "もう一度試しています…",
+  "stalled.queued": "再びキューに入りました",
+  "stalled.retry": "もう一度試す",
+  "stalled.open": "会話を開く",
+  "dash.title": "ダッシュボード",
+  "dash.notAvailable": "まだ利用できません",
+  "dash.tokensNotCounted": "今日はまだ、集計されたやり取りがありません。",
+  "dash.countsUnavailable": "トークン数は、今は確認できません。",
+  "dash.enginesLink": "エンジンを管理",
+  "dash.teamLink": "すべてのメンバー",
+  "dash.waitingForYou": "あなたの対応待ち",
+  "dash.available": "利用可能",
+  "dash.loading": "チームを読み込んでいます…",
+  "dash.nothingWaits": "あなたの対応待ちはありません。",
+  "dash.thingsWait": {
+    one: "あなたの対応待ちが{count}件あります。",
+    other: "あなたの対応待ちが{count}件あります。",
+  },
+  "dash.partialCount": "{turns}回の試行のうち{reported}回が数を報告しました",
+  "dash.inputPlusOutput": "入力と出力の合計（各エンジンの報告どおり）",
+  "dash.nothingSaved": "今日はまだ、無料のエンジンを通ったものはありません",
+  "dash.firstFor": {
+    one: "{count}人のメンバーで初めて",
+    other: "{count}人のメンバーで初めて",
+  },
+  "dash.members": {
+    one: "{count}人のメンバー",
+    other: "{count}人のメンバー",
+  },
+  "dash.indicators": "指標",
+  "dash.tokensToday": "今日のトークン",
+  "dash.savedToday": "今日、無料のエンジンで節約できた分",
+  "dash.waitingSub": "質問、承認、止まった引き継ぎ",
+  "dash.nextRoutine": "次のルーティン",
+  "dash.noRoutine": "予定されているルーティンはありません。",
+  "dash.team": "チーム",
+  "dash.engines": "エンジン",
+  "dash.noEngine": "まだエンジンが設定されていません。",
+  "dash.perMemberAria": "メンバーごとのトークン",
+  "dash.perMember": "メンバーごとのトークン（今日）",
+  "dash.foot":
+    "数は、各エンジンが報告した値を、UTCの日単位で集計したものです。最近の活動のログと、プランの上限のゲージは、まだ利用できません。",
+  "voice.heardNothing":
+    "何も聞き取れませんでした。マイクをタップしてもう一度試すか、入力してください。",
+  "voice.tapWhenDone": "話し終えたら、マイクをタップしてください",
+  "voice.discard": "破棄",
+  "voice.start": "音声入力を開始",
+  "voice.stopAndSend": "音声入力を止めて送信",
+  "voice.typeInstead": "代わりに入力する",
+  "voice.retry": "やり直す",
+  "voice.recordAgain": "もう一度録音",
+  "voice.writing": "話した内容を書き起こしています…",
+  "voice.listeningStop": "聞いています…話が途切れたら止まります",
+  "voice.listening": "聞いています。そのまま話し始めてください。",
+  "voice.permission": "マイクの許可を待っています…",
+  "voice.widget.unavailable": "",
+  "voice.widget.connecting": "",
+  "voice.widget.speaking": "",
+  "voice.widget.working": "",
+  "voice.widget.muted": "",
+  "voice.widget.listening": "",
+  "voice.widget.ready": "",
+  "voice.widget.label": "",
+  "voice.widget.duration": "",
+  "voice.widget.expand": "",
+  "voice.widget.expandTitle": "",
+  "voice.widget.end": "",
+  "voice.widget.endTitle": "",
+  "voice.widget.returnChat": "",
+  "voice.widget.returnChatTitle": "",
+  "voice.widget.settings": "",
+  "voice.widget.captions": "",
+  "voice.widget.captionsEmpty": "",
+  "voice.widget.you": "",
+  "voice.widget.youMuted": "",
+  "voice.widget.youNamed": "",
+  "voice.widget.mute": "",
+  "voice.widget.unmute": "",
+  "voice.widget.muteTitle": "",
+  "voice.session.slow": "",
+  "voice.session.timeLimit": "",
+  "voice.session.muteFailed": "",
+  "voice.session.lost": "",
+  "voice.session.startFailed": "",
+  "voice.session.transcriptLimit": "",
+  "voice.session.responseFailed": "",
+  "voice.session.serviceError": "",
+  "voice.webrtc.unsupported": "",
+  "voice.webrtc.playback": "",
+  "voice.webrtc.lost": "",
+  "voice.webrtc.micGone": "",
+  "voice.webrtc.channelFailed": "",
+  "voice.webrtc.ended": "",
+  "voice.webrtc.unreadable": "",
+  "voice.webrtc.connectFailed": "",
+  "voice.webrtc.invalid": "",
+  "voice.webrtc.notConnected": "",
+  "voice.websocket.audio": "",
+  "voice.websocket.config": "",
+  "voice.websocket.address": "",
+  "voice.websocket.startFailed": "",
+  "voice.websocket.connect": "",
+  "voice.websocket.closed": "",
+  "voice.websocket.notConnected": "",
+  "voice.websocket.invalid": "",
+  "voice.websocket.slow": "",
+  "voice.websocket.micGone": "",
+  "voice.connection.unsupported": "",
+  "voice.connection.unavailable": "",
+  "voice.connection.transport": "",
+  "dictation.controls.dictate": "",
+  "dictation.controls.cancel": "",
+  "dictation.controls.transcribing": "",
+  "dictation.controls.listening": "",
+  "dictation.controls.duration": "",
+  "dictation.controls.stop": "",
+  "dictation.controls.stopTitle": "",
+  "dictation.controls.send": "",
+  "dictation.recording.secure": "",
+  "dictation.recording.noRecorder": "",
+  "dictation.recording.noFormat": "",
+  "dictation.recording.tooLarge": "",
+  "dictation.recording.stopped": "",
+  "dictation.recording.interrupted": "",
+  "dictation.recording.empty": "",
+  "dictation.recording.noSpeech": "",
+  "dictation.recording.failed": "",
+  "dictation.session.denied": "",
+  "dictation.session.startFailed": "",
+  "dictation.session.finishFailed": "",
+  "dictation.session.transcribeFailed": "",
+  "home.bots": "チームを確認して、アシスタントごとに管理します。",
+  "home.capabilities": "スキルと記憶。",
+  "home.connectionsLabel": "アカウント、アプリ、メールのルール",
+  "home.connections": "アカウント、アプリ、メールのどれかを接続します。",
+  "home.setupLabel": "セットアップの確認リスト",
+  "home.setup": "設定済みのものと、残りを確認します。",
+  "home.approvalsLabel": "承認ルールとFull access",
+  "home.approvals": "アシスタントが、あなたに確認せずにできること。",
+  "home.passwordsLabel": "パスワード",
+  "home.passwords": "チームが使ってよいパスワードです。",
+  "home.routines": "自動で繰り返される作業と、週の表示です。",
+  "home.notifications": "更新のお知らせが届く場所です。",
+  "home.admin": "コンピューター、認証情報、制限、人、監査ログ。",
+  "home.engines":
+    "アシスタントごとに、どのエンジンが、どの順番で答えるか、今日どれだけ使ったか。順番を変えるまで、あなたのサブスクリプションが最初です。",
+  "home.safety": "安全性",
+  "home.jobs": "仕事",
+  "home.system": "システム",
+  "settings.description":
+    "チーム、接続したアカウント、個人の設定を管理します。",
+  "settings.sections": "設定のセクション",
+  "settings.workspace": "ワークスペース",
+  "settings.preferences": "環境設定",
+  "settings.devices": "デバイスと情報",
+  "settings.appearance": "外観",
+  "settings.matchPhone": "スマートフォンに合わせる",
+  "settings.light": "ライト",
+  "settings.dark": "ダーク",
+  "settings.voice": "音声",
+  "settings.shortcuts": "キーボードショートカット",
+  "language.section": "言語",
+  "language.title": "アプリの言語",
+  "language.description":
+    "メニューとボタンの言語です。チームは、チャットで設定した言語であなたに書きます。",
+  "language.auto": "自動（ブラウザー）",
+  "settings.descriptionPlain":
+    "{product}の見た目と動作を、あなた向けに整えます。",
+  "wide.yourTeam": "あなたのチーム",
+  "wide.team": "チーム",
+  "wide.stateWaiting": "あなたの対応待ち",
+  "wide.stateWorking": "作業中",
+  "wide.memberLabel": "{name}、{line}",
+  "chat.loadingConversation": "この会話を読み込んでいます",
+  "chat.readAloud": "読み上げる",
+  "chat.stopReading": "読み上げを止める",
+  "chat.thinking": "考え中",
+  "chat.queued": "キュー待ち",
+  "chat.removeQueued": "キュー待ちのメッセージを削除：{what}",
+  "chat.remove": "削除",
+  "chat.routineRan": "ルーティンが実行されました。",
+  "chat.firstDayYes": "そのとおりです",
+  "chat.firstDayNo": "何か違います",
+  "chat.tryingAgain": "もう一度試しています。",
+  "chat.responsibilityRan": "担当業務が実行されました。",
+  "chat.trigger": "きっかけ：",
+  "chat.details": "詳細",
+  "chat.via": "{source}経由",
+  "chat.untitledFile": "無題のファイル",
+  "chat.attachment": "添付ファイル",
+  "chat.attachmentLower": "添付ファイル",
+  "chat.attachmentNamed": "添付ファイル：{name}",
+  "chat.unavailableNamed": "{name}は利用できません。",
+  "chat.unavailable": "この添付ファイルは利用できません。",
+  "chat.openNamed": "{name}を開く",
+  "chat.close": "閉じる",
+  "chat.generatedInterface": "このアシスタントが作成した画面",
+  "chat.usedBrowser": "ブラウザーを使用",
+  "chat.hostAndMore": "{host}ほか{amount}件",
+  "chat.searchedWeb": "ウェブ検索",
+  "chat.readPages": {
+    one: "{amount}ページの読み取り",
+    other: "{amount}ページの読み取り",
+  },
+  "chat.browsedPages": {
+    one: "{amount}ページの閲覧",
+    other: "{amount}ページの閲覧",
+  },
+  "chat.usedBrowserPhrase": "ブラウザーの利用",
+  "chat.usedNamed": "{name}の利用",
+  "chat.usedConnectors": {
+    one: "{amount}件のコネクターの利用",
+    other: "{amount}件のコネクターの利用",
+  },
+  "chat.usedTools": {
+    one: "{amount}件のツールの利用",
+    other: "{amount}件のツールの利用",
+  },
+  "chat.andJoin": "{head}と{last}",
+  "chat.inProgress": "進行中",
+  "chat.waitingForYou": "あなたの対応待ち",
+  "chat.notCompleted": "完了していません",
+  "chat.blocked": "ブロック中",
+  "chat.didntWork": "うまくいきませんでした",
+  "chat.couldntFinishStep": "このステップを完了できませんでした。",
+  "chat.issues": {
+    one: "{amount}件の問題",
+    other: "{amount}件の問題",
+  },
+  "settings.addRepository": "リポジトリを追加",
+  "settings.approvals": "承認",
+  "settings.appsSharedBots": "共有されたアシスタントに使わせるアプリ",
+  "settings.backToApp": "アプリに戻る",
+  "settings.cancel": "キャンセル",
+  "settings.cannotMakeCode":
+    "コードは、コンピューターとペアリングされたブラウザーで作成します。このブラウザーでは作成できません。",
+  "settings.cantLink":
+    "{provider}のアカウントはまだ連携できません。先に管理者が設定する必要があります。",
+  "settings.changesDescription":
+    "アシスタントがチャットから変更した設定です。「元に戻す」を押すと、7日間は古い値に戻せます。ただし、その設定が変更後の値のままである場合に限ります。",
+  "settings.changesEmpty": "チャットでの変更は、まだありません。",
+  "settings.changesLoading": "変更を読み込んでいます…",
+  "settings.changesTitle": "チャットでの変更",
+  "settings.charactersOf": "{used}/{limit}文字",
+  "settings.checkLinkError":
+    "このアカウントを連携できるかどうかを確認できませんでした：{error}",
+  "settings.code": "コード",
+  "settings.codeExpires":
+    "このコードは一度だけ使えて、10分で期限切れになります。",
+  "settings.codeRanOut":
+    "そのコードは期限切れです。新しいコードを作成してください。",
+  "settings.componentsGallery": "コンポーネントのギャラリー",
+  "settings.computer": "コンピューター",
+  "settings.connect": "接続",
+  "settings.connectEvents": "イベントを接続",
+  "settings.connectNamed": "{name}に接続",
+  "settings.copied": "コピーしました",
+  "settings.copy": "コピー",
+  "settings.copyFailed":
+    "コピーできませんでした。コードを選択して、手動でコピーしてください。",
+  "settings.deliveriesEmpty": "まだ配信はありません。",
+  "settings.deliveriesTitle": "最近の配信",
+  "settings.deploymentOwn": "導入先の既定値",
+  "settings.devicesDescription":
+    "スマートフォンの{product}アプリにログインし、通知をオンにすると、ここに追加されます。",
+  "settings.devicesEmpty": "まだデバイスはありません。",
+  "settings.devicesTitle": "あなたのデバイス",
+  "settings.disconnect": "切断",
+  "settings.disconnectError": "{name}を切断できませんでした：{error}",
+  "settings.disconnectNamed": "{name}を切断",
+  "settings.done": "完了",
+  "settings.emphasisBot": "アシスタント名",
+  "settings.emphasisConversation": "会話のタイトル",
+  "settings.emphasisDescription": "サイドバーで目立たせる行を選びます。",
+  "settings.emphasisPreview": "メッセージ一覧のプレビュー",
+  "settings.emphasisTitle": "メッセージ一覧の強調",
+  "settings.general": "一般",
+  "settings.githubConnectError": "GitHubに接続できませんでした：{error}",
+  "settings.githubLinkFailed":
+    "GitHubアカウントを連携できませんでした。もう一度お試しください。",
+  "settings.githubLinked": "GitHubアカウントが連携されています。",
+  "settings.githubTaken":
+    "そのGitHubアカウントは、{product}で別の人と連携されています。別のアカウントでGitHubにログインしてから、もう一度お試しいただくか、管理者にご相談ください。",
+  "settings.kindDecision": "判断",
+  "settings.kindDecisionDescription": "アシスタントが動く前に必要な承認です。",
+  "settings.kindProgress": "進捗",
+  "settings.kindProgressDescription":
+    "あなたが見ていなかった作業からの返信と結果です。",
+  "settings.kindQuestion": "質問",
+  "settings.kindQuestionDescription":
+    "アシスタントがあなたに尋ね、回答を待っていることです。",
+  "settings.languageChanged":
+    "チーム向けのあなたの言語が、{from}から{to}に変わりました。",
+  "settings.lastSeen": "最終利用：{when}",
+  "settings.levelAll": "すべて",
+  "settings.levelNeedsInput": "対応が必要なときだけ",
+  "settings.linkBroughtCode":
+    "リンクからコードが届きました。このブラウザーに名前を付けて、「ペアリング」を押してください。",
+  "settings.linkSlack": "Slackアカウントを連携",
+  "settings.linked": "連携済み",
+  "settings.loadAccountError": "アカウントを読み込めませんでした：{error}",
+  "settings.loading": "読み込んでいます…",
+  "settings.localAddress":
+    "このアドレスは、このコンピューターでのみ使えます。スマートフォンには、外部からFreeDuetにアクセスするためのアドレスが必要です。そのアドレスをスマートフォンで開き、設定でコードを入力してください。",
+  "settings.madeWhen": "作成：{when}",
+  "settings.makeCode": "コードを作成",
+  "settings.memberAdded": "{member}がチームに追加されました。",
+  "settings.name": "名前",
+  "settings.nameChanged":
+    "{bot}：あなたがつけた名前が、{from}から{to}に変わりました。",
+  "settings.nameOwn": "アシスタント自身の名前",
+  "settings.needsReconnect": "再接続が必要",
+  "settings.needsReconnectHandle": "再接続が必要 · @{handle}",
+  "settings.noItalianVoice":
+    "このコンピューターには、イタリア語の音声がありません。そのため、ここでは返信を読み上げられません。",
+  "settings.notLinked": "未連携",
+  "settings.notSetUp": "未設定",
+  "settings.notifyChanged": "{bot}：通知が{from}から{to}に変わりました。",
+  "settings.pairThisDescription":
+    "FreeDuetが動いているコンピューターで「設定」を開き、「スマートフォンや別のブラウザーをペアリング」の下にある「コードを作成」を押してから、表示されたリンクを開くか、ここにコードを入力してください。",
+  "settings.pairThisTitle": "このブラウザーをペアリング",
+  "settings.pairedDescription":
+    "ペアリングされたスマートフォンや別のブラウザーは、このブラウザーと同じように動きます。取り消すと、次のリクエストで接続が切れ、ログアウトされます。",
+  "settings.pairedDone":
+    "このブラウザーは、コンピューターとペアリングされています。",
+  "settings.pairedTitle": "スマートフォンや別のブラウザーをペアリング",
+  "settings.phone": "スマートフォン",
+  "settings.phoneOrBrowser": "スマートフォンまたは別のブラウザー",
+  "settings.qrLabel": "ペアリング用のリンクを含むQRコード",
+  "settings.readAloudDescription":
+    "アシスタントの返信ごとに「読み上げ」ボタンを追加します。読み上げには、このコンピューターの音声だけを使い、どこにも送信しません。",
+  "settings.readAloudTitle": "返信を読み上げる",
+  "settings.rename": "名前を変更",
+  "settings.repositories": "リポジトリ",
+  "settings.repositoriesDescription":
+    "ここでリポジトリを追加し、下のアドレスと同じシークレットを使って、GitHubでWebhookを追加してください。そうすると、そのイベント（issues.opened など）で担当業務を開始できます。",
+  "settings.repositoriesEmpty":
+    "まだリポジトリはありません。「リポジトリを追加」から追加してください。",
+  "settings.repository": "リポジトリ",
+  "settings.reset": "リセット",
+  "settings.resetDescription":
+    "すべての回答を忘れて、共有されたアシスタントがそれぞれ改めて尋ねるようにします。",
+  "settings.resetDone":
+    "リセットしました。共有されたアシスタントが、それぞれ改めて尋ねます。",
+  "settings.revoke": "取り消す",
+  "settings.routingDescription":
+    "離れているときに、各種の更新がどこに届くかを設定します。Web版の{product}では、常にすべてが表示されます。",
+  "settings.routingError":
+    "更新の届き先を読み込めませんでした。ページを再読み込みしてください。",
+  "settings.routingTitle": "更新の届き先",
+  "settings.runsOut":
+    "あなたとしてログインしているスマートフォンで、このQRコードを読み取るか、リンクを開いてください。または、「設定」を開いてコードを入力してください。コードは一度だけ使え、{time}で期限切れになります。",
+  "settings.sameSecret":
+    "GitHubでWebhookを追加するときは、同じシークレットを使ってください。",
+  "settings.sampleBot": "汎用アシスタント",
+  "settings.sampleTitle": "来週の計画",
+  "settings.save": "保存",
+  "settings.saved": "保存しました",
+  "settings.saving": "保存しています…",
+  "settings.setup": "セットアップ",
+  "settings.sharedBots": "共有されたアシスタント",
+  "settings.sharedBotsDescription":
+    "あなたと共有されたアシスタントは、持ち主のアプリを使います。あなたのアプリは、会話の中で許可したときにだけ使います。",
+  "settings.slackCodeError": "Slackのコードを作成できませんでした：{error}",
+  "settings.standingDescription":
+    "すべての会話で、すべてのアシスタントに適用されます。アシスタントの役割は、何をするかを示します。ここでは、文章のスタイルのように、どう進めてほしいかを書きます。",
+  "settings.standingTitle": "常設の指示",
+  "settings.switchLabel": "{transport}の{kind}",
+  "settings.thisBrowserTag": "（このブラウザー）",
+  "settings.toneChanged": "{bot}：口調が{from}から{to}に変わりました。",
+  "settings.undo": "元に戻す",
+  "settings.undoFailed": "変更を元に戻せませんでした。もう一度お試しください。",
+  "settings.undoGone": "もう元に戻せません",
+  "settings.undoing": "元に戻しています…",
+  "settings.undone": "元に戻しました",
+  "settings.webhookSecret": "Webhookのシークレット",
+  "settings.yourAccount": "あなたのアカウント",
+  "bot.activity.kindRoutine": "ルーティン",
+  "bot.activity.kindResponsibility": "担当業務",
+  "bot.activity.kindHandoff": "引き継ぎ",
+  "bot.activity.kindApproval": "承認",
+  "bot.activity.kindQuestion": "質問",
+  "bot.activity.kindFollowUp": "フォローアップ",
+  "bot.activity.needsYou": "対応が必要",
+  "bot.activity.stop": "停止",
+  "bot.activity.stopping": "停止しています…",
+  "bot.activity.cancelling": "キャンセルしています…",
+  "bot.activity.open": "開く",
+  "bot.activity.title": "アクティビティ",
+  "bot.activity.scheduled": "予定",
+  "bot.activity.completed": "完了",
+  "bot.activity.emptyInProgress":
+    "実行中のものも、あなたの対応待ちのものもありません。",
+  "bot.activity.emptyScheduled": "予定されているものはありません。",
+  "bot.activity.emptyCompleted": "まだ完了したものはありません。",
+  "bot.activity.loadError":
+    "このアシスタントのアクティビティを読み込めませんでした。ページを再読み込みしてください。",
+  "bot.settings.heading": "このアシスタントの設定",
+  "bot.area.responsibilities": "担当業務",
+  "bot.area.reaching": "連絡手段",
+  "bot.area.memory": "記憶",
+  "bot.area.access": "スキルとアクセス",
+  "bot.area.sharing": "共有",
+  "bot.settings.activeCount": {
+    one: "{count}件が有効",
+    other: "{count}件が有効",
+  },
+  "bot.settings.noneActive": "有効なものはありません",
+  "bot.settings.ruleCount": {
+    one: "{count}件のルール",
+    other: "{count}件のルール",
+  },
+  "bot.settings.noRules": "ルールはありません",
+  "bot.settings.routineCount": {
+    one: "{count}件のルーティン",
+    other: "{count}件のルーティン",
+  },
+  "bot.settings.noRoutines": "ルーティンはありません",
+  "bot.access.skillsDescription":
+    "このアシスタントで使うには、スキルをオンにしてください。会話で / と入力すると実行できます。",
+  "bot.access.yourSkills": "あなたのスキル",
+  "bot.access.skillsError":
+    "スキルを読み込めませんでした。ページを再読み込みしてください。",
+  "bot.access.noSkills": "まだスキルはありません。",
+  "bot.access.writeOne": "作成する",
+  "bot.access.title": "利用できるもの",
+  "bot.access.grantedDescription":
+    "このアシスタントが利用できるアプリとスキル、そして各アプリがあなたにとって使える状態かどうかです。それ以外は利用できません。",
+  "bot.access.grantedError":
+    "このアシスタントが利用できるものを読み込めませんでした。ページを再読み込みしてください。",
+  "bot.access.readyError":
+    "各アプリが使える状態かどうかを確認できませんでした。ページを再読み込みしてください。",
+  "bot.access.noApps":
+    "まだアプリはありません。管理者が追加する必要があります。それまで、このアシスタントはあなたと話すことしかできません。",
+  "bot.access.toolsAndMore": "{list}ほか{count}件",
+  "bot.access.toolCount": {
+    one: "{count}件のツール",
+    other: "{count}件のツール",
+  },
+  "bot.access.skillLabel": "スキル",
+  "bot.access.manageNamed": "このアシスタントの{title}を管理",
+  "bot.reset.conversations": {
+    one: "会話{count}件",
+    other: "会話{count}件",
+  },
+  "bot.reset.memorySources": {
+    one: "記憶の情報源{count}件",
+    other: "記憶の情報源{count}件",
+  },
+  "bot.reset.memories": {
+    one: "取り込まれた記憶{count}件",
+    other: "取り込まれた記憶{count}件",
+  },
+  "bot.reset.routines": {
+    one: "ルーティン{count}件",
+    other: "ルーティン{count}件",
+  },
+  "bot.reset.responsibilities": {
+    one: "担当業務{count}件",
+    other: "担当業務{count}件",
+  },
+  "bot.reset.followUps": {
+    one: "予定されたフォローアップ{count}件",
+    other: "予定されたフォローアップ{count}件",
+  },
+  "bot.reset.formedMemories": {
+    one: "アシスタントが作った記憶{count}件",
+    other: "アシスタントが作った記憶{count}件",
+  },
+  "bot.reset.research": {
+    one: "バックグラウンドでの調査{count}件",
+    other: "バックグラウンドでの調査{count}件",
+  },
+  "bot.reset.standing": {
+    one: "常設の許可{count}件",
+    other: "常設の許可{count}件",
+  },
+  "bot.reset.title": "{name}をリセットしますか？",
+  "bot.reset.description":
+    "これにより、{name}があなたとの間に持っているものが削除されます。ほかの人の会話やデータは残ります。この操作は元に戻せません。",
+  "bot.reset.planError":
+    "リセットで何が削除されるかを確認できませんでした。もう一度お試しください。",
+  "bot.reset.done":
+    "完了しました。{name}は、あなたとまっさらな状態から始まります。",
+  "bot.reset.nothing": "削除できるものはありません。",
+  "bot.reset.willDelete": "次のものが削除されます：",
+  "bot.reset.sharedKept": {
+    one: "{count}件の会話は、ほかの人やアシスタントと共有されているため、残ります。",
+    other:
+      "{count}件の会話は、ほかの人やアシスタントと共有されているため、残ります。",
+  },
+  "bot.reset.memoriesKept": "あなたがアシスタントに直接伝えた記憶は残ります。",
+  "bot.reset.resetting": "リセットしています…",
+  "bot.reset.submit": "削除してリセット",
+  "bot.manage.pinnedAssigned":
+    "管理者があなたに割り当てました。あなたのアシスタント一覧の一番上に固定されたままになります。",
+  "bot.manage.pinnedOn":
+    "あなたのアシスタント一覧の一番上にあります。変わるのは一覧だけです。",
+  "bot.manage.pinnedOff":
+    "あなたのアシスタント一覧の一番上に固定します。変わるのは一覧だけです。",
+  "bot.manage.hiddenAssigned":
+    "管理者があなたに割り当てました。非表示にはできません。",
+  "bot.manage.hiddenOn":
+    "あなたのアシスタント一覧の「非表示」の下にあります。変わるのは一覧だけです。",
+  "bot.manage.hiddenOff":
+    "あなたのアシスタント一覧から外します。変わるのは一覧だけです。",
+  "bot.manage.duplicate": "複製",
+  "bot.manage.duplicateDescription":
+    "自分用のコピーを作成します。会話とキーはコピーされません。",
+  "bot.manage.resetDescription":
+    "このアシスタントとの会話、あなたについて覚えていること、予定された作業を削除します。先に一覧が表示されます。",
+  "bot.manage.delete": "削除",
+  "bot.manage.deleteDescription":
+    "すべての人から削除します。この操作は元に戻せません。",
+  "bot.manage.deleteTitle": "{name}を削除しますか？",
+  "bot.manage.deleteConfirm":
+    "全員から削除されます。この操作は元に戻せません。",
+  "bot.manage.deleting": "削除しています…",
+  "bot.setup.title": "タイトル",
+  "bot.setup.whatItDoes": "役割",
+  "bot.setup.identity": "基本情報",
+  "bot.setup.systemOwned": "システム所有",
+  "bot.setup.systemOwnedDescription":
+    "{product}に付属しています。個人の所有ではありません。",
+  "bot.setup.visibility": "公開範囲",
+  "bot.setup.visiblePrivate": "あなただけが見られ、会話を始められます。",
+  "bot.setup.visiblePublic": "{product}のすべての人が見つけて使えます。",
+  "bot.setup.private": "非公開",
+  "bot.setup.public": "公開",
+  "bot.setup.saveError": "保存できませんでした。もう一度お試しください。",
+  "bot.setup.checkField": "この項目を確認して、もう一度お試しください。",
+  "bot.setup.connection": "接続",
+  "bot.setup.builtIn": "内蔵",
+  "bot.setup.agentUrl": "エージェントのURL",
+  "bot.setup.builtInDescription":
+    "{product}の中で動きます。接続するものはありません。",
+  "bot.sharing.published": "公開済み",
+  "bot.sharing.toWholeTeam": "チーム全体へ",
+  "bot.sharing.toPeople": "{who}へ",
+  "bot.sharing.groupNamed": "グループ{name}",
+  "bot.sharing.teamPrivate":
+    "それぞれの人がこのアシスタントと行う会話は、非公開です。",
+  "bot.sharing.notVisibleYet":
+    "正式な名前と説明が設定されるまで、チームメンバーには表示されません。",
+  "bot.sharing.unpublish": "公開を取り消す",
+  "bot.sharing.link": "リンク",
+  "bot.sharing.linkDescription": "このアシスタントとの非公開の会話を開きます。",
+  "bot.sharing.copyLink": "リンクをコピー",
+  "bot.sharing.publicNotPublished":
+    "チームには公開されていません。このアシスタントは公開設定なので、{product}のすべての人がすでに使えます。",
+  "bot.sharing.onlyYouCanUse": "公開されていません。あなただけが使えます。",
+  "bot.sharing.notPublished": "公開されていません。",
+  "bot.sharing.whoPublishedTo": "公開先",
+  "bot.sharing.publish": "公開",
+  "bot.sharing.publishNote":
+    "公開しても、公開範囲は変わりません。いつでも公開を取り消せます。",
+  "bot.sharing.audience": "対象",
+  "bot.sharing.notPublishedSummary": "未公開",
+  "bot.sharing.theWholeTeam": "チーム全体",
+  "bot.sharing.specificPeople": "特定の人またはグループ",
+  "bot.sharing.peopleCount": {
+    one: "{count}人",
+    other: "{count}人",
+  },
+  "bot.sharing.groupCount": {
+    one: "{count}グループ",
+    other: "{count}グループ",
+  },
+  "bot.sharing.assignToGroups": "グループに割り当てる",
+  "bot.sharing.assignDescription":
+    "このアシスタントを、グループの各メンバーのアシスタント一覧の一番上にピン留めします。チーム全体には * を使います。",
+  "bot.sharing.publishedTo": "公開先",
+  "bot.sharing.peopleByEmail": "メールアドレスで指定する人",
+  "bot.sharing.commaSeparated": "カンマで区切る",
+  "bot.sharing.groups": "グループ",
+  "bot.sharing.update": "更新",
+  "bot.sharing.publishToTeam": "チームに公開",
+  "bot.sharing.assignNamed": "{name}をグループに割り当てる",
+  "bot.sharing.assignNote":
+    "すべてのメンバーのアシスタント一覧の一番上にピン留めされます。",
+  "bot.sharing.groupOrStar": "グループ、または *",
+  "bot.sharing.wholeTeamPlaceholder": "* でチーム全体を指定",
+  "bot.sharing.assign": "割り当てる",
+  "bot.sharing.removeNamed": "{name}を削除",
+  "bot.sharing.wholeTeam": "チーム全体",
+  "bot.sharing.notAssigned": "どのグループにも割り当てられていません。",
+  "bot.sharing.assignRow": "グループに割り当てる",
+  "bot.page.accessPurpose":
+    "このアシスタントが使えるスキル、アプリ、ほかのアシスタントです。",
+  "bot.page.approvalsPurpose":
+    "このアシスタントが、先にあなたに尋ねずにできること。",
+  "bot.page.memoryPurpose":
+    "このアシスタントが学習元にするアプリと、バックグラウンドであなたのために行う調査です。",
+  "bot.page.memoryPointer":
+    "アシスタントがあなたについて覚えていることは、次にあります：",
+  "bot.page.reachPurpose":
+    "Slack、Microsoft Teams、またはSMSで、このアシスタントとの会話を続けられます。",
+  "bot.page.responsibilitiesPurpose":
+    "このアシスタントがあなたのために取り組む、継続的な目標です。各実行のきっかけと、見つかったことを確認できます。",
+  "bot.page.routinesPurpose":
+    "このアシスタントが、予定に沿ってあなたのために行うことです。オフにする、今すぐ実行する、削除するのいずれかができます。",
+  "bot.page.setupPurpose":
+    "このアシスタントが何者か、誰が見つけられるか、どこで動くか。",
+  "bot.page.sharingPurpose":
+    "ほかに誰がこのアシスタントを使えるか。それぞれの人がこのアシスタントと行う会話は非公開です。",
+  // The Bot sub-pages' contents (D181 stage 2e): memory sources, suggestions, reaching you, responsibilities
+  // and routines, the summaries of lib/agents/bot-summaries.ts and the time phrases of lib/relative-time.ts.
+  // Shared words reuse their existing keys (`botPage.fallbackTitle` is "Bot"); `bot.choose` is "Choose a Bot".
+  "bot.choose": "アシスタントを選択",
+  "memory.addSource": "情報源を追加",
+  "memory.title": "アプリの情報源",
+  "memory.description":
+    "接続したアプリのうち、このアシスタントが読み取れるものがここに表示され、さらに追加もできます。ソースは15分ごとに更新されます。その内容が見えるのは、このアシスタントだけです。",
+  "memory.empty":
+    "まだ情報源はありません。「情報源を追加」から追加してください。",
+  "memory.upToDate": "最新の状態",
+  "memory.off": "オフ",
+  "memory.lastRead": "最終読み取り：{when}",
+  "memory.syncNow": "今すぐ同期",
+  "memory.readNamed": "{name}を読み取る",
+  "memory.addTitle": "情報源を追加",
+  "memory.addDescription":
+    "{product} はいま読み取り、その後は有効な間、15分ごとに読み取ります。",
+  "memory.enterNumber": "{name}の数値を入力してください。",
+  "memory.cantShow":
+    "この情報源には、{product}が表示できない設定があります。別のものを選んでください。",
+  "memory.checkSettings": "情報源の設定を確認してください。",
+  "memory.whatToRead": "読み取る内容",
+  "memory.chooseWhat": "読み取る内容を選択",
+  "memory.sourceName": "情報源の名前",
+  "memory.chooseValue": "値を選択",
+  "memory.reading": "情報源を読み取っています…",
+  "memory.addAndSync": "情報源を追加して同期",
+  "suggestions.everyHour": "1時間ごと",
+  "suggestions.every4Hours": "4時間ごと",
+  "suggestions.twiceDay": "1日2回",
+  "suggestions.onceDay": "1日1回",
+  "suggestions.everyMinutes": {
+    one: "{count}分ごと",
+    other: "{count}分ごと",
+  },
+  "suggestions.yourBot": "あなたのアシスタント",
+  "suggestions.title": "次にやることの提案",
+  "suggestions.from": "{app}から",
+  "suggestions.connectedApp": "接続済みのアプリ",
+  "suggestions.openRecord": "レコードを開く",
+  "suggestions.startTask": "タスクとして開始",
+  "suggestions.empty":
+    "いまは提案がありません。バックグラウンドのリサーチがオンのアシスタントが、ここで次のステップを提案します。",
+  "suggestions.turnOnResearch": "調査をオンにする",
+  "suggestions.researchDescription":
+    "このアシスタントでオンにするまでオフです。ただし、管理者が全員に対してオンにしている場合を除きます。オンのときは、すでに読み取れるアプリを4時間ごとに調べ、あなたが確認するための記憶を作り、次のステップを提案します。読み取りしかできません。メッセージの送信、アプリ内の変更、ブラウザやコンピュータの利用はできません。オフにするか削除すると、そのままの状態になります。",
+  "suggestions.researchTitle": "バックグラウンドでの調査",
+  "suggestions.researchOff": "バックグラウンドのリサーチはオフです。",
+  "suggestions.turnOnDialog": "バックグラウンドでの調査をオンにする",
+  "suggestions.turnOnDescription":
+    "スケジュールに沿って読み取り、提案を自分が参加しているチャンネルに届けます。",
+  "suggestions.deliverTo": "提案の届け先",
+  "suggestions.chooseChannel": "チャンネルを選択",
+  "suggestions.howOften": "頻度",
+  "suggestions.focus": "探す内容（任意）",
+  "suggestions.off": "オフ",
+  "suggestions.researchingNow": "リサーチ中",
+  "suggestions.lastRan": "前回の実行：{when}",
+  "suggestions.turnOff": "オフにする",
+  "reaching.linkSlack": "Slackを連携",
+  "reaching.linkTeams": "Microsoft Teamsを連携",
+  "reaching.connectPhone": "電話を接続",
+  "reaching.sumSlack": "Slackから会話を続けます。",
+  "reaching.sumTeams": "Microsoft Teamsから会話を続けます。",
+  "reaching.sumSms": "テキストメッセージで会話を続けます。",
+  "reaching.codeOnWay": "確認コードを送信中です。入力して完了してください。",
+  "reaching.linkReady":
+    "連携コードを送信できる状態です。もう一度見るにはここを開いてください。",
+  "reaching.smsNotSet":
+    "テキストメッセージはまだ設定されていません。先に管理者がオンにする必要があります。",
+  "reaching.notSet":
+    "まだ設定されていません。先に管理者がSlackとTeamsをオンにする必要があります。",
+  "reaching.pointerBefore":
+    "あなたのデバイス、最近の配信、更新の種類ごとの届け先は、次にあります：",
+  "reaching.connected": "接続済みの届け先",
+  "reaching.noDestinations": "接続済みの届け先はありません。",
+  "reaching.optedOut":
+    "STOPとテキストメッセージを送信しました。再開するにはSTARTを送信してください。",
+  "reaching.disconnect": "接続を解除",
+  "reaching.channelNote":
+    "他の人も読めるSlackまたはTeamsのチャンネルでは、アシスタントはダイレクトメッセージであなたに返信します。",
+  "reaching.connectTitle": "会話を接続",
+  "reaching.oneAtATime":
+    "アカウントや電話番号は、一度に1つの会話とだけ使えます。ここで連携すると、いま連携されている会話から移されます。",
+  "reaching.conversation": "会話",
+  "reaching.chooseConversation": "会話を選択",
+  "reaching.loadMore": "さらに会話を読み込む",
+  "reaching.phoneNumber": "電話番号",
+  "reaching.sendCode": "確認コードを送信",
+  "reaching.verificationCode": "確認コード",
+  "reaching.confirmPhone": "電話を確認",
+  "reaching.linkExpires": {
+    one: "{count}分以内に、このメッセージを{platform}の{product}アプリに送信してください。そのアカウントをこの会話とこのアシスタントに連携します。",
+    other:
+      "{count}分以内に、このメッセージを{platform}の{product}アプリに送信してください。そのアカウントをこの会話とこのアシスタントに連携します。",
+  },
+  "responsibilities.new": "新しい担当業務",
+  "responsibilities.title": "目標",
+  "responsibilities.empty":
+    "まだ担当業務はありません。「新しい担当業務」から追加してください。",
+  "responsibilities.emptyBot":
+    "このアシスタントの担当業務はまだありません。「新しい担当業務」から追加してください。",
+  "routines.neverRun": "まだ実行されていません",
+  "routines.running": "実行中…",
+  "routines.missed": "{when}の実行を逃しました",
+  "routines.failed": "{when}に失敗しました",
+  "routines.skipped": "{when}はスキップされました",
+  "routines.ran": "{when}に実行されました",
+  "routines.finished": "{when}に終了しました",
+  "routines.noRuns": "まだ実行はありません。",
+  "routines.runNow": "今すぐ実行",
+  "routines.triggered": "きっかけで開始",
+  "routines.scheduled": "予定",
+  "routines.sweepChecked":
+    "{product} が最後に確認したのは {when} です。再開するまで、どれも実行されません。これが続く場合は管理者に相談してください。",
+  "routines.sweepNever":
+    "{product} はまだルーティンの実行を開始していないため、これらは実行されません。管理者に設定を依頼してください。",
+  "routines.notRunning": "ルーティンは実行されていません。",
+  "routines.loadError":
+    "ルーティンを読み込めませんでした。ページを再読み込みしてください。",
+  "routines.emptyBot":
+    "このアシスタントのルーティンはまだありません。「平日の9時に、送ってください…」のように頼むと、ここに表示されます。",
+  "routines.empty":
+    "まだルーティンはありません。アシスタントに「平日の9時に、送ってください…」のように頼むと、ここに表示されます。",
+  "routines.enableAria": "{schedule}に予定されたルーティンを有効にする",
+  "routines.channelGone": "会話は削除されました",
+  "routines.untitledChannel": "無題の会話",
+  "routines.due": "期限切れ",
+  "routines.next": "次回：{when}",
+  "routines.runNowTitle":
+    "今すぐ本当に実行します。アシスタントが作業を行い、会話に投稿します。",
+  "routines.pausedTurnOn":
+    "このルーティンは一時停止中です。先にオンにしてください。",
+  "routines.runNowAria": "{schedule}に予定されたルーティンを今すぐ実行",
+  "routines.historyAria": "{schedule}に予定されたルーティンの実行履歴",
+  "routines.history": "履歴",
+  "routines.deleteAria": "{schedule}に予定されたルーティンを削除",
+  "routines.deleteTitle": "「{schedule}」を削除しますか？",
+  "routines.deleteDescription":
+    "このルーティンは完全に停止します。この操作は元に戻せません。",
+  "routines.week": "週",
+  "routines.nextRuns": "次の実行",
+  "routines.viewAria": "表示",
+  "summary.nothingGranted": "許可されたものはありません",
+  "summary.skills": {
+    one: "スキル{count}件",
+    other: "スキル{count}件",
+  },
+  "summary.apps": {
+    one: "アプリ{count}件",
+    other: "アプリ{count}件",
+  },
+  "summary.everyonePublic": "全員（公開）",
+  "summary.notShared": "共有なし",
+  "summary.specificPeople": "特定の人とグループ",
+  "summary.onlyIn": "{product} 内のみ",
+  "summary.nothingConnected": "何も接続されていません",
+  "summary.sources": {
+    one: "情報源{count}件",
+    other: "情報源{count}件",
+  },
+  "summary.researchOn": "バックグラウンドのリサーチはオン",
+  "summary.researchOnAfter": "バックグラウンドのリサーチはオン",
+  "time.justNow": "たった今",
+  "time.minutesAgo": {
+    one: "{count}分前",
+    other: "{count}分前",
+  },
+  "time.hoursAgo": {
+    one: "{count}時間前",
+    other: "{count}時間前",
+  },
+  "time.yesterday": "昨日",
+  "time.daysAgo": {
+    one: "{count}日前",
+    other: "{count}日前",
+  },
+  "time.weeksAgo": {
+    one: "{count}週間前",
+    other: "{count}週間前",
+  },
+  "time.recently": "最近",
+  // Stage 2f (D181): the approval rules, the responsibility dialog, the routine history, Passwords.
+  "approvals.behaviour.allow": "確認せずに実行する",
+  "approvals.behaviour.preApproved": "事前に承認されていれば実行する",
+  "approvals.behaviour.ask": "実行する前に確認する",
+  "approvals.behaviour.handOff": "あなたに引き継ぐ",
+  "approvals.host.ask": "毎回確認する",
+  "approvals.host.allow": "常に許可する",
+  "approvals.host.never": "許可しない",
+  "approvals.teamRule": "{label}（チームのルール）",
+  "approvals.matchOn": "{scope} に対して",
+  "approvals.matchFor": "{bot} 向け",
+  "approvals.locked": "ロック中",
+  "approvals.behaviourFor": "{tool} の動作",
+  "approvals.formLead":
+    "ツールまたはアプリと、アシスタントがそれを使う前にすることです。",
+  "approvals.formHelp":
+    "* はすべてに一致します。mcp/gmail/* はGmailのすべてのツールを意味します。対象 *.example.com は、そのサイトのすべてのページを意味します。",
+  "approvals.field.tool": "ツールまたはアプリ",
+  "approvals.field.effect": "操作の種類",
+  "approvals.field.scope": "対象",
+  "approvals.field.scopeHint": "*、サイト、フォルダ、アシスタントの名前",
+  "approvals.field.bot": "アシスタント",
+  "approvals.field.botHint": "* はすべてのアシスタント",
+  "approvals.field.behaviour": "動作",
+  "approvals.saveRule": "ルールを保存",
+  "approvals.addRule": "ルールを追加",
+  "approvals.rulesOff":
+    "管理者が個人のルールをオフにしました。あなたのルールは保持されますが、適用されません。",
+  "approvals.bot.lead":
+    "一致するルールのうち、最も厳しいものが優先されます。「確認する」ルールは「許可する」ルールより優先されます。すべてのアシスタント向けのルールは次にあります：",
+  "approvals.bot.settingsLink": "設定 → 承認",
+  "approvals.bot.title": "ルール",
+  "approvals.bot.empty": "このアシスタント向けのルールはありません。",
+  "approvals.adminLead":
+    "チームの設定と共有アカウントのリクエストは次にあります：",
+  "approvals.adminLink": "管理 → 承認",
+  "approvals.before.title": "アシスタントが動く前に",
+  "approvals.before.askTitle": "変更する前に確認する",
+  "approvals.before.askLine":
+    "アシスタントによるウェブサイト、接続済みアプリ、ファイルへの変更を、あなたが確認します。",
+  "approvals.before.autoTitle": "自動チェック",
+  "approvals.before.autoEnforced": "管理者が必須にしています。",
+  "approvals.before.autoLine":
+    "アシスタントがあなたのアカウントに影響したり情報を共有したりしかねないことをする前に、{product} があなたのリクエストとルールに照らして確認します。判断できない場合は、あなたに確認します。",
+  "approvals.before.hostTitle": "あなたのコンピュータ上のコマンド",
+  "approvals.before.hostLimited":
+    "管理者がこれを「{limit}」までに制限しています。",
+  "approvals.before.hostLine":
+    "{product} のデスクトップアプリは、それでも実行前にすべてのコマンドをあなたに表示します。",
+  "approvals.every.lead":
+    "一致するルールのうち、最も厳しいものが優先されます。「確認する」ルールは「許可する」ルールより優先されます。チームのルールはロックされています。パスワードとセキュリティ設定は常にあなたに引き継がれ、支払いも、下でアシスタントのFull accessをオンにしない限り同じです。1つのアシスタントのルールは次にあります：",
+  "approvals.every.botPage": "そのアシスタントのページ",
+  "approvals.every.title": "すべてのアシスタント向けのルール",
+  "approvals.every.empty": "まだルールはありません。",
+  "approvals.other.lead":
+    "これらは、あなたが開けるどのアシスタントにも一致しません。一致するアシスタントには、引き続き適用されます。不要なものは削除してください。",
+  "approvals.other.title": "他のアシスタント向けのルール",
+  "approvals.page.description":
+    "アシスタントが何かを変更する前に確認するタイミングを選びます。ここのルールはすべてのアシスタントに適用されます。",
+  "approvals.admin.description":
+    "メンバーのアシスタントが動く前に確認すべきこと、全員向けのルール、共有アカウントの利用リクエストです。",
+  "approvals.team.title": "チームの設定",
+  "approvals.team.enforce": "全員に自動チェックを必須にする",
+  "approvals.team.custom": "メンバーが個人のルールを設定できるようにする",
+  "approvals.team.hostTitle": "メンバーのコンピュータ上のコマンド（最大）",
+  "approvals.team.hostLine":
+    "メンバー自身のより厳しい設定は、引き続き適用されます。",
+  "approvals.team.rulesLead":
+    "これらはすべてのメンバーのアシスタントに適用されます。メンバーは変更できません。",
+  "approvals.team.rulesTitle": "チームのルール",
+  "approvals.team.empty": "チームのルールはありません。",
+  "approvals.team.addRule": "チームのルールを追加",
+  "approvals.shared.title": "共有アカウントのリクエスト",
+  "approvals.shared.wants": "{bot} が共有の {account} アカウントを求めています",
+  "approvals.shared.why.refusedCall":
+    "操作がブロックされました。このアシスタントは、承認された範囲より多くの人に届いています。",
+  "approvals.shared.why.publish":
+    "所有者が、このアシスタントに連絡できる人の範囲を広げました。",
+  "approvals.shared.why.trigger":
+    "所有者が、外部からのメッセージで操作できるトリガーを追加しました。",
+  "approvals.shared.why.grant": "アプリの操作が与えられました。",
+  "approvals.shared.now": "現在：",
+  "approvals.shared.notApproved": "未承認",
+  "approvals.shared.asked": "リクエスト内容：",
+  "approvals.shared.approve": "承認",
+  "approvals.shared.decline": "却下",
+  "tasks.updated": "{ago}に更新",
+  "routines.status.running": "実行中",
+  "routines.status.succeeded": "成功",
+  "routines.status.failed": "失敗",
+  "routines.status.skipped": "スキップ",
+  "routines.status.waiting": "あなたの対応待ち",
+  "routines.status.missed": "未実行",
+  "routines.history.empty":
+    "まだ実行はありません。ルーティンが動いたとき、または「今すぐ実行」を押したあとに、ここに実行が表示されます。",
+  "routines.history.aBot": "アシスタント",
+  "routines.history.latest": {
+    one: "最新の{count}件の実行を表示しています。",
+    other: "最新の{count}件の実行を表示しています。",
+  },
+  "routines.history.deleted": "その後削除されたルーティン",
+  "routines.history.waitingNote":
+    "あなたの承認を待っています。会話を開いて回答してください。",
+  "responsibilities.status.completed": "完了",
+  "responsibilities.summary.paused": "再開するまで、何も開始しません",
+  "responsibilities.summary.trigger": "{kind}のきっかけ",
+  "responsibilities.summary.starts": "{starts}に開始",
+  "responsibilities.summary.asked": "依頼されたときに実行",
+  "responsibilities.source.manual": "手動",
+  "responsibilities.source.schedule": "スケジュール",
+  "responsibilities.source.connector": "接続済みのアプリ",
+  "responsibilities.progress": "進捗",
+  "responsibilities.lastResult": "前回の結果",
+  "responsibilities.activeOn": "イベントとトリガーで開始します。",
+  "responsibilities.activeOff": "一時停止中です。トリガーでは開始しません。",
+  "responsibilities.runNowLine":
+    "いま、実際に実行します。アシスタントが作業を行い、投稿や操作もできます。",
+  "responsibilities.complete": "完了にする",
+  "responsibilities.completeLine": "完了にします。以降は何も開始しません。",
+  "responsibilities.field.title": "タイトル",
+  "responsibilities.field.instruction": "指示",
+  "responsibilities.field.criteria": "成功の基準",
+  "responsibilities.events": "イベント",
+  "responsibilities.saving": "保存しています…",
+  "responsibilities.run.queued": "キュー待ち",
+  "responsibilities.run.waiting":
+    "{kind}を待っています。このアシスタントのページの上部か、会話で回答してください。",
+  "responsibilities.runs": "実行",
+  "responsibilities.viewRuns": "実行を表示",
+  "responsibilities.hideRuns": "実行を隠す",
+  "passwords.description":
+    "ウェブサイトにアシスタントをログインさせたときに保存したログイン情報です。アシスタントには見えず、使うたびにあなたが確認します。",
+  "passwords.saved": "保存済みのログイン情報",
+  "passwords.loadError":
+    "パスワードを読み込めませんでした。ページを再読み込みしてください。",
+  "passwords.off":
+    "管理者が保存済みパスワードをオフにしました。ログイン情報は保持されますが、提示されません。",
+  "passwords.empty":
+    "保存済みのログイン情報はありません。ウェブサイトにアシスタントをログインさせるときに「パスワードに保存」を選んでください。",
+  "passwords.lastUsed": "最終使用 {date}",
+  "passwords.neverUsed": "未使用",
+  "passwords.deleteAria": "{origin} のログイン情報を削除",
+  "settings.notificationsPage":
+    "あなたが不在のとき、アシスタントの更新がどこに届くかです。各アシスタントがどれだけ送るかは、そのアシスタントのページで設定します。",
+  "fullaccess.label.noPayments": "支払いなしのFull access",
+  "fullaccess.label.full": "Full access",
+  "fullaccess.off": "オフ",
+  "fullaccess.description":
+    "初期設定では安全です。アシスタントは、送信、支払い、署名、予約、削除の前に確認します。アシスタントごとに、確認なしでこれらを行うよう選べます。",
+  "fullaccess.offTerm": "オフ：",
+  "fullaccess.offText":
+    "アシスタントは、送信、支払い、署名、予約、削除の前に確認します。",
+  "fullaccess.noPaymentsTerm": "支払いなしのFull access：",
+  "fullaccess.noPaymentsText":
+    "確認なしで送信、署名、予約、削除を行います。支払いと購入は引き続きあなたに確認します。",
+  "fullaccess.fullTerm": "Full access：",
+  "fullaccess.fullText":
+    "支払いと購入も確認なしで行います。支出の上限ができるまで、金額に上限はありません（v0.4で予定）。",
+  "fullaccess.askTitle": "{name}に{label}を付与しますか？",
+  "fullaccess.give": "{label}を付与",
+  "fullaccess.full.p1":
+    "{name}は、事前にあなたに確認せずに、送信、支払い、署名、予約、削除を行います。メールやウェブページなど、読み取った内容に基づいて動くことがあるため、そのことを任せられると信頼できる場合にのみオンにしてください。",
+  "fullaccess.full.p2":
+    "支払える金額に上限はありません。支出の上限はまだありません（v0.4で予定）。支払いと購入で引き続きあなたに確認させたい場合は、代わりに「支払いなしのFull access」を選んでください。",
+  "fullaccess.full.p3":
+    "パスワードとセキュリティ設定は、引き続きあなたの確認が必要です。自動レビュアーが設定されている場合は、レビュアーをオフにしていても、メンバーが自分のコンピューターで実行するすべてのコマンドとスクリプトを、レビュアーが1回ずつ読みます。設定されていない場合、コマンドは読まれません。これは、あなた自身のチャットでの依頼に適用され、ルーティンやチェックインには適用されません。いつでもオフにでき、すぐに止まります。",
+  "fullaccess.noPayments.p1":
+    "{name}は、事前にあなたに確認せずに、送信、署名、予約、削除を行います。支払いと購入は引き続きあなたに確認します。メールやウェブページなど、読み取った内容に基づいて動くことがあるため、そのことを任せられると信頼できる場合にのみオンにしてください。",
+  "fullaccess.noPayments.p2":
+    "アプリは組み込みのチェックで支払いを見分けます。そのため、支払いに触れているだけのメッセージでも確認することがあり、通常と違う書き方の支払いは見逃される可能性があります。パスワードとセキュリティ設定は、引き続きあなたの確認が必要です。自動レビュアーが設定されている場合は、レビュアーをオフにしていても、パスワード、セキュリティ設定、またはこの方法で行う支払いのためにメンバーが自分のコンピューターで実行するすべてのコマンドとスクリプトを、レビュアーが1回ずつ読みます。設定されていない場合、コマンドは読まれません。これは、あなた自身のチャットでの依頼に適用され、ルーティンやチェックインには適用されません。いつでもオフにでき、すぐに止まります。",
+  "fullaccess.noBots": "アシスタントはまだいません。",
+  "fullaccess.legend": "{name}のアクセス",
+  "fullaccess.radioAria": "{name}の{label}",
+  "fullaccess.summary.off": "送信、支払い、署名、予約、削除の前に確認します。",
+  "fullaccess.summary.noPayments":
+    "確認なしで動きます。ただし支払いと購入は引き続きあなたに確認します。{since}から。",
+  "fullaccess.summary.full":
+    "支払いを含め、確認なしで動き、金額に上限はありません。{since}から。",
+  "fullaccess.doneTitle": "確認なしで行ったこと",
+  "fullaccess.doneDescription":
+    "Full accessのアシスタントが、あなたに確認せずに行ったことです。新しい順に表示します。",
+  "fullaccess.nothingYet": "まだありません。",
+  "approvals.audience.owner": "所有者のみ",
+  "approvals.audience.team": "全員",
+  "approvals.audience.outside": "、および外部からの入力",
+  "approvals.audience.nobody": "指定なし",
+  "approvals.audience.groups": {
+    one: "グループ：{names}",
+    other: "グループ：{names}",
+  },
+  "approvals.audience.people": { one: "{count}人", other: "{count}人" },
+  "approvals.audience.join": "{a}と{b}",
+  "access.req.title": "リクエスト",
+  "access.req.loadError":
+    "アクセスリクエストを読み込めませんでした。ページを再読み込みしてください。",
+  "access.req.descApp":
+    "このアプリを求めている人たちです。承認すると、求められたことをすぐに実行します。",
+  "access.req.descAll":
+    "アプリのオン、アシスタントへの付与、または接続を求めている人たちです。承認すると、求められたことをすぐに実行します。",
+  "access.req.aBot": "アシスタント",
+  "access.req.theBot": "アシスタント",
+  "access.req.somebody": "だれか",
+  "access.req.enable": "{bot}の{app}をオンにする",
+  "access.req.grantMore": "{bot}に{app}の権限をさらに付与：{list}",
+  "access.req.grant": "{bot}に{app}を付与",
+  "access.req.connectShared": "共有の{app}アカウントを接続",
+  "access.req.asked": "{who}が{when}にリクエストしました{forBot}。",
+  "access.req.forBot": "（対象：{bot}）",
+  "access.req.approving": "承認しています…",
+  "access.req.botPage": "{app}のアシスタントのページ",
+  "access.req.toolRead": "{name}（読み取り専用）",
+  "access.req.toolWrite": "{name}（変更あり）",
+  "access.req.gives":
+    "承認すると、{bot}には次のツールだけが付与され、ほかは付与されません：{list}。",
+  "access.req.readOnly":
+    "承認すると、{bot}には{app}の読み取り専用の操作だけが付与されます。ほかの操作は{page}で選んでください。",
+  "access.req.canSend": {
+    one: "{names}は、本人に代わって送信できます。",
+    other: "{names}は、それぞれ本人に代わって送信できます。",
+  },
+  "access.req.unreviewed": {
+    one: "{names}が{app}で何をするかを示す確認済みの一覧がないため、本人に代わって送信する可能性があります。",
+    other:
+      "{names}が{app}で何をするかを示す確認済みの一覧がないため、それぞれが本人に代わって送信する可能性があります。",
+  },
+  "access.req.neverGives": {
+    one: "承認では、このようなツールは付与されません。設定で許可してください（{page}）。",
+    other:
+      "承認では、このようなツールは付与されません。設定で許可してください（{page}）。",
+  },
+  "access.req.and": "{a}と{b}",
+  "passwords.saveTo": "パスワードに保存",
+  "responsibilities.run.waitKind.approval": "あなたの承認",
+  "responsibilities.run.waitKind.question": "あなたの回答",
+  "responsibilities.run.waitKind.handoff": "あなたの引き継ぎ",
+  "responsibilities.run.waitKind.signIn": "あなたのログイン",
+  "responsibilities.run.waitKind.other": "あなた",
+  "responsibilities.new.description":
+    "継続する目標です。アシスタントは、選んだ会話の中でこれに取り組みます。",
+  "responsibilities.new.chooseConversation": "会話を選択",
+  "responsibilities.new.loadMore": "さらに会話を読み込む",
+  "responsibilities.new.titleExample": "顧客向けレポートを最新に保つ",
+  "responsibilities.new.criteriaExample":
+    "レポートに今四半期のグラフと出典へのリンクが含まれている。",
+  "responsibilities.new.eventSource": "イベントの発生元",
+  "responsibilities.new.source.none": "依頼されたときに実行",
+  "responsibilities.new.githubHelp":
+    "イベントは、{link}で接続したリポジトリから届きます。",
+  "responsibilities.new.eventType": "イベントの種類",
+  "responsibilities.new.creating": "作成しています…",
+  "responsibilities.new.create": "担当業務を作成",
+  "triggers.kind.email": "メール",
+  "triggers.help.webhook":
+    "このURLに、Authorizationヘッダー、またはStandard Webhooksの署名ヘッダー付きでJSONをPOSTします。200は受信されたことを示し、実行が終わったことを示すわけではありません。",
+  "triggers.help.github":
+    "リポジトリのSettings → Webhooksで、payload URLをこのURLに、content typeをapplication/jsonに、secretをこのキーに設定します。",
+  "triggers.help.linear":
+    "LinearのSettings → API → Webhooksで、URLを設定し、Linearが表示するsigning secretをここに貼り付けます。",
+  "triggers.help.sentry":
+    "Sentryの内部インテグレーションで、webhook URLを設定し、そのインテグレーションのclient secretをここに貼り付けます。",
+  "triggers.help.pagerduty":
+    "PagerDutyのIntegrations → Generic Webhooks (v3)で、URLを設定し、作成時に表示されるsecretをここに貼り付けます。",
+  "triggers.help.email":
+    "このアドレスにメールを送信または転送すると、実行が始まります。",
+  "triggers.help.slack":
+    "このアシスタントが受け取るSlackのイベントで開始します。トリガーを追加する前に送られたメッセージは無視されます。",
+  "triggers.slack.mention": "アシスタントがメンションされたとき",
+  "triggers.slack.phrase": "メッセージにフレーズが含まれるとき",
+  "triggers.slack.reaction": "リアクションが追加されたとき",
+  "triggers.slack.message": "すべてのメッセージ",
+  "triggers.f.inChannels": "{channels}で",
+  "triggers.f.everyChannel": "アシスタントが参加しているすべてのチャンネルで",
+  "triggers.f.mention": "アシスタントがメンションされたとき",
+  "triggers.f.anyMessage": "すべてのメッセージで",
+  "triggers.f.phrases": "{phrases}を含むメッセージで",
+  "triggers.f.or": "、または",
+  "triggers.f.reactions": "リアクションで",
+  "triggers.f.slack": "{what} {where}（ワークスペース {team}）",
+  "triggers.f.events": "イベント {types}",
+  "triggers.f.everyEvent": "すべてのイベント",
+  "triggers.f.where": "{path} = {equals} のとき",
+  "triggers.f.from": "{from}から",
+  "triggers.f.fromSenders": "{senders}から（認証済み）",
+  "triggers.title": "トリガー",
+  "triggers.add": "トリガーを追加",
+  "triggers.notActive.paused":
+    "この担当業務は一時停止中です。トリガーでは開始しません。",
+  "triggers.notActive.completed":
+    "この担当業務は完了しています。トリガーでは開始しません。",
+  "triggers.none":
+    "トリガーはありません。「今すぐ実行」を押したとき、または上のイベントで実行されます。",
+  "triggers.removeForGood": "完全に削除",
+  "triggers.keep": "残す",
+  "triggers.runOnAria": "この{kind}トリガーで実行",
+  "triggers.postTo": "POST先",
+  "triggers.copyUrl": "URLをコピー",
+  "triggers.copyAddress": "アドレスをコピー",
+  "triggers.emailOff":
+    "{product}ではメールがまだ設定されていないため、このアドレスはメールを受信できません。管理者がオンにする必要があります。",
+  "triggers.key": "キー",
+  "triggers.copyKey": "キーをコピー",
+  "triggers.copyHeader": "ヘッダーをコピー",
+  "triggers.showKey": "キーを表示",
+  "triggers.replaceKey": "キーを置き換える",
+  "triggers.secretSaved": "signing secretを保存しました",
+  "triggers.secretWaiting": "signing secretを待っています",
+  "triggers.secret": "Signing secret",
+  "triggers.pasteNew": "置き換えるには新しいsecretを貼り付けます",
+  "triggers.paste": "signing secretを貼り付け",
+  "triggers.saveSecret": "secretを保存",
+  "triggers.addDescription":
+    "{product}の外にある、この担当業務を開始するものです。",
+  "triggers.slackTeam": "SlackのチームID",
+  "triggers.fireOn": "実行する条件",
+  "triggers.phrases": "フレーズ（カンマ区切り）",
+  "triggers.reactions": "リアクション（空欄：すべて）",
+  "triggers.channelIds":
+    "チャンネルID（空欄：アシスタントが参加しているすべて）",
+  "triggers.eventTypes": "イベントの種類",
+  "triggers.onlyWhen": "次のフィールドが",
+  "triggers.equals": "と等しいときのみ",
+  "triggers.repository": "リポジトリ（任意）",
+  "triggers.senders": "許可する送信者（空欄：なし）",
+  "triggers.secretLater": "Signing secret（あとから追加できます）",
+  "triggers.adding": "追加しています…",
+  "triggers.addKind": "{kind}トリガーを追加",
+  "triggers.example.webhook": "deploy.finished（空欄：すべて）",
+  "routines.cal.intro":
+    "オンになっているルーティンの、今後{days}日間の予定です。時刻はあなたのタイムゾーンです。",
+  "routines.cal.none": "ルーティンがまだないため、予定はありません。",
+  "routines.cal.noneOn":
+    "これらのルーティンはどれもオンになっていないため、実行されません。",
+  "routines.cal.nothing": "今後{days}日間の予定はありません。",
+  "routines.cal.truncated":
+    "この{days}日間の最初の{max}回の実行だけを表示しています。",
+  "routines.cal.paused": {
+    one: "{count}件のルーティンが一時停止中のため、ここには表示されません。どれかをオンにすると、実行時刻を確認できます。",
+    other:
+      "{count}件のルーティンが一時停止中のため、ここには表示されません。どれかをオンにすると、実行時刻を確認できます。",
+  },
+  "routines.week.nothing": "今週の残りの予定はありません。",
+  "routines.week.label": "今週",
+  "routines.week.today": "今日",
+  "routines.week.now": "現在、{time}",
+  "routines.week.next": "次：",
+  "routines.week.nothingElse": "今週はほかに予定がありません。",
+  "routines.week.truncated":
+    "今後の日数のうち最初の実行だけを表示しているため、非常に頻繁に動くルーティンはすべての日に表示されないことがあります。",
+  "routines.week.historyError":
+    "すでに行われた実行を読み込めなかったため、表示されません。",
+  "routines.week.note":
+    "時刻はあなたのタイムゾーンです。1時間より頻繁に実行されるルーティンは、その日の1つのブロックとして表示されます。",
+  "routines.week.summary": "{count}回の実行、約{minutes}分ごと",
+  "routines.week.gone": "{label}、会話は削除されました",
+  "routines.card.label": "ルーティン",
+  "routines.card.cancelled": "ルーティンをキャンセルしました",
+  "routines.card.readError": "このルーティンを読み取れませんでした。",
+  "routines.card.reading": "このルーティンを読み取っています…",
+  "routines.card.gone": "このルーティンはもう存在しません",
+  "routines.card.cannotSend":
+    "この会話は今、メッセージを受け付けられません。変更内容は下のメッセージ欄に書いてください。",
+  "routines.card.confirm": "このルーティンをキャンセルしますか？",
+  "routines.card.yes": "はい、キャンセルする",
+  "routines.card.no": "いいえ、残す",
+  "routines.card.pause": "一時停止",
+  "routines.card.resume": "再開",
+  "routines.card.edit": "編集",
+  "routines.card.whatChange": "何を変えますか？",
+  "routines.card.send": "変更を送信",
+  "routines.card.writeBelow": "変更内容は下のメッセージ欄に書いてください。",
+  "routines.card.close": "閉じる",
+  "admin.boundaries.title": "制限",
+  "admin.boundaries.descLead":
+    "アシスタントが自分のコンピューターでできること、できないこと。すべての操作は実行前に確認されます。拒否された操作は、拒否したルールとともに",
+  "admin.boundaries.descAudit": "監査",
+  "admin.boundaries.descTail": "に表示されます。",
+  "admin.boundaries.whenTitle": "ルールに一致したとき",
+  "admin.boundaries.whenDesc":
+    "操作を止めるか、記録して通すかを選びます。記録しておくと、ルールが何かを拒否する前に、実際の動きで試せます。",
+  "admin.boundaries.modeEnforce": "操作を止める",
+  "admin.boundaries.modeRecord": "記録して許可する",
+  "admin.boundaries.modeEnforceNote":
+    "アシスタントは止められ、どのルールに拒否されたかが伝えられます。",
+  "admin.boundaries.modeRecordNote":
+    "何も止められません。一致したものは、拒否されたものとして記録されます。",
+  "admin.boundaries.neverTitle": "アシスタントが決してしてはいけないこと",
+  "admin.boundaries.neverLead":
+    "最初に確認されます。一致すると操作は止められ、どのルールに拒否されたかがアシスタントに伝えられます。ルールは CEL で書きます。次の値を確認できます:",
+  "admin.boundaries.neverMid1": "、要素、押された",
+  "admin.boundaries.neverMid2": "、ファイル、実行された",
+  "admin.boundaries.neverMid3": "、そして外部ツール用の",
+  "admin.boundaries.neverMid4": "です。",
+  "admin.boundaries.neverMid5": "の値は、何が実行を始めたかを示します:",
+  "admin.boundaries.neverTail":
+    "スケジュールされた実行は所有者として動くため、",
+  "admin.boundaries.neverTail2":
+    "の値だけではそれは分かりません。評価できないルールは一致として扱われます。入力ミスで操作が通ってしまうことはありません。",
+  "admin.boundaries.or": "または",
+  "admin.boundaries.noRules":
+    "ルールはありません。すべての操作が許可され、記録されます。",
+  "admin.boundaries.remove": "削除",
+  "admin.boundaries.ruleLabel": "CEL で書いたルール",
+  "admin.boundaries.testing": "テスト中…",
+  "admin.boundaries.testFirst": "先にテスト",
+  "admin.boundaries.addRule": "ルールを追加",
+  "admin.boundaries.preset.form": "フォームを決して送信しない",
+  "admin.boundaries.preset.formCost":
+    "ほかの場所で Enter を押すことも止めます。フォームは、どの入力欄でも Enter で送信されることがあります。メニューや日付欄での選択は対象外です。その変更だけでフォームが送信されることがあります。",
+  "admin.boundaries.preset.password": "パスワード欄に決して入力しない",
+  "admin.boundaries.preset.passwordCost":
+    "ラベルが違うパスワード欄は対象外です。ルールはラベルで一致を判断します。",
+  "admin.boundaries.preset.social": "ソーシャルメディアに近づかない",
+  "admin.boundaries.preset.socialCost":
+    "この2つのホストだけです。ほかの場所からそこへ転送されるリンクは許可されます。",
+  "admin.boundaries.otherwiseTitle": "それ以外では次を許可",
+  "admin.boundaries.otherwiseDesc":
+    "上のリストで捕まえられなかったすべてに適用されます。ここが空のリストなら何も許可されず、すべての操作が拒否されます。",
+  "admin.boundaries.allowAll": "true、上で拒否されなかったすべて",
+  "admin.boundaries.saved":
+    "保存しました。どのアシスタントでも、次の操作から適用されます。",
+  "admin.boundaries.footer":
+    "変更は、どのアシスタントでも次の操作から適用されます。再起動後も残ります。",
+  "admin.boundaries.dry.none":
+    "テストに使える、記録済みのコンピューター操作がまだありません。ルールは有効です。アシスタントが動いたあとで、何に一致するか確認できます。",
+  "admin.boundaries.dry.zero":
+    "記録済みの直近 {scanned} 件の操作でテストしました。このルールでは1件も拒否されません。今後の操作には一致する可能性があります。",
+  "admin.boundaries.dry.some":
+    "記録済みの直近 {scanned} 件の操作でテストしました。このルールでは {refused} 件が拒否されます。",
+  "admin.boundaries.dry.wouldRefuse": "拒否される",
+  "admin.boundaries.dry.wouldAllow": "今は許可される",
+  "admin.boundaries.dry.on": "「{name}」上で",
+  "admin.boundaries.dry.running": "実行中",
+  "admin.boundaries.dry.touching": "{file} に触れる",
+  "admin.boundaries.dry.first":
+    "最初の {shown} 件を表示しています。上の件数は確認したすべてを含みます。",
+  "admin.people.title": "ユーザー",
+  "admin.people.desc":
+    "サインインしたことのあるすべての人です。管理者はこれらの画面を開けます。それ以外の人はアシスタントと話します。",
+  "admin.people.whoTitle": "ここにいる人",
+  "admin.people.whoDesc":
+    "INITIAL_ADMIN_EMAILS にあるアドレスは常に管理者です。ここでは変更できません。",
+  "admin.people.stopped": {
+    one: "{count} 台のコンピューターを停止しました",
+    other: "{count} 台のコンピューターを停止しました",
+  },
+  "admin.people.stoppedFailed": "。{failed} 台は停止できませんでした",
+  "admin.people.disksKept": "。ディスクは保持されます。",
+  "admin.people.searchLabel": "ユーザーを検索",
+  "admin.people.searchPlaceholder": "名前またはアドレスで検索",
+  "admin.people.loadError":
+    "ユーザーを読み込めませんでした。ページを再読み込みしてください。",
+  "admin.people.noMatch": "「{query}」に一致する人はいません。",
+  "admin.people.nobody":
+    "まだ誰もサインインしていません。サインインすると、ここに表示されます。",
+  "admin.people.lastSignedIn": "最終サインイン {date}",
+  "admin.people.neverSignedIn": "サインインなし",
+  "admin.people.noProvider": "プロバイダーなし",
+  "admin.people.accessRemoved": "アクセス権を削除済み",
+  "admin.people.adminByConfig": "設定による管理者",
+  "admin.people.stopComputers": "コンピューターを停止",
+  "admin.people.restore": "復元",
+  "admin.people.remove": "削除",
+  "admin.people.adminSwitch": "管理者: {email}",
+  "admin.people.loading": "読み込み中…",
+  "admin.people.showMore": "もっと見る",
+  "admin.boundaries.and": "と",
+  "admin.credentials.title": "認証情報",
+  "admin.credentials.add": "認証情報を追加",
+  "admin.credentials.desc":
+    "このデプロイ用のキーとトークンです。{product} は、保存したシークレットを二度と表示しません。",
+  "admin.credentials.dialogDesc":
+    "このデプロイ用に保存されます。シークレットは二度と表示されません。",
+  "admin.credentials.type": "種類",
+  "admin.credentials.model": "モデル",
+  "admin.credentials.connector": "コネクター",
+  "admin.credentials.provider": "プロバイダー",
+  "admin.credentials.keyId": "キー ID",
+  "admin.credentials.secret": "シークレット",
+  "admin.credentials.replaces":
+    "このキーには、有効な認証情報がすでにあります。保存すると置き換えられ、古いものは無効になります。",
+  "admin.credentials.saveError":
+    "認証情報を保存できませんでした。もう一度お試しください。",
+  "admin.credentials.cancel": "キャンセル",
+  "admin.credentials.saving": "保存中…",
+  "admin.credentials.save": "認証情報を保存",
+  "admin.credentials.savedTitle": "保存済みの認証情報",
+  "admin.credentials.loadError":
+    "認証情報を読み込めませんでした。ページを再読み込みしてください。",
+  "admin.credentials.empty":
+    "認証情報はまだありません。「認証情報を追加」で追加してください。",
+  "admin.credentials.revoked": "無効化済み",
+  "admin.credentials.active": "有効",
+  "admin.credentials.revoke": "無効化",
+  "admin.idp.title": "ID プロバイダー",
+  "admin.idp.add": "プロバイダーを追加",
+  "admin.idp.desc":
+    "お使いの会社独自の SAML または OpenID Connect プロバイダーです。ユーザーはメールアドレスでサインインし、そのドメインでプロバイダーが決まります。",
+  "admin.idp.registeredTitle": "登録済み",
+  "admin.idp.registeredDesc":
+    "Google、Microsoft、Okta は環境設定で指定します。ここには表示されません。",
+  "admin.idp.loadError":
+    "ID プロバイダーを読み込めませんでした。ページを再読み込みしてください。",
+  "admin.idp.empty":
+    "ID プロバイダーはまだありません。ID チームから受け取ったメタデータで追加してください。",
+  "admin.idp.remove": "削除",
+  "admin.idp.dialogTitle": "ID プロバイダーを追加",
+  "admin.idp.name": "名前",
+  "admin.idp.domain": "メールのドメイン",
+  "admin.idp.domainNote":
+    "このドメインのアドレスを持つ人は全員、ここでサインインします。複数ある場合はカンマで区切ります。",
+  "admin.idp.issuer": "発行者",
+  "admin.idp.signOnUrl": "サインオン URL",
+  "admin.idp.metadata": "メタデータ XML",
+  "admin.idp.metadataNote":
+    "ID チームから受け取ったファイルです。署名用の証明書が含まれています。",
+  "admin.idp.clientId": "クライアント ID",
+  "admin.idp.clientSecret": "クライアントシークレット",
+  "admin.idp.cancel": "キャンセル",
+  "admin.idp.adding": "追加中…",
+  "admin.idp.addShort": "追加",
+  "admin.audit.decision.bot.declined": "アシスタントが断りました",
+  "admin.audit.decision.agent.stream_stalled":
+    "アシスタントが応答しなくなりました",
+  "admin.audit.decision.computer.policy_loaded": "起動時の制限",
+  "admin.audit.decision.computer.isolation_loaded": "起動時の隔離",
+  "admin.audit.decision.computer.control_taken": "人が操作を引き継ぎました",
+  "admin.audit.decision.computer.control_released":
+    "操作がアシスタントに戻りました",
+  "admin.audit.decision.computer.help_requested":
+    "アシスタントが助けを求めました",
+  "admin.audit.decision.computer.secret_requested":
+    "アシスタントがシークレットを求めました",
+  "admin.audit.decision.computer.secret_supplied":
+    "人がシークレットを渡しました",
+  "admin.audit.decision.computer.reset": "コンピューターをリセットしました",
+  "admin.audit.decision.computer.updated": "コンピューターを更新しました",
+  "admin.audit.decision.computer.stopped": "人が停止を押しました",
+  "admin.audit.decision.component.granted": "このアシスタントに付与しました",
+  "admin.audit.decision.component.revoked":
+    "このアシスタントから取り上げました",
+  "admin.audit.decision.component.published":
+    "公開しました。すべてのアシスタントが使えます",
+  "admin.audit.decision.component.unpublished":
+    "公開を取り下げました。どのアシスタントも使えません",
+  "admin.audit.decision.component.draft_saved":
+    "下書きを保存しました。まだ公開されていません",
+  "admin.audit.decision.component.refused": "拒否しました",
+  "admin.audit.decision.component.function_granted": "これを読み取れます",
+  "admin.audit.decision.component.function_revoked":
+    "これを読み取れなくなりました",
+  "admin.audit.decision.component.function_called":
+    "実際のデータを読み取りました",
+  "admin.audit.decision.component.function_refused": "拒否しました",
+  "admin.audit.decision.component.function_failed": "読み取れませんでした",
+  "admin.audit.decision.mcp.tools_discovered": "1回の実行に提示したツール",
+  "admin.audit.decision.mcp.call_succeeded":
+    "このアシスタントの代わりに呼び出しました",
+  "admin.audit.decision.mcp.call_rejected": "ブロックしました",
+  "admin.audit.decision.mcp.call_failed": "サーバーが応答しませんでした",
+  "admin.audit.decision.mcp.callback_refused":
+    "どのアシスタントか確認できませんでした",
+  "admin.audit.decision.configuration.changed": "設定を変更しました",
+  "admin.audit.decision.credential.created": "認証情報を保存しました",
+  "admin.audit.discovery.under-floor":
+    "ツールが少ないため、すべてを提示しました",
+  "admin.audit.discovery.nothing-declared":
+    "これらのツールを宣言しているスキルはありません",
+  "admin.audit.discovery.unavailable": "選べなかったため、すべてを提示しました",
+  "admin.audit.discovery.nothing-chosen":
+    "当てはまるスキルがなかったため、すべてを提示しました",
+  "admin.audit.discovery.selected": "スキルで選択",
+  "admin.audit.title": "監査",
+  "admin.audit.desc":
+    "アシスタントが行ったすべての操作と、このデプロイのポリシーが拒否したすべての操作です。",
+  "admin.audit.export": "CSV を書き出す",
+  "admin.audit.exporting": "書き出し中…",
+  "admin.audit.refresh": "更新",
+  "admin.audit.exportFailed":
+    "監査イベントを書き出せませんでした。もう一度お試しください。",
+  "admin.audit.filter.all": "すべて",
+  "admin.audit.filter.computer": "コンピューター操作",
+  "admin.audit.filter.blocked": "ブロック済み",
+  "admin.audit.filter.didNot": "実行されず",
+  "admin.audit.filter.nobody": "誰も見ていない",
+  "admin.audit.capped":
+    "ファイルには、すべてではなく最新の {count} 件のイベントが入っています。残りを書き出すには、フィルターか日付を絞り込んでください。",
+  "admin.audit.loadError":
+    "監査ログを読み込めませんでした。ページを再読み込みしてください。",
+  "admin.audit.empty": "このフィルターに一致するイベントはまだありません。",
+  "admin.audit.col.when": "日時",
+  "admin.audit.col.what": "内容",
+  "admin.audit.col.on": "対象",
+  "admin.audit.col.bot": "アシスタント",
+  "admin.audit.col.startedBy": "開始元",
+  "admin.audit.col.decision": "判断",
+  "admin.audit.by.routine": "ルーティン",
+  "admin.audit.by.handedOnBy": "{name} が引き継ぎ",
+  "admin.audit.by.handedOn": "引き継ぎ",
+  "admin.audit.by.memory": "記憶のソース",
+  "admin.audit.by.responsibility": "担当業務",
+  "admin.audit.by.deployment": "このデプロイ",
+  "admin.audit.by.remote": "コンピューターとペアリングされていないブラウザー",
+  "admin.audit.by.person": "人",
+  "admin.audit.routed.mention": "人がこのアシスタントを選びました",
+  "admin.audit.routed.default": "既定のアシスタントに送りました",
+  "admin.audit.routed.meant": "宛先のアシスタントに送りました",
+  "admin.audit.toolsOf": "{granted} 個のツールのうち {offered} 個",
+  "admin.audit.blocked": "ブロック済み",
+  "admin.audit.didNot": "実行されず",
+  "admin.audit.allowed": "許可",
+  "admin.audit.reportedByBot": "、アシスタント自身が報告",
+  "admin.audit.dryRun": "ドライラン: 記録のみで、適用なし",
+  "admin.nav.back": "アプリに戻る",
+  "admin.nav.overview": "概要",
+  "admin.nav.reach": "アシスタントが届く範囲",
+  "admin.nav.do": "アシスタントにできること",
+  "admin.nav.in": "入れる人",
+  "admin.nav.happened": "起きたこと",
+  "admin.nav.credentials": "認証情報",
+  "admin.nav.boundaries": "制限",
+  "admin.nav.approvals": "承認",
+  "admin.nav.computers": "コンピューター",
+  "admin.nav.plugins": "プラグイン",
+  "admin.nav.skills": "スキル",
+  "admin.nav.learning": "自動学習",
+  "admin.nav.components": "UI コンポーネント",
+  "admin.nav.playground": "Playground",
+  "admin.nav.people": "ユーザー",
+  "admin.nav.idp": "ID プロバイダー",
+  "admin.nav.audit": "監査",
+  "admin.enterprise.mode.allow_all": "すべてのネットワークアクセスを許可",
+  "admin.enterprise.mode.defaults_plus_allowlist":
+    "既定の設定にチームの許可リストを追加",
+  "admin.enterprise.mode.allowlist_only": "チームの許可リストのみ",
+  "admin.enterprise.noPolicy":
+    "ポリシーはありません。アシスタントのコンピューターは、クラスターが許可するあらゆる場所に接続できます",
+  "admin.enterprise.locked": " · ロック中",
+  "admin.enterprise.loadError":
+    "エンタープライズ設定を読み込めませんでした。ページを再読み込みしてください。",
+  "admin.enterprise.title": "エンタープライズ設定",
+  "admin.enterprise.description":
+    "メンバーが使えるもの、アシスタントのコンピューターがネットワークに接続する方法、記録される内容です。変更はすべて監査に表示されます。",
+  "admin.enterprise.signin.description":
+    "{env} にあるアドレスは、緊急用の入口として常にソーシャルサインインを使えます。そのサインインはすべて監査に表示されます。",
+  "admin.enterprise.signin.title": "サインイン",
+  "admin.enterprise.sso.title": "SSO を必須にする",
+  "admin.enterprise.sso.on":
+    "登録済みの SAML または OpenID Connect プロバイダー経由でのみサインインできます。",
+  "admin.enterprise.sso.off":
+    "Google、Microsoft、Okta でもサインインできます。",
+  "admin.enterprise.scim.title": "SCIM プロビジョニング",
+  "admin.enterprise.scim.on":
+    "ディレクトリのベース URL は {url}、ベアラートークンは {env} です。プロビジョニングを解除すると、セッションが終了し、そのアドレスがブロックされ、コネクターの認証情報が取り消され、その人のコンピューターが停止します。",
+  "admin.enterprise.scim.unsetUrl": "（BETTER_AUTH_URL を設定してください）",
+  "admin.enterprise.scim.off":
+    "オフです。Okta、Entra、その他のディレクトリからのプロビジョニングを受け付けるには {env} を設定してください。",
+  "admin.enterprise.on": "オン",
+  "admin.enterprise.off": "オフ",
+  "admin.enterprise.cap.description":
+    "各スイッチは組織全体に適用されます。ロールで上書きでき、ディレクトリグループには組織がオフにしている機能を付与できます。",
+  "admin.enterprise.cap.title": "機能",
+  "admin.enterprise.cap.offFor":
+    "ロールまたはグループがオンにしない限り、全員でオフです。",
+  "admin.enterprise.over.title": "ロールとグループの上書き",
+  "admin.enterprise.over.none": "なし。全員に上記のスイッチが適用されます",
+  "admin.enterprise.over.set": "{count} 件設定済み",
+  "admin.enterprise.net.description":
+    "アシスタントのコンピューターが接続できる先です。変更は再起動なしで、実行中のコンピューターに数秒で反映されます。グループのポリシーは、組織のポリシーがロックされていない限り、それを置き換えます。",
+  "admin.enterprise.net.title": "ネットワーク",
+  "admin.enterprise.net.org": "組織",
+  "admin.enterprise.net.group": "グループ: {name}",
+  "admin.enterprise.net.addGroup": "グループのポリシーを追加",
+  "admin.enterprise.mcp.description":
+    "許可リストをオンにすると、アシスタントはここで承認された MCP サーバーのツールだけを呼び出せます。それ以外のサーバーへの呼び出しは拒否されます。",
+  "admin.enterprise.mcp.title": "MCP サーバー",
+  "admin.enterprise.mcp.only": "承認済みのサーバーのみ",
+  "admin.enterprise.mcp.approved": "{count} 件承認済み",
+  "admin.enterprise.mcp.offDesc":
+    "オフです。アシスタントは、アクセス権のある登録済みサーバーをどれでも使えます。",
+  "admin.enterprise.mcp.onlyAria": "承認済みの MCP サーバーのみ",
+  "admin.enterprise.mcp.approveAria": "{name} を承認",
+  "admin.enterprise.models.description":
+    "組込みのアシスタントは {model} で動作します。リモートのアシスタントは自分で選び、報告されたモデルが記録されます。",
+  "admin.enterprise.models.configured": "このデプロイで設定されたモデル",
+  "admin.enterprise.models.title": "モデル",
+  "admin.enterprise.models.allowlist": "モデルの許可リスト",
+  "admin.enterprise.models.allowlistOn":
+    "リストにないモデルを使う組込みのアシスタントは、実行前に拒否されます。",
+  "admin.enterprise.models.allowlistOff": "オフです。どのモデルでも使えます。",
+  "admin.enterprise.models.allowed": "許可するモデル",
+  "admin.enterprise.models.none": "登録なし",
+  "admin.enterprise.models.listDesc":
+    "1 行に 1 モデル、プロバイダー/モデルの形式で入力します。例: {example}。",
+  "admin.enterprise.rec.description":
+    "{env} を設定すると、監査イベントとアシスタントの操作を OpenTelemetry コレクターまたは SIEM にストリーミングします。これらには {tag} のタグが付きます。",
+  "admin.enterprise.rec.title": "記録とエクスポート",
+  "admin.enterprise.rec.action": "Action Recording",
+  "admin.enterprise.rec.actionOn":
+    "アシスタントが実行したシェルコマンドは、シークレットを除いて記録され、{days} 日間保存されます。",
+  "admin.enterprise.rec.actionOff":
+    "オフです。コマンドは監査にのみ表示されます。",
+  "admin.enterprise.rec.otel": "OpenTelemetry エクスポート",
+  "admin.enterprise.rec.otelOn": "OTLP/HTTP でエクスポート中です。",
+  "admin.enterprise.rec.otelOff":
+    "未設定です。サーバーで {env} を設定してください。",
+  "admin.enterprise.comp.description":
+    "コンピューターを停止すると、その上で動作中のアシスタントは終了しますが、ディスクは残ります。アシスタントは次のセッションで新しいコンピューターを受け取ります。特定の 1 人のコンピューターを停止するには、「ユーザー」に移動してください。",
+  "admin.enterprise.comp.title": "コンピューター",
+  "admin.enterprise.comp.stopInactive": "非アクティブなコンピューターを停止",
+  "admin.enterprise.comp.afterDays": "{days} 日間使われなかった後",
+  "admin.enterprise.usage.error":
+    "モデルの利用状況を読み込めませんでした。ページを再読み込みしてください。",
+  "admin.enterprise.usage.empty":
+    "過去 30 日間にアシスタントの実行はありません。",
+  "admin.enterprise.usage.runs": "30 日間に {people} {who}が {runs} 回実行",
+  "admin.enterprise.usage.person": "人",
+  "admin.enterprise.usage.people": "人",
+  "admin.enterprise.usage.refused": " · 許可リスト外 {count} 件",
+  "admin.enterprise.recorded.error":
+    "記録された操作を読み込めませんでした。ページを再読み込みしてください。",
+  "admin.enterprise.recorded.empty": "記録されたコマンドはまだありません。",
+  "admin.enterprise.recorded.local": "メンバーのマシン",
+  "admin.enterprise.recorded.bot": "アシスタント {id}",
+  "admin.enterprise.sweep.stopping": "停止しています…",
+  "admin.enterprise.sweep.now": "非アクティブなコンピューターを今すぐ停止",
+  "admin.enterprise.sweep.stopped": "{count} 台を停止しました。",
+  "admin.enterprise.ov.admins": "管理者",
+  "admin.enterprise.ov.members": "メンバー",
+  "admin.enterprise.ov.group": "グループ: {name}",
+  "admin.enterprise.ov.scope": "対象範囲",
+  "admin.enterprise.ov.groupNote":
+    "グループは追加のみできます。「付与」は、組織がオフにしていても、そのグループのメンバーに機能を与えます。",
+  "admin.enterprise.ov.roleNote":
+    "ロールの設定は、そのロールを持つ全員について組織のスイッチを置き換えます。",
+  "admin.enterprise.ov.forScope": "{scope}の{title}",
+  "admin.enterprise.ov.inherit": "継承",
+  "admin.enterprise.ov.grant": "付与",
+  "admin.enterprise.netd.org": "組織のネットワークポリシー",
+  "admin.enterprise.netd.group": "グループのネットワークポリシー",
+  "admin.enterprise.netd.groupLabel": "グループ",
+  "admin.enterprise.netd.mode": "モード",
+  "admin.enterprise.netd.allowlist": "許可リスト",
+  "admin.enterprise.netd.help":
+    "1 行に 1 つ。ドメインはそのサブドメインを含みます。*.name はサブドメインだけを含みます。IP 範囲にはポートを指定できます。既定は {first} と、ほかに {more} 件のパッケージおよびソースのホストです。",
+  "admin.enterprise.netd.lock":
+    "グループがこのポリシーを置き換えられないようにロックする",
+  "admin.enterprise.netd.remove": "ポリシーを削除",
+  "admin.enterprise.days.label": "未使用の日数",
+  "admin.enterprise.days.help": "0 でオフになります。1 時間ごとに確認します。",
+  "admin.plugins.title": "プラグイン",
+  "admin.plugins.description":
+    "このデプロイが接続できる先と、それを使えるアシスタントです。追加したプラグインは全員のものになります。どのアシスタントにツールを渡すかは、プラグインのページで選びます。",
+  "admin.plugins.loadError":
+    "プラグインを読み込めませんでした。ページを再読み込みしてください。",
+  "admin.plugins.connected.description":
+    "全員に追加済みです。開いて設定し、どのアシスタントにツールを渡すかを選びます。",
+  "admin.plugins.connected.title": "接続済み",
+  "admin.plugins.connected.empty":
+    "まだ何も接続されていません。下の一覧から選んでください。",
+  "admin.plugins.explore.description":
+    "審査済みの公式サーバーです。開いて追加します。",
+  "admin.plugins.explore.title": "プラグインを探す",
+  "admin.plugins.explore.empty": "カタログのプラグインはすべて接続済みです。",
+  "admin.plugins.notAdded": "未追加",
+  "admin.plugins.more.title": "その他のアプリ",
+  "admin.plugins.sum.notConnected": "未接続",
+  "admin.plugins.sum.noTools": "ツールはまだありません",
+  "admin.plugins.sum.tools": {
+    one: "{count} 個のツール",
+    other: "{count} 個のツール",
+  },
+  "admin.plugins.sum.toolsNoBots": "{tools} · アシスタントなし",
+  "admin.plugins.sum.bots": {
+    one: "{count} 体のアシスタント",
+    other: "{count} 体のアシスタント",
+  },
+  "admin.plugins.requests": {
+    one: "{count} 件のリクエスト",
+    other: "{count} 件のリクエスト",
+  },
+  "admin.plugins.key.grant.none": "アシスタントなし",
+  "admin.plugins.key.grant.one": "アシスタント 1 体",
+  "admin.plugins.key.grant.all": "すべてのアシスタント",
+  "admin.plugins.key.grant.some": "アシスタント {total} 体中 {held} 体",
+  "admin.plugins.key.held.none": "ツールなし",
+  "admin.plugins.key.held.one": "ツール 1 個",
+  "admin.plugins.key.held.all": "すべてのツール",
+  "admin.plugins.key.held.some": "ツール {total} 個中 {held} 個",
+  "admin.plugins.key.notApproved": "未承認",
+  "admin.plugins.key.unreadableTitle": "あなたのアカウント",
+  "admin.plugins.key.unreadable":
+    "ここでアカウントを接続済みかどうかを読み込めませんでした。ページを再読み込みしてください。繰り返し起きる場合は、このデプロイのログを確認してください。",
+  "admin.plugins.key.noConsent":
+    "{product} は同意リンクを受け取れなかったため、何も接続されていません。もう一度試してください。繰り返し起きる場合は、このコネクターの設定を確認してください。",
+  "admin.plugins.key.reassurance":
+    "これがなくても設定は完了しており、アクセスできるのはあなたのドキュメントだけです。",
+  "admin.plugins.key.notPlugin.description":
+    "この名前のプラグインは、ここにもカタログにもありません。",
+  "admin.plugins.key.notPlugin.title": "プラグインではありません",
+  "admin.plugins.key.notPlugin.empty": "設定するものはありません。",
+  "admin.plugins.key.enable.title": "このデプロイで有効にする",
+  "admin.plugins.key.enable.on":
+    "アシスタントにこのツールを渡せます。オフにするとプラグインが削除され、すべてのアシスタントのツールへのアクセスも取り消されます。",
+  "admin.plugins.key.enable.off":
+    "どのアシスタントもこのベンダーに接続できません。オンにすると設定でき、アシスタントにツールを渡せます。",
+  "admin.plugins.key.enable.aria": "{title} をこのデプロイで有効にする",
+  "admin.plugins.key.whose.title": "誰のアカウントか",
+  "admin.plugins.key.whose.shared": "全員で 1 つの共有アカウントを使います。",
+  "admin.plugins.key.whose.personal": "各自が自分のアカウントを接続します。",
+  "admin.plugins.key.whose.makePersonal": "個人用にする",
+  "admin.plugins.key.whose.makeShared": "共有にする",
+  "admin.plugins.key.conn.oauth":
+    "このベンダーは、リクエストした本人として応答します。デプロイが OAuth クライアントを登録し、各自が自分のアカウントを接続します。アシスタントには、その人が見られるものだけが見えます。",
+  "admin.plugins.key.conn.secret":
+    "このベンダーは、リクエストした本人として応答します。各自が自分のアプリパスワードを、自分の「接続」ページに貼り付けます。ここで登録するものはなく、デプロイ自体はパスワードを保持しません。",
+  "admin.plugins.key.conn.builtin":
+    "このデプロイに組み込まれています。接続するベンダーも、保管する認証情報もありません。呼び出しは、依頼した本人として実行されます。",
+  "admin.plugins.key.conn.bearer":
+    "このデプロイがベンダーに送るものです。全員で 1 つの認証情報を使います。",
+  "admin.plugins.key.conn.title": "接続",
+  "admin.plugins.key.builtin.desc":
+    "設定は不要です。これらのツールは、このデプロイの内部で、その独自のデータに対して実行されます。",
+  "admin.plugins.key.builtin.badge": "組込み",
+  "admin.plugins.key.secret.title": "アプリパスワード",
+  "admin.plugins.key.secret.desc":
+    "各自が Google で自分のものを作成し、自分の「接続」ページに貼り付けます。メールボックス全体にアクセスできるため、アシスタントにできることは、下で付与するツールによって決まります。",
+  "admin.plugins.key.secret.badge": "1 人ずつ",
+  "admin.plugins.key.reach.title": "接続方法",
+  "admin.plugins.key.token.title": "アクセストークン",
+  "admin.plugins.key.token.desc":
+    "このベンダーへのすべての呼び出しに付けて送信されます。",
+  "admin.plugins.key.saved": "保存済み",
+  "admin.plugins.key.notSet": "未設定",
+  "admin.plugins.key.client.title": "OAuth クライアント",
+  "admin.plugins.key.client.selfDesc":
+    "このデプロイは、最初の接続時にベンダーへ自分自身を登録します。貼り付けるものはありません。",
+  "admin.plugins.key.client.selfBadge": "自己登録",
+  "admin.plugins.key.client.desc":
+    "このデプロイをベンダーに識別させるものです。これだけでは、誰のドキュメントにもアクセスできません。",
+  "admin.plugins.key.client.registered": "登録済み",
+  "admin.plugins.key.client.notRegistered": "未登録",
+  "admin.plugins.key.team.connected":
+    "接続済み{who}。これらのツールを持つすべてのアシスタントが、このアカウントとして動作します。",
+  "admin.plugins.key.team.as": "（{name} として）",
+  "admin.plugins.key.team.by": "（{name} が接続）",
+  "admin.plugins.key.team.disconnected":
+    "チームのアカウントが接続されていません。これらのツールを持つアシスタントは拒否されます。",
+  "admin.plugins.key.team.heading": "チームのアカウント",
+  "admin.plugins.key.team.notice":
+    "自分のアカウントではなく、チームのアカウントでサインインしてください。",
+  "admin.plugins.key.mine.connected":
+    "接続済みです。これらのツールを持つアシスタントは、あなたの {title} をあなたとして使います。{note}",
+  "admin.plugins.key.mine.tryConnect":
+    "このコネクターを試すには、自分のアカウントを接続してください。{note}",
+  "admin.plugins.key.oauthAcct.connected":
+    "接続済みです。これらのツールを持つアシスタントは、あなたの {title} をあなたとして使います。ほかの人は各自のアカウントを接続します。",
+  "admin.plugins.key.oauthAcct.connect":
+    "このコネクターを試すには、自分のアカウントを接続してください。これがなくても設定は完了しており、アクセスできるのはあなたのドキュメントだけです。",
+  "admin.plugins.key.connected": "接続済み",
+  "admin.plugins.key.connect": "接続",
+  "admin.plugins.key.instance.title": "インスタンスのホスト",
+  "admin.plugins.key.instance.desc":
+    "このベンダーは、顧客ごとに専用のホスト名を割り当てます。保存する前に、ベンダーのパターンに照らして確認されます。",
+  "admin.plugins.key.docs.builtin": "ドキュメント",
+  "admin.plugins.key.docs.vendor": "ベンダーのドキュメント",
+  "admin.plugins.key.docs.builtinDesc":
+    "これらのツールで何ができるかを、保守している人たちが説明しています。",
+  "admin.plugins.key.docs.vendorDesc":
+    "このサーバーで何ができるかを、保守している人たちが説明しています。",
+  "admin.plugins.key.redirect.dynamic":
+    "デプロイがリダイレクト URI を自分で登録します。ベンダー側で追加するものはありません。",
+  "admin.plugins.key.redirect.manual":
+    "これを、ベンダー側のクライアントの承認済みリダイレクト URI に、書かれているとおりに追加してください。1 文字でも違うとそちらで失敗し、そのエラーには {product} のことは書かれません。",
+  "admin.plugins.key.redirect.noUrl":
+    "このデプロイには公開 URL がないため、誰も接続を完了できません。{env} を設定してください。",
+  "admin.plugins.key.tools.refresh": "ツールを更新",
+  "admin.plugins.key.tools.grant": "ツールを付与…",
+  "admin.plugins.key.tools.description":
+    "アシスタントには、付与されたツールだけが見えます。呼び出しは発生するたびに確認されるため、アクセスを取り消すと次の呼び出しから反映されます。",
+  "admin.plugins.key.tools.title": "ツール",
+  "admin.plugins.key.tools.empty":
+    "ツールが一覧にありません。「ツールを更新」で再確認してください。",
+  "admin.plugins.key.tools.writes": "変更を伴う",
+  "admin.plugins.key.tools.reads": "読み取り",
+  "admin.plugins.key.byBot": "アシスタント別",
+  "admin.plugins.key.byBot.hidden":
+    "あなたの一覧では非表示です。このアプリの操作を 1 つずつオン・オフできます。",
+  "admin.plugins.key.byBot.shown":
+    "このアプリの操作を 1 つずつオン・オフできます。",
+  "admin.plugins.key.gone.description":
+    "このベンダーは、これらを一覧に載せなくなりました。どのアシスタントにも見えず、呼び出すこともできません。アクセス権は保存されたままで、ベンダーがそのツールを再び一覧に載せれば戻ります。削除するには、そのアシスタント自身のページを使ってください。",
+  "admin.plugins.key.gone.title": "付与済みだが、一覧にない",
+  "admin.plugins.key.gone.row": "{title} の一覧にありません{asOf}。",
+  "admin.plugins.key.gone.asOf": "（前回の更新時点）",
+  "admin.plugins.key.dlg.client": "{title} の OAuth クライアント",
+  "admin.plugins.key.dlg.instance": "{title} のインスタンスのホスト",
+  "admin.plugins.key.dlg.token": "{title} のアクセストークン",
+  "admin.plugins.key.dlg.clientDesc":
+    "ベンダーのコンソールから取得します。シークレットはこのデプロイの保管庫に保存され、二度と表示されません。",
+  "admin.plugins.key.dlg.instanceDesc":
+    "このベンダーでのあなた専用のホスト名です。保存する前に、ベンダーのパターンに照らして確認されます。",
+  "admin.plugins.key.dlg.tokenDesc":
+    "このデプロイの保管庫に保存され、二度と表示されません。",
+  "admin.plugins.key.dlg.clientId": "クライアント ID",
+  "admin.plugins.key.dlg.clientSecret": "クライアントシークレット",
+  "admin.plugins.key.gr.title": "ツールを付与",
+  "admin.plugins.key.gr.description":
+    "付与のたびに、監査に 1 行ずつ記録されます。変更を伴うツールは、呼び出しのたびに引き続き制限と照合されます。",
+  "admin.plugins.key.gr.to": "付与先",
+  "admin.plugins.key.gr.reads": "読み取り",
+  "admin.plugins.key.gr.writes": "変更を伴う",
+  "admin.plugins.key.gr.selectAll": "すべて選択",
+  "admin.plugins.key.gr.button": "付与",
+  "admin.plugins.key.gr.progress": "{total} 件中 {current} 件を付与しています…",
+  "admin.plugins.key.gr.summary": {
+    one: "{count} 個のツールを {names} に付与します。",
+    other: "{count} 個のツールを {names} に付与します。",
+  },
+  "admin.plugins.key.gr.changing": {
+    one: "そのうち {count} 個は変更を伴います。",
+    other: "そのうち {count} 個は変更を伴います。",
+  },
+  "admin.home.reach.desc":
+    "アシスタントが {product} の外で触れられるものと、その制限です。",
+  "admin.home.credentials.desc": "このデプロイのキーとトークンです。",
+  "admin.home.boundaries.desc":
+    "どのアシスタントにも決して許されないことです。",
+  "admin.home.approvals.desc":
+    "メンバーのアシスタントが行動する前に確認しなければならないことです。",
+  "admin.home.computers.desc": "アシスタントがツールを実行するマシンです。",
+  "admin.home.do.desc":
+    "すべてのアシスタントが使えるアプリ、スキル、インターフェースの部品です。",
+  "admin.home.plugins.desc":
+    "{product} が接続できるサービスと、それを使えるアシスタントです。",
+  "admin.home.skills.desc": "誰でも / で実行できる名前付きの指示です。",
+  "admin.home.learning.desc":
+    "終了した会話から学習し、提案されたスキルを確認します。",
+  "admin.home.components.desc":
+    "アシスタントが会話の中で描画できるカスタム部品です。",
+  "admin.home.playground.desc":
+    "コンポーネントを書くと、入力しながら描画を確認できます。",
+  "admin.home.engines.desc":
+    "メンバーが動作に使う AI エンジンと、それぞれが今応答できるかどうかです。",
+  "admin.home.people.desc":
+    "サインインしたことのあるすべての人、管理者、アクセス権を削除された人です。",
+  "admin.home.enterprise.desc":
+    "ロールとグループ、必須の SSO、SCIM、ネットワークポリシー、MCP とモデルの許可リスト、Action Recording。",
+  "admin.home.idp.desc":
+    "お使いの会社の SAML または OpenID Connect プロバイダーで、メールのドメインで対応づけます。",
+  "admin.home.audit.desc":
+    "{product} で行われたすべての操作と、その実行者です。",
+  "admin.home.description":
+    "このデプロイの全員に関わる設定です。ここでの変更は、すべての人とすべてのアシスタントに影響します。",
+  "admin.plugins.directoryError":
+    "プラグインの設定を読み込めませんでした。ページを再読み込みしてください。",
+  "admin.components.description":
+    "各アシスタントが回答に使えるものです。公開済みのコンポーネントは、すべてのアシスタントでオンになっています。1 つをオフにすると、そのアシスタントには見えなくなります。変更と拒否は監査に表示されます。",
+  "admin.components.loadError":
+    "コンポーネントを読み込めませんでした。ページを再読み込みしてください。",
+  "admin.components.emptyTitle": "コンポーネントはまだありません",
+  "admin.components.emptyDesc":
+    "アシスタントが使えるコンポーネントがここに表示されます。",
+  "admin.audit.silence.quiet": "{seconds} 秒間無言",
+  "admin.audit.silence.nothing": "{quiet}、何も発言しないまま",
+  "admin.audit.silence.after": {
+    one: "{quiet}、{count} 個のチャンクの後",
+    other: "{quiet}、{count} 個のチャンクの後",
+  },
+  "admin.compDetail.title": "コンポーネント",
+  "admin.compDetail.noSuch.title": "そのようなコンポーネントはありません",
+  "admin.compDetail.noSuch.description":
+    "その名前のコンポーネントはありません。",
+  "admin.compDetail.noSuch.hint":
+    "名前が変更されたか、このデプロイにはもう含まれていない可能性があります。",
+  "admin.compDetail.back": "コンポーネントに戻る",
+  "admin.compDetail.grant.noBots": "まだアシスタントがいません",
+  "admin.compDetail.grant.all": {
+    one: "{count} 体すべてのアシスタント",
+    other: "{count} 体すべてのアシスタント",
+  },
+  "admin.compDetail.grant.none": "アシスタントなし",
+  "admin.compDetail.grant.some": "{total} 体中 {granted} 体のアシスタント",
+  "admin.compDetail.fn.none": "このデプロイにはデータ関数がありません",
+  "admin.compDetail.fn.nothing":
+    "なし。アシスタントが渡したものだけを表示します。",
+  "admin.compDetail.notPublished":
+    "未公開です。どのアシスタントからも見えません。",
+  "admin.compDetail.config.title": "設定",
+  "admin.compDetail.config.description":
+    "このコンポーネントの用途と、どのアシスタントがこれで応答できるか。",
+  "admin.compDetail.notInBuild.title": "このビルドにはありません",
+  "admin.compDetail.notInBuild.description":
+    "{product} はこれを描画できません。下の設定は効果がありません。",
+  "admin.compDetail.published": "公開済み",
+  "admin.compDetail.published.on": "アシスタントがこれで応答できます。",
+  "admin.compDetail.published.off": "どのアシスタントもこれを使えません。",
+  "admin.compDetail.published.changes": "説明に未公開の変更があります。",
+  "admin.compDetail.description": "説明",
+  "admin.compDetail.nothingYet": "まだありません",
+  "admin.compDetail.availableTo": "利用できる対象",
+  "admin.compDetail.canRead": "読み取り可能",
+  "admin.compDetail.details": "詳細",
+  "admin.compDetail.kind": "種類",
+  "admin.compDetail.calledAs": "呼び出し名",
+  "admin.compDetail.lastChanged": "最終変更",
+  "admin.compDetail.by": "{name} による",
+  "admin.compDetail.descDlg.description":
+    "モデルがこれを使うかどうか判断するときに読む内容です。コンポーネントを公開するまで効果はありません。",
+  "admin.compDetail.grantsDlg.description":
+    "アシスタントをオフにすると、そのアシスタントはこのコンポーネントの存在を知りません。変更はすぐに反映されます。",
+  "admin.compDetail.grantsDlg.empty": "まだアシスタントがいません。",
+  "admin.compDetail.fnDlg.description":
+    "このコンポーネントが自身を描画するために取得できるデータです。「利用できる対象」とは別です。すべてオフの場合は、アシスタントが渡したものだけを表示します。読み取りはすべて監査に表示されます。変更はすぐに反映されます。",
+  "admin.compDetail.fnDlg.empty": "このデプロイにはデータ関数がありません。",
+  "admin.computers.description":
+    "各アシスタントのブラウザーと、それが保持するプロファイル。プロファイルがアシスタントのサインイン状態を保ちます。リセットすると、アシスタントはすべてからサインアウトします。",
+  "admin.computers.loadError":
+    "コンピューターを読み込めませんでした。ページを再読み込みしてください。",
+  "admin.computers.shared.lead":
+    "すべてのアシスタントが 1 台のコンピューターを共有しています。",
+  "admin.computers.shared.before":
+    "サインイン、ファイル、セッションを共有します。あるアシスタントが、別のアシスタントがサインインしたものにアクセスできてしまいます。各アシスタントに専用のコンピューターを持たせるには、",
+  "admin.computers.shared.after": "を設定してください。",
+  "admin.computers.perBot":
+    "各アシスタントは、専用のコンテナー、ファイル、ブラウザープロファイルを備えた自分のコンピューターを持っています。",
+  "admin.computers.list.title": "このデプロイのコンピューター",
+  "admin.computers.list.error": "一覧を読み込めませんでした。",
+  "admin.computers.list.empty":
+    "まだコンピューターがありません。アシスタントが初めてページを開くと 1 台表示されます。",
+  "admin.computers.running": "ブラウザーは {time} から実行中です",
+  "admin.computers.notRunning":
+    "実行中のブラウザーはありません。アシスタントが次に必要としたときに起動します。",
+  "admin.computers.egress.unknown": "外向き通信は未報告です",
+  "admin.computers.egress.direct": "直接外に出ます",
+  "admin.computers.egress.via": "{egress} 経由で外に出ます",
+  "admin.computers.updateAvailable": "アップデートがあります",
+  "admin.computers.update": "コンピューターを更新",
+  "admin.computers.working": "処理中…",
+  "admin.computers.stop": "ブラウザーを停止",
+  "admin.computers.reset": "リセット",
+  "admin.computers.resetTitle": "{name} のコンピューターをリセットしますか？",
+  "admin.computers.resetDesc":
+    "プロファイルが削除されます。アシスタントはすべてのサービスからサインアウトし、新しく始まります。この操作は元に戻せません。",
+  "admin.computers.resetting": "リセット中…",
+  "admin.computers.resetIt": "リセットする",
+  "admin.computers.updateTitle": "{name} のコンピューターを更新しますか？",
+  "admin.computers.updateDesc":
+    "このデプロイが現在実行しているコンピューターイメージに移行します。ファイルとサインインは保持されます。実行中の場合は再起動し、作業中の内容は中断されます。",
+  "admin.computers.updating": "更新中…",
+  "admin.computers.updateIt": "更新する",
+  "admin.computers.foot.stopLead": "停止",
+  "admin.computers.foot.stopRest":
+    "はブラウザーを閉じ、サインインは保持します。アシスタントが次に必要としたときに再び起動します。",
+  "admin.computers.foot.resetLead": "リセット",
+  "admin.computers.foot.resetRest":
+    "はプロファイルを削除し、アシスタントをすべてのサービスからサインアウトさせます。",
+  "admin.computers.foot.updateLead": "コンピューターを更新",
+  "admin.computers.foot.updateRest":
+    "は、コンピューターが古いイメージで動いているときに表示されます。コンピューターを新しいイメージに移し、ファイルとサインインは保持します。",
+  "admin.computers.foot.audit": "この 3 つはすべて次に表示されます：",
+  "admin.computers.host.description":
+    "アシスタントがこのコンピューターで読み取れるフォルダーを選びます。デスクトップアプリは、編集やコマンドのたびに確認します。{product} を停止するとアクセスは終了します。",
+  "admin.computers.host.title": "このコンピューターのフォルダー",
+  "admin.computers.host.offline":
+    "デスクトップアプリがオフラインです。フォルダーを承認したりコマンドを実行したりするには、アプリを開いてください。",
+  "admin.computers.host.noBots":
+    "まだアシスタントがいません。作成してから、そのフォルダーを選んでください。",
+  "admin.computers.host.choose": "フォルダーを選択",
+  "admin.computers.host.waiting": "待機中…",
+  "admin.computers.host.readOnlyNote":
+    "フォルダーは読み取り専用です。アシスタントが書き込む必要があるときは、デスクトップアプリが先に確認します。",
+  "admin.computers.host.stopAccess": "フォルダーへのアクセスを停止",
+  "admin.computers.host.stopping": "停止中…",
+  "admin.computers.host.viewAudit": "監査を見る",
+  "admin.computers.host.readOnly": "読み取り専用",
+  "admin.computers.host.revoke": "取り消す",
+  "admin.computers.host.revoking": "取り消し中…",
+  "admin.computers.host.pendingFrom": "{owner} からの{label}。",
+  "admin.computers.host.pendingFromFor": "{owner} から {name} への{label}。",
+  "admin.computers.host.folders": {
+    one: "読み取り専用フォルダー {count} 件",
+    other: "読み取り専用フォルダー {count} 件",
+  },
+  "admin.computers.host.requests": {
+    one: "保留中のリクエスト {count} 件",
+    other: "保留中のリクエスト {count} 件",
+  },
+  "admin.computers.host.none": "承認されたフォルダーはありません。",
+  "admin.computers.host.owner": "デスクトップの所有者",
+  "admin.computers.host.p.write":
+    "ファイルの変更が承認待ち、または完了待ちです",
+  "admin.computers.host.p.run": "コマンドが承認待ち、または完了待ちです",
+  "admin.computers.host.p.list": "ファイルを一覧表示中",
+  "admin.computers.host.p.read": "ファイルを読み取り中",
+  "admin.computers.host.p.stop": "フォルダーの作業を停止中",
+  "admin.computers.host.p.default": "フォルダーへのアクセスが承認待ちです",
+  "admin.learning.description":
+    "完了した会話から学び、Intelligence が提案するスキルを確認し、公開済みのスキルをアシスタントに渡します。",
+  "admin.learning.auto.assigned":
+    "{product} は、この Intelligence プロジェクトにコンテナー 「{container}」 を自動的に割り当てました。ここで変更できます。",
+  "admin.learning.auto.absent":
+    "この Intelligence プロジェクトには、まだ Learning コンテナー 「{container}」 がありません。何も収集されません。",
+  "admin.learning.auto.notEntitled":
+    "この Intelligence プロジェクトのプランには Learning が含まれていません。コンテナーは割り当てられませんでした。",
+  "admin.learning.auto.unavailable":
+    "このプロジェクトの Learning コンテナーを探すために Intelligence に接続できませんでした。{product} が再試行します。",
+  "admin.learning.target.container": "{label} のコンテナー ID",
+  "admin.learning.target.revision": "正確なリビジョン（任意）",
+  "admin.learning.target.revisionAria": "{label} のリビジョン",
+  "admin.learning.target.latest": "最新の公開版",
+  "admin.learning.create.busy": "作成中…",
+  "admin.learning.create.button": "{container} コンテナーを作成",
+  "admin.learning.create.note":
+    "ランタイムキーではなく、このデプロイの認証情報を使います。",
+  "admin.learning.create.how": "作成方法：",
+  "admin.learning.part.title": "参加",
+  "admin.learning.part.description":
+    "コンテナーの変更は新しい会話に適用されます。既存の会話は最初のコンテナーを保持します。コンテナーは同じ Intelligence プロジェクトにすでに存在している必要があります。ここで保存するまで、{product} はそのプロジェクトの openbot コンテナーを使います。",
+  "admin.learning.part.loading": "Learning の設定を読み込み中…",
+  "admin.learning.part.turnOn": "自動学習とスキルの配信をオンにする",
+  "admin.learning.part.default": "デフォルト",
+  "admin.learning.part.hint":
+    "デフォルトがない場合、専用のコンテナーを持たないアシスタントは対象外になります。ID は 1〜64 文字の小文字、数字、単独のハイフンです。リビジョンを空のままにすると、最新の公開済みスキルを使います。",
+  "admin.learning.part.perBot": "アシスタントごとの参加",
+  "admin.learning.part.botListError":
+    "アシスタントの一覧を読み込めませんでした。各アシスタントの保存済みの設定は下にあります。",
+  "admin.learning.part.botAria": "{name} の参加",
+  "admin.learning.part.inherit": "デプロイのデフォルトを使う",
+  "admin.learning.part.exclude": "Learning の対象外にする",
+  "admin.learning.part.container": "特定のコンテナーを使う",
+  "admin.learning.part.saving": "保存中…",
+  "admin.learning.part.save": "Learning の設定を保存",
+  "admin.learning.part.saved": "設定を保存しました。",
+  "admin.learning.rev.title": "確認して公開",
+  "admin.learning.rev.description":
+    "Intelligence は完了した会話を調べ、スキルを提案します。Intelligence で確認して公開してください。アシスタントは公開済みのスキルだけを使います。",
+  "admin.learning.rev.showFor": "コンテナーを表示する対象",
+  "admin.learning.rev.default": "デプロイのデフォルト",
+  "admin.learning.rev.checking": "Intelligence を確認中…",
+  "admin.learning.rev.invalid":
+    "選択したコンテナーまたはそのインストルメンテーションは利用できません。",
+  "admin.learning.rev.selection":
+    "アシスタントを選ぶか、デフォルトのコンテナーを設定してください。",
+  "admin.learning.rev.none": "Learning コンテナーが割り当てられていません。",
+  "admin.learning.rev.threads": "準備できたスレッド",
+  "admin.learning.rev.candidates": "確認待ちの候補",
+  "admin.learning.rev.published": "公開済みのスキル",
+  "admin.learning.rev.insights": "インサイト",
+  "admin.learning.rev.running": "分析が実行中です。",
+  "admin.learning.rev.latest": "直近の分析：{status}。",
+  "admin.learning.rev.noRun": "まだ分析は実行されていません。",
+  "admin.learning.rev.manage": "Intelligence で Learning を管理",
+  "admin.learning.rev.reviewCandidates": "スキルの候補を確認",
+  "admin.learning.rev.viewRuns": "分析の実行履歴を見る",
+  "admin.learning.del.title": "スキルの配信",
+  "admin.learning.del.checking": "配信を確認中…",
+  "admin.learning.del.off": "このアシスタントでは配信がオフです。",
+  "admin.learning.del.waiting":
+    "最初の検証済みスキルスナップショットを待っています。",
+  "admin.learning.del.stale":
+    "最後の検証済みスナップショットを使用中です。更新は保留中です。",
+  "admin.learning.del.ok": "検証済みスナップショットが利用できます。",
+  "admin.learning.del.revision": "読み込み済みのリビジョン：{revision}",
+  "admin.learning.del.lastChecked": "最終確認：",
+  "admin.learning.rev.refresh": "状態を更新",
+  "admin.learning.rev.footer":
+    "Learning を管理するには、Intelligence アカウントとプロジェクトへのアクセス権が必要です。{product} はプロジェクトの認証情報をサーバーに保管します。ここで Learning をオフにしても、設定と会話の割り当ては保持されます。スケジュールと公開は Intelligence に残ります。",
+  "admin.playground.validJson":
+    "{label} は有効な JSON である必要があります：{reason}",
+  "admin.playground.invalidJson": "無効な JSON",
+  "admin.playground.notObject":
+    "{label} は {kind} ではなく JSON オブジェクトである必要があります。",
+  "admin.playground.schemaLabel": "引数（JSON Schema）",
+  "admin.playground.sampleLabel": "サンプル引数",
+  "admin.playground.fixBeforeSave":
+    "保存する前に JSON のフィールドを修正してください。",
+  "admin.playground.draftSaved": "下書きを保存しました。",
+  "admin.playground.published": "公開しました。",
+  "admin.playground.description":
+    "コンポーネントを書いて、再デプロイせずに公開できます。編集内容は下書きです。会話には公開済みのものだけが表示されます。",
+  "admin.playground.saveDraft": "下書きを保存",
+  "admin.playground.publish": "公開",
+  "admin.playground.title": "タイトル",
+  "admin.playground.titlePlaceholder": "返金カード",
+  "admin.playground.told": "モデルに伝える内容",
+  "admin.playground.toldPlaceholder":
+    "金額、理由、状況つきで返金を表示します。",
+  "admin.playground.preview": "プレビュー",
+  "admin.playground.noSample": "サンプル引数は利用できません。",
+  "admin.playground.fixBeforePreview":
+    "プレビューの前に JSON のフィールドを修正してください。",
+  "admin.playground.saved.title": "ここに保存済み",
+  "admin.playground.saved.empty":
+    "まだ何も保存されていません。下書きを保存すると、ここに表示されます。",
+  "admin.playground.saved.published": "公開済み、リビジョン {revision}",
+  "admin.playground.saved.draftOnly":
+    "下書きのみ。どのアシスタントも描画できません",
+  "admin.playground.saved.edited": "公開後に編集されています",
+  "admin.playground.open": "開く",
+  "admin.playground.delete": "削除",
+  "admin.playground.saved.note":
+    "公開すると、すべてのアシスタントが使えるようになります。特定のアシスタントだけオフにするには、UI コンポーネントのページで行ってください。",
+  "admin.playground.del.title": "{name} を削除しますか？",
+  "admin.playground.del.description":
+    "このデプロイから削除され、どのアシスタントも描画できなくなります。この操作は元に戻せません。",
+  "admin.playground.del.confirm": "削除する",
+  "admin.plugins.tool.title": "ツール",
+  "admin.plugins.tool.noTool":
+    "このコネクターに、その名前のツールはありません。",
+  "admin.plugins.tool.removed":
+    "ツール一覧が最後に更新されてから削除された可能性があります。",
+  "admin.plugins.tool.notOn": "このコネクターはオンになっていません。",
+  "admin.plugins.tool.noDesc": "このツールには説明がありません。",
+  "admin.plugins.tool.writeDesc":
+    "このツールはベンダー側の何かを変更します。書き込みに関する制限が適用されます。",
+  "admin.plugins.tool.readDesc":
+    "このツールは読み取りのみです。書き込みに関する制限は適用されません。",
+  "admin.plugins.tool.what": "できること",
+  "admin.plugins.tool.effect": "影響",
+  "admin.plugins.tool.effectDesc":
+    "ツール名ではなく、コネクターが設定します。不明なものはすべて書き込みとして扱われます。",
+  "admin.plugins.tool.bots.title": "アシスタント",
+  "admin.plugins.tool.bots.description":
+    "アシスタントは、スイッチがオンの間だけこのツールを呼び出せます。オフにすると、次の呼び出しから適用されます。",
+  "admin.plugins.tool.bots.empty":
+    "まだアシスタントがいません。このツールを渡すには、作成してください。",
+  "admin.plugins.tool.hidden": "一覧から非表示です。",
+  "admin.plugins.tool.canCall":
+    "このツールを呼び出せます。すべての呼び出しは引き続き制限に照らして確認され、監査に記録されます。",
+  "admin.plugins.tool.noToken":
+    "許可されていますが、このアシスタントにはコールバックトークンがありません。すべての呼び出しが拒否されます。アシスタントのページで発行するか、AGENT_TOOL_TOKEN を設定してください。",
+  "admin.plugins.tool.cantCall":
+    "このツールを呼び出せません。アシスタントには見えません。",
+  "admin.plugins.tool.aria": "{bot} に {tool} の呼び出しを許可する",
+  "admin.plugins.bot.title": "アシスタント",
+  "admin.plugins.bot.notOn": "その名前でオンになっているアプリはありません。",
+  "admin.plugins.bot.nothing": "ここにはアシスタントに渡せるものがありません。",
+  "admin.plugins.bot.notBot.title": "アシスタントではありません",
+  "admin.plugins.bot.notBot.description": "その名前のアシスタントはいません。",
+  "admin.plugins.bot.notBot.hint":
+    "このページを開いたあとに削除された可能性があります。",
+  "admin.plugins.bot.noDesc": "このアクションには説明がありません。",
+  "admin.plugins.bot.destroys": "物を破壊します",
+  "admin.plugins.bot.description":
+    "{bot} が呼び出せる {app} のアクション。オフにすると、次の呼び出しから適用されます。",
+  "admin.plugins.bot.pageTitle": "{bot} と {app}",
+  "admin.plugins.bot.noActions":
+    "{app} にはアクションが一覧にありません。もう一度確認するには、ツールを更新してください。",
+  "admin.plugins.bot.searchAria": "{app} のアクションを検索",
+  "admin.plugins.bot.searchPlaceholder": "アクション名で検索",
+  "admin.plugins.bot.wouldHold": {
+    one: "この場合、このアシスタントはこのアプリのツールを {count} 個持つことになります。",
+    other:
+      "この場合、このアシスタントはこのアプリのツールを {count} 個持つことになります。",
+  },
+  "admin.plugins.bot.turnOnReads": "読み取りのみのアクションをすべてオンにする",
+  "admin.plugins.bot.reads.title": "読み取り",
+  "admin.plugins.bot.reads.description":
+    "これらは読み取りのみです。書き込みに関する制限は適用されません。",
+  "admin.plugins.bot.reads.noMatch":
+    "読み取りのみで 「{query}」 に一致するものはありません。",
+  "admin.plugins.bot.reads.none":
+    "{app} には読み取りのみのアクションがありません。",
+  "admin.plugins.bot.writes.title": "何かを変更するもの",
+  "admin.plugins.bot.writes.description":
+    "これらはベンダー側の何かを変更します。書き込みに関する制限が適用されます。",
+  "admin.plugins.bot.writes.noMatch":
+    "何かを変更するもので 「{query}」 に一致するものはありません。",
+  "admin.plugins.bot.writes.none":
+    "{app} には何かを変更するアクションがありません。",
+  "admin.plugins.bot.shared.title":
+    "{bot} に共有の {app} アカウントの使用を許可しますか？",
+  "admin.plugins.bot.allowing": "許可中…",
+  "admin.plugins.bot.allow": "許可",
+  "admin.shared.sentence.write":
+    "このアシスタントを使える人は誰でも、共有アカウントとしてこれを実行できます。",
+  "admin.shared.sentence.read":
+    "このアシスタントを使える人は誰でも、このアカウントが読み取れるものを読み取れます。",
+  "admin.shared.owner": "所有者のみ",
+  "admin.shared.named": "指名：{who}",
+  "admin.shared.team": "全員",
+  "admin.shared.legend": "このアシスタントを通じて共有アカウントを使える人",
+  "admin.shared.outside":
+    "外部からのメッセージ（メール、Slack、Webhook）も使えます",
+  "admin.shared.skipped": {
+    one: "このアプリが一覧にしているアクションのうち {count} 件が除外されました。ツール名に使えるのは英字、数字、アンダースコア、ハイフンだけです：",
+    other:
+      "このアプリが一覧にしているアクションのうち {count} 件が除外されました。ツール名に使えるのは英字、数字、アンダースコア、ハイフンだけです：",
+  },
+  "admin.vocab.browse": "{name} を参照",
+  "admin.vocab.dirDesc.composio":
+    "数百のアプリ。各自が自分のアカウントを接続します。",
+  "admin.vocab.dirDesc.arcade":
+    "ここでは誰も確認していないアプリ。各自が自分のアカウントを接続します。",
+  "admin.vocab.readFailure":
+    "{name} のアプリディレクトリを読み込めませんでした。ページを再読み込みしてください。",
+  "admin.vocab.moreApps": "{name} のアプリ。ここでは誰も確認していません。",
+  "admin.vocab.notSetUp":
+    "未設定です。そのアプリを参照するには、このデプロイで {envVar} を設定してください。",
+  "admin.vocab.connection":
+    "各自のアカウントを保持する {name} 経由で接続します。",
+  "admin.vocab.reach.description":
+    "{name} がアカウントを保持します。このデプロイは、1 つのキーと誰が依頼しているかを送ります。各自が自分のアカウントを接続し、アシスタントにはその人が見られるものだけが見えます。貼り付けるトークンはありません。",
+  "admin.vocab.reach.badge": "{name} 経由",
+  "admin.vocab.disconnect":
+    "接続を解除すると、{name} のアカウントも終了します。",
+  "admin.vocab.trip.stem":
+    "{name} は 1 つずつアクションを承認するため、アプリ全体として接続するものはありません。",
+  "admin.vocab.trip.below": "使いたいアクションを下で承認してください。",
+  "admin.vocab.trip.settings": "接続から承認してください。",
+  "admin.vocab.keyMissing":
+    "このデプロイで {envVar} を設定してください。それまでは、このアカウントをここで接続も解除もできません。アプリはオンのままで、ツールの付与も有効なままです。",
+  "admin.vocab.siblings": {
+    one: "接続を解除すると、この接続を共有している {names} へのあなたのアクセスも終了します。",
+    other:
+      "接続を解除すると、この接続を共有している {names} へのあなたのアクセスも終了します。",
+  },
+  "admin.vocab.unansweredMore": {
+    one: "ほかに {count} 個のアプリを確認できず、影響を受ける可能性があります。",
+    other:
+      "ほかに {count} 個のアプリを確認できず、影響を受ける可能性があります。",
+  },
+  "admin.vocab.unansweredOnly": {
+    one: "この接続の {count} 個のアプリを確認できなかったため、接続を解除するとそれらも終了する可能性があります。",
+    other:
+      "この接続の {count} 個のアプリを確認できなかったため、接続を解除するとそれらも終了する可能性があります。",
+  },
+  "admin.vocab.join2": "{a}と{b}",
+  "admin.vocab.joinMany": "{list}と{last}",
+  "admin.skills.write": "スキルを書く",
+  "admin.skills.description":
+    "誰でも / で実行できる名前付きの指示です。スキルがアクセスを増やすことはありません。アシスタントがすでに持っているものを使うよう頼めるだけです。",
+  "admin.skills.installed.title": "インストール済み",
+  "admin.skills.installed.description":
+    "このデプロイの全員向けです。各自は自分の「スキル」ページで自分のスキルを書きます。",
+  "admin.skills.loadError":
+    "スキルを読み込めませんでした。ページを再読み込みしてください。",
+  "admin.skills.empty":
+    "まだスキルがありません。「スキルを書く」で作成してください。",
+  "admin.skills.dlg.title": "全員向けのスキルを書く",
+  "admin.skills.dlg.description":
+    "/ のあとにスラッグを入力します。するとアシスタントが指示に従います。誰でも使え、どのアシスタントに持たせるかはあなたが選びます。",
+  "admin.skills.slug": "スラッグ",
+  "admin.skills.title": "タイトル",
+  "admin.skills.summary": "概要",
+  "admin.skills.summaryPlaceholder": "1 行",
+  "admin.skills.instructions": "指示",
+  "admin.skills.instructionsPlaceholder":
+    "このスキルが使われたときにアシスタントがすべきこと。",
+  "admin.skills.install": "スキルをインストール",
+  "engines.intro":
+    "エンジンは、各メンバーの代わりに考える部分です。別の順番を選ばない限り、まずあなた自身のログインが応答します。有料のものは、あなたがオンにするまでオフのままです。",
+  "engines.loadFailed":
+    "エンジンを読み込めませんでした。ページを再読み込みしてください。",
+  "engines.fallback": "エンジンを一覧表示できませんでした。",
+  "engines.noEngines": "報告されているエンジンはまだありません。",
+  "engines.statesTitle": "エンジンとその状態",
+  "engines.sectionsLabel": "エンジンのセクション",
+  "engines.tab.overview": "概要",
+  "engines.tab.providers": "プロバイダー",
+  "engines.tab.members": "アシスタントの割り当て",
+  "engines.tab.usage": "使用量",
+  "engines.asideLabel": "キーと支出",
+  "engines.keys.title": "キー",
+  "engines.keys.text":
+    "ここに保管されるのはゲートウェイのキーだけです。ClaudeとChatGPTのログイン情報を FreeDuet が保存することはありません。",
+  "engines.keys.notBuilt":
+    "キーは、そのエンジンのカードで追加します。この環境に保管され、二度と表示されません。",
+  "engines.spending.title": "支出",
+  "engines.spending.text":
+    "支出はこのページにはまだ表示されません。有料のエンジンは、この環境が許可している場合にのみ動作します。",
+  "engines.today": "今日",
+  "engines.reason.off":
+    "この環境ではエンジンがオフになっている（FREEDUET_ROUTER=off）ため、表示するものはありません。",
+  "engines.reason.not_set_up":
+    "この環境には FreeDuet のエージェントが設定されていないため、表示するエンジンはありません。",
+  "engines.reason.unreachable":
+    "FreeDuet のエージェントが応答しなかったため、今はエンジンを読み取れません。このページは30秒ごとにもう一度確認します。",
+  "engines.state.ready": "利用可能",
+  "engines.state.degraded": "利用可能ですが、最近エラーがありました",
+  "engines.state.limitedAt": "上限に達しました（{at}まで）",
+  "engines.state.limited": "上限に達しています（今のところ）",
+  "engines.state.outOfCreditAt": "クレジット切れです。{at}に再試行します",
+  "engines.state.outOfCredit": "クレジット切れ",
+  "engines.state.notAnsweringAt": "応答がありません。{at}に再試行します",
+  "engines.state.notAnswering": "今のところ応答がありません",
+  "engines.state.checking": "再び応答するかを確認しています",
+  "engines.state.gatewayKey":
+    "そのゲートウェイがキーを受け付けませんでした。渡したキーを確認してください。",
+  "engines.state.signedOut":
+    "ログアウトしています。そのエンジン自身のログインでもう一度ログインしてください",
+  "engines.state.refusedWhy": "実行されませんでした：{reason}",
+  "engines.state.refused": "実行されませんでした：理由は不明です。",
+  "engines.state.unknown": "状態は不明です",
+  "engines.state.toolsAsText":
+    "直前の応答で、ツール呼び出しを使わずにテキストとして書き出しました。ツールに対応したモデルを選んでください",
+  "engines.pill.working": "稼働中",
+  "engines.pill.checking": "確認中",
+  "engines.pill.limited": "上限",
+  "engines.pill.outOfCredit": "クレジット切れ",
+  "engines.pill.notAnswering": "応答なし",
+  "engines.pill.signedOut": "ログアウト",
+  "engines.pill.locked": "ロック中",
+  "engines.pill.unknown": "不明",
+  "engines.members.title": "誰が何を使うか",
+  "engines.members.description":
+    "各メンバーが試すエンジンと、その順番、そしてエンジンが使えなくなったときの動作です。変更はメンバーの次のメッセージから適用され、元に戻せます。",
+  "engines.members.col.member": "メンバー",
+  "engines.members.col.order": "エンジンの順番",
+  "engines.members.col.switching": "エンジンが使えなくなったとき",
+  "engines.order.note":
+    "矢印でエンジンを1つずつ動かせます。別の選び方をしない限り、あなた自身のログインが先に来ます。移動によって無料または有料のエンジンがそれより前になる場合は、先に確認を求められます。",
+  "engines.order.warnTitle.free_before_login":
+    "無料のエンジンが、あなた自身のログインより先に応答します",
+  "engines.order.warnTitle.paid_before_free_or_login":
+    "有料のエンジンが、無料のエンジンやログインより前になります",
+  "engines.order.warnText.free_before_login":
+    "クラウドサービスの場合、このメンバーのメッセージはまずそのプロバイダーに送られ、保持される可能性があります。応答の品質も、あなたのログインより低くなる場合があります。",
+  "engines.order.warnText.paid_before_free_or_login":
+    "有料のエンジンは、その後ろのエンジンより先に応答するため、その応答には料金がかかる可能性があります。リストの先頭にある場合は、最初のメッセージからすべてのメッセージに料金がかかる可能性があります。有料のエンジンをオンにして上限を設定した後にのみ動作します。",
+  "engines.order.newLabel": "新しい順番：",
+  "engines.order.tick": "理解したうえで、この順番を使う",
+  "engines.order.confirm": "確定",
+  "engines.order.tickLabel": "理解したうえで、{name}にこの順番を使う",
+  "engines.order.confirmLabel": "{name}の新しい順番を確定",
+  "engines.order.cancelLabel": "{name}の新しい順番を取り消す",
+  "engines.order.own": "あなたの順番：ログインが先頭ではありません",
+  "engines.order.recommended": "推奨の順番を使う",
+  "engines.order.recommendedLabel": "{name}に推奨の順番を使う",
+  "engines.order.moveUp": "{name}の{engine}を上に移動",
+  "engines.order.moveDown": "{name}の{engine}を下に移動",
+  "engines.order.saveFailed": "順番を保存できませんでした。",
+  "engines.claude.default": "サブスクリプションの既定",
+  "engines.claude.effort.low": "低",
+  "engines.claude.effort.medium": "中",
+  "engines.claude.effort.high": "高",
+  "engines.claude.effort.xhigh": "非常に高",
+  "engines.claude.effort.max": "最大",
+  "engines.claude.effortLabel": "思考の深さ",
+  "engines.claude.note":
+    "Claude Code のみです。サブスクリプションで使えないモデルを選ぶと、そのターンは Claude Code 自身のエラーで終わります。何かがオフになることはなく、「サブスクリプションの既定」を選べば元に戻ります。",
+  "engines.claude.modelAria": "{name}のClaudeモデル",
+  "engines.claude.effortAria": "{name}のClaudeの思考の深さ",
+  "engines.claude.saved":
+    "Claudeの選択を保存しました。次のメッセージから適用されます。",
+  "engines.members.saveFailed": "選択を保存できませんでした。",
+  "engines.members.undoFailed": "その変更を元に戻せませんでした。",
+  "engines.mode.groupLabel": "{name}のエンジンが使えなくなったとき",
+  "engines.mode.controlLabel": "{name}の{label}",
+  "engines.mode.undoLabel": "{name}の変更を元に戻す",
+  "engines.mode.automatic.label": "自動で切り替える",
+  "engines.mode.automatic.effect":
+    "エンジンが使えなくなると、次のエンジンが応答し、どれになったかをお知らせします。",
+  "engines.mode.askFirst.label": "先に確認する",
+  "engines.mode.askFirst.effect":
+    "エンジンが使えなくなると、切り替える、待つ、別のエンジンを指定する、のどれにするかを確認します。",
+  "engines.leftOut.line": "使用しません：{engine}（{why}）。",
+  "engines.leftOut.locked": "この環境のファイルが許可していないため",
+  "engines.leftOut.disabled": "オフになっているため",
+  "engines.leftOut.paid_gateway":
+    "有料のゲートウェイで、FreeDuet はまだ実行しないため",
+  "engines.leftOut.metered_off": "有料のエンジンがオフになっているため",
+  "engines.leftOut.cap_zero": "支出の上限がゼロのため",
+  "engines.leftOut.not_set_up": "この環境で設定されていないため",
+  "engines.leftOut.other": "動作しないため",
+  "engines.chain.none": "今、このメンバーに応答できるエンジンはありません。",
+  "engines.chain.one": "{engine}だけを試します。",
+  "engines.chain.many": "{list}を試します。",
+  "engines.chain.then": "、次に",
+  "engines.pin":
+    "この環境のファイルによって{engine}に固定されています。他のエンジンに切り替わることは決してありません。",
+  "engines.alone":
+    "このメンバーには{engine}だけが設定されているため、切り替え先はまだありません。選択は、切り替え先ができたときのために保持されます。",
+  "engines.source.yours": "あなたの選択です。この環境のファイルでは：{mode}。",
+  "engines.source.file": "この環境のファイルによります。",
+  "engines.block.not_at_the_computer":
+    "これらの変更は、FreeDuet が動いているコンピューターで行ってください。",
+  "engines.block.not_paired_with_the_computer":
+    "先に、このブラウザーを FreeDuet が動いているコンピューターとペアリングしてください。そこで `bash scripts/open.sh` を実行し、こちらでリンクを開きます。",
+  "engines.block.agent_too_old":
+    "これを変更するには FreeDuet を更新してください。",
+  "engines.block.choices_unreadable":
+    "あなたの選択を読み取れなかったため、この環境の設定が使われています。選んだ内容は失われていません。",
+  "engines.saved": "保存しました。メンバーの次のメッセージから適用されます。",
+  "engines.undone":
+    "元に戻しました。以前の設定が、メンバーの次のメッセージから適用されます。",
+  "engines.providers.title": "エンジンを追加",
+  "engines.providers.description":
+    "エンジンをオンにし、キーを貼り付けて「保存」を押し、続けて「テスト」を押します。変更は次のメッセージから適用されます。",
+  "engines.providers.pickerLabel": "プロバイダー",
+  "engines.providers.blurb.ollama":
+    "あなた自身のコンピューターで動くモデルです。",
+  "engines.providers.blurb.llamacpp":
+    "あなた自身のコンピューターまたはネットワーク上の llama.cpp サーバーです。",
+  "engines.providers.blurb.lmstudio":
+    "あなた自身のコンピューター上の LM Studio のローカルサーバーです。",
+  "engines.providers.blurb.freellmapi":
+    "自分で動かすルーターで、多数のプロバイダーの無料枠を1つのアドレスにまとめます。",
+  "engines.providers.blurb.groq":
+    "高速なオープンモデルです。無料で、1日あたりの上限があります。",
+  "engines.providers.blurb.google":
+    "Gemini モデルです。無料で、上限があります。",
+  "engines.providers.blurb.mistral":
+    "無料プランの Mistral モデルです。上限があります。",
+  "engines.providers.blurb.openrouter":
+    "費用がかからないモデルだけです。:free で終わる ID、または openrouter/free です。",
+  "engines.providers.blurb.cloudflare":
+    "Cloudflare 上のオープンモデルです。無料で、1日あたりの枠があります。アドレスにはあなた自身のアカウントを入れてください。",
+  "engines.providers.blurb.cerebras": "非常に高速なオープンモデルです。",
+  "engines.providers.blurb.anthropic-api":
+    "従量課金のクレジットで使う Claude です。",
+  "engines.providers.tag.local": "ローカル",
+  "engines.providers.tag.router": "上級者向け：自分のルーター",
+  "engines.providers.tag.free": "無料（上限あり）",
+  "engines.providers.tag.trial": "お試し（カードが必要）",
+  "engines.providers.tag.paid": "有料",
+  "engines.providers.cloudWarning":
+    "このサービスに送られたデータは、あなたのコンピューターの外に出ます。",
+  "engines.providers.routerWarning":
+    "あなたのメッセージはルーターに送られ、ルーターはその中で有効にした無料のプロバイダーに転送します。メッセージはあなたのコンピューターの外に出て、それらのプロバイダーが保持する可能性があります。",
+  "engines.providers.routerAdvanced":
+    "上級者向けのオプションで、推奨の既定ではありません。このプロジェクトは、個人での実験専用だと自ら説明しています。FreeDuet はこれをインストールも実行もしません。プロバイダーのキーはその中に残り、FreeDuet が保持するのは、それが発行する1つのアクセストークンだけです。",
+  "engines.providers.routerAddress":
+    "そのルーター自身の既定のポート 3001 は FreeDuet が使っています。別のポートで動かし、アドレスの末尾に /v1 を付けてください。このコンピューター上なら http で構いません。このコンピューターの外では、あなた自身のネットワーク（LAN のアドレスまたは .local の名前）だけが受け付けられ、https が必要です。公開されたホストは拒否されます。",
+  "engines.providers.address": "サーバーのアドレス",
+  "engines.providers.loadList": "リストを読み込む",
+  "engines.providers.saveSettings": "設定を保存",
+  "engines.providers.test": "テスト",
+  "engines.providers.freeModelsNote":
+    "無料のモデルは頻繁に変わり、送った内容を保持する場合があります。",
+  "engines.providers.freeModelsLoading":
+    "ツールを使える無料モデルを読み込んでいます。",
+  "engines.providers.freeModelsStale":
+    "今は OpenRouter に接続できませんでした。これは最後に読み込まれたリストです。",
+  "engines.providers.freeModelsFallback":
+    "今は OpenRouter に接続できませんでした。無料のルーターだけが表示されます。",
+  "engines.providers.freeRouterLabel":
+    "openrouter/free（OpenRouter が無料モデルを選びます）",
+  "engines.providers.keySaved": "キーを保存しました。二度と表示されません。",
+  "engines.providers.keyPlaceholder": "ここにキーを貼り付け",
+  "engines.providers.notOnKey":
+    "まだオンになっていません。キーを貼り付けて「保存」を押してください。",
+  "engines.providers.notOnSettings":
+    "まだオンになっていません。モデルを選んで「設定を保存」を押してください。",
+  "engines.providers.settingsSaved":
+    "保存しました。次のメッセージから適用されます。",
+  "engines.providers.keyRemoved": "キーを削除しました。エンジンはオフです。",
+  "engines.providers.lockedOwnFile":
+    "あなた自身のエンジンのファイルを書いているため、これらのカードは表示するだけです。変更はそのファイルで行ってください。",
+  "engines.providers.users.paid":
+    "支出の上限ができるまでオフです。それまで、FreeDuet は有料のエンジンを動かしません。",
+  "engines.providers.users.trial":
+    "無料枠はカードが必要なお試しのため、FreeDuet は無料のものとしては提供しません。オフのままです。",
+  "engines.providers.users.members":
+    "メンバー：はい、Claude のログインの後に使います。軽量アシスタント：はい。",
+  "engines.providers.users.notYet":
+    "メンバー：まだ使いません。軽量アシスタント：はい。",
+  "engines.providers.check.ok": "応答しました。動作しています。",
+  "engines.providers.check.key_rejected":
+    "キーが受け付けられませんでした。確認して、もう一度保存してください。",
+  "engines.providers.check.model_missing":
+    "サーバーがそのモデルを認識しません。モデル名を確認してください。",
+  "engines.providers.check.rate_limited":
+    "上限またはクレジットを今は使い切っています。後でもう一度お試しください。",
+  "engines.providers.check.other":
+    "応答がなかったか、応答を理解できませんでした。",
+  "engines.providers.freeNote":
+    "「無料」は FreeDuet の表示で、プロバイダーの規約に基づいています。一部のプロバイダー（たとえば Google）は、プロジェクトで課金がオンになっていると料金を請求します。",
+  "engines.providers.useFor": "使用するメンバー",
+  "engines.providers.useForNone":
+    "これを使っているメンバーはまだいません。軽量アシスタントは使っています。作業をこのサービスに送ってよいメンバーにチェックを入れてください。",
+  "engines.providers.warn.inbox": "あなたのメールをこのサービスに送ります。",
+  "engines.providers.warn.concierge": "あなたの予約をこのサービスに送ります。",
+  "engines.providers.modelsEmpty":
+    "リストが空です。モデル名を入力してください。",
+  "engines.providers.modelsLoaded": {
+    one: "{count}件のモデルを読み込みました。ボックスから1つ選んでください。",
+    other: "{count}件のモデルを読み込みました。ボックスから1つ選んでください。",
+  },
+  "engines.providers.switchOn": "{name}をオンにする",
+  "engines.providers.changeFailed": "変更できませんでした。",
+  "engines.providers.keySaveFailed": "キーを保存できませんでした。",
+  "engines.providers.listFailed": "リストを読み込めませんでした。",
+  "engines.providers.keyRemoveFailed": "キーを削除できませんでした。",
+  "engines.providers.saveFailed": "保存できませんでした。",
+  "engines.providers.testFailed": "テストを実行できませんでした。",
+  "engines.tokens.title": "トークン",
+  "engines.tokens.description":
+    "各メンバーが各エンジンで使った量を、エンジン自身が報告したとおりに表示します。日付は UTC で数えます。",
+  "engines.tokens.fallback": "トークン数を読み込めませんでした。",
+  "engines.tokens.empty": "カウントされたターンはまだありません。",
+  "engines.tokens.unavailable": "トークン数は今は利用できません。",
+  "engines.tokens.problem":
+    "カウントを保管しているファイルを読み取れなかったため、一部の数値が欠けている可能性があります。",
+  "engines.tokens.notReported": "報告なし",
+  "engines.tokens.col.engine": "エンジン",
+  "engines.tokens.col.week": "過去7日間",
+  "engines.tokens.allMembers": "全メンバー",
+  "engines.tokens.note":
+    "入力は、モデルに渡されたすべてのトークンを数えます（キャッシュされたものを含む）。各行はエンジンの試行回数を数えます。同じエンジンでの再試行は、もう一度数えられます。エンジンが何も報告しなかった試行は、時間だけを加え、トークンは加えません。時間はここで、各試行の開始から終了まで計測します。",
+  "engines.tokens.savedWeek": "過去7日間の節約分",
+  "engines.tokens.savedNote":
+    "節約とは、無料のエンジン（クラウド上、またはあなた自身のコンピューター上）を通ったトークンのことです。Claude Code のサブスクリプションは定額で、有料のエンジンは料金がかかるため、どちらも含まれません。",
+  "engines.tokens.currencyHelp":
+    "金額をクリックすると、ユーロとドルが切り替わります。",
+  "engines.tokens.reference":
+    "{model} の定価（100万トークンあたり入力 {input}、出力 {output}、{date}）で計算。{euro} = {rate}（{rateDate}）。",
+  "engines.tokens.under": "{amount}未満",
+  "engines.tokens.nothingYet": "まだありません",
+  "engines.tokens.plus": "＋{time}",
+  "engines.tokens.toDollars": "{amount}。金額をドルで表示",
+  "engines.tokens.toEuros": "{amount}。金額をユーロで表示",
+  "engines.tokens.amount": "{amount}トークン",
+  "engines.tokens.timeLocal": "あなた自身の GPU で{time}",
+  "engines.tokens.timeCloud": "無料のクラウドエンジンで{time}",
+  "engines.tokens.and": "と",
+  "engines.tokens.timeTail": "{parts}、トークンは報告なし",
+  "engines.tokens.cell": "入力 {input} · 出力 {output}",
+  "engines.tokens.partial": "{total}回の試行のうち{reported}回が報告済み",
+  "engines.dur.under": "1分未満",
+  "engines.dur.min": "{minutes}分",
+  "engines.dur.hourMin": "{hours}時間{minutes}分",
+  "engines.usage.bySource": "発生元別",
+  "engines.usage.byMember": "メンバー別",
+  "engines.usage.time": "時間",
+  "engines.usage.source.person": "あなた",
+  "engines.usage.source.routine": "ルーティン",
+  "engines.usage.source.handoff": "メンバー間",
+  "engines.usage.source.other": "その他",
+  "engines.usage.source.unknown": "以前（記録なし）",
+  "engines.usage.title": "過去7日間の内訳",
+  "engines.usage.note":
+    "割合は、エンジンが報告したトークン（入力と出力の合計）に対するものです。「時間」を選んだ場合は、時間に対するものです。トークンを報告しなかった試行は、時間だけを加えます。「あなた」はあなた自身のメッセージ、「ルーティン」はルーティンとチェックイン、「メンバー間」は引き継ぎ、「その他」はそれ以外のすべて（たとえば環境自身の実行）です。",
+  "engines.usage.nothing": "過去7日間にカウントされたものはありません。",
+  "engines.usage.chartsFailed":
+    "使用量のグラフを描画できませんでした。下の表には影響しません。",
+  "engines.usage.restMembers": "その他のメンバー",
+  "engines.usage.limitTitle": "プランの上限",
+  "engines.usage.limitNone":
+    "今、上限のために止められているエンジンはありません。",
+  "engines.usage.limitNote":
+    "プランの週間上限に対する割合は表示されません。サブスクリプションが FreeDuet にそれを報告しないためです。エンジンが上限に達したときだけ、そのことと、復帰の見込み時刻をお知らせします。",
+  "engines.usage.range": "{from}〜{to}（UTC の日付）",
+  "engines.usage.splitBy": "分け方",
+  "engines.usage.measure": "指標",
+  "engines.usage.perDay": "{title}：1日あたりの{metric}",
+  "engines.usage.perDayUtc": "{title}：1日あたりの{metric}（UTC）",
+  "engines.usage.day": "日付",
+  // connections-begin
+  "connections.connect": "接続",
+  "connections.reconnect": "再接続",
+  "connections.connected": "接続済み",
+  "connections.teamAccount": "チームのアカウント",
+  "connections.disconnect": "接続を解除",
+  "connections.disconnecting": "接続を解除しています…",
+  "connections.startFailed":
+    "接続を開始できなかったため、何も接続されていません。もう一度お試しください。繰り返す場合は管理者に連絡してください。",
+  "connections.list.auth.no-broker":
+    "アプリの接続がまだ設定されていないため、何も記録されませんでした。管理者に設定を依頼してください。",
+  "connections.list.auth.not-supported":
+    "ここのアプリは、アプリのページの「接続」で一度だけ接続します。操作ごとに認可されることはありません。",
+  "connections.list.auth.missing-handle":
+    "そのリンクには、どの認可を完了するものかが書かれていないため、何も行われませんでした。アプリのページからやり直してください。",
+  "connections.list.auth.no-attempt":
+    "あなたが完了できる進行中の認可はありません。期限が切れたか、別のセッションで開始された可能性があります。アプリのページからやり直してください。",
+  "connections.list.auth.vendor-unavailable":
+    "{product} がその認可を完了しようとしたとき、アプリが応答しなかったため、何も記録されませんでした。少し待ってから、もう一度リンクをお試しください。",
+  "connections.list.auth.not-your-authorization":
+    "そのリンクは、進行中のあなたの認可と一致しないため、何も記録されませんでした。開始したタブで完了するか、アプリのページからやり直してください。",
+  "connections.list.auth.not-finished":
+    "その認可はまだ完了していないため、何も記録されませんでした。アプリで完了してから、もう一度リンクを開いてください。",
+  "connections.list.auth.authorization-failed":
+    "アプリがその認可を完了しなかったため、何も記録されませんでした。アプリのページからやり直してください。",
+  "connections.list.auth.context-changed":
+    "認可を開いている間にそのアプリのアカウントが変わったため、何も記録されませんでした。以前のアカウントに与えられたアクセスは削除されました。アプリのページからやり直してください。",
+  "connections.list.auth.not-permitted":
+    "そのアプリのアカウントはもう接続できないため、何も記録されませんでした。認可を開いている間に、あなたのアクセス権またはアプリの設定が変わりました。完了できるはずだった場合は、管理者に連絡してください。",
+  "connections.list.auth.cancelled":
+    "その認可は完了の途中で取り消されたため、何も記録されませんでした。それが与えたアクセスは削除されました。",
+  "connections.list.auth.cancelled-left-live":
+    "その認可は完了の途中で取り消されたため、何も記録されませんでした。それが与えたアクセスは削除できなかったため、取り消した操作をアプリが今も許可している可能性があります。削除するには、アプリのページでそのアプリの接続を解除し、もう一度接続して、必要なものだけを認可してください。",
+  "connections.list.auth.not-recorded":
+    "その認可を記録できなかったため、何も保存されませんでした。アプリのページからやり直してください。繰り返す場合は管理者に連絡してください。",
+  "connections.list.description":
+    "あなたのアシスタントがあなたとして使うアプリとアカウントです。開いて、接続または変更してください。",
+  "connections.list.connectFailed":
+    "そのアカウントを接続できませんでした。何も保存されていません。もう一度お試しください。",
+  "connections.list.title": "あなたの接続",
+  "connections.list.loading": "接続を読み込んでいます…",
+  "connections.list.loadError":
+    "あなたの接続を読み込めませんでした。ページを再読み込みしてください。繰り返す場合は管理者に連絡してください。",
+  "connections.list.empty":
+    "接続できるものはまだありません。管理者がアプリをオンにすると、ここに表示されます。",
+  "connections.list.count": "使用中 {inUse}・全部で {total}",
+  "connections.list.search": "接続を検索",
+  "connections.list.noMatch": "「{query}」に一致するものはありません。",
+  "connections.list.linksError":
+    "GitHub と Slack を読み込めなかったため、一覧に表示されていません。ページを再読み込みしてください。",
+  "connections.list.connectNamed": "{title}を接続",
+  "connections.list.reconnectNamed": "{title}を再接続",
+  "connections.app.landed": "{action}を認可しました。",
+  "connections.app.pendingTitle": "アカウント",
+  "connections.app.loadError":
+    "この接続を読み込めませんでした。ページを再読み込みしてください。繰り返す場合は管理者に連絡してください。",
+  "connections.app.appLoadError":
+    "このアプリを読み込めませんでした。ページを再読み込みしてください。繰り返す場合は管理者に連絡してください。",
+  "connections.app.notSetUp":
+    "{title}はまだ設定されていません。誰かが接続するには、まず管理者がオンにする必要があります。",
+  "connections.app.sharedDesc":
+    "組織で共有されています。アシスタントはチームのアカウントとして動作します。",
+  "connections.app.brokeredDesc":
+    "アシスタントはこれをあなたとして使い、あなたに見えるものだけを見ます。",
+  "connections.app.reassurance":
+    "どのアシスタントも、これをあなたとして使えません。",
+  "connections.app.tripPerAction": "下で、許可したい操作を認可してください。",
+  "connections.app.tripConnect":
+    "接続すると、アクセスを承認するために{title}に移動します。",
+  "connections.app.connectedDesc":
+    "あなたが許可したアシスタントは、あなたの{title}をあなたとして使います。接続を解除すると、そのアクセスはすべての場所で削除されます。",
+  "connections.app.notYours":
+    "このアプリは、あなた自身で接続するものではありません。",
+  "connections.app.oneShared":
+    "アシスタントは、このアプリに対して全員共通の、1つの共有アカウントを使います。",
+  "connections.app.noApp": "{product}には、その名前のアプリはありません。",
+  "connections.app.yourAccount": "あなたのアカウント",
+  "connections.app.notAvailable":
+    "まだ利用できません。先に管理者がオンにする必要があります。",
+  "connections.app.connectedAsYou":
+    "あなたが許可したアシスタントは、これをあなたとして使い、あなたに見えるものだけを見ます。",
+  "connections.app.notConnected":
+    "どのアシスタントも、これをあなたとして使えません。接続すると、アクセスを承認するために{vendor}に移動します。",
+  "connections.app.disconnectedDone":
+    "接続を解除しました。{product}は、あなたの{vendor}アカウントをもう使えません。",
+  "connections.app.disconnectedUnconfirmed":
+    "ここでは接続を解除しました。{vendor}は確認しなかったため、{vendor}アカウントのサードパーティーアクセスの設定でも{product}を削除してください。",
+  "connections.app.accessDesc":
+    "あなたが許可した内容を、{vendor}が記録したとおりに表示します。{product}が求めたものより少ない場合があります。",
+  "connections.app.access": "アクセス",
+  "connections.app.allowed": "許可済み",
+  "connections.app.vendorDidntSay": "{vendor}からは情報がありませんでした。",
+  "connections.identity.toolsDesc":
+    "あなたのアシスタントが、あなたとしてリポジトリを読み取り、変更できるようにします。これは、上のアカウントとは別に接続します。",
+  "connections.identity.tools": "ツール",
+  "connections.identity.githubTools": "GitHub ツール",
+  "connections.identity.notConnected": "未接続",
+  "connections.mail.neverRun": "まだ実行されていません。",
+  "connections.mail.lastRun": {
+    one: "前回の実行 {when}：{count}件のメッセージ。合計 {total}件。",
+    other: "前回の実行 {when}：{count}件のメッセージ。合計 {total}件。",
+  },
+  "connections.mail.on": "オン。{activity}",
+  "connections.mail.off": "オフ",
+  "connections.mail.switchOff": "オフにする",
+  "connections.mail.switchOn": "オンにする",
+  "connections.mail.delete": "削除",
+  "connections.mail.lastProblem": "直近の問題：{error}",
+  "connections.mail.description":
+    "チャットで依頼した常設のルールです。アシスタントがこれを保持し、数分ごとに新しいメールに適用します。Gmail のフィルターではありません。ルールを削除しても、すでに行ったことは元に戻りません。",
+  "connections.mail.title": "メールのルール",
+  "connections.mail.search": "メールのルールを検索",
+  "connections.mail.statusLabel": "ルールの状態",
+  "connections.mail.allStatuses": "すべての状態",
+  "connections.mail.optActive": "有効",
+  "connections.mail.optPaused": "一時停止中",
+  "connections.mail.active": "有効",
+  "connections.mail.paused": "一時停止中",
+  "connections.mail.noMatch": "これらの条件に一致するルールはありません。",
+  "connections.mail.paging": {
+    one: "{count}件のルールのうち {from}～{to}",
+    other: "{count}件のルールのうち {from}～{to}",
+  },
+  "connections.mail.previous": "前へ",
+  "connections.mail.next": "次へ",
+  "connections.secret.aMember": "メンバー",
+  "connections.secret.doneMemberCal":
+    "接続しました。{name}が、あなたとして、あなたのメールとカレンダーを読めるようになりました。",
+  "connections.secret.doneMember":
+    "接続しました。{name}が、あなたとして、あなたのメールを読めるようになりました。",
+  "connections.secret.doneBotsCal":
+    "接続しました。あなたが許可したアシスタントが、あなたとして、あなたのメールとカレンダーを読めるようになりました。",
+  "connections.secret.doneBots":
+    "接続しました。あなたが許可したアシスタントが、あなたとして、あなたのメールを読めるようになりました。",
+  "connections.secret.notAvailable":
+    "まだ利用できません。先に管理者がオンにする必要があります。",
+  "connections.secret.statusError":
+    "接続済みかどうかを読み込めませんでした。ページを再読み込みしてください。繰り返す場合は管理者に連絡してください。",
+  "connections.secret.yourAccount": "あなたのアカウント",
+  "connections.secret.connectedCal":
+    "{address}として接続しています。カレンダーも接続されています。あなたが許可したアシスタントは、これをあなたとして使います。",
+  "connections.secret.connectedNoCal":
+    "{address}として接続しています。カレンダーは接続されていません。あなたが許可したアシスタントは、これをあなたとして使います。",
+  "connections.secret.notConnected":
+    "どのアシスタントも、これをあなたとして使えません。Gmail を接続するには、下にアプリパスワードを貼り付けてください。",
+  "connections.secret.useDifferent": "別のアプリパスワードを使う",
+  "connections.secret.disconnected":
+    "接続を解除しました。{product}は、あなたのメールやカレンダーをもう読めません。アプリパスワードが確実に使えなくなるよう、{url}でもそれを削除してください。",
+  "connections.secret.formDesc":
+    "Google で2つの手順を行い、表示されたものを貼り付けてください。Gmail が受け付けない限り、何も保存されません。",
+  "connections.secret.connectTitle": "接続",
+  "connections.secret.memberWillUse": "{name}がこのメールボックスを使います。",
+  "connections.secret.step1Lead":
+    "Google アカウントで2段階認証プロセスをオンにしてから、次の場所でアプリパスワードを作成します：",
+  "connections.secret.step1Tail":
+    "。名前を{product}にして、16文字をコピーしてください。",
+  "connections.secret.step2Lead":
+    "アシスタントにカレンダーも見せたい場合：Google カレンダーで設定を開き、あなたのカレンダーを選んで、次をコピーします：",
+  "connections.secret.step2Link": "iCal 形式の非公開アドレス",
+  "connections.secret.step2Tail": "。この手順は任意です。",
+  "connections.secret.address": "あなたの Gmail アドレス",
+  "connections.secret.password": "アプリパスワード",
+  "connections.secret.passwordHint":
+    "Google から渡された16文字です。スペースはあってもなくても構いません。普段のパスワードではありません。",
+  "connections.secret.calendar": "カレンダーの非公開アドレス（任意）",
+  "connections.secret.calendarHint":
+    "このアドレスを知っている人は誰でもあなたのカレンダーを読めるため、パスワードと同じように慎重に保管されます。",
+  "connections.secret.checking": "Gmail で確認しています…",
+  "connections.secret.canDoTitle": "アシスタントができるようになること",
+  "connections.secret.canDoDesc":
+    "アプリパスワードはメールボックス全体を開くため、何ができるようになるかを知っておく価値があります。",
+  "connections.secret.canDo":
+    "アシスタントは、あなたのメールを検索して読み、カレンダーを見ることができます。何かを削除、移動、ラベル付けすることはできません。返信は、あなたが承認した後にだけ、そしてそのメッセージにすでにいる人にだけ送られます。接続はいつでも解除でき、アプリパスワードも Google でいつでも削除できます。",
+  "connections.mode.goesShared": "共有アカウントの接続が解除されます。",
+  "connections.mode.goesNoShared": "共有アカウントは接続されていません。",
+  "connections.mode.goesPersonal": {
+    one: "個人アカウント{count}件の接続が解除されます。",
+    other: "個人アカウント{count}件の接続が解除されます。",
+  },
+  "connections.mode.makeShared": "{title}を共有にする",
+  "connections.mode.makePersonal": "{title}を個人用にする",
+  "connections.mode.titleShared": "{title}のアカウントを1つ共有しますか？",
+  "connections.mode.titlePersonal":
+    "全員にそれぞれの{title}アカウントを持たせますか？",
+  "connections.mode.checking": "これで何が変わるかを確認しています…",
+  "connections.mode.everyone":
+    "このアプリでアシスタントを使う全員が、この1つのアカウントとして動作します。",
+  "connections.cancel": "キャンセル",
+  "connections.dir.description":
+    "{name}のアプリディレクトリです。アプリを追加すると、そのツールをアシスタントが使えるようになります。何かが読み取られる前に、各自が自分のアカウントを接続する必要があります。",
+  "connections.dir.appsTitle": "アプリ",
+  "connections.dir.appsDesc":
+    "名前で検索します。ここでは、これらのアプリを誰も審査していません。",
+  "connections.dir.searchAria": "{name}のアプリを検索",
+  "connections.dir.searchPlaceholder": "アプリ名で検索",
+  "connections.dir.noMatch":
+    "「{query}」に一致する{name}のアプリはありません。",
+  "connections.dir.none": "{name}はアプリを返しませんでした。",
+  "connections.dir.actions": {
+    one: "{count}件の操作",
+    other: "{count}件の操作",
+  },
+  "connections.dir.added": "追加済み",
+  "connections.dir.adding": "追加しています…",
+  "connections.dir.add": "追加",
+  "connections.grants.consentFailed":
+    "{product}が同意のリンクなしで応答したため、何も認可されませんでした。もう一度お試しください。繰り返す場合は管理者に連絡してください。",
+  "connections.grants.title": "操作",
+  "connections.grants.readError":
+    "このアカウントが今何を許可しているかを読み取れませんでした。",
+  "connections.grants.retry": "再試行",
+  "connections.grants.description":
+    "各操作が求める権限ごとにまとめています。同意画面に表示される内容と一致します。",
+  "connections.grants.search": "操作を検索",
+  "connections.grants.wholeApp": "このアプリのすべてを、まとめて承認",
+  "connections.grants.noPermission": "それ自体の権限は求めません",
+  "connections.grants.needs": "{scopes}が必要です",
+  "connections.grants.authorize": "認可",
+  "connections.grants.hidden": {
+    one: "認可されていない操作があと{count}件あります。検索して探してください。",
+    other:
+      "認可されていない操作があと{count}件あります。検索して探してください。",
+  },
+  "connections.grants.noMatch": "その検索に一致する操作はありません。",
+  "connections.grants.before": "{action}を認可する前に",
+  "connections.grants.continue": "同意に進む",
+  "connections.grants.notRequired": "認可は不要です。",
+  "connections.grants.authorized": "認可済みです。",
+  "connections.grants.notYet": "まだ認可されていません。",
+  "connections.grants.notYetAdmin":
+    "まだ認可されていません。管理者が認可できます。",
+  "connections.grants.missing":
+    "{missing}が足りません。管理者が設定する必要があります。認可しても解決しません。",
+  "connections.grants.missingSetting":
+    "設定が足りません。管理者が設定する必要があります。認可しても解決しません。",
+  "connections.grants.unknown": "今はこれを読み取れませんでした。{reason}",
+  "connections.row.connectKey":
+    "このアプリはサインインのページではなくキーで接続するため、何も接続されませんでした。ページを再読み込みして、もう一度「接続」を押してください。",
+  "connections.row.noAuth":
+    "{title}にアカウントは不要です。それを持つアシスタントは、そのまま使えます。",
+  "connections.row.verified":
+    "あなたのキーで接続しています。最終確認：{date}。",
+  "connections.row.failedCheck":
+    "あなたのキーは、{title}での確認に通りませんでした。キーが原因か、{title}自体が原因の可能性があります。アカウントは接続されたままです。「再確認」を押してもう一度試すか、接続を解除して新しいキーで接続してください。",
+  "connections.row.noSafeCheck":
+    "あなたのキーで接続しています。{title}では確認されていません。当時、{title}にはキーを安全に確認する方法がありませんでした。これはアプリの事情であり、あなたのキーの問題ではありません。",
+  "connections.row.unchecked":
+    "あなたのキーで接続しています。{title}では確認されていません。",
+  "connections.row.keyStillWorks":
+    "接続を解除しました。あなたのキーは{title}ではまだ有効です。すべてのアクセスを止めるには、そこでキーを変更してください。",
+  "connections.row.asksForKey":
+    "{title}は、すでにお持ちのキーで接続します。「接続」を押すと入力を求められます。",
+  "connections.row.signedIn": "{title}でサインインしています。{description}",
+  "connections.row.yourAccount": "あなたのアカウント",
+  "connections.row.keyMissing": "キーがありません",
+  "connections.row.recheck": "再確認",
+  "connections.row.rechecking": "確認しています…",
+  "connections.row.perAction": "操作ごとに承認",
+  "connections.row.connectYour": "あなたのアカウントを接続",
+  "connections.row.checkingNeeds": "アプリに必要なものを確認しています…",
+  "connections.row.noNeeds":
+    "このアプリに必要なものを確認できませんでした。閉じて、もう一度お試しください。",
+  // connections-end
+  // computer-begin
+  "computer.tool.readPage": "",
+  "computer.tool.readPageCount": { one: "", other: "" },
+  "computer.tool.filledIn": "",
+  "computer.tool.choseIn": "",
+  "computer.tool.clicked": "",
+  "computer.tool.pressed": "",
+  "computer.tool.listedFiles": "",
+  "computer.tool.itemsInWorkspace": { one: "", other: "" },
+  "computer.tool.nothingSaved": "",
+  "computer.tool.readFile": "",
+  "computer.tool.ranCommand": "",
+  "computer.tool.addedToFile": "",
+  "computer.tool.savedFile": "",
+  "computer.tool.scrolled": "",
+  "computer.signIn.waiting": "",
+  "computer.signIn.signedIn": "",
+  "computer.signIn.failed": "",
+  "computer.signIn.open": "",
+  "computer.signIn.dialogTitle": "",
+  "computer.signIn.dialogBody": "",
+  "computer.output.truncated": "",
+  "computer.output.nothing": "",
+  "computer.output.timedOut": "",
+  "computer.output.exitCode": "",
+  "computer.activity.ran": "",
+  "computer.activity.read": "",
+  "computer.activity.saved": "",
+  "computer.activity.listed": "",
+  "computer.activity.workspace": "",
+  "computer.activity.refused": "",
+  "computer.activity.empty": "",
+  "computer.control.handBack": "",
+  "computer.control.take": "",
+  "computer.control.finishing": "",
+  "computer.control.close": "",
+  "computer.control.open": "",
+  "computer.panel.sidebar": "",
+  "computer.live.cantShow": "",
+  "computer.live.drivingLabel": "",
+  "computer.live.label": "",
+  "computer.view.aPage": "",
+  "computer.view.openedDuring": "",
+  "computer.view.noPage": "",
+  "computer.view.cantShow": "",
+  "computer.view.cantShowHelp": "",
+  "computer.view.blank": "",
+  "computer.view.waiting": "",
+  "computer.view.unavailable": "",
+  "computer.view.alt": "",
+  "computer.view.open": "",
+  "computer.view.youHaveControl": "",
+  "computer.view.botNeedsYou": "",
+  "computer.view.cancelRequest": "",
+  "computer.view.finishingBot": "",
+  "computer.view.recovery": "",
+  "computer.view.interrupted": "",
+  "computer.view.secretNeedsHost": "",
+  "computer.view.secretNeedsPage": "",
+  "computer.view.secretType": "",
+  "computer.view.secretPlaceholder": "",
+  "computer.view.secretGoesHost": "",
+  "computer.view.secretGoesPage": "",
+  "computer.view.sending": "",
+  "computer.view.send": "",
+  "computer.view.checking": "",
+  "computer.view.drivingOpen": "",
+  "computer.view.botHas": "",
+  "computer.view.dialog": "",
+  "computer.view.close": "",
+  "computer.view.turnAlt": "",
+  "computer.view.finishingYou": "",
+  "computer.view.drivingClick": "",
+  "computer.handoff.noCall": "",
+  "computer.handoff.answered": "",
+  "computer.handoff.running": "",
+  "computer.handoff.unreachable": "",
+  "computer.handoff.couldntResume": "",
+  "computer.handoff.waiting": "",
+  "computer.handoff.paused": "",
+  "computer.handoff.stopWaiting": "",
+  "computer.handoff.resume": "",
+  "computer.demo.everyWeekday": "",
+  "computer.demo.everyDay": "",
+  "computer.demo.everyMonday": "",
+  "computer.demo.everyHour": "",
+  "computer.demo.scheduled": "",
+  "computer.demo.seeRoutines": "",
+  "computer.demo.when": "",
+  "computer.demo.custom": "",
+  "computer.demo.cron": "",
+  "computer.demo.reportIn": "",
+  "computer.demo.onlyConversation": "",
+  "computer.demo.inputs": "",
+  "computer.demo.title": "",
+  "computer.demo.intro": "",
+  "computer.demo.recording": { one: "", other: "" },
+  "computer.demo.left": "",
+  "computer.demo.limitReached": "",
+  "computer.demo.stop": "",
+  "computer.demo.name": "",
+  "computer.demo.namePlaceholder": "",
+  "computer.demo.record": "",
+  "computer.demo.takeControl": "",
+  "computer.demo.entry": { one: "", other: "" },
+  "computer.demo.stoppedAtLimit": "",
+  "computer.demo.edit": "",
+  "computer.demo.runSchedule": "",
+  "computer.demo.reviewDraft": "",
+  "computer.demo.reviewTitle": "",
+  "computer.demo.reviewHelp": "",
+  "computer.demo.saveUse": "",
+  "computer.demo.couldntSave": "",
+  "computer.demo.ready": "",
+  // computer-end
+};

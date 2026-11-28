@@ -1,7 +1,7 @@
-import { isDirectRequest } from "./direct-request";
 import type { MiddlewareHandler } from "hono";
-import type { AuthService } from "./guards";
 import { browserLabel } from "./browser-pairings";
+import { isDirectRequest } from "./direct-request";
+import type { AuthService } from "./guards";
 import type { PairingGate } from "./install-secret";
 
 /**
@@ -312,6 +312,18 @@ export const LEDGER: readonly LedgerEntry[] = [
   ),
   ...refused("admin", "ALL /api/admin/*"),
   ...refused("engines", "ALL /api/freeduet/engines/*"),
+  // D162: the build label is read-only and holds no secret, so a phone session sees it too.
+  ...allowed("build", "GET /api/freeduet/build"),
+  ...refused("build", "ALL /api/freeduet/build/*"),
+  // D168: who is working and on what is read-only, narrowed to the person, with no argument or secret.
+  ...allowed("work-status", "GET /api/freeduet/work-status"),
+  ...refused("work-status", "ALL /api/freeduet/work-status/*"),
+  // D177: a colleague's offered files are drawn next to a Download that the computer route refuses remotely.
+  ...refused(
+    "handoff-files",
+    "ALL /api/freeduet/handoff-files",
+    "ALL /api/freeduet/handoff-files/*",
+  ),
   ...refused("settings", "ALL /api/settings/*", "ALL /api/settings-changes/*"),
   ...refused(
     "accounts",

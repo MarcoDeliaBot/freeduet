@@ -4,6 +4,7 @@ import {
   type BotAttention,
   botAttentionQueryOptions,
 } from "@/lib/bot-lifecycle/queries";
+import { englishT, type T, useT } from "@/freeduet/i18n/provider";
 
 /** Questions, approvals and stalled hand-offs: the things only the person can move forward. */
 export function needsInput(bot: BotAttention): number {
@@ -11,17 +12,15 @@ export function needsInput(bot: BotAttention): number {
 }
 
 /** What the badge says, in words, for the row's accessible name and its tooltip. */
-export function attentionSummary(bot: BotAttention): string {
+export function attentionSummary(bot: BotAttention, t: T = englishT): string {
   const parts: string[] = [];
   if (bot.questions)
-    parts.push(`${bot.questions} question${bot.questions === 1 ? "" : "s"}`);
+    parts.push(t("attention.questions", { count: bot.questions }));
   if (bot.approvals)
-    parts.push(`${bot.approvals} approval${bot.approvals === 1 ? "" : "s"}`);
+    parts.push(t("attention.approvals", { count: bot.approvals }));
   if (bot.handoffs)
-    parts.push(
-      `${bot.handoffs} stalled hand-off${bot.handoffs === 1 ? "" : "s"}`,
-    );
-  if (bot.unread) parts.push(`${bot.unread} unread`);
+    parts.push(t("attention.handoffs", { count: bot.handoffs }));
+  if (bot.unread) parts.push(t("attention.unread", { count: bot.unread }));
   return parts.join(", ");
 }
 
@@ -80,13 +79,38 @@ export function AttentionNotifier() {
  * Renders nothing when nothing is waiting, so a quiet day costs the menu nothing.
  */
 export function BotsNavBadge() {
+  const t = useT();
   const attention = useQuery(botAttentionQueryOptions());
   const bots = attention.data ?? [];
   const waiting = bots.reduce((total, bot) => total + needsInput(bot), 0);
   if (waiting > 0) {
+    // D171: the tooltip says what the number counts: only things this person can act on, never unread.
+    const total = bots.reduce(
+      (sum, bot) => ({
+        agentId: "",
+        name: "",
+        questions: sum.questions + bot.questions,
+        approvals: sum.approvals + bot.approvals,
+        handoffs: sum.handoffs + bot.handoffs,
+        unread: 0,
+        paused: false,
+        notify: "all" as const,
+      }),
+      {
+        agentId: "",
+        name: "",
+        questions: 0,
+        approvals: 0,
+        handoffs: 0,
+        unread: 0,
+        paused: false,
+        notify: "all" as const,
+      },
+    );
     return (
       <span
-        aria-label={`${waiting} ${waiting === 1 ? "thing needs" : "things need"} you`}
+        title={t("attention.open", { summary: attentionSummary(total, t) })}
+        aria-label={t("attention.needYou", { count: waiting })}
         className="type-caption ml-auto grid h-[18px] min-w-[18px] place-items-center rounded-full bg-duet-accent px-1.5 font-medium text-duet-on-accent tabular-nums"
         role="img"
       >
@@ -97,7 +121,7 @@ export function BotsNavBadge() {
   if (bots.some((bot) => bot.unread > 0)) {
     return (
       <span
-        aria-label="Unread messages"
+        aria-label={t("attention.unreadMessages")}
         className="ml-auto size-2 rounded-full bg-duet-accent"
         role="img"
       />

@@ -1,6 +1,8 @@
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useId, useState } from "react";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { type T, useT } from "@/freeduet/i18n/provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,12 +41,17 @@ type Source = "none" | ResponsibilityRecord["subscriptions"][number]["source"];
 
 /** The event sources a new responsibility can subscribe to, in the order they are offered. */
 const SOURCES = {
-  none: "Run when asked",
-  github: "GitHub",
-  slack: "Slack",
-  connector: "Connected app",
-  schedule: "Schedule",
-} as const satisfies Partial<Record<Source, string>>;
+  none: "responsibilities.new.source.none",
+  github: null,
+  slack: null,
+  connector: "responsibilities.source.connector",
+  schedule: "responsibilities.source.schedule",
+} as const satisfies Partial<Record<Source, MessageId | null>>;
+/** A product name stays as it is (`null` above); every other source has a catalogue key. */
+const sourceName = (value: keyof typeof SOURCES, t: T): string => {
+  const id = SOURCES[value];
+  return id === null ? (value === "github" ? "GitHub" : "Slack") : t(id);
+};
 
 /**
  * A new responsibility: where it runs, what it is for, and what — if anything — starts it on its
@@ -57,6 +64,7 @@ export function NewResponsibilityDialog({
   agentId?: string;
   onClose: () => void;
 }) {
+  const t = useT();
   const formId = useId();
   const bots = useQuery(agentListQueryOptions());
   const channels = useInfiniteQuery(channelListQueryOptions());
@@ -85,9 +93,9 @@ export function NewResponsibilityDialog({
     <Dialog onOpenChange={(next) => !next && onClose()} open>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New responsibility</DialogTitle>
+          <DialogTitle>{t("responsibilities.new")}</DialogTitle>
           <DialogDescription>
-            An ongoing goal. The Bot works on it in the conversation you pick.
+            {t("responsibilities.new.description")}
           </DialogDescription>
         </DialogHeader>
         <DialogBody className="mt-4 overflow-y-auto">
@@ -115,7 +123,7 @@ export function NewResponsibilityDialog({
               <FieldGroup className="sm:grid sm:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor={`${formId}-conversation`}>
-                    Conversation
+                    {t("reaching.conversation")}
                   </FieldLabel>
                   <Select
                     items={Object.fromEntries(
@@ -135,7 +143,11 @@ export function NewResponsibilityDialog({
                       className="w-full"
                       id={`${formId}-conversation`}
                     >
-                      <SelectValue placeholder="Choose a conversation" />
+                      <SelectValue
+                        placeholder={t(
+                          "responsibilities.new.chooseConversation",
+                        )}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {offered.map((channel) => (
@@ -148,7 +160,9 @@ export function NewResponsibilityDialog({
                 </Field>
                 {fixedBot === undefined ? (
                   <Field>
-                    <FieldLabel htmlFor={`${formId}-bot`}>Bot</FieldLabel>
+                    <FieldLabel htmlFor={`${formId}-bot`}>
+                      {t("approvals.field.bot")}
+                    </FieldLabel>
                     <Select
                       items={Object.fromEntries(
                         availableBots.map((bot) => [bot.id, bot.name]),
@@ -158,7 +172,7 @@ export function NewResponsibilityDialog({
                       value={agentId || null}
                     >
                       <SelectTrigger className="w-full" id={`${formId}-bot`}>
-                        <SelectValue placeholder="Choose a Bot" />
+                        <SelectValue placeholder={t("bot.choose")} />
                       </SelectTrigger>
                       <SelectContent>
                         {availableBots.map((bot) => (
@@ -179,7 +193,7 @@ export function NewResponsibilityDialog({
                   type="button"
                   variant="outline"
                 >
-                  Load more conversations
+                  {t("responsibilities.new.loadMore")}
                 </Button>
               )}
               {(channels.error || bots.error) && (
@@ -188,19 +202,21 @@ export function NewResponsibilityDialog({
                 </p>
               )}
               <Field>
-                <FieldLabel htmlFor={`${formId}-title`}>Title</FieldLabel>
+                <FieldLabel htmlFor={`${formId}-title`}>
+                  {t("responsibilities.field.title")}
+                </FieldLabel>
                 <Input
                   id={`${formId}-title`}
                   required
                   maxLength={160}
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
-                  placeholder="Keep the customer report up to date"
+                  placeholder={t("responsibilities.new.titleExample")}
                 />
               </Field>
               <Field>
                 <FieldLabel htmlFor={`${formId}-instruction`}>
-                  Instruction
+                  {t("responsibilities.field.instruction")}
                 </FieldLabel>
                 <Textarea
                   id={`${formId}-instruction`}
@@ -212,7 +228,7 @@ export function NewResponsibilityDialog({
               </Field>
               <Field>
                 <FieldLabel htmlFor={`${formId}-criteria`}>
-                  Success criteria
+                  {t("responsibilities.field.criteria")}
                 </FieldLabel>
                 <Textarea
                   id={`${formId}-criteria`}
@@ -220,16 +236,20 @@ export function NewResponsibilityDialog({
                   maxLength={3000}
                   value={successCriteria}
                   onChange={(event) => setSuccessCriteria(event.target.value)}
-                  placeholder="The report contains the current quarter's graph and a source link."
+                  placeholder={t("responsibilities.new.criteriaExample")}
                 />
               </Field>
               <FieldGroup className="sm:grid sm:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor={`${formId}-source`}>
-                    Event source
+                    {t("responsibilities.new.eventSource")}
                   </FieldLabel>
                   <Select
-                    items={SOURCES}
+                    items={Object.fromEntries(
+                      (Object.keys(SOURCES) as (keyof typeof SOURCES)[]).map(
+                        (key) => [key, sourceName(key, t)],
+                      ),
+                    )}
                     onValueChange={(value) => {
                       if (value && value in SOURCES) setSource(value as Source);
                     }}
@@ -242,7 +262,7 @@ export function NewResponsibilityDialog({
                       {(Object.keys(SOURCES) as (keyof typeof SOURCES)[]).map(
                         (value) => (
                           <SelectItem key={value} value={value}>
-                            {SOURCES[value]}
+                            {sourceName(value, t)}
                           </SelectItem>
                         ),
                       )}
@@ -250,15 +270,27 @@ export function NewResponsibilityDialog({
                   </Select>
                   {source === "github" && (
                     <FieldDescription>
-                      Events come from the repositories you connected in{" "}
-                      <Link to="/connections">Connections</Link>.
+                      {t("responsibilities.new.githubHelp", {
+                        link: "\u0001",
+                      })
+                        .split("\u0001")
+                        .flatMap((part, index) =>
+                          index === 0
+                            ? [part]
+                            : [
+                                <Link key="link" to="/connections">
+                                  {t("nav.connections")}
+                                </Link>,
+                                part,
+                              ],
+                        )}
                     </FieldDescription>
                   )}
                 </Field>
                 {source !== "none" && (
                   <Field>
                     <FieldLabel htmlFor={`${formId}-event`}>
-                      Event type
+                      {t("responsibilities.new.eventType")}
                     </FieldLabel>
                     <Input
                       id={`${formId}-event`}
@@ -267,7 +299,9 @@ export function NewResponsibilityDialog({
                       value={eventType}
                       onChange={(event) => setEventType(event.target.value)}
                       placeholder={
-                        source === "github" ? "issues.opened" : "Event type"
+                        source === "github"
+                          ? "issues.opened"
+                          : t("responsibilities.new.eventType")
                       }
                     />
                   </Field>
@@ -283,7 +317,7 @@ export function NewResponsibilityDialog({
         </DialogBody>
         <DialogFooter className="mt-4">
           <Button onClick={onClose} size="sm" type="button" variant="outline">
-            Cancel
+            {t("settings.cancel")}
           </Button>
           <Button
             disabled={create.isPending}
@@ -291,7 +325,9 @@ export function NewResponsibilityDialog({
             size="sm"
             type="submit"
           >
-            {create.isPending ? "Creating…" : "Create responsibility"}
+            {create.isPending
+              ? t("responsibilities.new.creating")
+              : t("responsibilities.new.create")}
           </Button>
         </DialogFooter>
       </DialogContent>

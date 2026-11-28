@@ -1,6 +1,6 @@
 # WhatsApp and a chat channel for the phone: design
 
-Written 17 November 2026 for two roadmap rows, "WhatsApp" and "Chat channel for the phone (Telegram first)" ([ROADMAP.md](../ROADMAP.md)). The decision is D82 ([M1_PLAN.md](../M1_PLAN.md), section 61). Read with [phone-and-remote.md](phone-and-remote.md), [remote-session-voice.md](remote-session-voice.md) and [SECURITY.md](../../SECURITY.md).
+Written 17 November 2026 for two roadmap rows, "WhatsApp" and "Chat channel for the phone (Telegram first)" ([ROADMAP.md](../ROADMAP.md)). The decision is D82 ([M1_PLAN.md](../M1_PLAN.md), section 61 ("WhatsApp and a chat channel for the phone are decided, with a design note (D82)")). Read with [phone-and-remote.md](phone-and-remote.md), [remote-session-voice.md](remote-session-voice.md) and [SECURITY.md](../../SECURITY.md).
 
 **Status: nothing is built.** This note says what could be built, what each choice costs, and what the maintainer must decide before code starts.
 

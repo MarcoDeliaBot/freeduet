@@ -1,3 +1,4 @@
+import { englishT, type T, useT } from "@/freeduet/i18n/provider";
 import {
   describeApproval,
   type SharedUseApproval,
@@ -6,11 +7,12 @@ import {
 export function sharedSectionSentence(
   effect: "read" | "write",
   shared: boolean,
+  t: T = englishT,
 ): string | null {
   if (!shared) return null;
   return effect === "write"
-    ? "Anyone who can use this Bot can do this as the shared account."
-    : "Anyone who can use this Bot can read what this account can read.";
+    ? t("admin.shared.sentence.write")
+    : t("admin.shared.sentence.read");
 }
 
 /**
@@ -25,25 +27,29 @@ export function SharedApprovalFields({
   value: SharedUseApproval;
   onChange: (next: SharedUseApproval) => void;
 }) {
+  const t = useT();
   const named = value.audience === "people" || value.members.length > 0;
   const options: { audience: SharedUseApproval["audience"]; label: string }[] =
     [
-      { audience: "owner", label: "Only its owner" },
+      { audience: "owner", label: t("admin.shared.owner") },
       ...(named
         ? [
             {
               audience: "people" as const,
-              label: `Named: ${describeApproval({ ...value, audience: "people", outsideInput: false })}`,
+              label: t("admin.shared.named", {
+                who: describeApproval(
+                  { ...value, audience: "people", outsideInput: false },
+                  t,
+                ),
+              }),
             },
           ]
         : []),
-      { audience: "team", label: "Everyone" },
+      { audience: "team", label: t("admin.shared.team") },
     ];
   return (
     <fieldset className="space-y-2 text-sm">
-      <legend className="font-medium">
-        Who can use the shared account through this Bot
-      </legend>
+      <legend className="font-medium">{t("admin.shared.legend")}</legend>
       {options.map((option) => (
         <label className="flex items-center gap-2" key={option.audience}>
           <input
@@ -69,7 +75,7 @@ export function SharedApprovalFields({
           }
           type="checkbox"
         />
-        Messages from outside (email, Slack, webhooks) can use it
+        {t("admin.shared.outside")}
       </label>
     </fieldset>
   );

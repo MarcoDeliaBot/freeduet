@@ -707,3 +707,153 @@ describe("reset", () => {
     ).toEqual([]);
   });
 });
+
+describe("a stalled hand-off (D171)", () => {
+  const activity = createActivityStore(database);
+  const key = (name: string) => `${prefix}-d171-${name}`;
+  const hop = (
+    name: string,
+    extra: Partial<typeof workItems.$inferInsert>,
+  ) => ({
+    kind: HANDOFF_KIND,
+    key: key(name),
+    payload: {
+      fromBotId: bot,
+      toBotId: helper,
+      actorId: owner,
+      threadId: `${prefix}-thread-${owner}`,
+      task: "Build an Arkanoid",
+      toName: "Helper Bot",
+    },
+    ...extra,
+  });
+  const read = async (name: string) =>
+    (
+      await database
+        .select()
+        .from(workItems)
+        .where(eq(workItems.key, key(name)))
+    )[0];
+
+  test("says who did not finish what and why in plain words, never the raw error", async () => {
+    await database.insert(workItems).values(
+      hop("timeout", {
+        attempts: 5,
+        lastError:
+          "kai did not finish within 300s after 7 events, the last tool_result",
+      }),
+    );
+    try {
+      const mine = (await activity.attention(owner)).find(
+        (e) => e.agentId === bot,
+      );
+      const stalled = mine?.stalled.find((s) => s.id === key("timeout"));
+      expect(stalled).toMatchObject({
+        toName: "Helper Bot",
+        task: "Build an Arkanoid",
+        reason: "it took longer than the time limit",
+      });
+      expect(JSON.stringify(mine?.stalled)).not.toContain("AbortError");
+      const item = (await activity.forBot(owner, bot)).inProgress.find(
+        (i) => i.id === key("timeout"),
+      );
+      expect(item?.stalled).toMatchObject({
+        reason: "it took longer than the time limit",
+        retryable: true,
+      });
+    } finally {
+      await database.delete(workItems).where(eq(workItems.key, key("timeout")));
+    }
+  });
+
+  test("retry re-queues the same hop once, and the count drops", async () => {
+    await database
+      .insert(workItems)
+      .values(hop("retry", { attempts: 5, lastError: "x" }));
+    try {
+      const before = (await activity.attention(owner)).find(
+        (e) => e.agentId === bot,
+      )!.handoffs;
+      expect(
+        (await activity.retryHandoff(owner, bot, key("retry")))?.toBotId,
+      ).toBe(helper);
+      const row = await read("retry");
+      expect(row).toMatchObject({
+        attempts: 0,
+        claimedBy: null,
+        finishedAt: null,
+      });
+      expect(row?.payload).toMatchObject({ task: "Build an Arkanoid" });
+      const after = (await activity.attention(owner)).find(
+        (e) => e.agentId === bot,
+      )!.handoffs;
+      expect(after).toBe(before - 1);
+      // A second click finds nothing stalled: no second run.
+      expect(await activity.retryHandoff(owner, bot, key("retry"))).toBeNull();
+    } finally {
+      await database.delete(workItems).where(eq(workItems.key, key("retry")));
+    }
+  });
+
+  test("retry refuses another person's hop, a running hop and a finished one", async () => {
+    await database.insert(workItems).values([
+      hop("others", {
+        attempts: 5,
+        payload: {
+          fromBotId: bot,
+          toBotId: helper,
+          actorId: other,
+          task: "Not yours",
+        },
+      }),
+      hop("running", {
+        attempts: 5,
+        claimedBy: "replica-1",
+        leaseUntil: new Date(Date.now() + 60_000),
+      }),
+      hop("done", { attempts: 5, finishedAt: new Date() }),
+      hop("fresh", { attempts: 1 }),
+    ]);
+    try {
+      expect(await activity.retryHandoff(owner, bot, key("others"))).toBeNull();
+      expect(
+        await activity.retryHandoff(owner, bot, key("running")),
+      ).toBeNull();
+      expect(await activity.retryHandoff(owner, bot, key("done"))).toBeNull();
+      expect(await activity.retryHandoff(owner, bot, key("fresh"))).toBeNull();
+      expect((await read("others"))?.attempts).toBe(5);
+      expect((await read("running"))?.claimedBy).toBe("replica-1");
+      expect((await read("fresh"))?.attempts).toBe(1);
+    } finally {
+      await database
+        .delete(workItems)
+        .where(sql`${workItems.key} like ${`${prefix}-d171-%`}`);
+    }
+  });
+
+  test("the stalled rows are the same set the badge counts, however many", async () => {
+    const names = Array.from({ length: 7 }, (_, i) => `many${i}`);
+    await database
+      .insert(workItems)
+      .values(names.map((name) => hop(name, { attempts: 5 })));
+    try {
+      const mine = (await activity.attention(owner)).find(
+        (e) => e.agentId === bot,
+      );
+      expect(mine?.stalled.length).toBe(mine?.handoffs ?? -1);
+      expect(mine?.stalled.length).toBeGreaterThanOrEqual(7);
+    } finally {
+      await database
+        .delete(workItems)
+        .where(sql`${workItems.key} like ${`${prefix}-d171-many%`}`);
+    }
+  });
+
+  test("attention names the conversation with the newest unread reply", async () => {
+    const mine = (await activity.attention(owner)).find(
+      (e) => e.agentId === bot,
+    );
+    expect(mine?.unread).toBeGreaterThan(0);
+    expect([direct, shared]).toContain(mine?.unreadChannelId ?? "");
+  });
+});

@@ -20,6 +20,8 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import { useBotLabels, useBotNames } from "@/lib/agents/bot-names";
 import {
   settingChangesKey,
@@ -31,16 +33,24 @@ import {
  * "Changes made in chat": every notification change a Bot made from chat, newest first, with Undo where
  * Undo still works (docs/design/settings-in-chat.md, section 8). It sits on the Notifications page, where
  * the person sets how their Bots reach them. The list is the person's own; the server reads it for them
- * alone. Its words are English, like the rest of the Settings page; the card in the chat is the one that
- * follows the person's language.
+ * alone. Its words come from the app's catalogue (D181), like the rest of the Settings page; the card in the
+ * chat is the one that follows the person's language.
  */
 
-const LEVEL: Record<ChatNotifyLevel, string> = {
-  all: "everything",
-  needs_input: "only when it needs you",
+const LEVEL: Record<ChatNotifyLevel, MessageId> = {
+  all: "settings.levelAll",
+  needs_input: "settings.levelNeedsInput",
 };
 
-const UNDO_FAILED = "Couldn't undo the change. Try again.";
+/** Local time to the second, as `Date.prototype.toLocaleString()` drew it, in the app's language. */
+const DATE_TIME: Intl.DateTimeFormatOptions = {
+  year: "numeric",
+  month: "numeric",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  second: "2-digit",
+};
 
 type RowState =
   | { kind: "idle" }
@@ -59,6 +69,7 @@ function ChangeRow({
   botName: string;
 }) {
   const queryClient = useQueryClient();
+  const { t, date } = useAppLanguage();
   const [state, setState] = useState<RowState>({ kind: "idle" });
   const undone = change.undone || state.kind === "undone";
   const showUndo = !undone && change.undoable && state.kind !== "refused";
@@ -68,16 +79,19 @@ function ChangeRow({
     const answer = await undoSettingChange(change.changeId);
     if (answer.undone) setState({ kind: "undone" });
     else if (answer.refused)
-      setState({ kind: "refused", message: answer.message ?? UNDO_FAILED });
+      setState({
+        kind: "refused",
+        message: answer.message ?? t("settings.undoFailed"),
+      });
     else setState({ kind: "failed" });
     void queryClient.invalidateQueries({ queryKey: settingChangesKey });
   }
 
   const status = undone
-    ? "Undone"
+    ? t("settings.undone")
     : change.undoable
       ? null
-      : "Undo is no longer possible";
+      : t("settings.undoGone");
 
   return (
     <Item size="sm">
@@ -87,17 +101,32 @@ function ChangeRow({
       <ItemContent>
         <ItemTitle>
           {change.setting === "member"
-            ? `${change.newValue} was added to your team`
+            ? t("settings.memberAdded", { member: String(change.newValue) })
             : change.setting === "name"
-              ? `${botName}: your name for it went from ${change.previousValue ?? "its own name"} to ${change.newValue ?? "its own name"}`
+              ? t("settings.nameChanged", {
+                  bot: botName,
+                  from: change.previousValue ?? t("settings.nameOwn"),
+                  to: change.newValue ?? t("settings.nameOwn"),
+                })
               : change.setting === "language"
-                ? `Your language for the team went from ${change.previousValue ?? "the deployment's own"} to ${change.newValue ?? "the deployment's own"}`
+                ? t("settings.languageChanged", {
+                    from: change.previousValue ?? t("settings.deploymentOwn"),
+                    to: change.newValue ?? t("settings.deploymentOwn"),
+                  })
                 : change.setting === "tone"
-                  ? `${botName}: tone went from ${change.previousValue} to ${change.newValue}`
-                  : `${botName}: notifications went from ${LEVEL[change.previousValue]} to ${LEVEL[change.newValue]}`}
+                  ? t("settings.toneChanged", {
+                      bot: botName,
+                      from: String(change.previousValue),
+                      to: String(change.newValue),
+                    })
+                  : t("settings.notifyChanged", {
+                      bot: botName,
+                      from: t(LEVEL[change.previousValue]),
+                      to: t(LEVEL[change.newValue]),
+                    })}
         </ItemTitle>
         <ItemDescription>
-          {new Date(change.at).toLocaleString()}
+          {date(new Date(change.at), DATE_TIME)}
           {status ? ` · ${status}` : null}
         </ItemDescription>
         {state.kind === "refused" ? (
@@ -107,7 +136,7 @@ function ChangeRow({
         ) : null}
         {state.kind === "failed" ? (
           <ItemDescription className="line-clamp-none text-destructive">
-            {UNDO_FAILED}
+            {t("settings.undoFailed")}
           </ItemDescription>
         ) : null}
       </ItemContent>
@@ -119,7 +148,7 @@ function ChangeRow({
             size="sm"
             variant="outline"
           >
-            {state.kind === "busy" ? "Undoing…" : "Undo"}
+            {state.kind === "busy" ? t("settings.undoing") : t("settings.undo")}
           </Button>
         </ItemActions>
       ) : null}
@@ -129,6 +158,7 @@ function ChangeRow({
 
 export function ChatChangesSection() {
   const list = useQuery(settingChangesQueryOptions());
+  const { t } = useAppLanguage();
   const botLabel = useBotLabels();
   const botReal = useBotNames();
   const botName = (change: SettingChangeRecord) =>
@@ -137,8 +167,8 @@ export function ChatChangesSection() {
       : botLabel(change.agentId);
   return (
     <PageSection
-      description="Settings a Bot changed from chat. Undo puts the old value back for seven days, and only while the setting still holds the value the change set."
-      title="Changes made in chat"
+      description={t("settings.changesDescription")}
+      title={t("settings.changesTitle")}
     >
       {list.error ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
@@ -147,11 +177,11 @@ export function ChatChangesSection() {
       ) : null}
       {list.isPending ? (
         <p className="mt-4 text-muted-foreground text-sm" role="status">
-          Loading changes…
+          {t("settings.changesLoading")}
         </p>
       ) : null}
       {list.data && list.data.length === 0 ? (
-        <PageEmpty>No changes made in chat yet.</PageEmpty>
+        <PageEmpty>{t("settings.changesEmpty")}</PageEmpty>
       ) : null}
       {list.data && list.data.length > 0 ? (
         <PageRows>

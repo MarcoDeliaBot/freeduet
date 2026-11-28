@@ -21,26 +21,31 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
-import {
-  SettingsDirectory,
-  type SettingsPlace,
-} from "@/freeduet/settings-directory";
-import { WorkspaceShell, WorkspaceTabs } from "@/freeduet/workspace";
-import { isFreeDuetApp } from "@/freeduet/manage-group";
 import { FreeDuetAbout } from "@/freeduet/about-section";
+import { isFreeDuetApp } from "@/freeduet/manage-group";
+import type { SettingsPlace } from "@/freeduet/settings-directory";
+import { SettingsHome } from "@/freeduet/settings-home";
+import { WorkspaceShell, WorkspaceTabs } from "@/freeduet/workspace";
 import { currentUserQueryOptions } from "@/lib/auth/queries";
 import { appConfig } from "@/lib/generated/application-config";
 import { formatHotkey, HOTKEYS } from "@/lib/hotkeys/hotkeys";
 import type { ThemePreference } from "@/lib/theme";
+import { AppLanguageSetting } from "@/freeduet/i18n/language-setting";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { useT } from "@/freeduet/i18n/provider";
 
 export const Route = createFileRoute("/_authed/settings/")({
   component: RouteComponent,
 });
 
-const APPEARANCE: readonly { value: ThemePreference; label: string }[] = [
-  { value: "system", label: "Match phone" },
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
+const APPEARANCE: readonly {
+  value: ThemePreference;
+  label: string;
+  key18n: MessageId;
+}[] = [
+  { value: "system", label: "Match phone", key18n: "settings.matchPhone" },
+  { value: "light", label: "Light", key18n: "settings.light" },
+  { value: "dark", label: "Dark", key18n: "settings.dark" },
 ];
 
 /**
@@ -108,7 +113,21 @@ export const SETTINGS_PLACES: readonly SettingsPlace[] = [
   },
 ];
 
+/** The ids of each place's name in the app's message catalogues (D181), by route; `label` stays the English. */
+const PLACE_LABEL: Record<string, MessageId> = {
+  "/bots": "nav.bots",
+  "/connections": "nav.connections",
+  "/capabilities": "nav.capabilities",
+  "/routines": "nav.routines",
+  "/settings/approvals": "nav.approvalRules",
+  "/admin/engines": "dash.engines",
+  "/settings/notifications": "profile.notifications",
+  "/settings/passwords": "home.passwordsLabel",
+  "/admin": "nav.admin",
+};
+
 function RouteComponent() {
+  const t = useT();
   const { preference, setPreference } = useTheme();
   const { data: user } = useQuery(currentUserQueryOptions());
   const product = appConfig.brand.productName;
@@ -118,17 +137,25 @@ function RouteComponent() {
   );
   const appearanceAndVoice = (
     <>
-      <PageSection title="Appearance">
+      <PageSection title={t("settings.appearance")}>
         <div className="mt-3">
           <Segmented
-            label="Appearance"
+            label={t("settings.appearance")}
             onChange={setPreference}
-            options={APPEARANCE}
+            options={APPEARANCE.map((option) => ({
+              value: option.value,
+              label: t(option.key18n),
+            }))}
             value={preference}
           />
         </div>
       </PageSection>
-      <PageSection title="Voice">
+      <PageSection title={t("language.section")}>
+        <PageRows>
+          <AppLanguageSetting />
+        </PageRows>
+      </PageSection>
+      <PageSection title={t("settings.voice")}>
         <ReadAloudSetting />
       </PageSection>
     </>
@@ -141,7 +168,7 @@ function RouteComponent() {
        * Only where there is a keyboard. Drawn from the same registry the listeners match against, so
        * this list is what the keys actually do. Read-only: they are not rebindable.
        */}
-      <PageSection className="hidden md:block" title="Keyboard shortcuts">
+      <PageSection className="hidden md:block" title={t("settings.shortcuts")}>
         <PageRows>
           {HOTKEYS.map((hotkey, index) => (
             <React.Fragment key={hotkey.id}>
@@ -174,22 +201,27 @@ function RouteComponent() {
   if (isFreeDuetApp()) {
     return (
       <WorkspaceShell
-        title="Settings"
+        title={t("nav.settings")}
         icon="iris"
-        description="Manage your team, connected accounts and personal preferences."
+        description={t("settings.description")}
       >
         <WorkspaceTabs
-          label="Settings sections"
+          label={t("settings.sections")}
           views={[
             {
               id: "workspace",
-              label: "Workspace",
+              label: t("settings.workspace"),
               icon: "dashboard",
-              content: <SettingsDirectory places={places} />,
+              content: (
+                <SettingsHome
+                  isAdmin={user?.role === "admin"}
+                  badges={{ "/bots": <BotsNavBadge /> }}
+                />
+              ),
             },
             {
               id: "preferences",
-              label: "Preferences",
+              label: t("settings.preferences"),
               icon: "settings",
               content: (
                 <div className="fd-preferences">
@@ -200,7 +232,7 @@ function RouteComponent() {
             },
             {
               id: "devices",
-              label: "Devices & info",
+              label: t("settings.devices"),
               icon: "phone",
               content: <div className="fd-facts">{devicesAndInfo}</div>,
             },
@@ -211,8 +243,8 @@ function RouteComponent() {
   }
   return (
     <PageShell
-      description={`How ${product} looks and works for you.`}
-      title="Settings"
+      description={t("settings.descriptionPlain", { product })}
+      title={t("nav.settings")}
     >
       {appearanceAndVoice}
       <nav aria-label="Settings" className="mt-8 flex flex-col gap-0.5">
@@ -228,7 +260,11 @@ function RouteComponent() {
               </Link>
             )}
             size="nav"
-            title={place.label}
+            title={
+              PLACE_LABEL[place.to as string]
+                ? t(PLACE_LABEL[place.to as string])
+                : place.label
+            }
           />
         ))}
       </nav>

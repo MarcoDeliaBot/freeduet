@@ -7,6 +7,8 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Switch } from "@/components/ui/switch";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import {
   installedVoices,
   pickVoice,
@@ -21,25 +23,23 @@ import {
  */
 export function ReadAloudSetting() {
   const enabled = useReadAloudEnabled();
-  const [note, setNote] = useState<string | null>(null);
+  const { t } = useAppLanguage();
+  const [note, setNote] = useState<MessageId | null>(null);
   return (
     <Item>
       <ItemContent>
-        <ItemTitle>Read replies aloud</ItemTitle>
+        <ItemTitle>{t("settings.readAloudTitle")}</ItemTitle>
         <ItemDescription>
-          {note ??
-            "Adds a Read aloud button under each Bot reply. It uses a voice on this computer only, and nothing is sent elsewhere."}
+          {t(note ?? "settings.readAloudDescription")}
         </ItemDescription>
       </ItemContent>
       <ItemActions>
         <Switch
-          aria-label="Read replies aloud"
+          aria-label={t("settings.readAloudTitle")}
           checked={enabled}
           onCheckedChange={(on) => {
             if (on && !pickVoice(installedVoices())) {
-              setNote(
-                "No local Italian voice on this computer, so replies cannot be read aloud here.",
-              );
+              setNote("settings.noItalianVoice");
               return;
             }
             setNote(null);

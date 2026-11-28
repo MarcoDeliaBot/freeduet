@@ -158,6 +158,12 @@ export type WorkQueue = {
     reason?: string;
     /** Refund a live claim only when execution never began, such as initial thread-lock contention. */
     unstarted?: boolean;
+    /**
+     * D172: leave the item at this many attempts at least, so `claim` never offers it again and it sits
+     * in the table with its reason, where the person's "Needs you" row finds it until it is retried or
+     * dismissed. Never lowers the count.
+     */
+    giveUpAt?: number;
   }) => Promise<boolean>;
   /**
    * Drop what is done with, older than the retention window. Returns how many went.
@@ -447,7 +453,7 @@ export function createWorkQueue(database: Database): WorkQueue {
       return Boolean(finished);
     },
 
-    async release({ kind, key, owner, delayMs, reason, unstarted }) {
+    async release({ kind, key, owner, delayMs, reason, unstarted, giveUpAt }) {
       // Freed and pushed out, rather than finished: the work still wants doing, just not immediately
       // and not by whoever just gave up on it. The reason stays on the row so an item that runs out
       // of attempts says why rather than simply stopping.
@@ -461,6 +467,9 @@ export function createWorkQueue(database: Database): WorkQueue {
           ...(reason === undefined ? {} : { lastError: reason }),
           // The ownership guard and clearing claimedBy make a refund atomic and one-shot.
           ...(unstarted ? { attempts: sql`${workItems.attempts} - 1` } : {}),
+          ...(giveUpAt === undefined
+            ? {}
+            : { attempts: sql`greatest(${workItems.attempts}, ${giveUpAt})` }),
         })
         // An expired final attempt already lets its sibling start. A late release must neither
         // move that older failure past a newer outcome nor refund its spent attempt.

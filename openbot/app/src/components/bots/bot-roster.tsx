@@ -7,6 +7,7 @@ import {
   attentionSummary,
   needsInput,
 } from "@/components/bot-profile/attention";
+import { StalledHandoffRow } from "@/components/bot-profile/stalled-handoff";
 import {
   PageEmpty,
   PageRows,
@@ -29,6 +30,8 @@ import {
   type BotAttention,
   botAttentionQueryOptions,
 } from "@/lib/bot-lifecycle/queries";
+import { wantFirstUnread } from "@/lib/channels/first-unread";
+import { useT } from "@/freeduet/i18n/provider";
 
 /**
  * Every Bot the person can reach, in the one place they are listed: pinned first, then their own,
@@ -37,6 +40,7 @@ import {
  * This replaces three screens — Bots, Agents and Team Bots — that listed the same Bots three ways.
  */
 export function BotRoster({ tenantId }: { tenantId?: string } = {}) {
+  const t = useT();
   const agents = useQuery(agentListQueryOptions());
   const hidden = useQuery(agentListQueryOptions(true));
   const attention = useQuery(botAttentionQueryOptions());
@@ -49,7 +53,7 @@ export function BotRoster({ tenantId }: { tenantId?: string } = {}) {
   if (agents.data === undefined) {
     return (
       <p className="mt-6 text-destructive text-sm" role="alert">
-        Couldn't load your Bots. Reload the page.
+        {t("bots.loadError")}
       </p>
     );
   }
@@ -66,33 +70,33 @@ export function BotRoster({ tenantId }: { tenantId?: string } = {}) {
   return (
     <>
       {needsYou.length ? (
-        <PageSection title="Needs you">
+        <PageSection title={t("bots.needsYou")}>
           <RosterRows agents={needsYou} byId={byId} message={message} />
         </PageSection>
       ) : null}
       {pinned.length ? (
-        <PageSection title="Pinned">
+        <PageSection title={t("bots.pinned")}>
           <RosterRows agents={pinned} byId={byId} message={message} />
         </PageSection>
       ) : null}
-      <PageSection title="Yours">
+      <PageSection title={t("bots.yours")}>
         {yours.length ? (
           <RosterRows agents={yours} byId={byId} message={message} />
         ) : (
           <PageEmpty>
             {yoursPinned
-              ? "Your Bots are all pinned above."
+              ? t("bots.allPinned")
               : yoursWaiting
-                ? "Your Bots are all under Needs you."
-                : "You don't have any Bots yet. Create one with New Bot."}
+                ? t("bots.allNeedYou")
+                : t("bots.none")}
           </PageEmpty>
         )}
       </PageSection>
-      <PageSection title="Shared with you">
+      <PageSection title={t("bots.shared")}>
         {shared.length ? (
           <RosterRows agents={shared} byId={byId} message={message} />
         ) : (
-          <PageEmpty>Nobody has shared a Bot with you yet.</PageEmpty>
+          <PageEmpty>{t("bots.nobodyShared")}</PageEmpty>
         )}
       </PageSection>
       {hidden.data?.length ? (
@@ -115,16 +119,17 @@ function HiddenSection({
   byId: Map<string, BotAttention>;
   message: boolean;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   return (
     <PageSection
       action={
         <Button onClick={() => setOpen(!open)} size="sm" variant="ghost">
-          {open ? "Hide" : "Show"}
+          {open ? t("bots.hide") : t("bots.show")}
         </Button>
       }
-      description={`${agents.length} ${agents.length === 1 ? "Bot" : "Bots"} you hid. Only your list changes.`}
-      title="Hidden"
+      description={t("bots.hiddenDescription", { count: agents.length })}
+      title={t("bots.hidden")}
     >
       {open ? (
         <RosterRows agents={agents} byId={byId} message={message} />
@@ -143,12 +148,13 @@ function RosterRows({
   /** Draw the Message button beside each row (FreeDuet's package). */
   message: boolean;
 }) {
+  const t = useT();
   return (
     <PageRows>
       {agents.map((agent, index) => {
         const state = byId.get(agent.id);
         const summary = state
-          ? [state.paused ? "Paused" : "", attentionSummary(state)]
+          ? [state.paused ? t("bots.paused") : "", attentionSummary(state, t)]
               .filter(Boolean)
               .join(" · ")
           : "";
@@ -180,6 +186,8 @@ function RosterRows({
             </ItemActions>
           </Item>
         );
+        const stalled = state?.stalled ?? [];
+        const unreadChannel = state?.unread ? state.unreadChannelId : null;
         return (
           <Fragment key={agent.id}>
             {index > 0 ? <Separator /> : null}
@@ -187,7 +195,7 @@ function RosterRows({
               <div className="flex items-center gap-1 pr-2">
                 {row}
                 <Button
-                  aria-label={`Message ${agent.name}`}
+                  aria-label={t("composer.messageNamed", { name: agent.name })}
                   render={(props) => (
                     <Link
                       {...props}
@@ -200,12 +208,51 @@ function RosterRows({
                   variant="outline"
                 >
                   <IconMessage />
-                  Message
+                  {t("bots.message")}
                 </Button>
               </div>
             ) : (
               row
             )}
+            {stalled.map((hop) => (
+              <StalledHandoffRow
+                agentId={agent.id}
+                channelId={hop.channelId}
+                id={hop.id}
+                key={hop.id}
+                reason={hop.reason}
+                task={hop.task}
+                toName={hop.toName}
+              />
+            ))}
+            {unreadChannel && state ? (
+              <div
+                className="flex flex-wrap items-center gap-3 px-3 py-2.5"
+                data-testid="unread-row"
+              >
+                <IconMessage aria-hidden className="size-4 text-duet-accent" />
+                <p className="min-w-0 flex-1 text-sm">
+                  {t("bots.wroteIn", {
+                    name: agent.name,
+                    count: state.unread,
+                  })}
+                </p>
+                <Button
+                  render={(props) => (
+                    <Link
+                      {...props}
+                      onClick={() => wantFirstUnread()}
+                      params={{ channelId: unreadChannel }}
+                      to="/channel/$channelId"
+                    />
+                  )}
+                  size="sm"
+                  variant="outline"
+                >
+                  {t("bots.readNewest")}
+                </Button>
+              </div>
+            ) : null}
           </Fragment>
         );
       })}

@@ -1,0 +1,1 @@
+| `openbot/app/src/routes/_authed/settings/index.tsx` | The Workspace tab draws `SettingsHome` (`app/src/freeduet/settings-home.tsx`) instead of `SettingsDirectory`; `SETTINGS_PLACES` is unchanged and still drives the other packages' list. About +8 −5 | One settings home in the approved light design, grouped, Engines one click away; every link is an existing route | D154 | No |

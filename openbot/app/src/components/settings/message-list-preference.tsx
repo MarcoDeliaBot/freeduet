@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import {
   saveUserPreferencesMutationOptions,
   useUserPreferences,
@@ -23,6 +24,7 @@ import {
 
 export function MessageListPreference() {
   const preferences = useUserPreferences();
+  const { t } = useAppLanguage();
   const queryClient = useQueryClient();
   const save = useMutation(
     saveUserPreferencesMutationOptions(queryClient, preferences.userId),
@@ -35,10 +37,8 @@ export function MessageListPreference() {
     <PageRows>
       <Item size="sm">
         <ItemContent>
-          <ItemTitle>Message list emphasis</ItemTitle>
-          <ItemDescription>
-            Choose which line stands out in the sidebar.
-          </ItemDescription>
+          <ItemTitle>{t("settings.emphasisTitle")}</ItemTitle>
+          <ItemDescription>{t("settings.emphasisDescription")}</ItemDescription>
         </ItemContent>
         <ItemActions>
           <Select
@@ -50,18 +50,20 @@ export function MessageListPreference() {
               }
             }}
           >
-            <SelectTrigger aria-label="Message list emphasis">
+            <SelectTrigger aria-label={t("settings.emphasisTitle")}>
               <SelectValue>
                 {emphasis
                   ? emphasis === "agent"
-                    ? "Bot name"
-                    : "Conversation title"
-                  : "Loading…"}
+                    ? t("settings.emphasisBot")
+                    : t("settings.emphasisConversation")
+                  : t("settings.loading")}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="thread">Conversation title</SelectItem>
-              <SelectItem value="agent">Bot name</SelectItem>
+              <SelectItem value="thread">
+                {t("settings.emphasisConversation")}
+              </SelectItem>
+              <SelectItem value="agent">{t("settings.emphasisBot")}</SelectItem>
             </SelectContent>
           </Select>
         </ItemActions>
@@ -76,7 +78,7 @@ export function MessageListPreference() {
             size="sm"
             onClick={() => void preferences.refetch()}
           >
-            Try again
+            {t("stalled.retry")}
           </Button>
         </div>
       ) : null}
@@ -87,19 +89,19 @@ export function MessageListPreference() {
       ) : null}
       {save.isPending ? (
         <p role="status" className="px-3 text-sm text-muted-foreground">
-          Saving…
+          {t("settings.saving")}
         </p>
       ) : null}
       {emphasis ? (
         <div className="flex justify-center px-6 pt-3 pb-6">
           <figure
-            aria-label="Message list preview"
+            aria-label={t("settings.emphasisPreview")}
             className="flex h-16 w-full max-w-xs items-center rounded-lg border border-border bg-sidebar px-3"
           >
             <ChannelItemContent
               participantIds={["message-list-preview"]}
-              name="General Assistant"
-              title="Plan next week"
+              name={t("settings.sampleBot")}
+              title={t("settings.sampleTitle")}
               lastMessageAt="2h"
               emphasis={emphasis}
             />

@@ -1,5 +1,6 @@
 import { Hono, type MiddlewareHandler } from "hono";
 import { z } from "zod";
+import { APP_LANGUAGE_CODES } from "@openbot/shared/user-preferences";
 import type { AppVariables } from "./auth/guards";
 import type { UserPreferencesStore } from "./user-preferences";
 
@@ -12,6 +13,7 @@ const preferencesPatch = z
   .strictObject({
     messageListEmphasis: z.enum(["agent", "thread"]).optional(),
     selfHostBannerDismissed: z.boolean().optional(),
+    appLanguage: z.enum(["auto", ...APP_LANGUAGE_CODES]).optional(),
   })
   .refine((patch) => Object.keys(patch).length > 0);
 
@@ -44,7 +46,7 @@ export function userPreferencesRoutes(
       return context.json(
         {
           error:
-            "Choose agent or thread for message list emphasis, or true or false for the self-host banner.",
+            "Choose agent or thread for message list emphasis, true or false for the self-host banner, or a language code or auto for the app language.",
         },
         400,
       );

@@ -6,7 +6,7 @@ session learns something the next one would otherwise rediscover the hard way, a
 ## What this repository is
 
 FreeDuet is a self-hosted team of AI employees: Iris (the head) and fifteen members (Leo, Otto, Portia,
-Penny, Jules, Wren, Gus, Basil, Vera, and, added after v0.1, Mark, the marketer, Cam, the video maker, Rex, the model trainer, Ada, the web developer, Kai, the game and app developer, and Lumi, the graphic designer). It is a thin fork of CopilotKit's OpenBot (under `openbot/`)
+Penny, Jules, Wren, Gus, Basil, Vera, and, added after v0.1, Mark, the marketer, Cam, the video maker, Rex, the model trainer, Ada, the web developer, Kai, the game and app developer, and Lumi, the graphic designer). It is a fork of CopilotKit's OpenBot (D150) that has changed many upstream files, each listed in docs/UPSTREAM_TOUCHES.md (under `openbot/`)
 plus `openbot/agent-freeduet/`, a Python service (port 4230) that runs each member on the person's own
 subscription login through a locked-down `claude -p`, with an MCP bridge for tools.
 
@@ -129,6 +129,7 @@ the hands"): plan, brief executors, verify with numbers, merge, report.
 - **Decisions belong to the maintainer** when they change product behaviour, security, cost, or
   anything public. Bring a recommendation and the trade-off, then wait.
 - **Go with the recommendation (rule of 2026-11-16).** When you bring the maintainer a choice with a recommendation, start on the recommendation at once and tell him afterwards; do not stop the work to wait. Two exceptions still wait for his explicit yes: a change to the look of the public site or of the app (preview first), and anything that costs money. An ambiguous "ok" never covers those two: ask which item it means.
+- **A narrowed idea is reported and asked about (rule of 2026-11-28).** When a session drops, narrows or postpones part of an idea or a decision of the maintainer (a channel left out, a feature cut, a reading of an ambiguous answer), it says so in its own line of the report, with what was left out and why, and ends that report with "Ho fatto bene?". Going with the recommendation still holds, but the choice is never left only in a PR or a section of `docs/M1_PLAN.md`: the maintainer gets the right of reply. An idea of his that is not built yet goes in the "Proposed, not yet decided" list of `docs/ROADMAP.md` the same day, so it is not lost. On 27 November 2026 his "solo con i canali senza login e gli account secondari? SI" (D182) was read as excluding the secondary accounts; he meant including them (D183).
 - **Roadmap follows decisions at once.** When the maintainer takes a decision (a feature, a priority, a rule), update `docs/ROADMAP.md` in the same session, before reporting the decision as recorded, and the README roadmap table if a row there changes. A decision that is not in the roadmap is not recorded. (Asked on 2026-11-14.)
 - **Site and app previews.** A design change to the site or the app is shown to the maintainer first, as a preview: Cloudflare Pages builds `https://<branch>.freeduet.pages.dev` for every branch, and the change goes online only after the maintainer's yes. Executors' site PRs conflict on the built pages, so the second one merges `origin/main` and rebuilds before it opens.
 

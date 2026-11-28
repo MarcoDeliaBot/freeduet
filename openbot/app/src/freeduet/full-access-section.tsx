@@ -22,6 +22,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import { client } from "@/lib/client";
+import { useAppLanguage } from "./i18n/provider";
 
 /**
  * Full access (docs/FULL_ACCESS.md): the person's own setting, one member at a time, with three
@@ -57,11 +58,11 @@ export const fullAccessOptions = () =>
     refetchInterval: 10_000,
   });
 
-/** What the choice is called, on the page and in the question that asks the person to confirm it. */
-const LABEL: Record<Exclude<FullAccessChoice, "off">, string> = {
-  no_payments: "Full access without payments",
-  full: "Full access",
-};
+/** What the choice is called, on the page and in the question that asks the person to confirm it (catalogue keys). */
+const LABEL = {
+  no_payments: "fullaccess.label.noPayments",
+  full: "fullaccess.label.full",
+} as const;
 
 const choiceOf = (entry: FullAccessData["bots"][string] | undefined) =>
   entry === undefined
@@ -95,6 +96,7 @@ const setFullAccess = (
   });
 
 export function FreeDuetFullAccess() {
+  const { t, date } = useAppLanguage();
   const state = useQuery(fullAccessOptions());
   const agents = useQuery(agentListQueryOptions());
   const [asking, setAsking] = useState<{
@@ -137,36 +139,37 @@ export function FreeDuetFullAccess() {
   const summary = (id: string) => {
     const entry = on[id];
     const choice = choiceOf(entry);
-    if (choice === "off" || !entry)
-      return "Asks before it sends, pays, signs, books or deletes.";
-    const since = new Date(entry.since).toLocaleDateString();
+    if (choice === "off" || !entry) return t("fullaccess.summary.off");
+    const since = date(new Date(entry.since), { dateStyle: "short" });
     return choice === "no_payments"
-      ? `Acts without asking, except that payments and purchases still ask you. Since ${since}.`
-      : `Acts without asking, payments included, with no limit on the amount. Since ${since}.`;
+      ? t("fullaccess.summary.noPayments", { since })
+      : t("fullaccess.summary.full", { since });
   };
 
   return (
     <>
       <PageSection
-        description="Safe by default: your Bots ask before they send, pay, sign, book or delete. For each Bot you can choose to let it do these without asking."
-        title="Full access"
+        description={t("fullaccess.description")}
+        title={t("fullaccess.label.full")}
       >
         <ul className="mt-3 space-y-1 text-muted-foreground text-sm">
           <li>
-            <span className="font-medium text-foreground">Off:</span> the Bot
-            asks before it sends, pays, signs, books or deletes.
+            <span className="font-medium text-foreground">
+              {t("fullaccess.offTerm")}
+            </span>{" "}
+            {t("fullaccess.offText")}
           </li>
           <li>
             <span className="font-medium text-foreground">
-              Full access without payments:
+              {t("fullaccess.noPaymentsTerm")}
             </span>{" "}
-            it sends, signs, books and deletes without asking. Payments and
-            purchases still ask you.
+            {t("fullaccess.noPaymentsText")}
           </li>
           <li>
-            <span className="font-medium text-foreground">Full access:</span> it
-            also pays and buys without asking. There is no limit on the amount
-            until spending caps exist (planned for v0.4).
+            <span className="font-medium text-foreground">
+              {t("fullaccess.fullTerm")}
+            </span>{" "}
+            {t("fullaccess.fullText")}
           </li>
         </ul>
         {error ? (
@@ -176,7 +179,10 @@ export function FreeDuetFullAccess() {
         ) : null}
         {asking ? (
           <section
-            aria-label={`Give ${asking.name} ${LABEL[asking.choice]}?`}
+            aria-label={t("fullaccess.askTitle", {
+              name: asking.name,
+              label: t(LABEL[asking.choice]),
+            })}
             className={
               asking.choice === "full"
                 ? "mt-3 mb-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4"
@@ -184,58 +190,36 @@ export function FreeDuetFullAccess() {
             }
           >
             <p className="font-medium text-sm">
-              Give {asking.name} {LABEL[asking.choice]}?
+              {t("fullaccess.askTitle", {
+                name: asking.name,
+                label: t(LABEL[asking.choice]),
+              })}
             </p>
             {asking.choice === "full" ? (
               <>
                 <p className="mt-1 text-sm">
-                  {asking.name} will send, pay, sign, book and delete without
-                  asking you first. It can act on what it reads, such as an
-                  email or a web page, so only turn this on if you trust it with
-                  that.
+                  {t("fullaccess.full.p1", { name: asking.name })}
                 </p>
                 <p className="mt-1 font-medium text-sm">
-                  There is no limit on the amount it can pay: spending caps do
-                  not exist yet (they are planned for v0.4). To keep payments
-                  and purchases asking you, choose Full access without payments
-                  instead.
+                  {t("fullaccess.full.p2")}
                 </p>
                 <p className="mt-1 text-muted-foreground text-sm">
-                  Passwords and security settings still need you. When an
-                  automatic reviewer is set up, it also reads each command and
-                  script the member runs on its computer once for that, even if
-                  you switched the reviewer off; when none is set up, a command
-                  is not read. This applies to what you ask in your own chats,
-                  not to routines or check-ins. You can turn it off at any time,
-                  and it stops at once.
+                  {t("fullaccess.full.p3")}
                 </p>
               </>
             ) : (
               <>
                 <p className="mt-1 text-sm">
-                  {asking.name} will send, sign, book and delete without asking
-                  you first. Payments and purchases still ask you. It can act on
-                  what it reads, such as an email or a web page, so only turn
-                  this on if you trust it with that.
+                  {t("fullaccess.noPayments.p1", { name: asking.name })}
                 </p>
                 <p className="mt-1 text-muted-foreground text-sm">
-                  The app recognises a payment by its built-in checks, so a
-                  message that only mentions a payment may ask too, and a
-                  payment worded in an unusual way might not be caught.
-                  Passwords and security settings still need you. When an
-                  automatic reviewer is set up, it also reads each command and
-                  script the member runs on its computer once for a password, a
-                  security setting or a payment made that way, even if you
-                  switched the reviewer off; when none is set up, a command is
-                  not read. This applies to what you ask in your own chats, not
-                  to routines or check-ins. You can turn it off at any time, and
-                  it stops at once.
+                  {t("fullaccess.noPayments.p2")}
                 </p>
               </>
             )}
             <div className="mt-3 flex gap-2">
               <Button onClick={() => setAsking(null)} variant="outline">
-                Cancel
+                {t("settings.cancel")}
               </Button>
               <Button
                 disabled={change.isPending}
@@ -250,12 +234,14 @@ export function FreeDuetFullAccess() {
                   )
                 }
               >
-                Give {LABEL[asking.choice]}
+                {t("fullaccess.give", { label: t(LABEL[asking.choice]) })}
               </Button>
             </div>
           </section>
         ) : null}
-        {bots.length === 0 ? <PageEmpty>No Bots yet.</PageEmpty> : null}
+        {bots.length === 0 ? (
+          <PageEmpty>{t("fullaccess.noBots")}</PageEmpty>
+        ) : null}
         {bots.length > 0 ? (
           <PageRows>
             {bots.map((agent, index) => {
@@ -273,31 +259,37 @@ export function FreeDuetFullAccess() {
                       </ItemDescription>
                       <fieldset className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                         <legend className="sr-only">
-                          Access for {agent.name}
+                          {t("fullaccess.legend", { name: agent.name })}
                         </legend>
                         {(
                           [
-                            ["off", "Off"],
+                            ["off", "fullaccess.off"],
                             ["no_payments", LABEL.no_payments],
                             ["full", LABEL.full],
                           ] as const
-                        ).map(([choice, label]) => (
-                          <label
-                            className="flex items-center gap-1.5"
-                            key={choice}
-                          >
-                            <input
-                              aria-label={`${label} for ${agent.name}`}
-                              checked={current === choice}
-                              disabled={change.isPending}
-                              name={`full-access-${agent.id}`}
-                              onChange={() => choose(agent, choice)}
-                              type="radio"
-                              value={choice}
-                            />
-                            {label}
-                          </label>
-                        ))}
+                        ).map(([choice, labelId]) => {
+                          const label = t(labelId);
+                          return (
+                            <label
+                              className="flex items-center gap-1.5"
+                              key={choice}
+                            >
+                              <input
+                                aria-label={t("fullaccess.radioAria", {
+                                  label,
+                                  name: agent.name,
+                                })}
+                                checked={current === choice}
+                                disabled={change.isPending}
+                                name={`full-access-${agent.id}`}
+                                onChange={() => choose(agent, choice)}
+                                type="radio"
+                                value={choice}
+                              />
+                              {label}
+                            </label>
+                          );
+                        })}
                       </fieldset>
                     </ItemContent>
                   </Item>
@@ -310,11 +302,11 @@ export function FreeDuetFullAccess() {
       </PageSection>
       {Object.keys(on).length > 0 || recent.length > 0 ? (
         <PageSection
-          description="What a Bot with Full access did without asking you, newest first."
-          title="Done without asking"
+          description={t("fullaccess.doneDescription")}
+          title={t("fullaccess.doneTitle")}
         >
           {recent.length === 0 ? (
-            <PageEmpty>Nothing yet.</PageEmpty>
+            <PageEmpty>{t("fullaccess.nothingYet")}</PageEmpty>
           ) : (
             <PageRows>
               {recent.map((action, index) => (
@@ -327,7 +319,11 @@ export function FreeDuetFullAccess() {
                         {nameOf(action.bot)}: {action.tool}
                       </ItemTitle>
                       <ItemDescription className="line-clamp-none">
-                        {action.scope} · {new Date(action.at).toLocaleString()}
+                        {action.scope} ·{" "}
+                        {date(new Date(action.at), {
+                          dateStyle: "short",
+                          timeStyle: "medium",
+                        })}
                       </ItemDescription>
                     </ItemContent>
                   </Item>

@@ -23,6 +23,9 @@ const WORK: HandoffWork = {
   task: "find the outage window",
 };
 
+/** A backwards hop: it runs in the asking thread itself, so what it reads is its own conversation. */
+const RELAY: HandoffWork = { ...WORK, answerIn: "thread-1" };
+
 const PRIOR: Message[] = [
   { id: "m1", role: "user", content: "we had an outage yesterday" },
   { id: "m2", role: "assistant", content: "I will find out when" },
@@ -46,7 +49,11 @@ function delivery(
   events: BaseEvent[],
   agent: AbstractAgent | null = stubAgent(),
   lockHeld = true,
-  options: { history?: readonly unknown[]; deadlineMs?: number } = {},
+  options: {
+    history?: readonly unknown[];
+    deadlineMs?: number;
+    onHistory?: () => void;
+  } = {},
 ) {
   const requests: Array<{
     threadId: string;
@@ -70,7 +77,10 @@ function delivery(
         builtFor.push(input);
         return agent;
       },
-      history: async () => options.history ?? PRIOR,
+      history: async () => {
+        options.onHistory?.();
+        return options.history ?? PRIOR;
+      },
       newRunId: () => "run-2",
       mintThreadId: () => "scratch-thread",
       lock: {
@@ -111,7 +121,7 @@ describe("turning a hop into a turn", () => {
     const { delivery: deliver, requests } = delivery(FINISHED);
 
     await deliver.deliver({
-      work: WORK,
+      work: RELAY,
       message: "assistant has asked you to help",
       shown: "Assistant asked Researcher for this on your behalf: find it",
       assertion: "signed",
@@ -258,8 +268,19 @@ describe("which conversation the turn runs in", () => {
     expect(requests[0]?.input.threadId).toBe("scratch-thread");
   });
 
-  test("but it reads the conversation that asked", async () => {
-    const { delivery: deliver, requests } = delivery(FINISHED);
+  test("and it is shown nothing of the conversation that asked (D176): only its own framing message", async () => {
+    let read = 0;
+    const { delivery: deliver, requests } = delivery(
+      FINISHED,
+      stubAgent(),
+      true,
+      {
+        history: PRIOR,
+        onHistory: () => {
+          read += 1;
+        },
+      },
+    );
 
     await deliver.deliver({
       work: WORK,
@@ -268,9 +289,10 @@ describe("which conversation the turn runs in", () => {
       assertion: "s",
     });
 
-    // Its own conversation is new and empty; reading that would tell it nothing.
+    // That conversation is the person's, with another Bot: the hop was handed a task, not it.
     const messages = requests[0]?.input.messages as Array<{ id: string }>;
-    expect(messages.map((m) => m.id).slice(0, 2)).toEqual(["m1", "m2"]);
+    expect(messages.map((m) => m.id)).toEqual(["handoff-platform-run"]);
+    expect(read).toBe(0);
   });
 });
 
@@ -306,7 +328,7 @@ describe("the conversation that crosses a hop", () => {
     );
 
     await deliver.deliver({
-      work: WORK,
+      work: RELAY,
       message: "the ask",
       shown: "one line",
       assertion: "s",
@@ -353,7 +375,7 @@ describe("a delivery that never finishes", () => {
 
     await expect(
       stalled.deliver({ work: WORK, message: "m", shown: "s", assertion: "s" }),
-    ).rejects.toThrow("did not finish within");
+    ).rejects.toThrow("no sign of life");
     // Given back, or the conversation stays unusable until the lock expires.
     expect(lockCalls).toContain("release");
     void deliver;
@@ -544,7 +566,7 @@ describe("what the addressed Bot is actually given", () => {
     const { delivery: deliver } = delivery(FINISHED, agent);
 
     await deliver.deliver({
-      work: WORK,
+      work: RELAY,
       message: "the ask",
       shown: "one line",
       assertion: "s",
@@ -557,9 +579,9 @@ describe("what the addressed Bot is actually given", () => {
       "handoff-platform-run",
     ]);
     expect(given.at(-1)).toMatchObject({ role: "user", content: "the ask" });
-    // And it runs in its own conversation, which the agent also carries.
+    // And it runs in the conversation it speaks into (a backwards hop), which the agent also carries.
     expect((agent as unknown as { threadId: string }).threadId).toBe(
-      "scratch-thread",
+      "thread-1",
     );
   });
 });
@@ -829,7 +851,7 @@ describe("a conversation that is not all plain strings", () => {
     );
 
     await deliver.deliver({
-      work: WORK,
+      work: RELAY,
       message: "the ask",
       shown: "one line",
       assertion: "s",
@@ -862,7 +884,7 @@ describe("a conversation that is not all plain strings", () => {
     );
 
     await deliver.deliver({
-      work: WORK,
+      work: RELAY,
       message: "the ask",
       shown: "one line",
       assertion: "s",
@@ -1065,5 +1087,104 @@ describe("a hop to a Bot that is paused while it works", () => {
     } finally {
       resetBotLifecycleForTests();
     }
+  });
+});
+
+/**
+ * D170: a hop is stopped for silence, not for time. Scaled: 100 ms stands for the ten minutes of
+ * silence, 400 ms for the cap, and an event every 30 ms for "an event every minute".
+ */
+describe("a hop stops for silence, not for time (D170)", () => {
+  function lively(everyMs: number | null, limits: { capMs: number }) {
+    let emit: ((emitted: unknown) => void) | undefined;
+    const agent = {
+      threadId: "",
+      messages: [] as unknown[],
+      setMessages(m: unknown[]) {
+        agent.messages = m;
+      },
+      runAgent: async (
+        _input: unknown,
+        config?: { onEvent?: (e: unknown) => void },
+      ) => {
+        emit = config?.onEvent;
+      },
+    };
+    const timers: ReturnType<typeof setInterval>[] = [];
+    const stopped: string[] = [];
+    const d = createHandoffDelivery({
+      admission: serverTurnAdmission,
+      deadlineMs: 100,
+      capMs: limits.capMs,
+      agentFor: async () => agent as unknown as AbstractAgent,
+      history: async () => PRIOR,
+      newRunId: () => "run-2",
+      mintThreadId: () => "scratch-thread",
+      lock: {
+        acquire: async () => ({ runId: "platform-run" }),
+        renew: async () => {},
+        release: async () => {},
+      },
+      runner: {
+        run: (request) =>
+          new Observable<BaseEvent>(() => {
+            void (request.agent as unknown as typeof agent).runAgent({}, {});
+            if (everyMs !== null)
+              timers.push(
+                setInterval(
+                  () => emit?.({ event: { type: "TOOL_CALL_RESULT" } }),
+                  everyMs,
+                ),
+              );
+            // Ends only when the delivery lets go of it.
+            return () => {
+              stopped.push("unsubscribed");
+              for (const t of timers) clearInterval(t);
+            };
+          }),
+        stop: async () => {
+          stopped.push("stop");
+        },
+      },
+    });
+    return { d, stopped };
+  }
+  const run = (d: ReturnType<typeof lively>["d"]) =>
+    d.deliver({ work: WORK, message: "m", shown: "s", assertion: "s" });
+
+  test("a Bot that keeps working past the silence limit is not stopped", async () => {
+    const { d } = lively(30, { capMs: 10_000 });
+    const outcome = await Promise.race([
+      run(d).then(
+        () => "ended",
+        () => "stopped",
+      ),
+      new Promise((resolve) => setTimeout(() => resolve("still running"), 350)),
+    ]);
+    expect(outcome).toBe("still running");
+  });
+
+  test("a silent Bot is stopped, and the reason says silence", async () => {
+    const { d } = lively(null, { capMs: 10_000 });
+    const error = await run(d).catch((e: Error) => e);
+    expect((error as Error).message).toContain("no sign of life for");
+    expect((error as Error).name).not.toBe("HopCapError");
+  });
+
+  test("a Bot that is still working at the cap is stopped, with a message that says so", async () => {
+    const { d } = lively(30, { capMs: 300 });
+    const error = (await run(d).catch((e: Error) => e)) as Error;
+    expect(error.name).toBe("HopCapError");
+    expect(error.message).toContain("still working");
+    expect(error.message).toContain("limit for one hand-off");
+  });
+
+  test("a silence stop and a cap stop both stop the run itself", async () => {
+    const silent = lively(null, { capMs: 10_000 });
+    await run(silent.d).catch(() => undefined);
+    expect(silent.stopped).toContain("stop");
+    const capped = lively(30, { capMs: 300 });
+    await run(capped.d).catch(() => undefined);
+    expect(capped.stopped).toContain("stop");
   });
 });

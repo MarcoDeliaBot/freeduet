@@ -10,31 +10,47 @@ import {
   ItemDescription,
   ItemTitle,
 } from "@/components/ui/item";
+import { englishT, type T, useAppLanguage } from "@/freeduet/i18n/provider";
 import {
   changeMailRuleMutationOptions,
   type MailRule,
   mailRulesQueryOptions,
 } from "@/lib/plugins/mail-rules";
 
-function ruleActivity(rule: MailRule): string {
-  if (!rule.lastRunAt) return "Has not run yet.";
-  const when = new Date(rule.lastRunAt).toLocaleString(undefined, {
+function ruleActivity(
+  rule: MailRule,
+  t: T = englishT,
+  locale?: string,
+): string {
+  if (!rule.lastRunAt) return t("connections.mail.neverRun");
+  const when = new Date(rule.lastRunAt).toLocaleString(locale, {
     day: "numeric",
     month: "short",
     hour: "numeric",
     minute: "2-digit",
   });
   const n = rule.lastMatched;
-  return `Last run ${when}: ${n} ${n === 1 ? "message" : "messages"}. ${rule.totalApplied} in all.`;
+  return t("connections.mail.lastRun", {
+    when,
+    count: n,
+    total: rule.totalApplied,
+  });
 }
 
-export function mailRuleStatus(rule: MailRule): string {
-  return rule.enabled ? `On. ${ruleActivity(rule)}` : "Off";
+export function mailRuleStatus(
+  rule: MailRule,
+  t: T = englishT,
+  locale?: string,
+): string {
+  return rule.enabled
+    ? t("connections.mail.on", { activity: ruleActivity(rule, t, locale) })
+    : t("connections.mail.off");
 }
 
 const PAGE_SIZE = 6;
 
 export function MailRulesSection({ browse = false }: { browse?: boolean }) {
+  const { t, language } = useAppLanguage();
   const queryClient = useQueryClient();
   const rules = useQuery(mailRulesQueryOptions());
   const change = useMutation(changeMailRuleMutationOptions(queryClient));
@@ -75,7 +91,9 @@ export function MailRulesSection({ browse = false }: { browse?: boolean }) {
         size="sm"
         variant="outline"
       >
-        {rule.enabled ? "Switch off" : "Switch on"}
+        {rule.enabled
+          ? t("connections.mail.switchOff")
+          : t("connections.mail.switchOn")}
       </Button>
       <Button
         disabled={change.isPending}
@@ -83,21 +101,21 @@ export function MailRulesSection({ browse = false }: { browse?: boolean }) {
         size="sm"
         variant={browse ? "ghost" : "outline"}
       >
-        Delete
+        {t("connections.mail.delete")}
       </Button>
     </>
   );
   const error = (rule: MailRule) =>
     rule.lastError ? (
       <p className="text-destructive text-sm" role="alert">
-        Last problem: {rule.lastError}
+        {t("connections.mail.lastProblem", { error: rule.lastError })}
       </p>
     ) : null;
   return (
     <PageSection
       className={browse ? "fd-rules" : undefined}
-      description="Standing rules you asked for in chat. Your Bots keep and apply them to new mail every few minutes; they are not Gmail filters. Deleting a rule does not undo what it already did."
-      title="Mail rules"
+      description={t("connections.mail.description")}
+      title={t("connections.mail.title")}
     >
       {browse ? (
         <>
@@ -106,8 +124,8 @@ export function MailRulesSection({ browse = false }: { browse?: boolean }) {
               <DuetIcon name="search" size={18} />
               <input
                 type="search"
-                aria-label="Search mail rules"
-                placeholder="Search mail rules"
+                aria-label={t("connections.mail.search")}
+                placeholder={t("connections.mail.search")}
                 value={search}
                 onChange={(event) => {
                   setSearch(event.target.value);
@@ -116,16 +134,16 @@ export function MailRulesSection({ browse = false }: { browse?: boolean }) {
               />
             </label>
             <select
-              aria-label="Rule status"
+              aria-label={t("connections.mail.statusLabel")}
               value={status}
               onChange={(event) => {
                 setStatus(event.target.value);
                 setPage(0);
               }}
             >
-              <option value="all">All statuses</option>
-              <option value="on">Active</option>
-              <option value="off">Paused</option>
+              <option value="all">{t("connections.mail.allStatuses")}</option>
+              <option value="on">{t("connections.mail.optActive")}</option>
+              <option value="off">{t("connections.mail.optPaused")}</option>
             </select>
           </div>
           {visible.length ? (
@@ -136,9 +154,11 @@ export function MailRulesSection({ browse = false }: { browse?: boolean }) {
                     <p className="fd-rule-title">{rule.inWords}</p>
                     <div className="fd-rule-meta">
                       <span className="fd-state" data-on={rule.enabled}>
-                        {rule.enabled ? "Active" : "Paused"}
+                        {rule.enabled
+                          ? t("connections.mail.active")
+                          : t("connections.mail.paused")}
                       </span>
-                      {ruleActivity(rule)}
+                      {ruleActivity(rule, t, language)}
                     </div>
                     {error(rule)}
                   </div>
@@ -148,14 +168,17 @@ export function MailRulesSection({ browse = false }: { browse?: boolean }) {
             </ul>
           ) : (
             <p role="status" className="text-sm text-muted-foreground">
-              No rules match these filters.
+              {t("connections.mail.noMatch")}
             </p>
           )}
           {matching.length > 0 && (
             <div className="fd-paging">
               <span role="status">
-                {start + 1}–{start + visible.length} of {matching.length}{" "}
-                {matching.length === 1 ? "rule" : "rules"}
+                {t("connections.mail.paging", {
+                  from: start + 1,
+                  to: start + visible.length,
+                  count: matching.length,
+                })}
               </span>
               {last > 0 && (
                 <div className="flex gap-2">
@@ -165,7 +188,7 @@ export function MailRulesSection({ browse = false }: { browse?: boolean }) {
                     disabled={current === 0}
                     onClick={() => setPage(current - 1)}
                   >
-                    Previous
+                    {t("connections.mail.previous")}
                   </Button>
                   <Button
                     variant="outline"
@@ -173,7 +196,7 @@ export function MailRulesSection({ browse = false }: { browse?: boolean }) {
                     disabled={current === last}
                     onClick={() => setPage(current + 1)}
                   >
-                    Next
+                    {t("connections.mail.next")}
                   </Button>
                 </div>
               )}
@@ -189,7 +212,7 @@ export function MailRulesSection({ browse = false }: { browse?: boolean }) {
                   {rule.inWords}
                 </ItemTitle>
                 <ItemDescription className="line-clamp-none">
-                  {mailRuleStatus(rule)}
+                  {mailRuleStatus(rule, t, language)}
                 </ItemDescription>
                 {error(rule)}
               </ItemContent>

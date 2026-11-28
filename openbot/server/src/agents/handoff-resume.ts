@@ -11,6 +11,7 @@
  * Which hop it was comes from the signed run the deployment minted for the delivery, kept in the
  * saved call. Nothing a model wrote is read.
  */
+import type { OfferedFile } from "@openbot/shared/member-file";
 import type { ApprovalContinuation } from "@openbot/toolkit/continuation";
 import { and, eq } from "drizzle-orm";
 import type { Database } from "../db/client";
@@ -26,13 +27,23 @@ export function createHopRelay(deps: {
   readRun: (signed: unknown) => RunAssertion | null;
   /** The Bot of the conversation a hop was asked in, for a hop whose row has been swept away. */
   askerOf: (run: RunAssertion) => Promise<string | null>;
+  /**
+   * D178: records the files the member offered in the resumed run, as the first run's are (D177), and
+   * returns the server's note for the front of the answer, or null. A throw is swallowed.
+   */
+  offeredFiles?: (input: {
+    work: HandoffWork;
+    files: readonly OfferedFile[];
+  }) => Promise<string | null>;
 }) {
-  const { queue, database, readRun, askerOf } = deps;
+  const { queue, database, readRun, askerOf, offeredFiles } = deps;
   /** True when the saved call was a hop's and its answer was queued for the Bot that asked. */
   return async (input: {
     snapshot: ApprovalContinuation;
     approvalId: string;
     answer: string;
+    /** D178: `offer_file` results of the resumed run (the sweep read them from the run's own events). */
+    files?: readonly OfferedFile[];
   }): Promise<boolean> => {
     const forwarded = input.snapshot.forwardedProps;
     const run =
@@ -78,15 +89,53 @@ export function createHopRelay(deps: {
         task: "a job from earlier in this conversation",
       };
     }
+    // D178: the same recorder as the first run's, for this hop's own member only.
+    let answer = input.answer;
+    if (offeredFiles && input.files && input.files.length > 0) {
+      const note = await offeredFiles({ work, files: input.files }).catch(
+        () => null,
+      );
+      if (note) answer = `${note}\n\n${answer}`;
+    }
     await queue.offer({
       kind: HANDOFF_KIND,
       // One relay per decision: the sweep that carried this decision out may run its tail twice.
       key: `relay:${run.handoff.key}:card:${input.approvalId}`,
-      payload: relayPayload(work, input.answer) as unknown as Record<
-        string,
-        unknown
-      >,
+      payload: relayPayload(work, answer) as unknown as Record<string, unknown>,
     });
     return true;
+  };
+}
+
+/**
+ * D176: whether a saved call was a FORWARD hop's, so that its resume is fed only the hop's own
+ * messages (`approvals/resume-input-guard.ts`). A relay or a notice back to the asking Bot runs in
+ * the asking thread itself and keeps its own tail. A hop whose row has been swept away counts as
+ * forward: its saved messages are checked by the framing message, which a relay's tail precedes
+ * only with its own conversation.
+ */
+export function createForwardHopCheck(deps: {
+  database: Database;
+  readRun: (signed: unknown) => RunAssertion | null;
+}) {
+  return async (snapshot: ApprovalContinuation): Promise<boolean> => {
+    const forwarded = snapshot.forwardedProps;
+    const run =
+      forwarded && typeof forwarded === "object" && "openbotRun" in forwarded
+        ? deps.readRun((forwarded as { openbotRun?: unknown }).openbotRun)
+        : null;
+    if (!run?.handoff) return false;
+    const [row] = await deps.database
+      .select({ payload: workItems.payload })
+      .from(workItems)
+      .where(
+        and(
+          eq(workItems.kind, HANDOFF_KIND),
+          eq(workItems.key, run.handoff.key),
+        ),
+      )
+      .limit(1);
+    const work = row?.payload as unknown as HandoffWork | undefined;
+    return work ? work.answerIn === undefined : true;
   };
 }

@@ -50,6 +50,10 @@ function app() {
       forBot: async () => ({ inProgress: [], scheduled: [], completed: [] }),
       stopHandoff: async (_o: string, _a: string, key: string) =>
         key === "hop-1" ? { key, toBotId: "bot-2" } : null,
+      retryHandoff: async (_o: string, _a: string, key: string) =>
+        key === "hop-stalled" ? { key, toBotId: "bot-2" } : null,
+      dismissHandoff: async (_o: string, _a: string, key: string) =>
+        key === "hop-stalled" ? { key, toBotId: "bot-2" } : null,
       attention: async () => [
         {
           agentId: "bot-1",
@@ -184,6 +188,89 @@ describe("Bot lifecycle routes", () => {
       eventType: "bot.handoff_stopped",
       payload: { hop: "hop-1", to: "bot-2" },
     });
+  });
+});
+
+describe("retrying a stalled hand-off (D171)", () => {
+  test("re-queues the person's stalled hop and audits it; anything else is a 404", async () => {
+    const { rows, hono } = app();
+    const url = "http://t/api/bots/bot-1/activity/handoffs/retry";
+    expect((await hono.request(url, post({}))).status).toBe(400);
+    expect((await hono.request(url, post({ id: "running-hop" }))).status).toBe(
+      404,
+    );
+    const ok = await hono.request(url, post({ id: "hop-stalled" }));
+    expect(ok.status).toBe(200);
+    expect(rows[0]).toMatchObject({
+      eventType: "bot.handoff_retried",
+      payload: { hop: "hop-stalled", to: "bot-2" },
+    });
+  });
+
+  test("a Bot the caller cannot reach is a 404 and nothing is retried", async () => {
+    const { rows, hono } = app();
+    const response = await hono.request(
+      "http://t/api/bots/someone-elses/activity/handoffs/retry",
+      post({ id: "hop-stalled" }),
+    );
+    expect(response.status).toBe(404);
+    expect(rows).toEqual([]);
+  });
+
+  test("signed out is a 401 from the same guard the other routes use", async () => {
+    const refuse = async (context: {
+      json: (b: unknown, s: number) => Response;
+    }) => context.json({ error: "Sign in" }, 401);
+    const hono = new Hono().route(
+      "/api/bots",
+      createBotLifecycleRoutes({} as never, refuse as never),
+    );
+    const response = await hono.request(
+      "http://t/api/bots/bot-1/activity/handoffs/retry",
+      post({ id: "hop-stalled" }),
+    );
+    expect(response.status).toBe(401);
+  });
+});
+
+describe("dismissing a stalled hand-off (D172)", () => {
+  const url = "http://t/api/bots/bot-1/activity/handoffs/dismiss";
+
+  test("dismisses the person's stalled hop and audits it; a running or unknown one is a 404", async () => {
+    const { rows, hono } = app();
+    expect((await hono.request(url, post({}))).status).toBe(400);
+    expect((await hono.request(url, post({ id: "running-hop" }))).status).toBe(
+      404,
+    );
+    expect(rows).toEqual([]);
+    const ok = await hono.request(url, post({ id: "hop-stalled" }));
+    expect(ok.status).toBe(200);
+    expect(rows[0]).toMatchObject({
+      eventType: "bot.handoff_dismissed",
+      payload: { hop: "hop-stalled", to: "bot-2" },
+    });
+  });
+
+  test("a Bot the caller cannot reach is a 404 and nothing is dismissed", async () => {
+    const { rows, hono } = app();
+    const response = await hono.request(
+      "http://t/api/bots/someone-elses/activity/handoffs/dismiss",
+      post({ id: "hop-stalled" }),
+    );
+    expect(response.status).toBe(404);
+    expect(rows).toEqual([]);
+  });
+
+  test("signed out is a 401 from the same guard the other routes use", async () => {
+    const refuse = async (context: {
+      json: (b: unknown, s: number) => Response;
+    }) => context.json({ error: "Sign in" }, 401);
+    const hono = new Hono().route(
+      "/api/bots",
+      createBotLifecycleRoutes({} as never, refuse as never),
+    );
+    const response = await hono.request(url, post({ id: "hop-stalled" }));
+    expect(response.status).toBe(401);
   });
 });
 

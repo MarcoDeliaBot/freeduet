@@ -2,6 +2,7 @@ import { OpenGenerativeUIActivityRenderer } from "@copilotkit/react-core/v2";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useId, useState } from "react";
+import { englishT, type T, useT } from "@/freeduet/i18n/provider";
 import { SidebarToggle } from "@/components/layout/sidebar-toggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,32 +67,52 @@ function jsonKind(value: unknown): string {
   return typeof value;
 }
 
-export function parseJsonObject(raw: string, label: string): JsonObjectResult {
+export function parseJsonObject(
+  raw: string,
+  label: string,
+  t: T = englishT,
+): JsonObjectResult {
   let value: unknown;
   try {
     value = JSON.parse(raw);
   } catch (thrown) {
     const reason =
-      thrown instanceof SyntaxError ? thrown.message : "invalid JSON";
-    return { ok: false, message: `${label} must be valid JSON: ${reason}` };
+      thrown instanceof SyntaxError
+        ? thrown.message
+        : t("admin.playground.invalidJson");
+    return {
+      ok: false,
+      message: t("admin.playground.validJson", { label, reason }),
+    };
   }
 
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return {
       ok: false,
-      message: `${label} must be a JSON object, not ${jsonKind(value)}.`,
+      message: t("admin.playground.notObject", {
+        label,
+        kind: jsonKind(value),
+      }),
     };
   }
 
   return { ok: true, value: value as Record<string, unknown> };
 }
 
-export function validatePlaygroundDraft(draft: Draft): PlaygroundValidation {
+export function validatePlaygroundDraft(
+  draft: Draft,
+  t: T = englishT,
+): PlaygroundValidation {
   const schema = parseJsonObject(
     draft.argumentSchema,
-    "Arguments (JSON Schema)",
+    t("admin.playground.schemaLabel"),
+    t,
   );
-  const sample = parseJsonObject(draft.sampleArguments, "Sample arguments");
+  const sample = parseJsonObject(
+    draft.sampleArguments,
+    t("admin.playground.sampleLabel"),
+    t,
+  );
   if (!schema.ok || !sample.ok) {
     return {
       ok: false,
@@ -118,6 +139,7 @@ export function validatePlaygroundDraft(draft: Draft): PlaygroundValidation {
 }
 
 function PlaygroundPage() {
+  const t = useT();
   const [deleting, setDeleting] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { data: components } = useQuery(sandboxedListQueryOptions());
@@ -131,7 +153,7 @@ function PlaygroundPage() {
     setDraft((current) => ({ ...current, [field]: value }));
   };
 
-  const validation = validatePlaygroundDraft(draft);
+  const validation = validatePlaygroundDraft(draft, t);
   const sample = validation.ok ? validation.input.sampleArguments : null;
 
   /* Every write here reports into the same banner, so they share one failure handler. */
@@ -153,12 +175,11 @@ function PlaygroundPage() {
   const canWrite = Boolean(draft.slug && draft.title) && validation.ok && !busy;
 
   const input = (): SandboxedDraftInput | null => {
-    const current = validatePlaygroundDraft(draft);
+    const current = validatePlaygroundDraft(draft, t);
     if (!current.ok) {
       setNotice(null);
       setError(
-        Object.values(current.fields)[0] ??
-          "Fix the JSON fields before saving.",
+        Object.values(current.fields)[0] ?? t("admin.playground.fixBeforeSave"),
       );
       return null;
     }
@@ -170,7 +191,9 @@ function PlaygroundPage() {
     setNotice(null);
     const payload = input();
     if (!payload) return;
-    saveDraft.mutate(payload, { onSuccess: () => setNotice("Draft saved.") });
+    saveDraft.mutate(payload, {
+      onSuccess: () => setNotice(t("admin.playground.draftSaved")),
+    });
   };
 
   const publish = () => {
@@ -178,11 +201,13 @@ function PlaygroundPage() {
     setNotice(null);
     const payload = input();
     if (!payload) return;
-    publishDraft.mutate(payload, { onSuccess: () => setNotice("Published.") });
+    publishDraft.mutate(payload, {
+      onSuccess: () => setNotice(t("admin.playground.published")),
+    });
   };
 
   // Named in the app's page chrome, as every Admin page is (parity-spec 2.9).
-  usePageChrome({ title: "Playground" });
+  usePageChrome({ title: t("admin.nav.playground") });
   const inChrome = useInPageChrome();
 
   const load = (component: SandboxedRecord) =>
@@ -217,11 +242,10 @@ function PlaygroundPage() {
                 inChrome && "sr-only",
               )}
             >
-              Playground
+              {t("admin.nav.playground")}
             </h1>
             <p className="mt-1 max-w-prose text-pretty text-muted-foreground text-sm leading-relaxed">
-              Write a component and publish it without redeploying. Your edits
-              are a draft. Conversations only show what is published.
+              {t("admin.playground.description")}
             </p>
           </div>
         </div>
@@ -233,7 +257,7 @@ function PlaygroundPage() {
             type="button"
             variant="outline"
           >
-            Save draft
+            {t("admin.playground.saveDraft")}
           </Button>
           <Button
             /* `publish` saves first, since publishing acts on the stored draft, not the editors. */
@@ -242,7 +266,7 @@ function PlaygroundPage() {
             size="sm"
             type="button"
           >
-            Publish
+            {t("admin.playground.publish")}
           </Button>
         </div>
       </header>
@@ -268,22 +292,22 @@ function PlaygroundPage() {
         <div className="space-y-3">
           <div className="grid gap-2 md:grid-cols-2">
             <TextField
-              label="Name"
+              label={t("settings.name")}
               onChange={set("slug")}
               placeholder="refund_card"
               value={draft.slug}
             />
             <TextField
-              label="Title"
+              label={t("admin.playground.title")}
               onChange={set("title")}
-              placeholder="Refund card"
+              placeholder={t("admin.playground.titlePlaceholder")}
               value={draft.title}
             />
           </div>
           <TextField
-            label="What the model is told about it"
+            label={t("admin.playground.told")}
             onChange={set("description")}
-            placeholder="Show a refund with its amount, reason and status."
+            placeholder={t("admin.playground.toldPlaceholder")}
             value={draft.description}
           />
           <CodeField label="HTML" onChange={set("html")} value={draft.html} />
@@ -297,7 +321,7 @@ function PlaygroundPage() {
             error={
               !validation.ok ? validation.fields.argumentSchema : undefined
             }
-            label="Arguments (JSON Schema)"
+            label={t("admin.playground.schemaLabel")}
             onChange={set("argumentSchema")}
             value={draft.argumentSchema}
           />
@@ -305,7 +329,7 @@ function PlaygroundPage() {
             error={
               !validation.ok ? validation.fields.sampleArguments : undefined
             }
-            label="Sample arguments"
+            label={t("admin.playground.sampleLabel")}
             onChange={set("sampleArguments")}
             value={draft.sampleArguments}
           />
@@ -313,13 +337,15 @@ function PlaygroundPage() {
 
         <div className="space-y-4">
           <div className="rounded-lg border p-4">
-            <div className="mb-2 text-sm font-medium">Preview</div>
+            <div className="mb-2 text-sm font-medium">
+              {t("admin.playground.preview")}
+            </div>
             {sample === null ? (
               <p className="text-sm text-destructive">
                 {validation.ok
-                  ? "The sample arguments aren't available."
+                  ? t("admin.playground.noSample")
                   : (validation.fields.sampleArguments ??
-                    "Fix the JSON fields before previewing.")}
+                    t("admin.playground.fixBeforePreview"))}
               </p>
             ) : (
               <OpenGenerativeUIActivityRenderer
@@ -343,11 +369,11 @@ function PlaygroundPage() {
 
           <div className="rounded-lg border border-border bg-card">
             <div className="border-border border-b px-4 py-2 font-medium text-sm">
-              Saved here
+              {t("admin.playground.saved.title")}
             </div>
             {(components ?? []).length === 0 ? (
               <p className="px-4 py-3 text-muted-foreground text-sm">
-                Nothing saved yet. Save a draft to see it here.
+                {t("admin.playground.saved.empty")}
               </p>
             ) : (
               <ul className="divide-y divide-border">
@@ -360,10 +386,12 @@ function PlaygroundPage() {
                       <div className="font-mono text-xs">{component.name}</div>
                       <div className="text-xs text-muted-foreground">
                         {component.published
-                          ? `published, revision ${component.revision}`
-                          : "draft only, no Bot can draw it"}
+                          ? t("admin.playground.saved.published", {
+                              revision: component.revision,
+                            })
+                          : t("admin.playground.saved.draftOnly")}
                         {component.hasUnpublishedChanges
-                          ? " · edited since publishing"
+                          ? ` · ${t("admin.playground.saved.edited")}`
                           : ""}
                       </div>
                     </div>
@@ -374,7 +402,7 @@ function PlaygroundPage() {
                         type="button"
                         variant="outline"
                       >
-                        Open
+                        {t("admin.playground.open")}
                       </Button>
                       <Button
                         onClick={() => setDeleting(component.name)}
@@ -382,7 +410,7 @@ function PlaygroundPage() {
                         type="button"
                         variant="ghost"
                       >
-                        Delete
+                        {t("admin.playground.delete")}
                       </Button>
                     </div>
                   </li>
@@ -390,8 +418,7 @@ function PlaygroundPage() {
               </ul>
             )}
             <p className="border-border border-t px-4 py-2 text-muted-foreground text-xs">
-              Publishing makes it available to every Bot. Turn it off for one
-              Bot on the UI components page.
+              {t("admin.playground.saved.note")}
             </p>
           </div>
         </div>
@@ -409,15 +436,16 @@ function PlaygroundPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete {deleting}?</DialogTitle>
+            <DialogTitle>
+              {t("admin.playground.del.title", { name: deleting ?? "" })}
+            </DialogTitle>
             <DialogDescription>
-              It's removed from this deployment, and no Bot can draw it. You
-              can't undo this.
+              {t("admin.playground.del.description")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button onClick={() => setDeleting(null)} size="sm" variant="ghost">
-              Cancel
+              {t("settings.cancel")}
             </Button>
             <Button
               onClick={() => {
@@ -431,7 +459,7 @@ function PlaygroundPage() {
               size="sm"
               variant="destructive"
             >
-              Delete it
+              {t("admin.playground.del.confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>

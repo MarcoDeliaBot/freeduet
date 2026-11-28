@@ -38,6 +38,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { englishT, type T, useT } from "@/freeduet/i18n/provider";
 import { markdownComponents } from "@/lib/markdown";
 import {
   type ResponsibilityRecord,
@@ -48,7 +50,7 @@ import {
   updateResponsibilityMutationOptions,
 } from "@/lib/responsibilities";
 import { queryClient } from "@/query-client";
-import { KIND_LABEL, Triggers } from "./triggers";
+import { kindLabel, Triggers } from "./triggers";
 
 type Status = ResponsibilityRecord["status"];
 type Source = ResponsibilityRecord["subscriptions"][number]["source"];
@@ -56,13 +58,17 @@ type Source = ResponsibilityRecord["subscriptions"][number]["source"];
 /** A responsibility's state, as a word and as the mark its row leads with. */
 export const STATUS: Record<
   Status,
-  { label: string; icon: typeof IconTarget }
+  { label: MessageId; icon: typeof IconTarget }
 > = {
-  active: { label: "Active", icon: IconTarget },
-  paused: { label: "Paused", icon: IconPlayerPause },
-  completed: { label: "Completed", icon: IconCircleCheck },
+  active: { label: "profile.active", icon: IconTarget },
+  paused: { label: "bots.paused", icon: IconPlayerPause },
+  completed: {
+    label: "responsibilities.status.completed",
+    icon: IconCircleCheck,
+  },
 };
 
+/** The names a source goes by in the app's language where they are words; a product's own name is not translated. */
 const SOURCE_LABEL: Record<Source, string> = {
   manual: "Manual",
   slack: "Slack",
@@ -76,6 +82,16 @@ const SOURCE_LABEL: Record<Source, string> = {
   email: "Email",
 };
 
+function sourceLabel(source: Source, t: T): string {
+  return source === "manual"
+    ? t("responsibilities.source.manual")
+    : source === "schedule"
+      ? t("responsibilities.source.schedule")
+      : source === "connector"
+        ? t("responsibilities.source.connector")
+        : SOURCE_LABEL[source];
+}
+
 /**
  * What a responsibility's row says under its title: its state, and while it is active, what starts
  * it. Computed from the queries on every render so it follows whatever the dialog just changed.
@@ -86,22 +102,30 @@ const SOURCE_LABEL: Record<Source, string> = {
 export function summaryFor(
   goal: ResponsibilityRecord,
   triggers: TriggerRecord[] | undefined,
+  t: T = englishT,
 ): string {
-  const status = STATUS[goal.status].label;
+  const status = t(STATUS[goal.status].label);
   if (goal.status === "completed") return status;
   if (goal.status === "paused")
-    return `${status} · Nothing starts it until you resume it`;
+    return `${status} · ${t("responsibilities.summary.paused")}`;
   const starts = [
     ...goal.subscriptions.map(
       (subscription) =>
-        `${SOURCE_LABEL[subscription.source]} ${subscription.eventType}`,
+        `${sourceLabel(subscription.source, t)} ${subscription.eventType}`,
     ),
     ...(triggers ?? [])
       .filter((trigger) => trigger.enabled)
-      .map((trigger) => `${KIND_LABEL[trigger.kind]} trigger`),
+      .map((trigger) =>
+        t("responsibilities.summary.trigger", {
+          kind: kindLabel(trigger.kind, t),
+        }),
+      ),
   ];
-  if (starts.length) return `${status} · Starts on ${starts.join(", ")}`;
-  return triggers ? `${status} · Runs when asked` : status;
+  if (starts.length)
+    return `${status} · ${t("responsibilities.summary.starts", { starts: starts.join(", ") })}`;
+  return triggers
+    ? `${status} · ${t("responsibilities.summary.asked")}`
+    : status;
 }
 
 /**
@@ -116,6 +140,7 @@ export function ResponsibilityDialog({
   goal: ResponsibilityRecord;
   onClose: () => void;
 }) {
+  const t = useT();
   const formId = useId();
   const [showRuns, setShowRuns] = useState(false);
   const [title, setTitle] = useState(goal.title);
@@ -128,7 +153,7 @@ export function ResponsibilityDialog({
     goal.progress
       ? {
           key: "progress",
-          label: "Progress",
+          label: t("responsibilities.progress"),
           icon: IconProgress,
           text: goal.progress,
         }
@@ -136,7 +161,7 @@ export function ResponsibilityDialog({
     goal.lastResult
       ? {
           key: "result",
-          label: "Last result",
+          label: t("responsibilities.lastResult"),
           icon: IconFlag,
           text: goal.lastResult,
         }
@@ -149,7 +174,7 @@ export function ResponsibilityDialog({
         <DialogHeader>
           <DialogTitle>{goal.title}</DialogTitle>
           <DialogDescription>
-            {summaryFor(goal, triggers.data)}
+            {summaryFor(goal, triggers.data, t)}
           </DialogDescription>
         </DialogHeader>
         <DialogBody className="mt-4 overflow-y-auto">
@@ -161,16 +186,16 @@ export function ResponsibilityDialog({
                     <IconTarget />
                   </ItemMedia>
                   <ItemContent>
-                    <ItemTitle>Active</ItemTitle>
+                    <ItemTitle>{t("profile.active")}</ItemTitle>
                     <ItemDescription>
                       {goal.status === "active"
-                        ? "Its events and triggers start it."
-                        : "Paused. Its triggers won't start it."}
+                        ? t("responsibilities.activeOn")
+                        : t("responsibilities.activeOff")}
                     </ItemDescription>
                   </ItemContent>
                   <ItemActions>
                     <Switch
-                      aria-label="Active"
+                      aria-label={t("profile.active")}
                       checked={goal.status === "active"}
                       disabled={action.isPending}
                       onCheckedChange={(active) =>
@@ -205,10 +230,9 @@ export function ResponsibilityDialog({
                     <IconPlayerPlay />
                   </ItemMedia>
                   <ItemContent>
-                    <ItemTitle>Run now</ItemTitle>
+                    <ItemTitle>{t("routines.runNow")}</ItemTitle>
                     <ItemDescription>
-                      Runs it now, for real. The Bot does the work and can post
-                      and take actions.
+                      {t("responsibilities.runNowLine")}
                     </ItemDescription>
                   </ItemContent>
                 </Item>
@@ -234,9 +258,9 @@ export function ResponsibilityDialog({
                     <IconCircleCheck />
                   </ItemMedia>
                   <ItemContent>
-                    <ItemTitle>Complete</ItemTitle>
+                    <ItemTitle>{t("responsibilities.complete")}</ItemTitle>
                     <ItemDescription>
-                      Mark it done. Nothing starts it after this.
+                      {t("responsibilities.completeLine")}
                     </ItemDescription>
                   </ItemContent>
                 </Item>
@@ -257,7 +281,7 @@ export function ResponsibilityDialog({
                 <IconMessage />
               </ItemMedia>
               <ItemContent>
-                <ItemTitle>Open conversation</ItemTitle>
+                <ItemTitle>{t("stalled.open")}</ItemTitle>
               </ItemContent>
               <ItemActions>
                 <IconChevronRight className="size-4 text-muted-foreground" />
@@ -287,7 +311,9 @@ export function ResponsibilityDialog({
           >
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor={`${formId}-title`}>Title</FieldLabel>
+                <FieldLabel htmlFor={`${formId}-title`}>
+                  {t("responsibilities.field.title")}
+                </FieldLabel>
                 <Input
                   id={`${formId}-title`}
                   value={title}
@@ -298,7 +324,7 @@ export function ResponsibilityDialog({
               </Field>
               <Field>
                 <FieldLabel htmlFor={`${formId}-instruction`}>
-                  Instruction
+                  {t("responsibilities.field.instruction")}
                 </FieldLabel>
                 <Textarea
                   id={`${formId}-instruction`}
@@ -310,7 +336,7 @@ export function ResponsibilityDialog({
               </Field>
               <Field>
                 <FieldLabel htmlFor={`${formId}-criteria`}>
-                  Success criteria
+                  {t("responsibilities.field.criteria")}
                 </FieldLabel>
                 <Textarea
                   id={`${formId}-criteria`}
@@ -347,12 +373,12 @@ export function ResponsibilityDialog({
                       <IconWebhook />
                     </ItemMedia>
                     <ItemContent>
-                      <ItemTitle>Events</ItemTitle>
+                      <ItemTitle>{t("responsibilities.events")}</ItemTitle>
                       <ItemDescription className="line-clamp-none">
                         {goal.subscriptions
                           .map(
                             (subscription) =>
-                              `${SOURCE_LABEL[subscription.source]} · ${subscription.eventType}`,
+                              `${sourceLabel(subscription.source, t)} · ${subscription.eventType}`,
                           )
                           .join(", ")}
                       </ItemDescription>
@@ -373,7 +399,7 @@ export function ResponsibilityDialog({
         </DialogBody>
         <DialogFooter className="mt-4">
           <Button onClick={onClose} size="sm" type="button" variant="outline">
-            Cancel
+            {t("settings.cancel")}
           </Button>
           <Button
             disabled={edit.isPending}
@@ -381,7 +407,7 @@ export function ResponsibilityDialog({
             size="sm"
             type="submit"
           >
-            {edit.isPending ? "Saving…" : "Save"}
+            {edit.isPending ? t("responsibilities.saving") : t("settings.save")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -389,14 +415,26 @@ export function ResponsibilityDialog({
   );
 }
 
-const RUN_LABEL: Record<string, string> = {
-  queued: "Queued",
-  running: "Running",
-  waiting: "Waiting for you",
-  succeeded: "Succeeded",
-  failed: "Failed",
-  skipped: "Skipped",
+const RUN_LABEL: Record<string, MessageId> = {
+  queued: "responsibilities.run.queued",
+  running: "routines.status.running",
+  waiting: "routines.status.waiting",
+  succeeded: "routines.status.succeeded",
+  failed: "routines.status.failed",
+  skipped: "routines.status.skipped",
 };
+/**
+ * What a run waits for, by the kind the server reports: each known kind has its own words, any other
+ * reads as "you".
+ */
+const WAIT_KIND: Record<string, MessageId> = {
+  approval: "responsibilities.run.waitKind.approval",
+  person_question: "responsibilities.run.waitKind.question",
+  computer_handoff: "responsibilities.run.waitKind.handoff",
+  computer_sign_in: "responsibilities.run.waitKind.signIn",
+};
+const waitingKindId = (kind: string): MessageId =>
+  WAIT_KIND[kind] ?? "responsibilities.run.waitKind.other";
 function runStatusClass(status: string) {
   return status === "failed"
     ? "text-destructive"
@@ -420,6 +458,7 @@ function Runs({
   shown: boolean;
   onToggle: () => void;
 }) {
+  const t = useT();
   const runs = useQuery({
     ...responsibilityRunsQueryOptions(goalId),
     enabled: shown,
@@ -427,9 +466,11 @@ function Runs({
   return (
     <section className="grid gap-2">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="font-medium text-sm">Runs</h3>
+        <h3 className="font-medium text-sm">{t("responsibilities.runs")}</h3>
         <Button onClick={onToggle} size="sm" type="button" variant="ghost">
-          {shown ? "Hide runs" : "View runs"}
+          {shown
+            ? t("responsibilities.hideRuns")
+            : t("responsibilities.viewRuns")}
         </Button>
       </div>
       {!shown ? null : runs.isPending ? null : runs.error ? (
@@ -447,7 +488,9 @@ function Runs({
                 </ItemMedia>
                 <ItemContent>
                   <ItemTitle className={runStatusClass(run.status)}>
-                    {RUN_LABEL[run.status]}
+                    {RUN_LABEL[run.status]
+                      ? t(RUN_LABEL[run.status])
+                      : run.status}
                   </ItemTitle>
                   <ItemDescription>
                     {new Date(run.createdAt).toLocaleString()}
@@ -459,15 +502,16 @@ function Runs({
                     params={{ channelId }}
                     className="text-sm underline"
                   >
-                    Open conversation
+                    {t("stalled.open")}
                   </Link>
                 </ItemActions>
                 {run.waiting || run.error || run.replyText ? (
                   <ItemFooter className="min-w-0 flex-col items-stretch">
                     {run.waiting && (
                       <p>
-                        Waiting for {run.waiting.kind}. Answer at the top of
-                        this Bot's page or in the conversation.
+                        {t("responsibilities.run.waiting", {
+                          kind: t(waitingKindId(run.waiting.kind)),
+                        })}
                       </p>
                     )}
                     {run.error && (
@@ -483,7 +527,7 @@ function Runs({
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground text-sm">No runs yet.</p>
+        <p className="text-muted-foreground text-sm">{t("routines.noRuns")}</p>
       )}
     </section>
   );

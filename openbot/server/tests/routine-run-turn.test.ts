@@ -1321,3 +1321,61 @@ test("trusted selected skill messages precede a task attachment and persist with
   expect(calls.runs[0]?.input.messages).toEqual([skill, userMessage]);
   expect(calls.runs[0]?.persistedInputMessages).toEqual([skill, userMessage]);
 });
+
+describe("reading the tool results of a turn (D178)", () => {
+  test("each result is reported with the name of the call that made it, matched by call id", async () => {
+    const seen: { name: string; content: string }[] = [];
+    const { run } = harness({
+      drive: ({ agent, observer }) => {
+        for (const subscriber of agent.subscribers) {
+          const params = {
+            messages: agent.messages,
+            state: agent.state,
+            agent,
+          };
+          void subscriber.onToolCallStartEvent?.({
+            event: {
+              type: EventType.TOOL_CALL_START,
+              toolCallId: "c1",
+              toolCallName: "mcp__freeduet__offer_file",
+            },
+            ...params,
+            // biome-ignore lint/suspicious/noExplicitAny: the subscriber params are not the subject.
+          } as any);
+          void subscriber.onToolCallResultEvent?.({
+            event: {
+              type: EventType.TOOL_CALL_RESULT,
+              messageId: "r1",
+              toolCallId: "c1",
+              content: "result one",
+            },
+            ...params,
+            // biome-ignore lint/suspicious/noExplicitAny: the subscriber params are not the subject.
+          } as any);
+          // A result whose call was never seen has no name, so it is not reported.
+          void subscriber.onToolCallResultEvent?.({
+            event: {
+              type: EventType.TOOL_CALL_RESULT,
+              messageId: "r2",
+              toolCallId: "unknown",
+              content: "result two",
+            },
+            ...params,
+            // biome-ignore lint/suspicious/noExplicitAny: the subscriber params are not the subject.
+          } as any);
+        }
+        agent.messages = [
+          ...agent.messages,
+          { id: "assistant_1", role: "assistant", content: "Done." },
+        ] as typeof agent.messages;
+        observer.complete();
+      },
+    });
+
+    await run({ onToolResult: (result) => seen.push(result) });
+
+    expect(seen).toEqual([
+      { name: "mcp__freeduet__offer_file", content: "result one" },
+    ]);
+  });
+});

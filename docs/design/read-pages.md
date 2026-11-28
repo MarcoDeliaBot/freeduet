@@ -1,13 +1,13 @@
 # Read several pages in one call (D127, item 4 of D123)
 
-Status: built, not yet run live. Roadmap row 94, `docs/M1_PLAN.md` section 85.
+Status: built, not yet run live. Roadmap row 94, [`docs/M1_PLAN.md`](../M1_PLAN.md) section 85 ("Read several pages in one call, read only (D127)").
 
 ## The gap
 
 A member that compares pages calls `computer_navigate` once per page: one model call, one tool call and one
 full page of text in the conversation each time. Checked in the code: `computer_navigate` returns the text of
 one page (`agent-computer/src/index.ts`, route `/navigate`, limit `TEXT_EXTRACT_LIMIT`, 6,000), and nothing
-reads a list. This is the first step of code mode (section 81, item 7): one call instead of several, with
+reads a list. This is the first step of code mode (section 81 of [M1_PLAN.md](../M1_PLAN.md), "Eight items from two research reports, in Next (D123)", item 7): one call instead of several, with
 nothing new that acts.
 
 ## The tool
@@ -85,3 +85,7 @@ navigation:
 The prompt sentence (Jules) and the tool's description are text a model reads. To run on the eval stack:
 jules-1, jules-2 and jules-3, plus a case that gives Jules three addresses to compare and checks that he
 calls the tool once. The saving in calls per turn is for the script of row 93 to measure.
+
+## Built so far: an engine for the page (D156, [M1_PLAN.md](../M1_PLAN.md) section 110, "Members can check a page in Firefox and WebKit (D156)")
+
+`computer_read_pages` takes an optional `engine` (`firefox` or `webkit`; the default is the member's own Chromium tab). The server passes it to the computer's `/read-page`, which reads the page in a private browser of that engine behind the same network filter, after the engine has passed a check against the filter in the running computer. Text only. Verified: the server cases and the canary logic (with Chromium standing in). Not verified: a real Firefox and WebKit run (CI installs them and runs `engine-check-browser.test.ts`).

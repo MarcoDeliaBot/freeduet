@@ -23,6 +23,8 @@ import {
   TAKE_CONTROL_FIRST,
 } from "./control";
 import { describeHumanGesture } from "./demonstration";
+import { parseEngine } from "./browser-engine";
+import { createEngineChecker, EngineUnavailableError } from "./engine-check";
 import { handleEgressPolicyRequest, startEgressFilter } from "./egress";
 import { allowedHostsFrom, createHostGuard } from "./host-guard";
 import { identity } from "./identity";
@@ -332,6 +334,8 @@ const workspace = createWorkspace(
 // Only the running computer points its shell at it: a test that imports this module shares its
 // process with every later test.
 await startEgressFilter({ forShell: import.meta.main });
+/** Read-only page checks in Firefox and WebKit (D156); each engine is proven against the filter before use. */
+const engineChecker = createEngineChecker();
 const profiles = createProfiles(
   process.env.PROFILES_DIR?.trim() || "/profiles",
   async (botId) => {
@@ -1479,74 +1483,92 @@ serve<StreamData>({
         const body = (await request.json().catch(() => null)) as {
           url?: unknown;
           limit?: unknown;
+          engine?: unknown;
         } | null;
         const parsed = parseNavigateUrl(body?.url);
         if (!parsed.ok) return json({ error: parsed.error }, 400);
         const asked = parseReadPageLimit(body?.limit);
         if (!asked.ok) return json({ error: asked.error }, 400);
+        const engine = parseEngine(body?.engine);
+        if (!engine.ok) return json({ error: engine.error }, 400);
 
         const startedAt = Date.now();
         let watch: ReturnType<typeof watchNavigations> | undefined;
         try {
-          const target = await currentPage(botId, "navigate");
-          session.control.assertBotMayAct(true);
-          watch = watchNavigations(target);
-          let response: Awaited<ReturnType<typeof navigateWebPage>> | null =
-            null;
-          try {
-            response = await navigateWebPage(
+          // Chromium reads in the Bot's own tab. Another engine (D156) reads in a private browser of its
+          // own, so it neither moves the Bot's tab nor retires its refs.
+          const readThrough = async (target: Page, ownTab: boolean) => {
+            watch = watchNavigations(target);
+            let response: Awaited<ReturnType<typeof navigateWebPage>> | null =
+              null;
+            try {
+              response = await navigateWebPage(
+                target,
+                parsed.url,
+                RUNTIME.backend,
+                NAVIGATION_TIMEOUT_MS,
+              );
+            } catch (error) {
+              if (!pageMovedOn(error, watch.count())) throw error;
+            }
+            // A new document: every ref handed out before it is retired, as after any navigation.
+            if (ownTab) session.snapshotId += 1;
+            const cfMitigated = response
+              ? await response
+                  .headerValue("cf-mitigated")
+                  .catch(() => undefined)
+              : undefined;
+            const { value: page } = await collectWhenSettled(
               target,
-              parsed.url,
-              RUNTIME.backend,
-              NAVIGATION_TIMEOUT_MS,
-            );
-          } catch (error) {
-            if (!pageMovedOn(error, watch.count())) throw error;
-          }
-          // A new document: every ref handed out before it is retired, as after any navigation.
-          session.snapshotId += 1;
-          const cfMitigated = response
-            ? await response.headerValue("cf-mitigated").catch(() => undefined)
-            : undefined;
-          const { value: page } = await collectWhenSettled(
-            target,
-            async () => {
-              assertPageAccess(RUNTIME.backend, target.url());
-              return {
-                url: target.url(),
-                title: await target.title(),
-                extract: await readablePageText(target, asked.limit),
-                signal: await readChallengeSignal(target, { cfMitigated }),
-              };
-            },
-            {
-              quietMs: SETTLE_QUIET_MS,
-              signal: request.signal,
-              watch,
-              holdDocument: async () => {
-                const body = await target.evaluateHandle(() => document.body);
+              async () => {
+                assertPageAccess(RUNTIME.backend, target.url());
                 return {
-                  intact: () =>
-                    body.evaluate(
-                      (element) =>
-                        element === null ||
-                        (element.isConnected && element === document.body),
-                    ),
-                  release: () => body.dispose(),
+                  url: target.url(),
+                  title: await target.title(),
+                  extract: await readablePageText(target, asked.limit),
+                  signal: await readChallengeSignal(target, { cfMitigated }),
                 };
               },
-            },
+              {
+                quietMs: SETTLE_QUIET_MS,
+                signal: request.signal,
+                watch,
+                holdDocument: async () => {
+                  const body = await target.evaluateHandle(() => document.body);
+                  return {
+                    intact: () =>
+                      body.evaluate(
+                        (element) =>
+                          element === null ||
+                          (element.isConnected && element === document.body),
+                      ),
+                    release: () => body.dispose(),
+                  };
+                },
+              },
+            );
+            const notRead = challengeNotice(page.signal);
+            return json({
+              url: page.url,
+              title: page.title,
+              text: notRead ? "" : page.extract.text,
+              truncated: notRead ? false : page.extract.truncated,
+              ...(notRead ? { notRead } : {}),
+              elapsedMs: Date.now() - startedAt,
+            });
+          };
+          if (engine.engine === "chromium") {
+            const target = await currentPage(botId, "navigate");
+            session.control.assertBotMayAct(true);
+            return await readThrough(target, true);
+          }
+          session.control.assertBotMayAct(true);
+          return await engineChecker.check(botId, engine.engine, (target) =>
+            readThrough(target, false),
           );
-          const notRead = challengeNotice(page.signal);
-          return json({
-            url: page.url,
-            title: page.title,
-            text: notRead ? "" : page.extract.text,
-            truncated: notRead ? false : page.extract.truncated,
-            ...(notRead ? { notRead } : {}),
-            elapsedMs: Date.now() - startedAt,
-          });
         } catch (error) {
+          if (error instanceof EngineUnavailableError)
+            return json({ error: error.message }, 502);
           if (
             error instanceof ControlError ||
             error instanceof SnapshotRequiredError

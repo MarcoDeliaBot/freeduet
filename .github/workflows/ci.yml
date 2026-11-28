@@ -149,7 +149,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun install --frozen-lockfile
         working-directory: openbot/agent-computer
-      - run: bunx playwright install --with-deps chromium
+      - run: bunx playwright install --with-deps chromium firefox webkit
         working-directory: openbot/agent-computer
       # Headless here: these launch through the profile path without the computer's own X server.
       # The headless run of the Web Bot Auth test is also the one that checks the user agent fix.
@@ -158,7 +158,9 @@ jobs:
           tests/demonstration-live.test.ts tests/webrtc-proxy.test.ts tests/web-bot-auth-browser.test.ts
           tests/handoff-page-restore.test.ts tests/page-links-browser.test.ts
           tests/navigation-settle-browser.test.ts tests/private-network-browser.test.ts
+          tests/playwright-ready.test.ts
           tests/secret-field-write.test.ts tests/select-field.test.ts tests/read-page-browser.test.ts
+          tests/engine-check-browser.test.ts tests/engine-canary-browser.test.ts
         working-directory: openbot/agent-computer
         env:
           OPENBOT_COMPUTER_BROWSER: '1'
@@ -401,7 +403,7 @@ jobs:
         working-directory: openbot/agent-computer
       # Same for the Mastra Bot: root test discovery imports its receiver tests, which load Mastra
       # from that Bot's own dependency tree.
-      - run: bun install
+      - run: bun install --frozen-lockfile
         working-directory: openbot/agent-mastra
       # Same for the desktop app: root test discovery imports its React tests, whose JSX runtime is
       # pinned by the desktop lockfile rather than the root one.

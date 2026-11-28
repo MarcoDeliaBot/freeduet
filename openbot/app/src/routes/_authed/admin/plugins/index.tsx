@@ -35,6 +35,9 @@ import {
   pluginsPageQueryOptions,
   pluginsProvider,
 } from "@/lib/plugins/queries";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
+import type { Translator } from "@/freeduet/i18n/translate";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
 import {
   moreAppsRow,
   moreAppsSectionDescription,
@@ -97,18 +100,20 @@ function summaryFor(
    */
   auth: CatalogueItem["auth"] | undefined,
   youConnected: boolean,
+  t: Translator<MessageId>,
 ): string {
   if ((auth === "user-oauth" || auth === "user-secret") && !youConnected)
-    return "Not connected";
-  if (server.tools.length === 0) return "No tools yet";
+    return t("admin.plugins.sum.notConnected");
+  if (server.tools.length === 0) return t("admin.plugins.sum.noTools");
 
   const bots = new Set(server.tools.flatMap((tool) => tool.grantedTo)).size;
-  const tools = `${server.tools.length} ${server.tools.length === 1 ? "tool" : "tools"}`;
-  if (bots === 0) return `${tools} · no Bots`;
-  return `${tools} · ${bots} ${bots === 1 ? "Bot" : "Bots"}`;
+  const tools = t("admin.plugins.sum.tools", { count: server.tools.length });
+  if (bots === 0) return t("admin.plugins.sum.toolsNoBots", { tools });
+  return `${tools} · ${t("admin.plugins.sum.bots", { count: bots })}`;
 }
 
 function RouteComponent() {
+  const { t } = useAppLanguage();
   const plugins = useQuery(pluginsPageQueryOptions());
   const connections = useQuery(connectionsQueryOptions());
   /*
@@ -121,6 +126,7 @@ function RouteComponent() {
   const moreApps = moreAppsRow(
     provider,
     plugins.data?.composioConfigured ?? false,
+    t,
   );
 
   /*
@@ -144,13 +150,13 @@ function RouteComponent() {
 
   return (
     <PageShell
-      description="What this deployment can reach, and which Bots can use it. A plugin you add is for everybody. Choose which Bots get its tools on its page."
-      title="Plugins"
+      description={t("admin.plugins.description")}
+      title={t("admin.plugins.title")}
     >
       {/* Pending, error, empty, rows — pending first, so no sentence asserts anything mid-fetch. */}
       {plugins.isPending ? null : plugins.error ? (
         <p className="mt-12 text-destructive text-sm" role="alert">
-          Couldn't load plugins. Reload the page.
+          {t("admin.plugins.loadError")}
         </p>
       ) : (
         <>
@@ -161,13 +167,11 @@ function RouteComponent() {
           <AccessRequestsSection />
 
           <PageSection
-            description="Added for everybody. Open one to set it up and choose which Bots get its tools."
-            title="Connected"
+            description={t("admin.plugins.connected.description")}
+            title={t("admin.plugins.connected.title")}
           >
             {plugins.data?.servers.length === 0 ? (
-              <PageEmpty>
-                Nothing connected yet. Pick one from the list below.
-              </PageEmpty>
+              <PageEmpty>{t("admin.plugins.connected.empty")}</PageEmpty>
             ) : (
               <PageRows>
                 {plugins.data?.servers.map((server, index) => {
@@ -216,6 +220,7 @@ function RouteComponent() {
                               server,
                               authByKey.get(server.id),
                               connected.has(server.id),
+                              t,
                             )}
                           </span>
                           <IconChevronRight className="size-4 shrink-0 text-muted-foreground" />
@@ -232,11 +237,11 @@ function RouteComponent() {
           </PageSection>
 
           <PageSection
-            description="Reviewed, first-party servers. Open one to add it."
-            title="Explore plugins"
+            description={t("admin.plugins.explore.description")}
+            title={t("admin.plugins.explore.title")}
           >
             {explore.length === 0 ? (
-              <PageEmpty>Every plugin in the catalogue is connected.</PageEmpty>
+              <PageEmpty>{t("admin.plugins.explore.empty")}</PageEmpty>
             ) : (
               <PageRows>
                 {explore.map((entry: CatalogueItem, index) => {
@@ -265,7 +270,7 @@ function RouteComponent() {
                             count={requestCounts?.byApp[entry.key] ?? 0}
                           />
                           <span className="text-muted-foreground text-xs">
-                            Not added
+                            {t("admin.plugins.notAdded")}
                           </span>
                           <IconChevronRight className="size-4 shrink-0 text-muted-foreground" />
                         </ItemActions>
@@ -279,8 +284,8 @@ function RouteComponent() {
           </PageSection>
 
           <PageSection
-            description={moreAppsSectionDescription(provider)}
-            title="More apps"
+            description={moreAppsSectionDescription(provider, t)}
+            title={t("admin.plugins.more.title")}
           >
             <PageRows>
               {/*
@@ -299,7 +304,7 @@ function RouteComponent() {
                      redirected it straight back. The field is a literal union over the generated
                      route tree, so a path no route answers does not compile. */
                   render={
-                    <Link to={providerVocabulary(provider).directoryPath} />
+                    <Link to={providerVocabulary(provider, t).directoryPath} />
                   }
                   size="sm"
                 >
@@ -340,10 +345,11 @@ function RouteComponent() {
  * row that reads as something to do. Nothing at zero: a count of nothing on every row is noise.
  */
 function PendingRequests({ count }: { count: number }) {
+  const { t } = useAppLanguage();
   if (count === 0) return null;
   return (
     <span className="font-medium text-foreground text-xs tabular-nums">
-      {count} {count === 1 ? "request" : "requests"}
+      {t("admin.plugins.requests", { count })}
     </span>
   );
 }

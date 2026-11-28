@@ -17,6 +17,7 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import { deleteSavedLoginMutationOptions } from "@/lib/passwords/mutations";
 import { savedLoginsQueryOptions } from "@/lib/passwords/queries";
 import { queryClient } from "@/query-client";
@@ -32,28 +33,23 @@ export const Route = createFileRoute("/_authed/settings/passwords")({
  * it. A saved login is used only when you confirm it in a sign-in form.
  */
 function PasswordsPage() {
+  const { t, date } = useAppLanguage();
   const logins = useQuery(savedLoginsQueryOptions());
   const remove = useMutation(deleteSavedLoginMutationOptions(queryClient));
   return (
     <PageShell
-      title="Passwords"
-      description="Logins you saved when signing a Bot in to a website. Bots never see them, and you confirm each use."
+      title={t("home.passwordsLabel")}
+      description={t("passwords.description")}
     >
-      <PageSection title="Saved logins">
+      <PageSection title={t("passwords.saved")}>
         {logins.isPending ? null : logins.error ? (
           <p className="text-destructive text-sm" role="alert">
-            Couldn't load your passwords. Reload the page.
+            {t("passwords.loadError")}
           </p>
         ) : !logins.data.passwordManager ? (
-          <PageEmpty>
-            An admin has turned off saved passwords. Your logins are kept but
-            won't be offered.
-          </PageEmpty>
+          <PageEmpty>{t("passwords.off")}</PageEmpty>
         ) : logins.data.logins.length === 0 ? (
-          <PageEmpty>
-            No saved logins. Choose Save to Passwords when you sign a Bot in to
-            a website.
-          </PageEmpty>
+          <PageEmpty>{t("passwords.empty")}</PageEmpty>
         ) : (
           <PageRows>
             {logins.data.logins.map((login, index) => (
@@ -68,13 +64,15 @@ function PasswordsPage() {
                     <ItemDescription>
                       {login.username}
                       {login.lastUsedAt
-                        ? ` · last used ${new Date(login.lastUsedAt).toLocaleDateString()}`
-                        : " · never used"}
+                        ? ` · ${t("passwords.lastUsed", { date: date(new Date(login.lastUsedAt)) })}`
+                        : ` · ${t("passwords.neverUsed")}`}
                     </ItemDescription>
                   </ItemContent>
                   <ItemActions>
                     <Button
-                      aria-label={`Delete login for ${login.origin}`}
+                      aria-label={t("passwords.deleteAria", {
+                        origin: login.origin,
+                      })}
                       size="sm"
                       variant="ghost"
                       disabled={remove.isPending}

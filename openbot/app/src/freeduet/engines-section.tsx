@@ -1,33 +1,23 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { DuetIcon } from "@/components/duet/icons";
 import { DuetCard, OutcomePill } from "@/components/duet/kit";
-import { PageEmpty, PageShell } from "@/components/layout/page-shell";
+import { PageEmpty } from "@/components/layout/page-shell";
 import { StaggerItem } from "@/components/layout/stagger";
 import { client } from "@/lib/client";
-import { isFreeDuetApp } from "./manage-group";
-import { WorkspaceShell, WorkspaceTabs } from "./workspace";
 import { EngineMembers } from "./engines-members";
 import { EngineProviders } from "./engines-providers";
-import { EngineTokens } from "./engines-tokens";
 import {
-  ASIDE_LABEL,
-  ENGINE_STATES_TITLE,
-  ENGINES_FALLBACK,
-  ENGINES_INTRO,
-  ENGINES_TITLE,
   type EngineSummary,
   type EnginesReading,
   enginePill,
   engineReasonText,
   engineStateText,
-  KEYS_NOT_BUILT,
-  KEYS_TEXT,
-  KEYS_TITLE,
-  LOAD_FAILED,
-  NO_ENGINES,
-  SPENDING_TEXT,
-  SPENDING_TITLE,
 } from "./engines-text";
+import { EngineTokens } from "./engines-tokens";
+import { englishT, type T, useAppLanguage } from "./i18n/provider";
+import { LightPageShell } from "./light/light-page";
+import { isFreeDuetApp } from "./manage-group";
+import { WorkspaceTabs } from "./workspace";
 
 /** How often the page asks again, so a time it shows does not go stale while it stays open. */
 const REFRESH_MS = 30_000;
@@ -35,12 +25,12 @@ const REFRESH_MS = 30_000;
 export const enginesKeys = { all: ["freeduet", "engines"] as const };
 
 /** The server's read of agent-freeduet's engines. The token never reaches this page. */
-export function enginesQueryOptions() {
+export function enginesQueryOptions(t: T = englishT) {
   return queryOptions({
     queryKey: enginesKeys.all,
     queryFn: async (): Promise<EnginesReading> => {
       const response = await client("/api/freeduet/engines", {
-        fallback: ENGINES_FALLBACK,
+        fallback: t("engines.fallback"),
       });
       return response.json();
     },
@@ -49,7 +39,8 @@ export function enginesQueryOptions() {
 
 /** One engine: its word for the state, its name, and one line of note from the server's words. */
 function EngineCard({ engine, now }: { engine: EngineSummary; now: Date }) {
-  const pill = enginePill(engine.state);
+  const { t, language } = useAppLanguage();
+  const pill = enginePill(engine.state, t);
   return (
     <DuetCard className="flex h-full flex-col gap-3 p-5" data-slot="engine">
       <div>
@@ -61,15 +52,16 @@ function EngineCard({ engine, now }: { engine: EngineSummary; now: Date }) {
         {engine.name}
       </h3>
       <p className="type-label mt-auto border-duet-hair-2 border-t pt-3 text-duet-ink-2">
-        {engineStateText(engine, now)}
+        {engineStateText(engine, now, undefined, t, language)}
       </p>
     </DuetCard>
   );
 }
 
 export function FreeDuetEngines() {
+  const { t } = useAppLanguage();
   const engines = useQuery({
-    ...enginesQueryOptions(),
+    ...enginesQueryOptions(t),
     refetchInterval: REFRESH_MS,
   });
   const reading = engines.data;
@@ -84,11 +76,11 @@ export function FreeDuetEngines() {
           className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm"
           role="alert"
         >
-          {LOAD_FAILED}
+          {t("engines.loadFailed")}
         </p>
       ) : null}
       {reading?.reason ? (
-        <PageEmpty>{engineReasonText(reading.reason)}</PageEmpty>
+        <PageEmpty>{engineReasonText(reading.reason, t)}</PageEmpty>
       ) : null}
       {reading && !reading.reason ? (
         <EngineSections
@@ -100,18 +92,16 @@ export function FreeDuetEngines() {
       ) : null}
     </>
   );
-  return workspace ? (
-    <WorkspaceShell
-      title={ENGINES_TITLE}
-      icon="activity"
-      description={ENGINES_INTRO}
+  // The light design (D174): a header with a way back to the settings home, one sentence, the same sections.
+  return (
+    <LightPageShell
+      className={workspace ? "fd-workspace" : undefined}
+      purpose={t("engines.intro")}
+      title={t("dash.engines")}
+      width="wide"
     >
       {content}
-    </WorkspaceShell>
-  ) : (
-    <PageShell description={ENGINES_INTRO} title={ENGINES_TITLE} width="wide">
-      {content}
-    </PageShell>
+    </LightPageShell>
   );
 }
 
@@ -126,13 +116,14 @@ export function EngineSections({
   workspace: boolean;
   onChanged: () => unknown;
 }) {
+  const { t } = useAppLanguage();
   const states =
     reading.engines.length === 0 ? (
-      <PageEmpty>{NO_ENGINES}</PageEmpty>
+      <PageEmpty>{t("engines.noEngines")}</PageEmpty>
     ) : (
       <section>
         <h2 className={workspace ? "fd-section-title" : "sr-only"}>
-          {ENGINE_STATES_TITLE}
+          {t("engines.statesTitle")}
         </h2>
         <ul
           className={workspace ? "fd-engine-grid" : "grid gap-4 sm:grid-cols-2"}
@@ -148,19 +139,30 @@ export function EngineSections({
       </section>
     );
   const notes = (
-    <aside aria-label={ASIDE_LABEL} className="flex min-w-0 flex-col gap-4">
+    <aside
+      aria-label={t("engines.asideLabel")}
+      className="flex min-w-0 flex-col gap-4"
+    >
       <DuetCard className="p-5">
         <h2 className="type-body font-semibold">
-          {workspace && <DuetIcon name="key" size={19} />} {KEYS_TITLE}
+          {workspace && <DuetIcon name="key" size={19} />}{" "}
+          {t("engines.keys.title")}
         </h2>
-        <p className="type-label mt-2 text-duet-ink-2">{KEYS_TEXT}</p>
-        <p className="type-label mt-2 text-duet-ink-2">{KEYS_NOT_BUILT}</p>
+        <p className="type-label mt-2 text-duet-ink-2">
+          {t("engines.keys.text")}
+        </p>
+        <p className="type-label mt-2 text-duet-ink-2">
+          {t("engines.keys.notBuilt")}
+        </p>
       </DuetCard>
       <DuetCard className="p-5">
         <h2 className="type-body font-semibold">
-          {workspace && <DuetIcon name="activity" size={19} />} {SPENDING_TITLE}
+          {workspace && <DuetIcon name="activity" size={19} />}{" "}
+          {t("engines.spending.title")}
         </h2>
-        <p className="type-label mt-2 text-duet-ink-2">{SPENDING_TEXT}</p>
+        <p className="type-label mt-2 text-duet-ink-2">
+          {t("engines.spending.text")}
+        </p>
       </DuetCard>
     </aside>
   );
@@ -178,11 +180,11 @@ export function EngineSections({
   if (workspace) {
     return (
       <WorkspaceTabs
-        label="Engine sections"
+        label={t("engines.sectionsLabel")}
         views={[
           {
             id: "overview",
-            label: "Overview",
+            label: t("engines.tab.overview"),
             icon: "dashboard",
             content: (
               <div className="fd-overview">
@@ -195,7 +197,7 @@ export function EngineSections({
             ? [
                 {
                   id: "providers",
-                  label: "Providers",
+                  label: t("engines.tab.providers"),
                   icon: "plug" as const,
                   content: providers,
                 },
@@ -205,13 +207,18 @@ export function EngineSections({
             ? [
                 {
                   id: "members",
-                  label: "Bot assignments",
+                  label: t("engines.tab.members"),
                   icon: "bolt" as const,
                   content: members,
                 },
               ]
             : []),
-          { id: "usage", label: "Usage", icon: "activity", content: usage },
+          {
+            id: "usage",
+            label: t("engines.tab.usage"),
+            icon: "activity",
+            content: usage,
+          },
         ]}
       />
     );

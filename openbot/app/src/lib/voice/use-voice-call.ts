@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useT } from "@/freeduet/i18n/provider";
 import { deploymentCapabilitiesQueryOptions } from "@/lib/deployment/queries";
 import { queryClient } from "@/query-client";
 import { connectVoice, voiceSupported } from "./connection";
@@ -17,6 +18,9 @@ export function useVoiceCall(options: {
   const callbacks = useRef(options);
   const ownerId = useRef(voiceCallOwner());
   callbacks.current = options;
+  const t = useT();
+  const translate = useRef(t);
+  translate.current = t;
   const { data } = useQuery(deploymentCapabilitiesQueryOptions(), queryClient);
   const [session] = useState(
     () =>
@@ -27,6 +31,7 @@ export function useVoiceCall(options: {
           callbacks.current.askAgent(request, signal),
         context: () => callbacks.current.context(),
         anchorMessageId: () => callbacks.current.anchorMessageId(),
+        t: (id, params) => translate.current(id, params),
         onEnd: (call) => saveVoiceSession(call, ownerId.current),
       }),
   );

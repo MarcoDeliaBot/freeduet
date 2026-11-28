@@ -1,9 +1,14 @@
+import { type OfferedFile, readOfferedFile } from "@openbot/shared/member-file";
 import type { ApprovalContinuation } from "@openbot/toolkit/continuation";
 import { HeadlessToolSuspension } from "@openbot/toolkit/headless-tools";
 import type { TurnRunner } from "@openbot/toolkit/run-turn";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { headlessTurnRefusal } from "../admin/controls";
+import {
+  MAX_OFFERS_PER_HOP,
+  OFFER_FILE_NAMES,
+} from "../agents/handoff-delivery";
 import type { AgentActor } from "../agents/profile-types";
 import { PERSON_INITIATOR } from "../audit";
 import type { GroupConversations } from "../channels/group";
@@ -19,6 +24,7 @@ import { PRIVATE_SHARE_TOOL_REF } from "../proactive/private-share";
 import { recordTaskContinuation } from "../proactive/store";
 import type { ResponsibilityStore } from "../responsibilities/types";
 import { DEFAULT_MAX_ATTEMPTS, type WorkQueue } from "../work/queue";
+import { guardedSnapshot } from "./resume-input-guard";
 import type { ApprovalResumeDependencies, ApprovalService } from "./service";
 
 /**
@@ -47,7 +53,11 @@ export function createApprovalResumeTick(deps: {
     snapshot: ApprovalContinuation;
     approvalId: string;
     answer: string;
+    /** D178: files the member offered in the resumed run, by the exact tool names of D177. */
+    files?: readonly OfferedFile[];
   }) => Promise<boolean>;
+  /** D176: true when the saved call was a forward hop's (`agents/handoff-resume.ts`). */
+  forwardHop?: (snapshot: ApprovalContinuation) => Promise<boolean>;
   notify: (
     scope: DeliveryScope,
     input: { id: string; text: string; kind: "reply" },
@@ -99,12 +109,16 @@ export function createApprovalResumeTick(deps: {
           carriedOutByContinuation: (action) =>
             action.toolRef === PRIVATE_SHARE_TOOL_REF,
           continue: async ({
-            continuation: snapshot,
+            continuation: savedSnapshot,
             result,
             messageId,
             approvalId,
             answered = [{ approvalId, result }],
           }) => {
+            // D176: a resume is fed the run's own messages, within a size limit.
+            const snapshot = guardedSnapshot(savedSnapshot, {
+              forwardHop: (await deps.forwardHop?.(savedSnapshot)) ?? false,
+            });
             // The run waits on the first decision its step stopped on, which need not be this one.
             const decided = answered.map((entry) => entry.approvalId);
             const waitingOn = sql<string>`${responsibilityRuns.waiting}->>'approvalId'`;
@@ -185,7 +199,13 @@ export function createApprovalResumeTick(deps: {
              */
             const relayHop = async (answer: string) => {
               await deps
-                .relayHop?.({ snapshot, approvalId, answer })
+                .relayHop?.({
+                  snapshot,
+                  approvalId,
+                  answer,
+                  // A refused or failed decision records no file (D178).
+                  ...(result.error ? {} : { files: offered }),
+                })
                 .catch((failure: unknown) =>
                   console.error(
                     JSON.stringify({
@@ -198,6 +218,18 @@ export function createApprovalResumeTick(deps: {
                     }),
                   ),
                 );
+            };
+            // D178: `offer_file` results of the resumed run, read from its own events by call name.
+            const offered: OfferedFile[] = [];
+            const onToolResult = (done: { name: string; content: string }) => {
+              if (!OFFER_FILE_NAMES.has(done.name)) return;
+              const file = readOfferedFile(done.content);
+              if (
+                file &&
+                offered.length < MAX_OFFERS_PER_HOP &&
+                !offered.some((each) => each.path === file.path)
+              )
+                offered.push(file);
             };
             // A group turn's approval also writes the resumed reply into the shared transcript.
             let outcome: { replyText: string };
@@ -213,6 +245,7 @@ export function createApprovalResumeTick(deps: {
                     instruction: "",
                     initiator: snapshot.initiator ?? PERSON_INITIATOR,
                     continuation: { snapshot, result, messageId },
+                    ...(deps.relayHop ? { onToolResult } : {}),
                   }),
               );
             } catch (error) {

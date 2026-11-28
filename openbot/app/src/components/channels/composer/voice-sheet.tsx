@@ -1,11 +1,19 @@
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { IconKeyboard } from "@tabler/icons-react";
+import { useReducedMotion } from "motion/react";
 import { useRef } from "react";
 import { DuetIcon } from "@/components/duet/icons";
 import { MicOrb, type MicOrbState } from "@/components/duet/mic-orb";
+import { MemberOrb } from "@/components/shell/member-orb";
 import { Button } from "@/components/ui/button";
+import { useAutoStop } from "@/freeduet/voice/auto-stop";
+import { LevelMeter } from "@/freeduet/voice/level-meter";
+import { useMicLevel } from "@/freeduet/voice/use-mic-level";
+import { mascotKeyOf } from "@/freeduet/wide/mascot";
+import { useActiveBotId } from "@/lib/copilot/active-bot";
 import { cn } from "@/lib/utils";
 import type { useDictation } from "./use-dictation";
+import { useT } from "@/freeduet/i18n/provider";
 
 type Dictation = ReturnType<typeof useDictation>;
 
@@ -16,7 +24,8 @@ const SIDE_CONTROL =
 /**
  * A brain dump, spoken. Chat's composer opens this over the whole screen and starts recording; the
  * person says everything they need to do and then picks what happens to the words: × throws them
- * away, ↑ sends them as their message, and the keyboard puts them in the composer to edit first.
+ * away, the microphone stops and sends them as their message, and the keyboard puts them in the
+ * composer to edit first (with nothing said, it just closes and leaves the caret in the box).
  *
  * It drives the composer's own dictation session rather than one of its own, so the words reach the
  * conversation through exactly the path inline dictation uses: appended to the draft, and sent
@@ -28,19 +37,41 @@ export function VoiceSheet({
   dictation,
   open,
   canSend,
+  onType,
 }: {
   dictation: Dictation;
   open: boolean;
   /** Whether the words could be sent now, or parked behind the turn in flight. */
   canSend: boolean;
+  /** The keyboard with nothing said: close the sheet and put the caret in the box. */
+  onType: () => void;
 }) {
+  const t = useT();
   const { state, session } = dictation;
+  // A FreeDuet team member wears its drawn mascot here, as in the header; any other Bot keeps the mic orb.
+  const botId = useActiveBotId();
   const popup = useRef<HTMLDivElement>(null);
   const recording = state.phase === "recording";
+  const mic = useMicLevel(recording ? state.stream : undefined);
+  const notice = state.notice;
+  // Pausing after speaking puts the words in the message box (never sent); saying nothing stops quietly.
+  useAutoStop(recording, mic, {
+    onSilence: () => void session.finish("draft", { quiet: true }),
+    onNoSpeech: () => session.stopWithNotice(t("voice.heardNothing")),
+  });
+  const reduced = useReducedMotion() ?? false;
+  const typeInstead = () => {
+    // Nothing was heard: there is nothing to write down, so no transcription and no error.
+    if (mic.measuring && !mic.heard()) {
+      onType();
+      return;
+    }
+    void session.finish("draft", { quiet: true });
+  };
   const orb: MicOrbState =
     state.phase === "transcribing"
       ? "thinking"
-      : state.phase === "error"
+      : state.phase === "error" || notice !== undefined
         ? "idle"
         : "listening";
   return (
@@ -65,50 +96,73 @@ export function VoiceSheet({
         >
           <div className="mx-auto flex w-full max-w-[430px] flex-1 flex-col items-center px-6 pt-[max(env(safe-area-inset-top),24px)] pb-[max(env(safe-area-inset-bottom),28px)]">
             <div className="flex flex-1 flex-col items-center justify-center py-6 text-center">
-              <MicOrb size={132} state={orb} />
+              {mascotKeyOf(botId) !== null ? (
+                <span
+                  className="inline-flex transition-transform duration-100 ease-out"
+                  data-testid="voice-orb"
+                  style={
+                    reduced || !recording
+                      ? undefined
+                      : { transform: `scale(${1 + mic.level * 0.14})` }
+                  }
+                >
+                  <MemberOrb agentId={botId} size={132} state={orb} />
+                </span>
+              ) : (
+                <MicOrb size={132} state={orb} />
+              )}
               <DialogPrimitive.Title className="type-big mt-14 max-w-[300px] text-balance font-semibold">
-                Say everything you need to do
+                {t("composer.dictateTitle")}
               </DialogPrimitive.Title>
               <DialogPrimitive.Description className="type-sub mt-2 text-duet-ink-2">
-                Tap ↑ when you're done
+                {t("voice.tapWhenDone")}
               </DialogPrimitive.Description>
+              {recording ? (
+                <LevelMeter
+                  history={mic.history}
+                  level={mic.level}
+                  seconds={state.seconds}
+                />
+              ) : null}
             </div>
-            <Status dictation={dictation} />
+            <Status dictation={dictation} heard={mic.heard()} />
             <div className="mt-7 flex items-center justify-center gap-8 transition-transform duration-[var(--duet-dur-sheet)] motion-safe:group-data-starting-style:translate-y-3">
               <Button
-                aria-label="Discard"
+                aria-label={t("voice.discard")}
                 className={SIDE_CONTROL}
                 onClick={session.cancel}
                 size="icon"
-                title="Discard"
+                title={t("voice.discard")}
                 type="button"
                 variant="ghost"
               >
                 <DuetIcon className="size-[22px]" name="x" size={22} />
               </Button>
               <Button
-                aria-label="Send"
+                aria-label={notice ? t("voice.start") : t("voice.stopAndSend")}
                 className="size-[68px] rounded-full bg-duet-black p-0 text-duet-on-black hover:bg-duet-black hover:brightness-125 disabled:opacity-30"
-                disabled={!recording || !canSend}
-                onClick={() => void session.finish("send")}
+                disabled={notice ? false : !recording || !canSend}
+                onClick={() =>
+                  notice ? void session.start() : void session.finish("send")
+                }
                 size="icon"
-                title="Send"
+                title={notice ? t("voice.start") : t("voice.stopAndSend")}
                 type="button"
               >
                 <DuetIcon
-                  className="size-[26px]"
-                  name="arrowUp"
-                  size={26}
-                  stroke={2.4}
+                  className="size-[28px]"
+                  name="mic"
+                  size={28}
+                  stroke={2.2}
                 />
               </Button>
               <Button
-                aria-label="Type instead"
+                aria-label={t("voice.typeInstead")}
                 className={SIDE_CONTROL}
-                disabled={!recording}
-                onClick={() => void session.finish("draft")}
+                disabled={!recording && !notice}
+                onClick={notice ? onType : typeInstead}
                 size="icon"
-                title="Type instead"
+                title={t("voice.typeInstead")}
                 type="button"
                 variant="ghost"
               >
@@ -127,7 +181,14 @@ export function VoiceSheet({
 }
 
 /** The glass pill over the controls: what the sheet is doing, or what went wrong and what to do. */
-function Status({ dictation }: { dictation: Dictation }) {
+function Status({
+  dictation,
+  heard,
+}: {
+  dictation: Dictation;
+  heard: boolean;
+}) {
+  const t = useT();
   const { state, session } = dictation;
   const pill =
     "duet-glass type-label flex min-h-10 max-w-full items-center gap-2.5 rounded-[20px] px-4 py-2.5 shadow-duet-glass animate-in fade-in duration-[var(--duet-dur-swap)]";
@@ -146,20 +207,28 @@ function Status({ dictation }: { dictation: Dictation }) {
           type="button"
           variant="ghost"
         >
-          {state.canRetry ? "Retry" : "Record again"}
+          {state.canRetry ? t("voice.retry") : t("voice.recordAgain")}
         </Button>
       </div>
     );
   }
-  const message =
-    state.phase === "transcribing"
-      ? "Writing it down…"
+  const message = state.notice
+    ? state.notice
+    : state.phase === "transcribing"
+      ? t("voice.writing")
       : state.phase === "recording"
-        ? "I'm listening, just start talking"
-        : "Waiting for microphone permission…";
+        ? heard
+          ? t("voice.listeningStop")
+          : t("voice.listening")
+        : t("voice.permission");
   // The live region stays put and only its words change, so a screen reader hears each change.
   return (
-    <div className={cn(pill, "text-duet-ink-2")} role="status">
+    <div
+      aria-atomic="true"
+      aria-live="polite"
+      className={cn(pill, "text-duet-ink-2")}
+      role="status"
+    >
       <span
         className="flex items-center gap-2.5 animate-in fade-in duration-[var(--duet-dur-swap)]"
         key={state.phase}

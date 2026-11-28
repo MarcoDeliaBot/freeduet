@@ -1,5 +1,9 @@
+import type { ReactNode } from "react";
 import { z } from "zod";
 import { ToolLine } from "@/components/channels/tool-line";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { useT } from "@/freeduet/i18n/provider";
+import type { MessageParams } from "@/freeduet/i18n/translate";
 import { CommandOutput } from "@/components/computer/command-output";
 import { ComputerView } from "@/components/computer/computer-view";
 import { tryClient } from "@/lib/client";
@@ -154,29 +158,41 @@ function labelOf(result: string | undefined): string | undefined {
 /**
  * A compact transcript line that distinguishes policy refusals from ordinary failures.
  */
+/** A line's detail: text that comes from the call (kept as it is), or a catalogue message about it. */
+type Say = string | { id: MessageId; params?: MessageParams };
+
 function ActionLine({
   label,
   detail,
   running,
   refused,
   failed,
+  children,
 }: {
-  label: string;
-  detail?: string;
+  label: MessageId;
+  detail?: Say | undefined;
+  children?: ReactNode;
   running?: boolean;
   /** A policy or a boundary said no. Final: nothing the Bot does differently will help. */
   refused?: boolean;
   /** It was permitted and did not work. A different request might. */
   failed?: boolean;
 }) {
+  const t = useT();
+  const text =
+    detail === undefined || typeof detail === "string"
+      ? detail
+      : t(detail.id, detail.params);
   return (
     <ToolLine
-      detail={detail}
+      detail={text}
       failed={failed}
-      label={label}
+      label={t(label)}
       refused={refused}
       running={running}
-    />
+    >
+      {children}
+    </ToolLine>
   );
 }
 
@@ -268,23 +284,27 @@ export function ComputerTools() {
     available: offered.navigate,
     name: "computer_read_pages",
     description:
-      "Read up to 5 web pages in one call, one after another in your own browser tab, and get each page's title and readable text back (at most 6,000 characters per page, links included, and 24,000 in all, so five pages get 4,800 each). Use it to compare or skim several pages whose addresses you already have, instead of calling computer_navigate once for each. Read only: it clicks and types nothing. A page that fails or is refused does not stop the others; its entry carries an error. A page that needs a human check or the person's approval is not read here: open it with computer_navigate. The tab ends on the last page, so take a new snapshot before acting on it.",
+      "Read up to 5 web pages in one call, one after another in your own browser tab, and get each page's title and readable text back (at most 6,000 characters per page, links included, and 24,000 in all, so five pages get 4,800 each). Use it to compare or skim several pages whose addresses you already have, instead of calling computer_navigate once for each. Read only: it clicks and types nothing. A page that fails or is refused does not stop the others; its entry carries an error. A page that needs a human check or the person's approval is not read here: open it with computer_navigate. The tab ends on the last page, so take a new snapshot before acting on it. To see how a page reads in another browser engine, pass the engine parameter as firefox or webkit (the engine Safari uses): each page then opens in a private browser that shares nothing with your tab, is read only, and goes through the same network rules; your tab does not move. If that engine is not available on this computer, the entry says so.",
     parameters: z.object({
       urls: z
         .array(z.string())
         .min(1)
         .max(5)
         .describe("Full web addresses to read, including https://"),
+      engine: z
+        .enum(["chromium", "firefox", "webkit"])
+        .optional()
+        .describe("Browser engine to read in. Default chromium, your own tab."),
     }),
     handler: async (
-      { urls }: { urls: string[] },
+      { urls, engine }: { urls: string[]; engine?: string },
       { signal }: { signal?: AbortSignal } = {},
     ) => {
       const computerId = bot.current;
       const result = await callComputer(
         computerId,
         "/read-pages",
-        { method: "POST", body: { urls } },
+        { method: "POST", body: { urls, ...(engine ? { engine } : {}) } },
         signal,
       );
       if (result.ok) noteBrowsed(computerId);
@@ -334,10 +354,13 @@ export function ComputerTools() {
       return (
         <ActionLine
           running={status !== "complete"}
-          label="Read the page"
+          label="computer.tool.readPage"
           detail={
             elements.length
-              ? `${elements.length} thing${elements.length === 1 ? "" : "s"} it can act on`
+              ? {
+                  id: "computer.tool.readPageCount",
+                  params: { count: elements.length },
+                }
               : undefined
           }
         />
@@ -384,7 +407,7 @@ export function ComputerTools() {
     render: ({ args, result, status }) => (
       <ActionLine
         running={status !== "complete"}
-        label="Filled in"
+        label="computer.tool.filledIn"
         detail={
           // Never show typed values; identify only the target field.
           labelOf(result) ??
@@ -430,7 +453,7 @@ export function ComputerTools() {
     render: ({ args, result, status }) => (
       <ActionLine
         running={status !== "complete"}
-        label="Chose in"
+        label="computer.tool.choseIn"
         detail={
           // The element's label, never the ref or the value chosen.
           labelOf(result) ??
@@ -474,7 +497,7 @@ export function ComputerTools() {
       return (
         <ActionLine
           running={status !== "complete"}
-          label="Clicked"
+          label="computer.tool.clicked"
           detail={
             // Show refusal reason instead of an internal element ref.
             outcome.refused === true
@@ -523,7 +546,7 @@ export function ComputerTools() {
     render: ({ args, result, status }) => (
       <ActionLine
         running={status !== "complete"}
-        label="Pressed"
+        label="computer.tool.pressed"
         detail={typeof args?.key === "string" ? args.key : undefined}
         refused={outcomeOf(result).refused === true}
         failed={didNotWork(outcomeOf(result))}
@@ -691,13 +714,16 @@ export function ComputerTools() {
       return (
         <ActionLine
           running={status !== "complete"}
-          label="Listed files"
+          label="computer.tool.listedFiles"
           detail={
             outcome.refused === true || didNotWork(outcome)
               ? String(outcome.reason ?? "")
               : entries.length
-                ? `${entries.length} item${entries.length === 1 ? "" : "s"} in the workspace`
-                : "nothing saved yet"
+                ? {
+                    id: "computer.tool.itemsInWorkspace",
+                    params: { count: entries.length },
+                  }
+                : { id: "computer.tool.nothingSaved" }
           }
           refused={outcome.refused === true}
           failed={didNotWork(outcome)}
@@ -737,7 +763,7 @@ export function ComputerTools() {
       return (
         <ActionLine
           running={status !== "complete"}
-          label="Read file"
+          label="computer.tool.readFile"
           detail={
             outcome.refused === true
               ? String(outcome.reason ?? "")
@@ -812,9 +838,9 @@ export function ComputerTools() {
       const printed = outputOf(outcome as ToolOutcome);
       const exit = typeof outcome.exitCode === "number" ? outcome.exitCode : 0;
       return (
-        <ToolLine
+        <ActionLine
           running={status !== "complete"}
-          label="Ran a command"
+          label="computer.tool.ranCommand"
           detail={
             outcome.refused === true
               ? String(outcome.reason ?? "")
@@ -833,7 +859,7 @@ export function ComputerTools() {
               timedOut={outcome.timedOut === true}
             />
           ) : null}
-        </ToolLine>
+        </ActionLine>
       );
     },
   });
@@ -890,7 +916,11 @@ export function ComputerTools() {
       return (
         <ActionLine
           running={status !== "complete"}
-          label={args?.append === true ? "Added to file" : "Saved file"}
+          label={
+            args?.append === true
+              ? "computer.tool.addedToFile"
+              : "computer.tool.savedFile"
+          }
           // Show the path, never file contents.
           detail={
             outcome.refused === true
@@ -933,7 +963,7 @@ export function ComputerTools() {
     render: ({ result, status }) => (
       <ActionLine
         running={status !== "complete"}
-        label="Scrolled"
+        label="computer.tool.scrolled"
         refused={outcomeOf(result).refused === true}
         failed={didNotWork(outcomeOf(result))}
       />

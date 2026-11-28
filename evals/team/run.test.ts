@@ -60,6 +60,7 @@ import {
   messagesToEvents,
   runCaseLive,
   toRunMessages,
+  turnLimit,
 } from "./live";
 import {
   type CaseResult,
@@ -123,8 +124,8 @@ const REPORT = [
 describe("case file", () => {
   test("loads every case with a known member", async () => {
     const names = await loadMemberNames(PATHS.agents);
-    expect(cases.length).toBe(126);
-    expect(cases.filter((c) => c.safety).length).toBe(60);
+    expect(cases.length).toBe(147);
+    expect(cases.filter((c) => c.safety).length).toBe(67);
     expect(new Set(cases.map((c) => c.id)).size).toBe(cases.length);
     expect(cases.filter((c) => !names.has(c.member))).toEqual([]);
   });
@@ -169,7 +170,7 @@ describe("case file", () => {
       selectCases(cases, { members: ["fixer"], safetyOnly: true }).map(
         (c) => c.id,
       ),
-    ).toEqual(["gus-2", "gus-3", "gus-6", "gus-7"]);
+    ).toEqual(["gus-2", "gus-3", "gus-6", "gus-7", "gus-8"]);
   });
 
   test("attachments are read from fixtures/live with their text and type", () => {
@@ -191,7 +192,21 @@ describe("case file", () => {
       cases
         .filter((c) => /\[fixture:/i.test(c.request) && !c.attachments.length)
         .map((c) => c.id),
-    ).toEqual(["jules-5", "wren-2", "gus-1", "gus-4", "cam-4"]);
+    ).toEqual([
+      "jules-5",
+      "wren-2",
+      "gus-1",
+      "gus-4",
+      "cam-4",
+      "ada-5",
+      "iris-31",
+      "iris-32",
+      "iris-35",
+      "iris-36",
+      "iris-37",
+      "iris-38",
+      "iris-39",
+    ]);
     // iris-5's delivered invoice is real: Penny's answer to the hand-off, with the brief, and the page.
     expect(caseOf("iris-5").attachments.map((a) => a.name)).toEqual([
       "penny-report-northwind-invoice.txt",
@@ -545,6 +560,69 @@ describe("case file", () => {
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("a case's own turn time limit", () => {
+  test("the case value wins over the global one, and the global applies when the case has none", () => {
+    expect(turnLimit({ id: "x", timeout: 600 }, 300_000)).toEqual({
+      ms: 600_000,
+      source: "case timeout 600 s",
+    });
+    expect(turnLimit({ id: "x" }, 300_000)).toEqual({
+      ms: 300_000,
+      source: "--timeout 300 s",
+    });
+  });
+
+  test("loadCases reads a whole-second timeout and refuses one out of range or not whole, naming the case", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "team-eval-"));
+    const load = async (extra: string) => {
+      const file = join(dir, "cases.yaml");
+      await writeFile(
+        file,
+        `cases:\n  - id: x-1\n    member: inbox\n    request: hi\n    must: [a]\n${extra}`,
+      );
+      return loadCases(file);
+    };
+    try {
+      expect((await load("    timeout: 600\n"))[0]?.timeout).toBe(600);
+      expect((await load(""))[0]?.timeout).toBeUndefined();
+      for (const bad of ["29", "1801", "600.5", "'600'", "true"]) {
+        await expect(load(`    timeout: ${bad}\n`)).rejects.toThrow(
+          "x-1: timeout must be a whole number of seconds from 30 to 1800",
+        );
+      }
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("the shipped cases jules-2 and kai-5 set 600 s, and no other case sets one", async () => {
+    const timed = cases.filter((c) => c.timeout !== undefined);
+    expect(timed.map((c) => [c.id, c.timeout]).sort()).toEqual([
+      ["jules-2", 600],
+      ["kai-5", 600],
+    ]);
+  });
+
+  test("a turn over the case's own limit ends at that limit, and the timeout names the case limit", async () => {
+    const server = streamingServer({
+      member: "chef",
+      answer: [{ id: "a1", role: "assistant", content: "Still looking." }],
+      body: () =>
+        streamOf([], { gapMs: 20, close: false, state: { cancelled: false } }),
+    });
+    const started = Date.now();
+    const t = await runCaseLive(
+      { ...caseOf("basil-1"), timeout: 0.3 },
+      { ...FAST, timeoutMs: 5000, fetchImpl: server.fetchImpl },
+    );
+    expect(t.status).toBe("timeout");
+    expect(t.error).toBe(
+      "turn 1 of 1 did not finish within 0.3 s, the time limit for each turn (case timeout 0.3 s)",
+    );
+    expect(Date.now() - started).toBeLessThan(3000);
   });
 });
 
@@ -2571,7 +2649,7 @@ describe("live: a run's answer streams, and the turn's time limit bounds it", ()
     });
     expect(t.status).toBe("timeout");
     expect(t.error).toBe(
-      "turn 1 of 1 did not finish within 0.3 s, the time limit for each turn (--timeout)",
+      "turn 1 of 1 did not finish within 0.3 s, the time limit for each turn (--timeout 0.3 s)",
     );
     expect(stream.cancelled).toBe(true);
     expect(Date.now() - started).toBeLessThan(3000);

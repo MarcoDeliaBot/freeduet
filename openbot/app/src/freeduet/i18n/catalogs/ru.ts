@@ -1,0 +1,3107 @@
+import type { Catalog } from "../translate";
+import type { EN } from "./en";
+
+/*
+ * Russian (D181, stage 2): natural and short, "ты", the same tone as the Russian approval cards
+ * (openbot/shared/approval-text-ru.ts) and the Russian site page. Where the site's Russian page has a word
+ * for a thing, the app uses it: "помощник" for a Bot and for a member, "движок" for an engine, "рутина" for
+ * a routine, "передача" for a hand-off, "чат" for chat. "Full access" stays as the site and the cards have
+ * it. "запрос на одобрение" is an approval, and "Обзор" is the dashboard, a word neither the site page nor
+ * the cards use. The approval cards still say "Bot": a mismatch to settle, not a choice made here. Product
+ * and member names are placeholders, kept as they are and not declined. Plurals take one, few, many and
+ * other, as Russian rules have them. Not yet checked by a person who reads Russian.
+ */
+export const ru: Catalog<typeof EN> = {
+  "sign.title": "Вход в {product}",
+  "sign.continueWith": "Продолжить с {provider}",
+  "sign.opening": "Открываем {provider}…",
+  "sign.openError":
+    "Не удалось открыть вход через {provider}. Попробуй ещё раз.",
+  "sign.ssoRequired":
+    "Твоя организация требует входа с корпоративной учётной записью.",
+  "sign.pairLead":
+    "Этот браузер ещё не связан с {product}. На компьютере, где работает приложение, выполни",
+  "sign.pairTail": ": откроется {product}, готовый к работе.",
+  "sign.notSetUp":
+    "Вход ещё не настроен. Сначала его должен настроить администратор.",
+  "sign.or": "или",
+  "sign.emailPlaceholder": "you@company.com",
+  "sign.openingCompany": "Открываем…",
+  "sign.continueCompany": "Продолжить с корпоративной учётной записью",
+  "sign.adminSignIn": "Вход для администратора",
+  "sign.noCompany": "Для этого адреса корпоративный вход не настроен.",
+  "shell.menu": "Меню",
+  "shell.everything": "Всё",
+  "shell.everythingLine": "Весь контекст чатов во всех каналах",
+  "shell.channelsError": "Не удалось загрузить твои каналы. Обнови страницу.",
+  "shell.channels": "Каналы",
+  "shell.newChannel": "Новый канал",
+  "shell.archived": "Архив",
+  "shell.archivedChannels": "Архивные каналы",
+  "shell.unarchive": "Вернуть из архива",
+  "shell.unarchiveNamed": "Вернуть из архива: {name}",
+  "shell.earlier": "Более ранние разговоры",
+  "shell.manage": "Управление",
+  "shell.signOut": "Выйти",
+  "nav.bots": "Помощники",
+  "nav.connections": "Подключения",
+  "nav.capabilities": "Возможности",
+  "nav.routines": "Рутины",
+  "nav.approvalRules": "Правила одобрения",
+  "nav.admin": "Администрирование",
+  "nav.dashboard": "Обзор",
+  "nav.settings": "Настройки",
+  "tab.main": "Главная",
+  "tab.chat": "Чат",
+  "tab.tasks": "Задачи",
+  "tab.make": "Создать",
+  "tab.waiting": "{tab}, в ожидании: {badge}",
+  "header.chat": "Чат {product}",
+  "header.settings": "Твои настройки",
+  "header.back": "Назад",
+  "header.more": "Ещё",
+  "composer.ask": "Спроси что угодно",
+  "composer.message": "Сообщение",
+  "composer.queue": "Поставить в очередь",
+  "composer.send": "Отправить сообщение",
+  "composer.stop": "Остановить помощника",
+  "composer.showCall": "Показать голосовой звонок",
+  "composer.startCall": "Начать голосовой звонок",
+  "composer.callBot": "Позвонить этому помощнику",
+  "composer.callUnsupported":
+    "Для голосовых звонков нужны микрофон и защищённое соединение (HTTPS)",
+  "composer.speak": "Надиктовать сообщение",
+  "composer.dictateTitle": "Скажи всё, что нужно сделать",
+  "composer.attach": "Прикрепить файл",
+  "composer.moreUnavailable": "Дополнительные параметры сообщения недоступны",
+  "composer.messageNamed": "Написать {name}",
+  "chat.botsError": "Не удалось загрузить твоих помощников. Обнови страницу.",
+  "chat.noBots": "Помощников пока нет.",
+  "chat.conversationError": "Не удалось загрузить разговор. Обнови страницу.",
+  "chat.stillStarting": "Разговор ещё запускается. Попробуй через минуту.",
+  "chat.startError": "Не удалось начать разговор. Попробуй ещё раз.",
+  "attention.questions": {
+    one: "{count} вопрос",
+    few: "{count} вопроса",
+    many: "{count} вопросов",
+    other: "{count} вопроса",
+  },
+  "attention.approvals": {
+    one: "{count} запрос на одобрение",
+    few: "{count} запроса на одобрение",
+    many: "{count} запросов на одобрение",
+    other: "{count} запроса на одобрение",
+  },
+  "attention.handoffs": {
+    one: "{count} застрявшая передача",
+    few: "{count} застрявшие передачи",
+    many: "{count} застрявших передач",
+    other: "{count} застрявшей передачи",
+  },
+  "attention.unread": {
+    one: "{count} непрочитанный разговор",
+    few: "{count} непрочитанных разговора",
+    many: "{count} непрочитанных разговоров",
+    other: "{count} непрочитанного разговора",
+  },
+  "attention.needYou": {
+    one: "{count} дело ждёт тебя",
+    few: "{count} дела ждут тебя",
+    many: "{count} дел ждут тебя",
+    other: "{count} дела ждут тебя",
+  },
+  "attention.open": "{summary}. Открой «Помощники», чтобы разобраться с ними.",
+  "attention.unreadMessages": "Непрочитанные сообщения",
+  "bots.new": "Новый помощник",
+  "bots.purpose":
+    "Твои помощники и те, которыми с тобой поделились. Смотри, что делает каждый и что ему нужно от тебя.",
+  "bots.loadError": "Не удалось загрузить твоих помощников. Обнови страницу.",
+  "bots.needsYou": "Ждут тебя",
+  "bots.pinned": "Закреплённые",
+  "bots.yours": "Твои",
+  "bots.shared": "С тобой поделились",
+  "bots.allPinned": "Все твои помощники закреплены выше.",
+  "bots.allNeedYou": "Все твои помощники в разделе «Ждут тебя».",
+  "bots.none":
+    "У тебя пока нет помощников. Создай первого кнопкой «Новый помощник».",
+  "bots.nobodyShared": "С тобой пока никто не поделился помощником.",
+  "bots.hide": "Скрыть",
+  "bots.show": "Показать",
+  "bots.hidden": "Скрытые",
+  "bots.hiddenDescription": {
+    one: "{count} скрытый помощник. Меняется только твой список.",
+    few: "{count} скрытых помощника. Меняется только твой список.",
+    many: "{count} скрытых помощников. Меняется только твой список.",
+    other: "{count} скрытого помощника. Меняется только твой список.",
+  },
+  "bots.paused": "На паузе",
+  "bots.message": "Написать",
+  "bots.wroteIn": {
+    one: "Новые сообщения от {name} в {count} непрочитанном разговоре.",
+    few: "Новые сообщения от {name} в {count} непрочитанных разговорах.",
+    many: "Новые сообщения от {name} в {count} непрочитанных разговорах.",
+    other: "Новые сообщения от {name} в {count} непрочитанном разговоре.",
+  },
+  "bots.readNewest": "Прочитать новые",
+  "bots.resuming": "Возобновляем…",
+  "bots.pausedResume": "На паузе. Возобновить",
+  "botPage.purpose": "Что этот помощник делает для тебя и как он настроен.",
+  "botPage.fallbackTitle": "Помощник",
+  "botPage.openError":
+    "Не удалось открыть этого помощника. Возможно, он тебе недоступен.",
+  "profile.forYou": "Для тебя",
+  "profile.settingsError":
+    "Не удалось загрузить настройки этого помощника. Обнови страницу.",
+  "profile.active": "Включён",
+  "profile.pausedDescription":
+    "На паузе. Для тебя ничего не работает, пока ты его не включишь.",
+  "profile.activeDescription":
+    "Ведёт для тебя свои рутины, обязанности, передачи и напоминания.",
+  "profile.notifications": "Уведомления",
+  "profile.notifyDescription":
+    "{level}. Значки на боковой панели видны всегда.",
+  "profile.notify.all": "Всё",
+  "profile.notify.needsInput": "Только когда он ждёт меня",
+  "profile.notify.none": "Ничего (только значки)",
+  "profile.browserNotifications": "Уведомления в браузере",
+  "profile.browserOff":
+    "В этом браузере выключено. Включи, чтобы узнавать, когда помощник ждёт тебя.",
+  "profile.turnOn": "Включить",
+  "profile.startConversation": "Начни разговор.",
+  "stalled.what": "{name}: не завершено — {task}",
+  "stalled.why": "Почему: {reason}.",
+  "stalled.retryError": "Не удалось повторить. Возможно, это уже запущено.",
+  "stalled.dismissError": "Не удалось убрать. Возможно, это уже запущено.",
+  "stalled.dismissing": "Убираем…",
+  "stalled.dismissed": "Убрано",
+  "stalled.dismiss": "Убрать",
+  "stalled.retrying": "Пробуем снова…",
+  "stalled.queued": "Снова в очереди",
+  "stalled.retry": "Повторить",
+  "stalled.open": "Открыть разговор",
+  "dash.title": "Обзор",
+  "dash.notAvailable": "Пока недоступно",
+  "dash.tokensNotCounted": "Сегодня ещё ни один запрос не учтён.",
+  "dash.countsUnavailable": "Счётчики токенов сейчас недоступны.",
+  "dash.enginesLink": "Управлять движками",
+  "dash.teamLink": "Вся команда",
+  "dash.waitingForYou": "Ждут тебя",
+  "dash.available": "Доступно",
+  "dash.loading": "Загружаем твою команду…",
+  "dash.nothingWaits": "Ничего не ждёт тебя.",
+  "dash.thingsWait": {
+    one: "{count} дело ждёт тебя.",
+    few: "{count} дела ждут тебя.",
+    many: "{count} дел ждут тебя.",
+    other: "{count} дела ждут тебя.",
+  },
+  "dash.partialCount": "Сообщили счётчик: {reported} из {turns}",
+  "dash.inputPlusOutput": "Вход и выход вместе, как сообщил каждый движок",
+  "dash.nothingSaved": "Сегодня ещё ничего не прошло через бесплатный движок",
+  "dash.firstFor": {
+    one: "первый выбор у {count} помощника",
+    few: "первый выбор у {count} помощников",
+    many: "первый выбор у {count} помощников",
+    other: "первый выбор у {count} помощника",
+  },
+  "dash.members": {
+    one: "{count} помощник",
+    few: "{count} помощника",
+    many: "{count} помощников",
+    other: "{count} помощника",
+  },
+  "dash.indicators": "Показатели",
+  "dash.tokensToday": "Токены за сегодня",
+  "dash.savedToday": "Сэкономлено бесплатными движками сегодня",
+  "dash.waitingSub": "Вопросы, запросы на одобрение и застрявшие передачи",
+  "dash.nextRoutine": "Следующая рутина",
+  "dash.noRoutine": "Ни одна рутина не запланирована.",
+  "dash.team": "Команда",
+  "dash.engines": "Движки",
+  "dash.noEngine": "Ни один движок ещё не настроен.",
+  "dash.perMemberAria": "Токены на каждого помощника",
+  "dash.perMember": "Токены на каждого помощника, за сегодня",
+  "dash.foot":
+    "Счётчики — то, что сообщил каждый движок, по дням UTC. Журнал последней активности и индикатор лимита тарифа пока недоступны.",
+  "voice.heardNothing":
+    "Не удалось ничего расслышать. Нажми на микрофон, чтобы попробовать снова, или напиши.",
+  "voice.tapWhenDone": "Нажми на микрофон, когда закончишь",
+  "voice.discard": "Отменить",
+  "voice.start": "Начать диктовку",
+  "voice.stopAndSend": "Остановить диктовку и отправить",
+  "voice.typeInstead": "Напечатать вместо этого",
+  "voice.retry": "Повторить",
+  "voice.recordAgain": "Записать снова",
+  "voice.writing": "Превращаем сказанное в текст…",
+  "voice.listeningStop": "Слушаю… Остановлюсь, когда ты сделаешь паузу",
+  "voice.listening": "Слушаю, просто начинай говорить",
+  "voice.permission": "Ждём разрешения на микрофон…",
+  "voice.widget.unavailable": "",
+  "voice.widget.connecting": "",
+  "voice.widget.speaking": "",
+  "voice.widget.working": "",
+  "voice.widget.muted": "",
+  "voice.widget.listening": "",
+  "voice.widget.ready": "",
+  "voice.widget.label": "",
+  "voice.widget.duration": "",
+  "voice.widget.expand": "",
+  "voice.widget.expandTitle": "",
+  "voice.widget.end": "",
+  "voice.widget.endTitle": "",
+  "voice.widget.returnChat": "",
+  "voice.widget.returnChatTitle": "",
+  "voice.widget.settings": "",
+  "voice.widget.captions": "",
+  "voice.widget.captionsEmpty": "",
+  "voice.widget.you": "",
+  "voice.widget.youMuted": "",
+  "voice.widget.youNamed": "",
+  "voice.widget.mute": "",
+  "voice.widget.unmute": "",
+  "voice.widget.muteTitle": "",
+  "voice.session.slow": "",
+  "voice.session.timeLimit": "",
+  "voice.session.muteFailed": "",
+  "voice.session.lost": "",
+  "voice.session.startFailed": "",
+  "voice.session.transcriptLimit": "",
+  "voice.session.responseFailed": "",
+  "voice.session.serviceError": "",
+  "voice.webrtc.unsupported": "",
+  "voice.webrtc.playback": "",
+  "voice.webrtc.lost": "",
+  "voice.webrtc.micGone": "",
+  "voice.webrtc.channelFailed": "",
+  "voice.webrtc.ended": "",
+  "voice.webrtc.unreadable": "",
+  "voice.webrtc.connectFailed": "",
+  "voice.webrtc.invalid": "",
+  "voice.webrtc.notConnected": "",
+  "voice.websocket.audio": "",
+  "voice.websocket.config": "",
+  "voice.websocket.address": "",
+  "voice.websocket.startFailed": "",
+  "voice.websocket.connect": "",
+  "voice.websocket.closed": "",
+  "voice.websocket.notConnected": "",
+  "voice.websocket.invalid": "",
+  "voice.websocket.slow": "",
+  "voice.websocket.micGone": "",
+  "voice.connection.unsupported": "",
+  "voice.connection.unavailable": "",
+  "voice.connection.transport": "",
+  "dictation.controls.dictate": "",
+  "dictation.controls.cancel": "",
+  "dictation.controls.transcribing": "",
+  "dictation.controls.listening": "",
+  "dictation.controls.duration": "",
+  "dictation.controls.stop": "",
+  "dictation.controls.stopTitle": "",
+  "dictation.controls.send": "",
+  "dictation.recording.secure": "",
+  "dictation.recording.noRecorder": "",
+  "dictation.recording.noFormat": "",
+  "dictation.recording.tooLarge": "",
+  "dictation.recording.stopped": "",
+  "dictation.recording.interrupted": "",
+  "dictation.recording.empty": "",
+  "dictation.recording.noSpeech": "",
+  "dictation.recording.failed": "",
+  "dictation.session.denied": "",
+  "dictation.session.startFailed": "",
+  "dictation.session.finishFailed": "",
+  "dictation.session.transcribeFailed": "",
+  "home.bots": "Познакомься с командой и управляй каждым помощником.",
+  "home.capabilities": "Навыки и память.",
+  "home.connectionsLabel": "Аккаунты, приложения и правила для почты",
+  "home.connections": "Подключи аккаунт, приложение или почту.",
+  "home.setupLabel": "Список настройки",
+  "home.setup": "Посмотри, что уже настроено и что осталось.",
+  "home.approvalsLabel": "Правила одобрения и Full access",
+  "home.approvals": "Что помощник может делать, не спрашивая тебя.",
+  "home.passwordsLabel": "Пароли",
+  "home.passwords": "Пароли, которыми может пользоваться команда.",
+  "home.routines": "Работа, которая повторяется сама, и вид на неделю.",
+  "home.notifications": "Куда приходят обновления.",
+  "home.admin": "Компьютеры, учётные данные, границы, люди и журнал аудита.",
+  "home.engines":
+    "Какие движки отвечают за каждого помощника, в каком порядке и сколько токенов ушло сегодня. Твоя подписка остаётся первой, пока ты не поменяешь порядок.",
+  "home.safety": "Безопасность",
+  "home.jobs": "Работы",
+  "home.system": "Система",
+  "settings.description":
+    "Управляй командой, подключёнными аккаунтами и личными настройками.",
+  "settings.sections": "Разделы настроек",
+  "settings.workspace": "Рабочее пространство",
+  "settings.preferences": "Предпочтения",
+  "settings.devices": "Устройства и сведения",
+  "settings.appearance": "Оформление",
+  "settings.matchPhone": "Как на телефоне",
+  "settings.light": "Светлая",
+  "settings.dark": "Тёмная",
+  "settings.voice": "Голос",
+  "settings.shortcuts": "Горячие клавиши",
+  "language.section": "Язык",
+  "language.title": "Язык приложения",
+  "language.description":
+    "Язык меню и кнопок. Команда пишет тебе на языке, который задан в чате.",
+  "language.auto": "Автоматически (браузер)",
+  "settings.descriptionPlain": "Как {product} выглядит и работает для тебя.",
+  "wide.yourTeam": "Твоя команда",
+  "wide.team": "Команда",
+  "wide.stateWaiting": "Ждёт тебя",
+  "wide.stateWorking": "Работает над этим",
+  "wide.memberLabel": "{name}, {line}",
+  "chat.loadingConversation": "Загружаем этот разговор",
+  "chat.readAloud": "Прочитать вслух",
+  "chat.stopReading": "Остановить чтение",
+  "chat.thinking": "Думает",
+  "chat.queued": "В очереди",
+  "chat.removeQueued": "Убрать сообщение из очереди: {what}",
+  "chat.remove": "Убрать",
+  "chat.routineRan": "Рутина отработала.",
+  "chat.firstDayYes": "Всё верно",
+  "chat.firstDayNo": "Что-то не так",
+  "chat.tryingAgain": "Пробую снова.",
+  "chat.responsibilityRan": "Обязанность отработала.",
+  "chat.trigger": "Запуск:",
+  "chat.details": "Подробности",
+  "chat.via": "через {source}",
+  "chat.untitledFile": "Файл без названия",
+  "chat.attachment": "Вложение",
+  "chat.attachmentLower": "вложение",
+  "chat.attachmentNamed": "Вложение: {name}",
+  "chat.unavailableNamed": "Недоступно: {name}",
+  "chat.unavailable": "Это вложение недоступно.",
+  "chat.openNamed": "Открыть {name}",
+  "chat.close": "Закрыть",
+  "chat.generatedInterface": "Интерфейс, который создал этот помощник",
+  "chat.usedBrowser": "Использовал браузер",
+  "chat.hostAndMore": "{host} и ещё {amount}",
+  "chat.searchedWeb": "искал в интернете",
+  "chat.readPages": {
+    one: "прочитал {amount} страницу",
+    few: "прочитал {amount} страницы",
+    many: "прочитал {amount} страниц",
+    other: "прочитал {amount} страницы",
+  },
+  "chat.browsedPages": {
+    one: "просмотрел {amount} страницу",
+    few: "просмотрел {amount} страницы",
+    many: "просмотрел {amount} страниц",
+    other: "просмотрел {amount} страницы",
+  },
+  "chat.usedBrowserPhrase": "использовал браузер",
+  "chat.usedNamed": "использовал {name}",
+  "chat.usedConnectors": {
+    one: "использовал {amount} подключение",
+    few: "использовал {amount} подключения",
+    many: "использовал {amount} подключений",
+    other: "использовал {amount} подключения",
+  },
+  "chat.usedTools": {
+    one: "использовал {amount} инструмент",
+    few: "использовал {amount} инструмента",
+    many: "использовал {amount} инструментов",
+    other: "использовал {amount} инструмента",
+  },
+  "chat.andJoin": "{head} и {last}",
+  "chat.inProgress": "В работе",
+  "chat.waitingForYou": "Ждёт тебя",
+  "chat.notCompleted": "Не выполнено",
+  "chat.blocked": "Заблокировано",
+  "chat.didntWork": "Не сработало",
+  "chat.couldntFinishStep": "Не удалось завершить этот шаг.",
+  "chat.issues": {
+    one: "{amount} проблема",
+    few: "{amount} проблемы",
+    many: "{amount} проблем",
+    other: "{amount} проблемы",
+  },
+  "settings.addRepository": "Добавить репозиторий",
+  "settings.approvals": "Одобрения",
+  "settings.appsSharedBots":
+    "Приложения, которыми общие помощники могут пользоваться по твоему разрешению",
+  "settings.backToApp": "Назад в приложение",
+  "settings.cancel": "Отмена",
+  "settings.cannotMakeCode":
+    "Код создаётся в браузере, связанном с компьютером. Из этого браузера его создать нельзя.",
+  "settings.cantLink":
+    "Пока нельзя связать аккаунт {provider}. Сначала его должен настроить администратор.",
+  "settings.changesDescription":
+    "Настройки, которые помощник изменил из чата. «Отменить» возвращает прежнее значение на семь дней, и только пока настройка ещё хранит значение, которое задала эта правка.",
+  "settings.changesEmpty": "Изменений из чата пока нет.",
+  "settings.changesLoading": "Загружаем изменения…",
+  "settings.changesTitle": "Изменения, сделанные в чате",
+  "settings.charactersOf": "{used} из {limit} символов",
+  "settings.checkLinkError":
+    "Не удалось проверить, можно ли связать этот аккаунт: {error}",
+  "settings.code": "Код",
+  "settings.codeExpires": "Код работает один раз и истекает через 10 минут.",
+  "settings.codeRanOut": "Срок действия кода истёк. Создай новый.",
+  "settings.componentsGallery": "Галерея компонентов",
+  "settings.computer": "Компьютер",
+  "settings.connect": "Подключить",
+  "settings.connectEvents": "Подключить события",
+  "settings.connectNamed": "Подключить {name}",
+  "settings.copied": "Скопировано",
+  "settings.copy": "Копировать",
+  "settings.copyFailed":
+    "Не удалось скопировать. Выдели код и скопируй его сам.",
+  "settings.deliveriesEmpty": "Доставок пока нет.",
+  "settings.deliveriesTitle": "Последние доставки",
+  "settings.deploymentOwn": "имя установки",
+  "settings.devicesDescription":
+    "Войди в приложение {product} на телефоне и включи уведомления, чтобы добавить телефон сюда.",
+  "settings.devicesEmpty": "Устройств пока нет.",
+  "settings.devicesTitle": "Твои устройства",
+  "settings.disconnect": "Отключить",
+  "settings.disconnectError": "Не удалось отключить {name}: {error}",
+  "settings.disconnectNamed": "Отключить {name}",
+  "settings.done": "Готово",
+  "settings.emphasisBot": "Имя помощника",
+  "settings.emphasisConversation": "Название разговора",
+  "settings.emphasisDescription":
+    "Выбери, какая строка выделяется на боковой панели.",
+  "settings.emphasisPreview": "Предпросмотр списка сообщений",
+  "settings.emphasisTitle": "Выделение в списке сообщений",
+  "settings.general": "Общие",
+  "settings.githubConnectError": "Не удалось подключить GitHub: {error}",
+  "settings.githubLinkFailed":
+    "Не удалось связать твой аккаунт GitHub. Попробуй ещё раз.",
+  "settings.githubLinked": "Твой аккаунт GitHub связан.",
+  "settings.githubTaken":
+    "Этот аккаунт GitHub связан с другим человеком в {product}. Войди в GitHub с другим аккаунтом и попробуй снова или попроси администратора.",
+  "settings.kindDecision": "Решения",
+  "settings.kindDecisionDescription":
+    "Запросы на одобрение, которые помощнику нужны до его действий.",
+  "settings.kindProgress": "Ход работы",
+  "settings.kindProgressDescription":
+    "Ответы и результаты работы, за которой не следишь.",
+  "settings.kindQuestion": "Вопросы",
+  "settings.kindQuestionDescription":
+    "Что помощник спросил у тебя и ждёт ответа.",
+  "settings.languageChanged":
+    "Твой язык для команды сменился с «{from}» на «{to}».",
+  "settings.lastSeen": "последняя активность {when}",
+  "settings.levelAll": "всё",
+  "settings.levelNeedsInput": "только когда он ждёт тебя",
+  "settings.linkBroughtCode":
+    "По ссылке пришёл код. Назови этот браузер и нажми «Связать».",
+  "settings.linkSlack": "Связать твой аккаунт Slack",
+  "settings.linked": "Связан",
+  "settings.loadAccountError": "Не удалось загрузить твой аккаунт: {error}",
+  "settings.loading": "Загружаем…",
+  "settings.localAddress":
+    "Этот адрес работает только на этом компьютере. Телефону нужен адрес, по которому FreeDuet доступен извне: открой его на телефоне и введи код в «Настройках».",
+  "settings.madeWhen": "создано {when}",
+  "settings.makeCode": "Создать код",
+  "settings.memberAdded": "{member} теперь в твоей команде.",
+  "settings.name": "Имя",
+  "settings.nameChanged":
+    "{bot}: твоё имя для него сменилось с «{from}» на «{to}».",
+  "settings.nameOwn": "собственное имя помощника",
+  "settings.needsReconnect": "Нужно подключить заново",
+  "settings.needsReconnectHandle": "Нужно подключить заново · @{handle}",
+  "settings.noItalianVoice":
+    "На этом компьютере нет локального итальянского голоса, поэтому ответы здесь нельзя прочитать вслух.",
+  "settings.notLinked": "Не связан",
+  "settings.notSetUp": "Не настроено",
+  "settings.notifyChanged":
+    "{bot}: уведомления сменились с «{from}» на «{to}».",
+  "settings.pairThisDescription":
+    "На компьютере, где работает FreeDuet, открой «Настройки», нажми «Создать код» в разделе «Связать телефон или другой браузер», затем открой показанную ссылку или введи здесь код.",
+  "settings.pairThisTitle": "Связать этот браузер",
+  "settings.pairedDescription":
+    "Связанный телефон или другой браузер работает так же, как этот. Отзови один — и при следующем запросе он отключится и выйдет из системы.",
+  "settings.pairedDone": "Этот браузер связан с компьютером.",
+  "settings.pairedTitle": "Связать телефон или другой браузер",
+  "settings.phone": "Телефон",
+  "settings.phoneOrBrowser": "Телефон или другой браузер",
+  "settings.qrLabel": "QR-код со ссылкой для связи",
+  "settings.readAloudDescription":
+    "Добавляет кнопку «Прочитать вслух» под каждым ответом помощника. Используется голос только этого компьютера, и никуда ничего не отправляется.",
+  "settings.readAloudTitle": "Читать ответы вслух",
+  "settings.rename": "Переименовать",
+  "settings.repositories": "Репозитории",
+  "settings.repositoriesDescription":
+    "Добавь здесь репозиторий, затем добавь в GitHub вебхук с адресом ниже и тем же секретом. Его события, например issues.opened, тогда смогут запускать обязанность.",
+  "settings.repositoriesEmpty":
+    "Репозиториев пока нет. Добавь первый кнопкой «Добавить репозиторий».",
+  "settings.repository": "Репозиторий",
+  "settings.reset": "Сбросить",
+  "settings.resetDescription":
+    "Забыть все ответы, чтобы каждый общий помощник спросил снова.",
+  "settings.resetDone": "Сброшено. Каждый общий помощник спросит снова.",
+  "settings.revoke": "Отозвать",
+  "settings.routingDescription":
+    "Куда попадает каждый тип обновлений, когда тебя нет. {product} в браузере всегда показывает всё.",
+  "settings.routingError":
+    "Не удалось загрузить, куда приходят обновления. Обнови страницу.",
+  "settings.routingTitle": "Куда приходят обновления",
+  "settings.runsOut":
+    "На телефоне, войдя как ты, отсканируй этот код или открой ссылку, либо открой «Настройки» и введи код. Он работает один раз и истекает через {time}.",
+  "settings.sameSecret":
+    "Используй тот же секрет, когда добавляешь вебхук в GitHub.",
+  "settings.sampleBot": "Универсальный помощник",
+  "settings.sampleTitle": "План на следующую неделю",
+  "settings.save": "Сохранить",
+  "settings.saved": "Сохранено",
+  "settings.saving": "Сохраняем…",
+  "settings.setup": "Настройка",
+  "settings.sharedBots": "Общие помощники",
+  "settings.sharedBotsDescription":
+    "Общий с тобой помощник использует приложения своего владельца. Твои приложения он использует только там, где ты разрешишь это в разговоре.",
+  "settings.slackCodeError": "Не удалось создать код Slack: {error}",
+  "settings.standingDescription":
+    "Действует для каждого помощника в каждом разговоре. Роль помощника говорит, что он делает. Здесь написано, как ты хочешь, чтобы он это делал, например твой стиль письма.",
+  "settings.standingTitle": "Постоянные инструкции",
+  "settings.switchLabel": "{kind} через {transport}",
+  "settings.thisBrowserTag": "(этот браузер)",
+  "settings.toneChanged": "{bot}: тон сменился с «{from}» на «{to}».",
+  "settings.undo": "Отменить",
+  "settings.undoFailed": "Не удалось отменить изменение. Попробуй ещё раз.",
+  "settings.undoGone": "Отменить уже нельзя",
+  "settings.undoing": "Отменяем…",
+  "settings.undone": "Отменено",
+  "settings.webhookSecret": "Секрет вебхука",
+  "settings.yourAccount": "Твой аккаунт",
+  "bot.activity.kindRoutine": "Рутина",
+  "bot.activity.kindResponsibility": "Обязанность",
+  "bot.activity.kindHandoff": "Переданная задача",
+  "bot.activity.kindApproval": "Запрос на одобрение",
+  "bot.activity.kindQuestion": "Вопрос",
+  "bot.activity.kindFollowUp": "Напоминание",
+  "bot.activity.needsYou": "ждёт тебя",
+  "bot.activity.stop": "Остановить",
+  "bot.activity.stopping": "Останавливаем…",
+  "bot.activity.cancelling": "Отменяем…",
+  "bot.activity.open": "Открыть",
+  "bot.activity.title": "Активность",
+  "bot.activity.scheduled": "Запланировано",
+  "bot.activity.completed": "Завершено",
+  "bot.activity.emptyInProgress": "Ничего не выполняется и не ждёт тебя.",
+  "bot.activity.emptyScheduled": "Ничего не запланировано.",
+  "bot.activity.emptyCompleted": "Пока ничего не завершено.",
+  "bot.activity.loadError":
+    "Не удалось загрузить активность этого помощника. Обнови страницу.",
+  "bot.settings.heading": "Настройки этого помощника",
+  "bot.area.responsibilities": "Обязанности",
+  "bot.area.reaching": "Связь с тобой",
+  "bot.area.memory": "Память",
+  "bot.area.access": "Навыки и доступ",
+  "bot.area.sharing": "Общий доступ",
+  "bot.settings.activeCount": {
+    one: "{count} активный",
+    few: "{count} активных",
+    many: "{count} активных",
+    other: "{count} активного",
+  },
+  "bot.settings.noneActive": "Нет активных",
+  "bot.settings.ruleCount": {
+    one: "{count} правило",
+    few: "{count} правила",
+    many: "{count} правил",
+    other: "{count} правила",
+  },
+  "bot.settings.noRules": "Правил пока нет.",
+  "bot.settings.routineCount": {
+    one: "{count} рутина",
+    few: "{count} рутины",
+    many: "{count} рутин",
+    other: "{count} рутины",
+  },
+  "bot.settings.noRoutines": "Рутин пока нет.",
+  "bot.access.skillsDescription":
+    "Включи навык, чтобы использовать его с этим помощником. Напиши / в разговоре, чтобы его запустить.",
+  "bot.access.yourSkills": "Твои навыки",
+  "bot.access.skillsError":
+    "Не удалось загрузить твои навыки. Обнови страницу.",
+  "bot.access.noSkills": "Навыков пока нет.",
+  "bot.access.writeOne": "Создай свой",
+  "bot.access.title": "Что он может использовать",
+  "bot.access.grantedDescription":
+    "Приложения и навыки, которые может использовать этот помощник, и готово ли каждое приложение для тебя. Больше он ничего не может использовать.",
+  "bot.access.grantedError":
+    "Не удалось загрузить то, что может использовать этот помощник. Обнови страницу.",
+  "bot.access.readyError":
+    "Не удалось проверить, готово ли каждое приложение для тебя. Обнови страницу.",
+  "bot.access.noApps":
+    "Приложений пока нет. Их должен добавить администратор. До тех пор этот помощник может только разговаривать с тобой.",
+  "bot.access.toolsAndMore": "{list} и ещё {count}",
+  "bot.access.toolCount": {
+    one: "{count} инструмент",
+    few: "{count} инструмента",
+    many: "{count} инструментов",
+    other: "{count} инструмента",
+  },
+  "bot.access.skillLabel": "Навык",
+  "bot.access.manageNamed": "Управлять {title} у этого помощника",
+  "bot.reset.conversations": {
+    one: "{count} разговор",
+    few: "{count} разговора",
+    many: "{count} разговоров",
+    other: "{count} разговора",
+  },
+  "bot.reset.memorySources": {
+    one: "{count} источник памяти",
+    few: "{count} источника памяти",
+    many: "{count} источников памяти",
+    other: "{count} источника памяти",
+  },
+  "bot.reset.memories": {
+    one: "{count} импортированная запись памяти",
+    few: "{count} импортированные записи памяти",
+    many: "{count} импортированных записей памяти",
+    other: "{count} импортированной записи памяти",
+  },
+  "bot.reset.routines": {
+    one: "{count} рутина",
+    few: "{count} рутины",
+    many: "{count} рутин",
+    other: "{count} рутины",
+  },
+  "bot.reset.responsibilities": {
+    one: "{count} обязанность",
+    few: "{count} обязанности",
+    many: "{count} обязанностей",
+    other: "{count} обязанности",
+  },
+  "bot.reset.followUps": {
+    one: "{count} запланированное напоминание",
+    few: "{count} запланированных напоминания",
+    many: "{count} запланированных напоминаний",
+    other: "{count} запланированного напоминания",
+  },
+  "bot.reset.formedMemories": {
+    one: "{count} запись памяти, созданная помощником",
+    few: "{count} записи памяти, созданные помощником",
+    many: "{count} записей памяти, созданных помощником",
+    other: "{count} записи памяти, созданной помощником",
+  },
+  "bot.reset.research": {
+    one: "{count} фоновое исследование",
+    few: "{count} фоновых исследования",
+    many: "{count} фоновых исследований",
+    other: "{count} фонового исследования",
+  },
+  "bot.reset.standing": {
+    one: "{count} постоянное разрешение",
+    few: "{count} постоянных разрешения",
+    many: "{count} постоянных разрешений",
+    other: "{count} постоянного разрешения",
+  },
+  "bot.reset.title": "Сбросить {name}?",
+  "bot.reset.description":
+    "Будет удалено всё, что у {name} есть с тобой. Разговоры и данные других людей остаются. Это нельзя отменить.",
+  "bot.reset.planError":
+    "Не удалось проверить, что удалит сброс. Попробуй ещё раз.",
+  "bot.reset.done": "Готово. {name} начинает с тобой с чистого листа.",
+  "bot.reset.nothing": "Удалять нечего: ничего твоего здесь нет.",
+  "bot.reset.willDelete": "Будет удалено:",
+  "bot.reset.sharedKept": {
+    one: "{count} разговор общий с другими людьми или помощниками, он сохранится.",
+    few: "{count} разговора общие с другими людьми или помощниками, они сохранятся.",
+    many: "{count} разговоров общие с другими людьми или помощниками, они сохранятся.",
+    other:
+      "{count} разговора общего с другими людьми или помощниками, он сохранится.",
+  },
+  "bot.reset.memoriesKept":
+    "Записи памяти, которые ты сам передаёшь помощнику, сохраняются.",
+  "bot.reset.resetting": "Сбрасываем…",
+  "bot.reset.submit": "Удалить и сбросить",
+  "bot.manage.pinnedAssigned":
+    "Администратор назначил его тебе. Он остаётся вверху твоего списка помощников.",
+  "bot.manage.pinnedOn":
+    "Вверху твоего списка помощников. Меняется только твой список.",
+  "bot.manage.pinnedOff":
+    "Держать его вверху твоего списка помощников. Меняется только твой список.",
+  "bot.manage.hiddenAssigned":
+    "Администратор назначил его тебе. Скрыть его нельзя.",
+  "bot.manage.hiddenOn":
+    "В разделе «Скрытые» твоего списка помощников. Меняется только твой список.",
+  "bot.manage.hiddenOff":
+    "Убрать его из твоего списка помощников. Меняется только твой список.",
+  "bot.manage.duplicate": "Дублировать",
+  "bot.manage.duplicateDescription":
+    "Создать твою собственную копию. Его разговоры и ключи не копируются.",
+  "bot.manage.resetDescription":
+    "Удалить твои разговоры с ним, то, что он помнит о тебе, и его запланированную работу. Сначала ты увидишь список.",
+  "bot.manage.delete": "Удалить",
+  "bot.manage.deleteDescription": "Удаляется для всех. Это нельзя отменить.",
+  "bot.manage.deleteTitle": "Удалить {name}?",
+  "bot.manage.deleteConfirm": "Его удалят для всех. Это нельзя отменить.",
+  "bot.manage.deleting": "Удаляем…",
+  "bot.setup.title": "Название",
+  "bot.setup.whatItDoes": "Что делает",
+  "bot.setup.identity": "Личность",
+  "bot.setup.systemOwned": "Системный",
+  "bot.setup.systemOwnedDescription":
+    "Входит в {product}. Не принадлежит ни одному человеку.",
+  "bot.setup.visibility": "Видимость",
+  "bot.setup.visiblePrivate":
+    "Только ты можешь его видеть и начинать с ним разговоры.",
+  "bot.setup.visiblePublic":
+    "Любой в {product} может найти его и использовать.",
+  "bot.setup.private": "Личный",
+  "bot.setup.public": "Публичный",
+  "bot.setup.saveError": "Не удалось сохранить. Попробуй ещё раз.",
+  "bot.setup.checkField": "Проверь это поле и попробуй ещё раз.",
+  "bot.setup.connection": "Подключение",
+  "bot.setup.builtIn": "Встроенный",
+  "bot.setup.agentUrl": "Адрес агента",
+  "bot.setup.builtInDescription":
+    "Работает внутри {product}. Подключать ничего не нужно.",
+  "bot.sharing.published": "Опубликован",
+  "bot.sharing.toWholeTeam": "Всей команде",
+  "bot.sharing.toPeople": "Кому: {who}",
+  "bot.sharing.groupNamed": "группа {name}",
+  "bot.sharing.teamPrivate": "Разговоры каждого с ним остаются личными.",
+  "bot.sharing.notVisibleYet":
+    "Коллеги по команде не увидят его, пока у него нет настоящего имени и описания.",
+  "bot.sharing.unpublish": "Отменить публикацию",
+  "bot.sharing.link": "Ссылка",
+  "bot.sharing.linkDescription": "Открывает с ним личный разговор.",
+  "bot.sharing.copyLink": "Копировать ссылку",
+  "bot.sharing.publicNotPublished":
+    "Не опубликован для команды. Он публичный, поэтому каждый в {product} и так может им пользоваться.",
+  "bot.sharing.onlyYouCanUse":
+    "Не опубликован. Использовать его можешь только ты.",
+  "bot.sharing.notPublished": "Не опубликован.",
+  "bot.sharing.whoPublishedTo": "Кому он опубликован",
+  "bot.sharing.publish": "Опубликовать",
+  "bot.sharing.publishNote":
+    "Публикация не меняет его видимость. Публикацию можно отменить в любое время.",
+  "bot.sharing.audience": "Аудитория",
+  "bot.sharing.notPublishedSummary": "Не опубликован",
+  "bot.sharing.theWholeTeam": "Вся команда",
+  "bot.sharing.specificPeople": "Отдельные люди или группы",
+  "bot.sharing.peopleCount": {
+    one: "{count} человек",
+    few: "{count} человека",
+    many: "{count} человек",
+    other: "{count} человека",
+  },
+  "bot.sharing.groupCount": {
+    one: "{count} группа",
+    few: "{count} группы",
+    many: "{count} групп",
+    other: "{count} группы",
+  },
+  "bot.sharing.assignToGroups": "Назначить группам",
+  "bot.sharing.assignDescription":
+    "Закрепляет этого помощника вверху списка помощников каждого участника группы. Используй * для всей команды.",
+  "bot.sharing.publishedTo": "Опубликован для",
+  "bot.sharing.peopleByEmail": "Люди, по email",
+  "bot.sharing.commaSeparated": "Через запятую",
+  "bot.sharing.groups": "Группы",
+  "bot.sharing.update": "Обновить",
+  "bot.sharing.publishToTeam": "Опубликовать для команды",
+  "bot.sharing.assignNamed": "Назначить {name} группе",
+  "bot.sharing.assignNote":
+    "Он закреплён вверху списка помощников каждого участника.",
+  "bot.sharing.groupOrStar": "Группа или *",
+  "bot.sharing.wholeTeamPlaceholder": "* для всей команды",
+  "bot.sharing.assign": "Назначить",
+  "bot.sharing.removeNamed": "Убрать {name}",
+  "bot.sharing.wholeTeam": "Вся команда",
+  "bot.sharing.notAssigned": "Не назначен ни одной группе.",
+  "bot.sharing.assignRow": "Назначить группе",
+  "bot.page.accessPurpose":
+    "Навыки, приложения и другие помощники, которые может использовать этот помощник.",
+  "bot.page.approvalsPurpose":
+    "Что этот помощник может делать, не спрашивая тебя сначала.",
+  "bot.page.memoryPurpose":
+    "Приложения, из которых этот помощник учится, и исследования, которые он ведёт для тебя в фоне.",
+  "bot.page.memoryPointer": "Что твои помощники помнят о тебе, хранится в",
+  "bot.page.reachPurpose":
+    "Продолжай разговор с этим помощником в Slack, Microsoft Teams или по SMS.",
+  "bot.page.responsibilitiesPurpose":
+    "Долгие цели, над которыми этот помощник работает для тебя. Видно, что запустило каждый прогон и что он нашёл.",
+  "bot.page.routinesPurpose":
+    "Что этот помощник делает для тебя по расписанию. Выключи рутину, запусти её сейчас или удали.",
+  "bot.page.setupPurpose":
+    "Кто этот помощник, кто может его найти и где он работает.",
+  "bot.page.sharingPurpose":
+    "Кто ещё может использовать этого помощника. Разговоры каждого с ним остаются личными.",
+  // The Bot sub-pages' contents (D181 stage 2e): memory sources, suggestions, reaching you, responsibilities
+  // and routines, the summaries of lib/agents/bot-summaries.ts and the time phrases of lib/relative-time.ts.
+  // Shared words reuse their existing keys (`botPage.fallbackTitle` is "Bot"); `bot.choose` is "Choose a Bot".
+  "bot.choose": "Выбери помощника",
+  "memory.addSource": "Добавить источник",
+  "memory.title": "Источники приложений",
+  "memory.description":
+    "Здесь появляются подключённые тобой приложения, которые этот помощник может читать, и ты можешь добавить ещё. Источники обновляются каждые 15 минут. Содержимое видит только этот помощник.",
+  "memory.empty":
+    "Источников пока нет. Добавь один кнопкой «Добавить источник».",
+  "memory.upToDate": "Актуально",
+  "memory.off": "Выключено",
+  "memory.lastRead": "Последнее чтение: {when}",
+  "memory.syncNow": "Синхронизировать сейчас",
+  "memory.readNamed": "Прочитать {name}",
+  "memory.addTitle": "Добавить источник",
+  "memory.addDescription":
+    "{product} прочитает её сейчас, а потом будет читать каждые 15 минут, пока она включена.",
+  "memory.enterNumber": "Введи число для {name}.",
+  "memory.cantShow":
+    "У этого источника есть настройки, которые {product} не может показать. Выбери другой.",
+  "memory.checkSettings": "Проверь настройки источника.",
+  "memory.whatToRead": "Что читать",
+  "memory.chooseWhat": "Выбери, что читать",
+  "memory.sourceName": "Название источника",
+  "memory.chooseValue": "Выбери значение",
+  "memory.reading": "Читаем источник…",
+  "memory.addAndSync": "Добавить и синхронизировать источник",
+  "suggestions.everyHour": "Каждый час",
+  "suggestions.every4Hours": "Каждые 4 часа",
+  "suggestions.twiceDay": "Дважды в день",
+  "suggestions.onceDay": "Раз в день",
+  "suggestions.everyMinutes": {
+    one: "Каждые {count} минуту",
+    few: "Каждые {count} минуты",
+    many: "Каждые {count} минут",
+    other: "Каждые {count} минуты",
+  },
+  "suggestions.yourBot": "Твой помощник",
+  "suggestions.title": "Предложенные следующие шаги",
+  "suggestions.from": "От {app}",
+  "suggestions.connectedApp": "подключённого приложения",
+  "suggestions.openRecord": "Открыть запись",
+  "suggestions.startTask": "Начать как задачу",
+  "suggestions.empty":
+    "Сейчас предложений нет. Помощники с включённым фоновым исследованием будут предлагать здесь следующие шаги.",
+  "suggestions.turnOnResearch": "Включить исследование",
+  "suggestions.researchDescription":
+    "Выключена, пока ты не включишь её для этого помощника, если только администратор не включил её для всех. Когда она включена, каждые четыре часа она просматривает приложения, которые уже может читать, составляет воспоминания, чтобы ты мог их просмотреть, и предлагает следующие шаги. Она может только читать: не может отправлять сообщения, менять что-либо в приложении, пользоваться браузером или компьютером. Если ты выключишь или удалишь её, так и останется.",
+  "suggestions.researchTitle": "Фоновое исследование",
+  "suggestions.researchOff": "Фоновое исследование выключено.",
+  "suggestions.turnOnDialog": "Включить фоновое исследование",
+  "suggestions.turnOnDescription":
+    "Читает по расписанию и доставляет свои предложения в канал, в котором находится.",
+  "suggestions.deliverTo": "Доставлять предложения в",
+  "suggestions.chooseChannel": "Выбери канал",
+  "suggestions.howOften": "Как часто",
+  "suggestions.focus": "Что искать (необязательно)",
+  "suggestions.off": "Выключено",
+  "suggestions.researchingNow": "Исследует сейчас",
+  "suggestions.lastRan": "Последний запуск: {when}",
+  "suggestions.turnOff": "Выключить",
+  "reaching.linkSlack": "Привязать Slack",
+  "reaching.linkTeams": "Привязать Microsoft Teams",
+  "reaching.connectPhone": "Подключить телефон",
+  "reaching.sumSlack": "Продолжить разговор из Slack.",
+  "reaching.sumTeams": "Продолжить разговор из Microsoft Teams.",
+  "reaching.sumSms": "Продолжить разговор текстовыми сообщениями.",
+  "reaching.codeOnWay":
+    "Код подтверждения уже в пути. Введи его, чтобы закончить.",
+  "reaching.linkReady":
+    "Твой код привязки готов к отправке. Открой это, чтобы увидеть его снова.",
+  "reaching.smsNotSet":
+    "Текстовые сообщения ещё не настроены. Сначала администратор должен их включить.",
+  "reaching.notSet":
+    "Ещё не настроено. Сначала администратор должен включить Slack и Teams.",
+  "reaching.pointerBefore":
+    "Твои устройства, недавние доставки и то, куда приходит каждый вид обновлений, находятся в разделе",
+  "reaching.connected": "Подключённые адресаты",
+  "reaching.noDestinations": "Нет подключённых адресатов.",
+  "reaching.optedOut":
+    "От тебя пришло сообщение STOP. Отправь START, чтобы возобновить.",
+  "reaching.disconnect": "Отключить",
+  "reaching.channelNote":
+    "В канале Slack или Teams, который могут читать другие, помощник отвечает тебе в личном сообщении.",
+  "reaching.connectTitle": "Подключить разговор",
+  "reaching.oneAtATime":
+    "Каждый аккаунт или номер телефона работает только с одним разговором за раз. Если привязать его здесь, он будет перенесён из разговора, к которому привязан сейчас.",
+  "reaching.conversation": "Разговор",
+  "reaching.chooseConversation": "Выбери разговор",
+  "reaching.loadMore": "Загрузить ещё разговоры",
+  "reaching.phoneNumber": "Номер телефона",
+  "reaching.sendCode": "Отправить код подтверждения",
+  "reaching.verificationCode": "Код подтверждения",
+  "reaching.confirmPhone": "Подтвердить телефон",
+  "reaching.linkExpires": {
+    one: "Отправь это сообщение приложению {product} в {platform} в течение {count} минуты. Оно привяжет этот аккаунт к этому разговору и этому помощнику.",
+    few: "Отправь это сообщение приложению {product} в {platform} в течение {count} минут. Оно привяжет этот аккаунт к этому разговору и этому помощнику.",
+    many: "Отправь это сообщение приложению {product} в {platform} в течение {count} минут. Оно привяжет этот аккаунт к этому разговору и этому помощнику.",
+    other:
+      "Отправь это сообщение приложению {product} в {platform} в течение {count} минуты. Оно привяжет этот аккаунт к этому разговору и этому помощнику.",
+  },
+  "responsibilities.new": "Новая обязанность",
+  "responsibilities.title": "Цели",
+  "responsibilities.empty":
+    "Обязанностей пока нет. Добавь одну кнопкой «Новая обязанность».",
+  "responsibilities.emptyBot":
+    "У этого помощника пока нет обязанностей. Добавь одну кнопкой «Новая обязанность».",
+  "routines.neverRun": "Ещё не запускалась",
+  "routines.running": "Выполняется…",
+  "routines.missed": "Упущена {when}",
+  "routines.failed": "Не удалась {when}",
+  "routines.skipped": "Пропущена {when}",
+  "routines.ran": "Запускалась {when}",
+  "routines.finished": "Завершена {when}",
+  "routines.noRuns": "Запусков пока нет.",
+  "routines.runNow": "Запустить сейчас",
+  "routines.triggered": "По событию",
+  "routines.scheduled": "По расписанию",
+  "routines.sweepChecked":
+    "{product} последний раз проверил их {when}. Пока он не запустится снова, ни одна не сработает. Если это повторяется, спроси администратора.",
+  "routines.sweepNever":
+    "{product} ещё не начал запускать рутины, поэтому ни одна из них не сработает. Попроси администратора это настроить.",
+  "routines.notRunning": "Рутины не запускаются.",
+  "routines.loadError": "Не удалось загрузить твои рутины. Обнови страницу.",
+  "routines.emptyBot":
+    "У этого помощника пока нет рутин. Попроси его, например, «каждый будний день в 9 присылай мне…», и рутина появится здесь.",
+  "routines.empty":
+    "Рутин пока нет. Попроси помощника, например, «каждый будний день в 9 присылай мне…», и рутина появится здесь.",
+  "routines.enableAria": "Включить рутину, запланированную на {schedule}",
+  "routines.channelGone": "Разговор удалён",
+  "routines.untitledChannel": "Разговор без названия",
+  "routines.due": "Пора",
+  "routines.next": "Следующий запуск: {when}",
+  "routines.runNowTitle":
+    "Запускает её сейчас, по-настоящему. Помощник выполняет работу и публикует результат в разговоре.",
+  "routines.pausedTurnOn": "Эта рутина на паузе. Сначала включи её.",
+  "routines.runNowAria":
+    "Запустить сейчас рутину, запланированную на {schedule}",
+  "routines.historyAria":
+    "История запусков рутины, запланированной на {schedule}",
+  "routines.history": "История",
+  "routines.deleteAria": "Удалить рутину, запланированную на {schedule}",
+  "routines.deleteTitle": "Удалить «{schedule}»?",
+  "routines.deleteDescription":
+    "Эта рутина перестанет работать навсегда. Это нельзя отменить.",
+  "routines.week": "Неделя",
+  "routines.nextRuns": "Ближайшие запуски",
+  "routines.viewAria": "Вид",
+  "summary.nothingGranted": "Ничего не разрешено",
+  "summary.skills": {
+    one: "{count} навык",
+    few: "{count} навыка",
+    many: "{count} навыков",
+    other: "{count} навыка",
+  },
+  "summary.apps": {
+    one: "{count} приложение",
+    few: "{count} приложения",
+    many: "{count} приложений",
+    other: "{count} приложения",
+  },
+  "summary.everyonePublic": "Все (публично)",
+  "summary.notShared": "Не открыто для других",
+  "summary.specificPeople": "Выбранные люди и группы",
+  "summary.onlyIn": "Только в {product}",
+  "summary.nothingConnected": "Ничего не подключено",
+  "summary.sources": {
+    one: "{count} источник",
+    few: "{count} источника",
+    many: "{count} источников",
+    other: "{count} источника",
+  },
+  "summary.researchOn": "Фоновое исследование включено",
+  "summary.researchOnAfter": "фоновое исследование включено",
+  "time.justNow": "только что",
+  "time.minutesAgo": {
+    one: "{count} минуту назад",
+    few: "{count} минуты назад",
+    many: "{count} минут назад",
+    other: "{count} минуты назад",
+  },
+  "time.hoursAgo": {
+    one: "{count} час назад",
+    few: "{count} часа назад",
+    many: "{count} часов назад",
+    other: "{count} часа назад",
+  },
+  "time.yesterday": "вчера",
+  "time.daysAgo": {
+    one: "{count} день назад",
+    few: "{count} дня назад",
+    many: "{count} дней назад",
+    other: "{count} дня назад",
+  },
+  "time.weeksAgo": {
+    one: "{count} неделю назад",
+    few: "{count} недели назад",
+    many: "{count} недель назад",
+    other: "{count} недели назад",
+  },
+  "time.recently": "недавно",
+  // Stage 2f (D181): the approval rules, the responsibility dialog, the routine history, Passwords.
+  "approvals.behaviour.allow": "Действовать, не спрашивая",
+  "approvals.behaviour.preApproved": "Действовать, если заранее одобрено",
+  "approvals.behaviour.ask": "Спросить, прежде чем действовать",
+  "approvals.behaviour.handOff": "Передать тебе",
+  "approvals.host.ask": "Спрашивать каждый раз",
+  "approvals.host.allow": "Всегда разрешать",
+  "approvals.host.never": "Никогда",
+  "approvals.teamRule": "{label} (правило команды)",
+  "approvals.matchOn": "для {scope}",
+  "approvals.matchFor": "для {bot}",
+  "approvals.locked": "Заблокировано",
+  "approvals.behaviourFor": "Поведение для {tool}",
+  "approvals.formLead":
+    "Инструмент или приложение и то, что помощник делает, прежде чем им воспользоваться.",
+  "approvals.formHelp":
+    "Звёздочка * подходит для чего угодно. mcp/gmail/* означает каждый инструмент Gmail. Цель *.example.com означает каждую страницу этого сайта.",
+  "approvals.field.tool": "Инструмент или приложение",
+  "approvals.field.effect": "Вид действия",
+  "approvals.field.scope": "Цель",
+  "approvals.field.scopeHint": "*, сайт, папка, имя помощника",
+  "approvals.field.bot": "Помощник",
+  "approvals.field.botHint": "* для каждого помощника",
+  "approvals.field.behaviour": "Поведение",
+  "approvals.saveRule": "Сохранить правило",
+  "approvals.addRule": "Добавить правило",
+  "approvals.rulesOff":
+    "Администратор отключил личные правила. Твои правила сохранены, но не применяются.",
+  "approvals.bot.lead":
+    "Действует самое строгое из подходящих правил. Правило «спрашивать» главнее правила «разрешать». Правила для каждого помощника находятся в разделе",
+  "approvals.bot.settingsLink": "Настройки → Одобрения",
+  "approvals.bot.title": "Правила",
+  "approvals.bot.empty": "Для этого помощника нет правил.",
+  "approvals.adminLead":
+    "Настройки команды и запросы на общие аккаунты находятся в разделе",
+  "approvals.adminLink": "Администрирование → Одобрения",
+  "approvals.before.title": "Прежде чем помощник действует",
+  "approvals.before.askTitle": "Спрашивать перед изменениями",
+  "approvals.before.askLine":
+    "Ты проверяешь изменения, которые помощник вносит в сайты, подключённые приложения и файлы.",
+  "approvals.before.autoTitle": "Автопроверка",
+  "approvals.before.autoEnforced": "Этого требует администратор.",
+  "approvals.before.autoLine":
+    "Прежде чем помощник сделает что-то, что может затронуть твои аккаунты или раскрыть информацию, {product} сверяет это с твоим запросом и твоими правилами. Если не может решить, спрашивает тебя.",
+  "approvals.before.hostTitle": "Команды на твоём компьютере",
+  "approvals.before.hostLimited":
+    "Администратор ограничил это значением «{limit}».",
+  "approvals.before.hostLine":
+    "Настольное приложение {product} всё равно показывает тебе каждую команду, прежде чем она выполнится.",
+  "approvals.every.lead":
+    "Действует самое строгое из подходящих правил. Правило «спрашивать» главнее правила «разрешать». Правила команды заблокированы. Пароли и настройки безопасности всегда передаются тебе, как и платежи, если ты не включишь ниже Full access для помощника. Правила для одного помощника находятся на",
+  "approvals.every.botPage": "странице этого помощника",
+  "approvals.every.title": "Правила для каждого помощника",
+  "approvals.every.empty": "Правил пока нет.",
+  "approvals.other.lead":
+    "Эти правила не подходят ни к одному помощнику, которого ты можешь открыть. Они всё равно действуют для любого помощника, к которому подходят. Удали те, что не нужны.",
+  "approvals.other.title": "Правила для других помощников",
+  "approvals.page.description":
+    "Выбери, когда твои помощники спрашивают, прежде чем что-то изменить. Правила здесь действуют для всех.",
+  "approvals.admin.description":
+    "О чём помощники участников должны спрашивать, прежде чем действовать, правила для всех и запросы на использование общих аккаунтов.",
+  "approvals.team.title": "Настройки команды",
+  "approvals.team.enforce": "Требовать автопроверку для всех",
+  "approvals.team.custom": "Разрешить участникам задавать личные правила",
+  "approvals.team.hostTitle": "Команды на компьютерах участников, не более",
+  "approvals.team.hostLine":
+    "Более строгая собственная настройка участника всё равно действует.",
+  "approvals.team.rulesLead":
+    "Эти правила действуют для помощников каждого участника. Участники не могут их менять.",
+  "approvals.team.rulesTitle": "Правила команды",
+  "approvals.team.empty": "Нет правил команды.",
+  "approvals.team.addRule": "Добавить правило команды",
+  "approvals.shared.title": "Запросы на общие аккаунты",
+  "approvals.shared.wants": "{bot} хочет получить общий аккаунт {account}",
+  "approvals.shared.why.refusedCall":
+    "Действие заблокировано. Этот помощник охватывает больше людей, чем одобрено.",
+  "approvals.shared.why.publish":
+    "Его владелец расширил круг тех, кто может с ним связаться.",
+  "approvals.shared.why.trigger":
+    "Его владелец добавил триггер, который позволяет внешним сообщениям им управлять.",
+  "approvals.shared.why.grant": "Ему выдали действия приложения.",
+  "approvals.shared.now": "Сейчас:",
+  "approvals.shared.notApproved": "Не одобрено",
+  "approvals.shared.asked": "Запрошено:",
+  "approvals.shared.approve": "Одобрить",
+  "approvals.shared.decline": "Отклонить",
+  "tasks.updated": "Обновлено {ago}",
+  "routines.status.running": "Выполняется",
+  "routines.status.succeeded": "Успешно",
+  "routines.status.failed": "Сбой",
+  "routines.status.skipped": "Пропущена",
+  "routines.status.waiting": "Ждёт тебя",
+  "routines.status.missed": "Упущена",
+  "routines.history.empty":
+    "Запусков пока нет. Запуск появится здесь, когда рутина сработает, или после того, как ты нажмёшь «Запустить сейчас».",
+  "routines.history.aBot": "Помощник",
+  "routines.history.latest": {
+    one: "Показаны последние запуски: {count}.",
+    few: "Показаны последние запуски: {count}.",
+    many: "Показаны последние запуски: {count}.",
+    other: "Показаны последние запуски: {count}.",
+  },
+  "routines.history.deleted": "Рутина, которую с тех пор удалили",
+  "routines.history.waitingNote":
+    "Ждёт твоего одобрения. Открой разговор, чтобы ответить.",
+  "responsibilities.status.completed": "Выполнена",
+  "responsibilities.summary.paused":
+    "Ничто не запустит её, пока ты её не возобновишь",
+  "responsibilities.summary.trigger": "Запуск: {kind}",
+  "responsibilities.summary.starts": "Начнётся {starts}",
+  "responsibilities.summary.asked": "Запускается по твоей просьбе",
+  "responsibilities.source.manual": "Вручную",
+  "responsibilities.source.schedule": "Расписание",
+  "responsibilities.source.connector": "Подключённое приложение",
+  "responsibilities.progress": "Прогресс",
+  "responsibilities.lastResult": "Последний результат",
+  "responsibilities.activeOn": "Её запускают её события и триггеры.",
+  "responsibilities.activeOff": "На паузе. Её триггеры её не запускают.",
+  "responsibilities.runNowLine":
+    "Запускает её сейчас, по-настоящему. Помощник выполняет работу и может публиковать сообщения и совершать действия.",
+  "responsibilities.complete": "Завершить",
+  "responsibilities.completeLine":
+    "Отметить выполненной. После этого ничто её не запустит.",
+  "responsibilities.field.title": "Название",
+  "responsibilities.field.instruction": "Инструкция",
+  "responsibilities.field.criteria": "Критерии успеха",
+  "responsibilities.events": "События",
+  "responsibilities.saving": "Сохраняем…",
+  "responsibilities.run.queued": "В очереди",
+  "responsibilities.run.waiting":
+    "Ждёт {kind}. Ответь вверху страницы этого помощника или в разговоре.",
+  "responsibilities.runs": "Запуски",
+  "responsibilities.viewRuns": "Показать запуски",
+  "responsibilities.hideRuns": "Скрыть запуски",
+  "passwords.description":
+    "Данные для входа, сохранённые, когда ты выполнял вход помощника на сайте. Помощники их никогда не видят, а каждое использование подтверждаешь ты.",
+  "passwords.saved": "Сохранённые данные для входа",
+  "passwords.loadError": "Не удалось загрузить твои пароли. Обнови страницу.",
+  "passwords.off":
+    "Администратор отключил сохранённые пароли. Твои данные для входа сохранены, но предлагаться не будут.",
+  "passwords.empty":
+    "Нет сохранённых данных для входа. Выбери «Сохранить в Паролях», когда выполняешь вход помощника на сайте.",
+  "passwords.lastUsed": "последнее использование: {date}",
+  "passwords.neverUsed": "ни разу не использовано",
+  "passwords.deleteAria": "Удалить данные для входа для {origin}",
+  "settings.notificationsPage":
+    "Куда приходят обновления твоих помощников, когда тебя нет. Сколько отправляет каждый помощник, настраивается на его странице.",
+  "fullaccess.label.noPayments": "Full access без платежей",
+  "fullaccess.label.full": "Full access",
+  "fullaccess.off": "Выключен",
+  "fullaccess.description":
+    "По умолчанию безопасно: твои помощники спрашивают, прежде чем отправить, оплатить, подписать, забронировать или удалить. Для каждого помощника можно выбрать, чтобы он делал это без вопросов.",
+  "fullaccess.offTerm": "Выключен:",
+  "fullaccess.offText":
+    "помощник спрашивает, прежде чем отправить, оплатить, подписать, забронировать или удалить.",
+  "fullaccess.noPaymentsTerm": "Full access без платежей:",
+  "fullaccess.noPaymentsText":
+    "он отправляет, подписывает, бронирует и удаляет без вопросов. Платежи и покупки по-прежнему спрашивают тебя.",
+  "fullaccess.fullTerm": "Full access:",
+  "fullaccess.fullText":
+    "он ещё и платит и покупает без вопросов. Пока нет лимитов расходов, сумма не ограничена (они запланированы на v0.4).",
+  "fullaccess.askTitle": "Дать {name} {label}?",
+  "fullaccess.give": "Дать {label}",
+  "fullaccess.full.p1":
+    "{name} будет отправлять, оплачивать, подписывать, бронировать и удалять, не спрашивая тебя заранее. Он может действовать по тому, что читает, например по письму или веб-странице, поэтому включай это, только если доверяешь ему в этом.",
+  "fullaccess.full.p2":
+    "Сумма, которую он может оплатить, не ограничена: лимитов расходов пока нет (они запланированы на v0.4). Чтобы платежи и покупки по-прежнему спрашивали тебя, выбери вместо этого Full access без платежей.",
+  "fullaccess.full.p3":
+    "Пароли и настройки безопасности по-прежнему требуют тебя. Когда настроен автоматический проверяющий, он ещё и один раз читает каждую команду и каждый скрипт, которые участник запускает на своём компьютере, даже если ты выключил проверяющего; когда его нет, команды не читаются. Это относится к тому, что ты просишь в своих чатах, а не к рутинам и check-in. Ты можешь выключить это в любой момент, и оно сразу прекращается.",
+  "fullaccess.noPayments.p1":
+    "{name} будет отправлять, подписывать, бронировать и удалять, не спрашивая тебя заранее. Платежи и покупки по-прежнему спрашивают тебя. Он может действовать по тому, что читает, например по письму или веб-странице, поэтому включай это, только если доверяешь ему в этом.",
+  "fullaccess.noPayments.p2":
+    "Приложение распознаёт платёж по встроенным проверкам, поэтому сообщение, которое лишь упоминает платёж, тоже может спросить, а платёж, сформулированный необычно, может быть не замечен. Пароли и настройки безопасности по-прежнему требуют тебя. Когда настроен автоматический проверяющий, он ещё и один раз читает каждую команду и каждый скрипт, которые участник запускает на своём компьютере для пароля, настройки безопасности или платежа, сделанного так, даже если ты выключил проверяющего; когда его нет, команды не читаются. Это относится к тому, что ты просишь в своих чатах, а не к рутинам и check-in. Ты можешь выключить это в любой момент, и оно сразу прекращается.",
+  "fullaccess.noBots": "Помощников пока нет.",
+  "fullaccess.legend": "Доступ для {name}",
+  "fullaccess.radioAria": "{label} для {name}",
+  "fullaccess.summary.off":
+    "Спрашивает, прежде чем отправить, оплатить, подписать, забронировать или удалить.",
+  "fullaccess.summary.noPayments":
+    "Действует без вопросов, кроме платежей и покупок: они по-прежнему спрашивают тебя. С {since}.",
+  "fullaccess.summary.full":
+    "Действует без вопросов, включая платежи, без ограничения суммы. С {since}.",
+  "fullaccess.doneTitle": "Сделано без вопросов",
+  "fullaccess.doneDescription":
+    "Что помощник с Full access сделал, не спрашивая тебя, сначала самое новое.",
+  "fullaccess.nothingYet": "Пока ничего.",
+  "approvals.audience.owner": "Только его владелец",
+  "approvals.audience.team": "Все",
+  "approvals.audience.outside": ", и внешние данные",
+  "approvals.audience.nobody": "Никто не указан",
+  "approvals.audience.groups": {
+    one: "Группа {names}",
+    few: "Группы {names}",
+    many: "Группы {names}",
+    other: "Группы {names}",
+  },
+  "approvals.audience.people": {
+    one: "{count} человек",
+    few: "{count} человека",
+    many: "{count} человек",
+    other: "{count} человека",
+  },
+  "approvals.audience.join": "{a} и {b}",
+  "access.req.title": "Запросы",
+  "access.req.loadError":
+    "Не удалось загрузить запросы на доступ. Обнови страницу.",
+  "access.req.descApp":
+    "Люди, которые просят это приложение. «Одобрить» сразу делает то, о чём они просили.",
+  "access.req.descAll":
+    "Люди, которые просят включить приложение, дать его помощнику или подключить. «Одобрить» сразу делает то, о чём они просили.",
+  "access.req.aBot": "помощника",
+  "access.req.theBot": "помощника",
+  "access.req.somebody": "Кто-то",
+  "access.req.enable": "Включить {app} для {bot}",
+  "access.req.grantMore": "Дать больше из {app} для {bot}: {list}",
+  "access.req.grant": "Дать {app} для {bot}",
+  "access.req.connectShared": "Подключить общий аккаунт {app}",
+  "access.req.asked": "Запрос от {who}, {when}{forBot}.",
+  "access.req.forBot": ", для {bot}",
+  "access.req.approving": "Одобряем…",
+  "access.req.botPage": "страница помощника в {app}",
+  "access.req.toolRead": "{name} (только чтение)",
+  "access.req.toolWrite": "{name} (что-то меняет)",
+  "access.req.gives":
+    "Одобрение даёт для {bot} ровно эти инструменты и ничего больше: {list}.",
+  "access.req.readOnly":
+    "Одобрение даёт для {bot} только действия {app}, доступные для чтения. Остальные выбери в {page}.",
+  "access.req.canSend": {
+    one: "{names} может отправлять от имени человека.",
+    few: "{names} могут отправлять, каждый от имени человека.",
+    many: "{names} могут отправлять, каждый от имени человека.",
+    other: "{names} могут отправлять, каждый от имени человека.",
+  },
+  "access.req.unreviewed": {
+    one: "Ни один проверенный список не говорит, что делает {names} в {app}, поэтому он может отправлять от имени человека.",
+    few: "Ни один проверенный список не говорит, что делают {names} в {app}, поэтому каждый может отправлять от имени человека.",
+    many: "Ни один проверенный список не говорит, что делают {names} в {app}, поэтому каждый может отправлять от имени человека.",
+    other:
+      "Ни один проверенный список не говорит, что делают {names} в {app}, поэтому каждый может отправлять от имени человека.",
+  },
+  "access.req.neverGives": {
+    one: "Одобрение никогда не даёт такой инструмент: разреши его в настройках, в {page}.",
+    few: "Одобрение никогда не даёт такие инструменты: разреши их в настройках, в {page}.",
+    many: "Одобрение никогда не даёт такие инструменты: разреши их в настройках, в {page}.",
+    other:
+      "Одобрение никогда не даёт такие инструменты: разреши их в настройках, в {page}.",
+  },
+  "access.req.and": "{a} и {b}",
+  "passwords.saveTo": "Сохранить в Паролях",
+  "responsibilities.run.waitKind.approval": "твоего одобрения",
+  "responsibilities.run.waitKind.question": "твоего ответа",
+  "responsibilities.run.waitKind.handoff": "твоего вмешательства",
+  "responsibilities.run.waitKind.signIn": "твоего входа",
+  "responsibilities.run.waitKind.other": "тебя",
+  "responsibilities.new.description":
+    "Постоянная цель. Помощник работает над ней в разговоре, который ты выберешь.",
+  "responsibilities.new.chooseConversation": "Выбери разговор",
+  "responsibilities.new.loadMore": "Загрузить ещё разговоры",
+  "responsibilities.new.titleExample":
+    "Поддерживать отчёт для клиентов актуальным",
+  "responsibilities.new.criteriaExample":
+    "В отчёте есть график за текущий квартал и ссылка на источник.",
+  "responsibilities.new.eventSource": "Источник событий",
+  "responsibilities.new.source.none": "Запускать по запросу",
+  "responsibilities.new.githubHelp":
+    "События приходят из репозиториев, которые ты подключил в {link}.",
+  "responsibilities.new.eventType": "Тип события",
+  "responsibilities.new.creating": "Создаём…",
+  "responsibilities.new.create": "Создать обязанность",
+  "triggers.kind.email": "Почта",
+  "triggers.help.webhook":
+    "Отправь POST с JSON на этот URL с заголовком Authorization или с заголовками подписи Standard Webhooks. Ответ 200 означает, что запрос получен, а не что запуск завершён.",
+  "triggers.help.github":
+    "В Settings → Webhooks репозитория укажи этот URL как payload URL, content type application/json, а ключ как secret.",
+  "triggers.help.linear":
+    "В Linear, Settings → API → Webhooks: укажи URL, затем вставь сюда signing secret, который показывает Linear.",
+  "triggers.help.sentry":
+    "В внутренней интеграции Sentry укажи URL вебхука, затем вставь сюда client secret интеграции.",
+  "triggers.help.pagerduty":
+    "В PagerDuty, Integrations → Generic Webhooks (v3): укажи URL, затем вставь сюда secret, показанный при создании.",
+  "triggers.help.email":
+    "Отправь или перешли письмо на этот адрес, чтобы начать запуск.",
+  "triggers.help.slack":
+    "Запускается по событиям Slack, которые получает этот помощник. Сообщения, отправленные до добавления триггера, игнорируются.",
+  "triggers.slack.mention": "Помощника упоминают",
+  "triggers.slack.phrase": "Сообщение содержит фразу",
+  "triggers.slack.reaction": "Добавлена реакция",
+  "triggers.slack.message": "Любое сообщение",
+  "triggers.f.inChannels": "в {channels}",
+  "triggers.f.everyChannel": "в каждом канале, где есть помощник",
+  "triggers.f.mention": "когда помощника упоминают",
+  "triggers.f.anyMessage": "на любое сообщение",
+  "triggers.f.phrases": "на сообщения со словами {phrases}",
+  "triggers.f.or": " или ",
+  "triggers.f.reactions": "на реакции",
+  "triggers.f.slack": "{what} {where} (рабочее пространство {team})",
+  "triggers.f.events": "события {types}",
+  "triggers.f.everyEvent": "каждое событие",
+  "triggers.f.where": "когда {path} = {equals}",
+  "triggers.f.from": "от {from}",
+  "triggers.f.fromSenders": "от {senders} (с проверкой подлинности)",
+  "triggers.title": "Триггеры",
+  "triggers.add": "Добавить триггер",
+  "triggers.notActive.paused":
+    "Эта обязанность на паузе. Её триггеры её не запускают.",
+  "triggers.notActive.completed":
+    "Эта обязанность завершена. Её триггеры её не запускают.",
+  "triggers.none":
+    "Триггеров нет. Она запускается, когда ты нажимаешь «Запустить сейчас», или по событиям выше.",
+  "triggers.removeForGood": "Удалить навсегда",
+  "triggers.keep": "Оставить",
+  "triggers.runOnAria": "Запускать по этому триггеру ({kind})",
+  "triggers.postTo": "POST на",
+  "triggers.copyUrl": "Скопировать URL",
+  "triggers.copyAddress": "Скопировать адрес",
+  "triggers.emailOff":
+    "Почта в {product} ещё не настроена, поэтому этот адрес не может принимать письма. Её должен включить администратор.",
+  "triggers.key": "Ключ",
+  "triggers.copyKey": "Скопировать ключ",
+  "triggers.copyHeader": "Скопировать заголовок",
+  "triggers.showKey": "Показать ключ",
+  "triggers.replaceKey": "Заменить ключ",
+  "triggers.secretSaved": "Signing secret сохранён",
+  "triggers.secretWaiting": "Ожидаем signing secret",
+  "triggers.secret": "Signing secret",
+  "triggers.pasteNew": "Вставь новый secret, чтобы заменить его",
+  "triggers.paste": "Вставь signing secret",
+  "triggers.saveSecret": "Сохранить secret",
+  "triggers.addDescription":
+    "Что-то вне {product}, что запускает эту обязанность.",
+  "triggers.slackTeam": "ID команды Slack",
+  "triggers.fireOn": "Срабатывать на",
+  "triggers.phrases": "Фразы (через запятую)",
+  "triggers.reactions": "Реакции (пусто: любые)",
+  "triggers.channelIds": "ID каналов (пусто: все, где есть помощник)",
+  "triggers.eventTypes": "Типы событий",
+  "triggers.onlyWhen": "Только когда поле",
+  "triggers.equals": "равно",
+  "triggers.repository": "Репозиторий (необязательно)",
+  "triggers.senders": "Разрешённые отправители (пусто: никто)",
+  "triggers.secretLater": "Signing secret (можно добавить позже)",
+  "triggers.adding": "Добавляем…",
+  "triggers.addKind": "Добавить триггер ({kind})",
+  "triggers.example.webhook": "deploy.finished (пусто: любое)",
+  "routines.cal.intro":
+    "Ближайшие {days} дн. для включённых рутин. Время указано в твоём часовом поясе.",
+  "routines.cal.none": "Рутин пока нет, поэтому ничего не запланировано.",
+  "routines.cal.noneOn":
+    "Ни одна из этих рутин не включена, поэтому ни одна не запустится.",
+  "routines.cal.nothing": "В ближайшие {days} дн. ничего не запланировано.",
+  "routines.cal.truncated":
+    "Показаны только первые {max} запусков за эти {days} дн.",
+  "routines.cal.paused": {
+    one: "{count} рутина на паузе, поэтому её здесь нет. Включи одну, чтобы увидеть, когда она запустится.",
+    few: "{count} рутины на паузе, поэтому их здесь нет. Включи одну, чтобы увидеть, когда она запустится.",
+    many: "{count} рутин на паузе, поэтому их здесь нет. Включи одну, чтобы увидеть, когда она запустится.",
+    other:
+      "{count} рутины на паузе, поэтому их здесь нет. Включи одну, чтобы увидеть, когда она запустится.",
+  },
+  "routines.week.nothing": "На остаток этой недели ничего не запланировано.",
+  "routines.week.label": "Эта неделя",
+  "routines.week.today": "сегодня",
+  "routines.week.now": "Сейчас, {time}",
+  "routines.week.next": "Дальше:",
+  "routines.week.nothingElse": "Больше на этой неделе ничего не запланировано.",
+  "routines.week.truncated":
+    "Показаны только первые запуски на ближайшие дни, поэтому очень занятая рутина может отображаться не каждый день.",
+  "routines.week.historyError":
+    "Запуски, которые уже прошли, не удалось загрузить, поэтому они не показаны.",
+  "routines.week.note":
+    "Время указано в твоём часовом поясе. Рутина, которая запускается чаще раза в час, отображается одним блоком на день.",
+  "routines.week.summary": "{count} запусков, каждые ~{minutes} мин",
+  "routines.week.gone": "{label}, разговор удалён",
+  "routines.card.label": "Рутина",
+  "routines.card.cancelled": "Рутина отменена",
+  "routines.card.readError": "Не удалось прочитать эту рутину.",
+  "routines.card.reading": "Читаем эту рутину…",
+  "routines.card.gone": "Этой рутины больше нет",
+  "routines.card.cannotSend":
+    "Этот разговор сейчас не может принять сообщение. Напиши изменение в поле сообщения ниже.",
+  "routines.card.confirm": "Отменить эту рутину?",
+  "routines.card.yes": "Да, отменить",
+  "routines.card.no": "Нет, оставить",
+  "routines.card.pause": "Пауза",
+  "routines.card.resume": "Продолжить",
+  "routines.card.edit": "Изменить",
+  "routines.card.whatChange": "Что нужно изменить?",
+  "routines.card.send": "Отправить изменение",
+  "routines.card.writeBelow": "Напиши изменение в поле сообщения ниже.",
+  "routines.card.close": "Закрыть",
+  "admin.boundaries.title": "Границы",
+  "admin.boundaries.descLead":
+    "Что помощник может и чего не может делать со своим компьютером. Каждое действие проверяется до того, как оно произойдёт. Отказы видны в разделе",
+  "admin.boundaries.descAudit": "Аудит",
+  "admin.boundaries.descTail": "вместе с правилом, которое их отклонило.",
+  "admin.boundaries.whenTitle": "Когда правило совпадает",
+  "admin.boundaries.whenDesc":
+    "Остановить действие или записать его и пропустить. Запись позволяет проверить правило на реальной активности, прежде чем оно что-либо отклонит.",
+  "admin.boundaries.modeEnforce": "Остановить действие",
+  "admin.boundaries.modeRecord": "Записать и разрешить",
+  "admin.boundaries.modeEnforceNote":
+    "Помощника останавливают и сообщают, какое правило его отклонило.",
+  "admin.boundaries.modeRecordNote":
+    "Ничего не останавливается. Каждое совпадение записывается так, как если бы оно было отклонено.",
+  "admin.boundaries.neverTitle": "Помощникам никогда нельзя",
+  "admin.boundaries.neverLead":
+    "Проверяется первым. Совпадение останавливает действие, и помощнику сообщают, какое правило его отклонило. Правила пишутся на CEL. Они могут проверять",
+  "admin.boundaries.neverMid1": ", элемент, нажатую клавишу",
+  "admin.boundaries.neverMid2": ", файл, выполненную команду",
+  "admin.boundaries.neverMid3": "а также",
+  "admin.boundaries.neverMid4": "для внешних инструментов.",
+  "admin.boundaries.neverMid5": "показывает, что запустило выполнение:",
+  "admin.boundaries.neverTail":
+    "Запланированный запуск действует от имени своего владельца, поэтому одного",
+  "admin.boundaries.neverTail2":
+    "для этого недостаточно. Правило, которое нельзя вычислить, считается совпадением. Опечатка никогда не пропустит действие.",
+  "admin.boundaries.or": "или",
+  "admin.boundaries.noRules":
+    "Правил нет. Каждое действие разрешено и записывается.",
+  "admin.boundaries.remove": "Удалить",
+  "admin.boundaries.ruleLabel": "Правило на CEL",
+  "admin.boundaries.testing": "Проверка…",
+  "admin.boundaries.testFirst": "Сначала проверить",
+  "admin.boundaries.addRule": "Добавить правило",
+  "admin.boundaries.preset.form": "Никогда не отправлять форму",
+  "admin.boundaries.preset.formCost":
+    "Также не даёт помощнику нажимать Enter где-либо ещё. Форма может отправиться по Enter в любом поле. Не охватывает выбор в меню или в поле даты: их изменение может само отправить форму.",
+  "admin.boundaries.preset.password": "Никогда не вводить текст в поле пароля",
+  "admin.boundaries.preset.passwordCost":
+    "Поле пароля с другой подписью не охвачено. Правило сравнивает подпись.",
+  "admin.boundaries.preset.social": "Держаться подальше от соцсетей",
+  "admin.boundaries.preset.socialCost":
+    "Только эти два хоста. Ссылка, которая перенаправляет туда с другого сайта, разрешена.",
+  "admin.boundaries.otherwiseTitle": "В остальных случаях они могут",
+  "admin.boundaries.otherwiseDesc":
+    "Относится ко всему, что не поймал список выше. Пустой список здесь ничего не разрешает, и каждое действие отклоняется.",
+  "admin.boundaries.allowAll": "true, всё, что не отклонено выше",
+  "admin.boundaries.saved":
+    "Сохранено. Действует со следующего действия любого помощника.",
+  "admin.boundaries.footer":
+    "Изменения действуют со следующего действия любого помощника. Они сохраняются после перезапуска.",
+  "admin.boundaries.dry.none":
+    "Записанных действий компьютера для проверки пока нет. Правило допустимо. Что оно ловит, станет видно, когда помощники начнут действовать.",
+  "admin.boundaries.dry.zero":
+    "Проверено на последних {scanned} записанных действиях. Это правило не отклонило бы ни одного. Оно всё равно может совпасть с будущими.",
+  "admin.boundaries.dry.some":
+    "Проверено на последних {scanned} записанных действиях. Это правило отклонило бы {refused}.",
+  "admin.boundaries.dry.wouldRefuse": "Отклонило бы",
+  "admin.boundaries.dry.wouldAllow": "Теперь разрешило бы",
+  "admin.boundaries.dry.on": "на «{name}»",
+  "admin.boundaries.dry.running": "запускает",
+  "admin.boundaries.dry.touching": "затрагивает {file}",
+  "admin.boundaries.dry.first":
+    "Показаны первые {shown}. Число выше охватывает всё проверенное.",
+  "admin.people.title": "Люди",
+  "admin.people.desc":
+    "Все, кто входил в систему. Администраторы могут открывать эти экраны. Все остальные общаются с помощниками.",
+  "admin.people.whoTitle": "Кто здесь",
+  "admin.people.whoDesc":
+    "Адреса из INITIAL_ADMIN_EMAILS всегда администраторы. Здесь их изменить нельзя.",
+  "admin.people.stopped": {
+    one: "{count} компьютер остановлен",
+    few: "{count} компьютера остановлены",
+    many: "{count} компьютеров остановлено",
+    other: "{count} компьютера остановлено",
+  },
+  "admin.people.stoppedFailed": ". Не удалось остановить: {failed}",
+  "admin.people.disksKept": ". Их диски сохраняются.",
+  "admin.people.searchLabel": "Поиск людей",
+  "admin.people.searchPlaceholder": "Искать по имени или адресу",
+  "admin.people.loadError": "Не удалось загрузить людей. Перезагрузи страницу.",
+  "admin.people.noMatch": "Никто не подходит под «{query}».",
+  "admin.people.nobody":
+    "Пока никто не входил. Люди появятся здесь, когда войдут.",
+  "admin.people.lastSignedIn": "последний вход {date}",
+  "admin.people.neverSignedIn": "ни разу не входил",
+  "admin.people.noProvider": "нет поставщика",
+  "admin.people.accessRemoved": "Доступ отозван",
+  "admin.people.adminByConfig": "Администратор по конфигурации",
+  "admin.people.stopComputers": "Остановить компьютеры",
+  "admin.people.restore": "Восстановить",
+  "admin.people.remove": "Удалить",
+  "admin.people.adminSwitch": "Администратор: {email}",
+  "admin.people.loading": "Загрузка…",
+  "admin.people.showMore": "Показать ещё",
+  "admin.boundaries.and": "и",
+  "admin.credentials.title": "Учётные данные",
+  "admin.credentials.add": "Добавить учётные данные",
+  "admin.credentials.desc":
+    "Ключи и токены этой установки. {product} никогда не показывает секрет после его сохранения.",
+  "admin.credentials.dialogDesc":
+    "Сохраняется для этой установки. Секрет ты больше не увидишь.",
+  "admin.credentials.type": "Тип",
+  "admin.credentials.model": "Модель",
+  "admin.credentials.connector": "Коннектор",
+  "admin.credentials.provider": "Поставщик",
+  "admin.credentials.keyId": "ID ключа",
+  "admin.credentials.secret": "Секрет",
+  "admin.credentials.replaces":
+    "У этого ключа уже есть активные учётные данные. Сохранение заменяет их и отзывает старые.",
+  "admin.credentials.saveError":
+    "Не удалось сохранить учётные данные. Попробуй ещё раз.",
+  "admin.credentials.cancel": "Отмена",
+  "admin.credentials.saving": "Сохранение…",
+  "admin.credentials.save": "Сохранить учётные данные",
+  "admin.credentials.savedTitle": "Сохранённые учётные данные",
+  "admin.credentials.loadError":
+    "Не удалось загрузить учётные данные. Перезагрузи страницу.",
+  "admin.credentials.empty":
+    "Учётных данных пока нет. Добавь их кнопкой «Добавить учётные данные».",
+  "admin.credentials.revoked": "отозваны",
+  "admin.credentials.active": "активны",
+  "admin.credentials.revoke": "Отозвать",
+  "admin.idp.title": "Поставщики удостоверений",
+  "admin.idp.add": "Добавить поставщика",
+  "admin.idp.desc":
+    "Собственный поставщик SAML или OpenID Connect твоей компании. Люди входят по своей электронной почте, а её домен выбирает поставщика.",
+  "admin.idp.registeredTitle": "Зарегистрированные",
+  "admin.idp.registeredDesc":
+    "Google, Microsoft и Okta задаются в окружении. Здесь они не показаны.",
+  "admin.idp.loadError":
+    "Не удалось загрузить поставщиков удостоверений. Перезагрузи страницу.",
+  "admin.idp.empty":
+    "Поставщиков удостоверений пока нет. Добавь одного с метаданными от своей команды по удостоверениям.",
+  "admin.idp.remove": "Удалить",
+  "admin.idp.dialogTitle": "Добавить поставщика удостоверений",
+  "admin.idp.name": "Название",
+  "admin.idp.domain": "Домен почты",
+  "admin.idp.domainNote":
+    "Все, у кого адрес в этом домене, входят здесь. Несколько доменов разделяй запятыми.",
+  "admin.idp.issuer": "Издатель",
+  "admin.idp.signOnUrl": "URL входа",
+  "admin.idp.metadata": "XML метаданных",
+  "admin.idp.metadataNote":
+    "Файл от твоей команды по удостоверениям. В нём есть сертификат подписи.",
+  "admin.idp.clientId": "ID клиента",
+  "admin.idp.clientSecret": "Секрет клиента",
+  "admin.idp.cancel": "Отмена",
+  "admin.idp.adding": "Добавление…",
+  "admin.idp.addShort": "Добавить",
+  "admin.audit.decision.bot.declined": "Помощник отказался",
+  "admin.audit.decision.agent.stream_stalled": "Помощник перестал отвечать",
+  "admin.audit.decision.computer.policy_loaded": "Граница при запуске",
+  "admin.audit.decision.computer.isolation_loaded": "Изоляция при запуске",
+  "admin.audit.decision.computer.control_taken":
+    "Человек взял управление на себя",
+  "admin.audit.decision.computer.control_released":
+    "Управление вернулось помощнику",
+  "admin.audit.decision.computer.help_requested": "Помощник попросил помощи",
+  "admin.audit.decision.computer.secret_requested": "Помощник запросил секрет",
+  "admin.audit.decision.computer.secret_supplied": "Человек передал секрет",
+  "admin.audit.decision.computer.reset": "Компьютер сброшен",
+  "admin.audit.decision.computer.updated": "Компьютер обновлён",
+  "admin.audit.decision.computer.stopped": "Человек нажал «Стоп»",
+  "admin.audit.decision.component.granted": "Выдано этому помощнику",
+  "admin.audit.decision.component.revoked": "Отозвано у этого помощника",
+  "admin.audit.decision.component.published":
+    "Опубликовано. Любой помощник может использовать",
+  "admin.audit.decision.component.unpublished":
+    "Снято с публикации. Ни один помощник не может использовать",
+  "admin.audit.decision.component.draft_saved":
+    "Черновик сохранён, ещё не опубликован",
+  "admin.audit.decision.component.refused": "Отказано",
+  "admin.audit.decision.component.function_granted": "Может это читать",
+  "admin.audit.decision.component.function_revoked":
+    "Больше не может это читать",
+  "admin.audit.decision.component.function_called": "Прочитал реальные данные",
+  "admin.audit.decision.component.function_refused": "Отказано",
+  "admin.audit.decision.component.function_failed": "Не удалось прочитать",
+  "admin.audit.decision.mcp.tools_discovered":
+    "Инструменты, предложенные для одного запуска",
+  "admin.audit.decision.mcp.call_succeeded": "Вызвано от имени этого помощника",
+  "admin.audit.decision.mcp.call_rejected": "Заблокировано",
+  "admin.audit.decision.mcp.call_failed": "Сервер не ответил",
+  "admin.audit.decision.mcp.callback_refused":
+    "Не удалось подтвердить, какой это был помощник",
+  "admin.audit.decision.configuration.changed": "Конфигурация изменена",
+  "admin.audit.decision.credential.created": "Учётные данные сохранены",
+  "admin.audit.discovery.under-floor":
+    "Инструментов так мало, что предложены все",
+  "admin.audit.discovery.nothing-declared":
+    "Ни один навык не объявляет ни одного из этих инструментов",
+  "admin.audit.discovery.unavailable":
+    "Выбрать не удалось, поэтому предложены все",
+  "admin.audit.discovery.nothing-chosen":
+    "Ни один навык не подошёл, поэтому предложены все",
+  "admin.audit.discovery.selected": "Выбрано по навыку",
+  "admin.audit.title": "Аудит",
+  "admin.audit.desc":
+    "Каждое действие помощника и каждое, которое отклонила политика этой установки.",
+  "admin.audit.export": "Экспорт CSV",
+  "admin.audit.exporting": "Экспорт…",
+  "admin.audit.refresh": "Обновить",
+  "admin.audit.exportFailed":
+    "Не удалось экспортировать события аудита. Попробуй ещё раз.",
+  "admin.audit.filter.all": "Всё",
+  "admin.audit.filter.computer": "Действия компьютера",
+  "admin.audit.filter.blocked": "Заблокировано",
+  "admin.audit.filter.didNot": "Не произошло",
+  "admin.audit.filter.nobody": "Никто не наблюдал",
+  "admin.audit.capped":
+    "В файле самые новые события ({count}), не все. Сузь фильтр или даты, чтобы экспортировать остальные.",
+  "admin.audit.loadError":
+    "Не удалось загрузить журнал аудита. Перезагрузи страницу.",
+  "admin.audit.empty": "Пока нет событий, подходящих под этот фильтр.",
+  "admin.audit.col.when": "Когда",
+  "admin.audit.col.what": "Что",
+  "admin.audit.col.on": "Где",
+  "admin.audit.col.bot": "Помощник",
+  "admin.audit.col.startedBy": "Запустил",
+  "admin.audit.col.decision": "Решение",
+  "admin.audit.by.routine": "Рутина",
+  "admin.audit.by.handedOnBy": "Передано от {name}",
+  "admin.audit.by.handedOn": "Передано",
+  "admin.audit.by.memory": "Источник памяти",
+  "admin.audit.by.responsibility": "Обязанность",
+  "admin.audit.by.deployment": "Эта установка",
+  "admin.audit.by.remote": "Браузер, не связанный с компьютером",
+  "admin.audit.by.person": "Человек",
+  "admin.audit.routed.mention": "Человек выбрал этого помощника",
+  "admin.audit.routed.default": "Отправлено помощнику по умолчанию",
+  "admin.audit.routed.meant": "Отправлено помощнику, которому предназначалось",
+  "admin.audit.toolsOf": "{offered} из {granted} инструментов",
+  "admin.audit.blocked": "Заблокировано",
+  "admin.audit.didNot": "Не произошло",
+  "admin.audit.allowed": "Разрешено",
+  "admin.audit.reportedByBot": ", сообщил сам помощник",
+  "admin.audit.dryRun": "пробный запуск: записано, не применено",
+  "admin.nav.back": "Назад в приложение",
+  "admin.nav.overview": "Обзор",
+  "admin.nav.reach": "До чего помощники могут добраться",
+  "admin.nav.do": "Что помощники могут делать",
+  "admin.nav.in": "Кто может войти",
+  "admin.nav.happened": "Что произошло",
+  "admin.nav.credentials": "Учётные данные",
+  "admin.nav.boundaries": "Границы",
+  "admin.nav.approvals": "Одобрения",
+  "admin.nav.computers": "Компьютеры",
+  "admin.nav.plugins": "Плагины",
+  "admin.nav.skills": "Навыки",
+  "admin.nav.learning": "Автоматическое обучение",
+  "admin.nav.components": "Компоненты интерфейса",
+  "admin.nav.playground": "Playground",
+  "admin.nav.people": "Люди",
+  "admin.nav.idp": "Поставщики удостоверений",
+  "admin.nav.audit": "Аудит",
+  "admin.enterprise.mode.allow_all": "Разрешить любой доступ к сети",
+  "admin.enterprise.mode.defaults_plus_allowlist":
+    "Значения по умолчанию плюс список разрешённых адресов команды",
+  "admin.enterprise.mode.allowlist_only":
+    "Только список разрешённых адресов команды",
+  "admin.enterprise.noPolicy":
+    "Политики нет. Компьютеры помощников могут обращаться ко всему, что разрешает кластер",
+  "admin.enterprise.locked": " · заблокировано",
+  "admin.enterprise.loadError":
+    "Не удалось загрузить корпоративные настройки. Перезагрузи страницу.",
+  "admin.enterprise.title": "Корпоративные настройки",
+  "admin.enterprise.description":
+    "Что могут использовать участники, как компьютеры помощников выходят в сеть и что записывается. Каждое изменение видно в Аудите.",
+  "admin.enterprise.signin.description":
+    "Адреса из {env} всегда могут входить через соцсети, как аварийный способ входа. Каждый такой вход виден в Аудите.",
+  "admin.enterprise.signin.title": "Вход",
+  "admin.enterprise.sso.title": "Требовать SSO",
+  "admin.enterprise.sso.on":
+    "Люди могут входить только через зарегистрированного поставщика SAML или OpenID Connect.",
+  "admin.enterprise.sso.off":
+    "Люди могут также входить через Google, Microsoft или Okta.",
+  "admin.enterprise.scim.title": "Провижининг SCIM",
+  "admin.enterprise.scim.on":
+    "Базовый URL каталога {url} с bearer-токеном {env}. Деактивация завершает сеансы, блокирует адрес, отзывает учётные данные коннекторов и останавливает их компьютеры.",
+  "admin.enterprise.scim.unsetUrl": "(задай BETTER_AUTH_URL)",
+  "admin.enterprise.scim.off":
+    "Выключено. Задай {env}, чтобы принимать провижининг из Okta, Entra или другого каталога.",
+  "admin.enterprise.on": "Вкл.",
+  "admin.enterprise.off": "Выкл.",
+  "admin.enterprise.cap.description":
+    "Каждый переключатель действует на всю организацию. Роль может его переопределить, а группа каталога может получить возможность, которую организация выключила.",
+  "admin.enterprise.cap.title": "Возможности",
+  "admin.enterprise.cap.offFor":
+    "Выключено для всех, если роль или группа не включит её.",
+  "admin.enterprise.over.title": "Исключения для ролей и групп",
+  "admin.enterprise.over.none": "Нет. Все получают переключатели выше",
+  "admin.enterprise.over.set": "Задано: {count}",
+  "admin.enterprise.net.description":
+    "Куда могут подключаться компьютеры помощников. Изменения доходят до работающих компьютеров за секунды, без перезапуска. Политика группы заменяет политику организации, если та не заблокирована.",
+  "admin.enterprise.net.title": "Сеть",
+  "admin.enterprise.net.org": "Организация",
+  "admin.enterprise.net.group": "Группа: {name}",
+  "admin.enterprise.net.addGroup": "Добавить политику группы",
+  "admin.enterprise.mcp.description":
+    "Когда список разрешённых включён, помощники могут вызывать инструменты только на MCP-серверах, одобренных здесь. Вызовы любого другого сервера отклоняются.",
+  "admin.enterprise.mcp.title": "MCP-серверы",
+  "admin.enterprise.mcp.only": "Только одобренные серверы",
+  "admin.enterprise.mcp.approved": "Одобрено: {count}",
+  "admin.enterprise.mcp.offDesc":
+    "Выключено. Помощники могут использовать любой зарегистрированный сервер, к которому у них есть доступ.",
+  "admin.enterprise.mcp.onlyAria": "Только одобренные MCP-серверы",
+  "admin.enterprise.mcp.approveAria": "Одобрить {name}",
+  "admin.enterprise.models.description":
+    "Встроенный помощник работает на {model}. Удалённый помощник выбирает свою модель сам, и модель, о которой он сообщает, записывается.",
+  "admin.enterprise.models.configured": "модели, настроенной в этой установке",
+  "admin.enterprise.models.title": "Модели",
+  "admin.enterprise.models.allowlist": "Список разрешённых моделей",
+  "admin.enterprise.models.allowlistOn":
+    "Встроенный помощник с моделью не из списка отклоняется до запуска.",
+  "admin.enterprise.models.allowlistOff":
+    "Выключено. Можно использовать любую модель.",
+  "admin.enterprise.models.allowed": "Разрешённые модели",
+  "admin.enterprise.models.none": "В списке ничего нет",
+  "admin.enterprise.models.listDesc":
+    "Одна модель в строке, в виде поставщик/модель, например {example}.",
+  "admin.enterprise.rec.description":
+    "Задай {env}, чтобы передавать события аудита и действия помощников в твой коллектор OpenTelemetry или SIEM. Они помечены тегом {tag}.",
+  "admin.enterprise.rec.title": "Запись и экспорт",
+  "admin.enterprise.rec.action": "Action Recording",
+  "admin.enterprise.rec.actionOn":
+    "Команды оболочки, которые выполняют помощники, записываются без секретов и хранятся {days} дн.",
+  "admin.enterprise.rec.actionOff": "Выключено. Команды видны только в Аудите.",
+  "admin.enterprise.rec.otel": "Экспорт в OpenTelemetry",
+  "admin.enterprise.rec.otelOn": "Экспорт идёт по OTLP/HTTP.",
+  "admin.enterprise.rec.otelOff": "Не настроено. Задай {env} на сервере.",
+  "admin.enterprise.comp.description":
+    "Остановка компьютера завершает работающих на нём помощников и сохраняет его диск. В следующем сеансе помощник получит новый компьютер. Чтобы остановить компьютеры одного человека, перейди в раздел «Люди».",
+  "admin.enterprise.comp.title": "Компьютеры",
+  "admin.enterprise.comp.stopInactive": "Останавливать неактивные компьютеры",
+  "admin.enterprise.comp.afterDays": "Через {days} дн. без использования",
+  "admin.enterprise.usage.error":
+    "Не удалось загрузить использование моделей. Перезагрузи страницу.",
+  "admin.enterprise.usage.empty":
+    "За последние 30 дней не было запусков помощников.",
+  "admin.enterprise.usage.runs": "{runs} запусков за 30 дней · {who}: {people}",
+  "admin.enterprise.usage.person": "человек",
+  "admin.enterprise.usage.people": "людей",
+  "admin.enterprise.usage.refused": " · не из списка разрешённых: {count}",
+  "admin.enterprise.recorded.error":
+    "Не удалось загрузить записанные действия. Перезагрузи страницу.",
+  "admin.enterprise.recorded.empty": "Пока нет записанных команд.",
+  "admin.enterprise.recorded.local": "Компьютер участника",
+  "admin.enterprise.recorded.bot": "Помощник {id}",
+  "admin.enterprise.sweep.stopping": "Останавливаем…",
+  "admin.enterprise.sweep.now": "Остановить неактивные компьютеры сейчас",
+  "admin.enterprise.sweep.stopped": "Остановлено: {count}.",
+  "admin.enterprise.ov.admins": "Администраторы",
+  "admin.enterprise.ov.members": "Участники",
+  "admin.enterprise.ov.group": "Группа: {name}",
+  "admin.enterprise.ov.scope": "Область",
+  "admin.enterprise.ov.groupNote":
+    "Группа может только добавлять. «Выдать» даёт её участникам возможность, даже если организация её выключила.",
+  "admin.enterprise.ov.roleNote":
+    "Настройка роли заменяет переключатель организации для всех с этой ролью.",
+  "admin.enterprise.ov.forScope": "{title}: {scope}",
+  "admin.enterprise.ov.inherit": "Наследовать",
+  "admin.enterprise.ov.grant": "Выдать",
+  "admin.enterprise.netd.org": "Сетевая политика организации",
+  "admin.enterprise.netd.group": "Сетевая политика группы",
+  "admin.enterprise.netd.groupLabel": "Группа",
+  "admin.enterprise.netd.mode": "Режим",
+  "admin.enterprise.netd.allowlist": "Список разрешённых",
+  "admin.enterprise.netd.help":
+    "По одному в строке. Домен охватывает свои поддомены. *.имя охватывает только поддомены. Диапазон IP может содержать порты. По умолчанию это {first} и ещё {more} хостов пакетов и исходников.",
+  "admin.enterprise.netd.lock":
+    "Заблокировать, чтобы группы не могли заменить эту политику",
+  "admin.enterprise.netd.remove": "Удалить политику",
+  "admin.enterprise.days.label": "Дней без использования",
+  "admin.enterprise.days.help": "0 выключает. Проверяется каждый час.",
+  "admin.plugins.title": "Плагины",
+  "admin.plugins.description":
+    "До чего может добраться эта установка и какие помощники могут этим пользоваться. Добавленный тобой плагин доступен всем. Каких помощников наделить его инструментами, выбери на его странице.",
+  "admin.plugins.loadError":
+    "Не удалось загрузить плагины. Перезагрузи страницу.",
+  "admin.plugins.connected.description":
+    "Добавлены для всех. Открой один, чтобы настроить его и выбрать, каким помощникам достанутся его инструменты.",
+  "admin.plugins.connected.title": "Подключены",
+  "admin.plugins.connected.empty":
+    "Пока ничего не подключено. Выбери плагин из списка ниже.",
+  "admin.plugins.explore.description":
+    "Проверенные серверы первой стороны. Открой один, чтобы добавить его.",
+  "admin.plugins.explore.title": "Найти плагины",
+  "admin.plugins.explore.empty": "Все плагины из каталога подключены.",
+  "admin.plugins.notAdded": "Не добавлен",
+  "admin.plugins.more.title": "Другие приложения",
+  "admin.plugins.sum.notConnected": "Не подключён",
+  "admin.plugins.sum.noTools": "Инструментов пока нет",
+  "admin.plugins.sum.tools": {
+    one: "{count} инструмент",
+    few: "{count} инструмента",
+    many: "{count} инструментов",
+    other: "{count} инструмента",
+  },
+  "admin.plugins.sum.toolsNoBots": "{tools} · без помощников",
+  "admin.plugins.sum.bots": {
+    one: "{count} помощник",
+    few: "{count} помощника",
+    many: "{count} помощников",
+    other: "{count} помощника",
+  },
+  "admin.plugins.requests": {
+    one: "{count} запрос",
+    few: "{count} запроса",
+    many: "{count} запросов",
+    other: "{count} запроса",
+  },
+  "admin.plugins.key.grant.none": "Нет помощников",
+  "admin.plugins.key.grant.one": "1 помощник",
+  "admin.plugins.key.grant.all": "Все помощники",
+  "admin.plugins.key.grant.some": "{held} из {total} помощников",
+  "admin.plugins.key.held.none": "Нет инструментов",
+  "admin.plugins.key.held.one": "1 инструмент",
+  "admin.plugins.key.held.all": "Все инструменты",
+  "admin.plugins.key.held.some": "{held} из {total} инструментов",
+  "admin.plugins.key.notApproved": "Не одобрен",
+  "admin.plugins.key.unreadableTitle": "Твой аккаунт",
+  "admin.plugins.key.unreadable":
+    "Не удалось узнать, подключён ли здесь твой аккаунт. Перезагрузи страницу или проверь журналы этой установки, если это повторяется.",
+  "admin.plugins.key.noConsent":
+    "{product} не получил обратно ссылку на согласие, поэтому ничего не подключено. Попробуй ещё раз или проверь настройку этого коннектора, если это повторяется.",
+  "admin.plugins.key.reassurance":
+    "Настройка завершена и без него, и он получает доступ только к твоим документам.",
+  "admin.plugins.key.notPlugin.description":
+    "Плагина с таким именем нет ни здесь, ни в каталоге.",
+  "admin.plugins.key.notPlugin.title": "Это не плагин",
+  "admin.plugins.key.notPlugin.empty": "Нечего настраивать.",
+  "admin.plugins.key.enable.title": "Включить для этой установки",
+  "admin.plugins.key.enable.on":
+    "Помощникам можно выдать его инструменты. Выключение удаляет плагин и отзывает у всех помощников доступ к его инструментам.",
+  "admin.plugins.key.enable.off":
+    "Ни один помощник не может обратиться к этому поставщику. Включи, чтобы настроить его и выдать помощникам его инструменты.",
+  "admin.plugins.key.enable.aria": "Включить {title} для этой установки",
+  "admin.plugins.key.whose.title": "Чей аккаунт",
+  "admin.plugins.key.whose.shared": "Один общий аккаунт для всех.",
+  "admin.plugins.key.whose.personal": "Каждый подключает свой.",
+  "admin.plugins.key.whose.makePersonal": "Сделать личным",
+  "admin.plugins.key.whose.makeShared": "Сделать общим",
+  "admin.plugins.key.conn.oauth":
+    "Этот поставщик отвечает от имени того, кто спрашивает. Установка регистрирует клиент OAuth, а каждый человек подключает свой аккаунт. Помощник видит только то, что может видеть этот человек.",
+  "admin.plugins.key.conn.secret":
+    "Этот поставщик отвечает от имени того, кто спрашивает. Каждый человек вставляет свой пароль приложения на своей странице «Подключения». Регистрировать здесь нечего, а собственного пароля установка не хранит.",
+  "admin.plugins.key.conn.builtin":
+    "Встроено в эту установку. Нет поставщика, к которому нужно обращаться, и нет учётных данных, которые нужно хранить. Вызов выполняется от имени того, кто его запросил.",
+  "admin.plugins.key.conn.bearer":
+    "То, что эта установка отправляет поставщику. Одни учётные данные для всех.",
+  "admin.plugins.key.conn.title": "Подключение",
+  "admin.plugins.key.builtin.desc":
+    "Настраивать нечего. Эти инструменты работают внутри этой установки, на её собственных данных.",
+  "admin.plugins.key.builtin.badge": "Встроено",
+  "admin.plugins.key.secret.title": "Пароль приложения",
+  "admin.plugins.key.secret.desc":
+    "Каждый человек создаёт свой в Google и вставляет на своей странице «Подключения». Он даёт доступ ко всему почтовому ящику, поэтому то, что могут делать помощники, определяют инструменты, которые ты выдашь ниже.",
+  "admin.plugins.key.secret.badge": "Для каждого",
+  "admin.plugins.key.reach.title": "Как к этому обращаются",
+  "admin.plugins.key.token.title": "Токен доступа",
+  "admin.plugins.key.token.desc":
+    "Отправляется с каждым вызовом этого поставщика.",
+  "admin.plugins.key.saved": "Сохранено",
+  "admin.plugins.key.notSet": "Не задано",
+  "admin.plugins.key.client.title": "Клиент OAuth",
+  "admin.plugins.key.client.selfDesc":
+    "Эта установка сама регистрируется у поставщика при первом подключении. Вставлять ничего не нужно.",
+  "admin.plugins.key.client.selfBadge": "Самостоятельная регистрация",
+  "admin.plugins.key.client.desc":
+    "Представляет эту установку поставщику. Сам по себе он не может добраться до чьих-либо документов.",
+  "admin.plugins.key.client.registered": "Зарегистрирован",
+  "admin.plugins.key.client.notRegistered": "Не зарегистрирован",
+  "admin.plugins.key.team.connected":
+    "Подключено{who}. Каждый помощник с этими инструментами действует от имени этого аккаунта.",
+  "admin.plugins.key.team.as": " как {name}",
+  "admin.plugins.key.team.by": " пользователем {name}",
+  "admin.plugins.key.team.disconnected":
+    "Аккаунт команды не подключён. Помощники с этими инструментами получают отказ.",
+  "admin.plugins.key.team.heading": "Аккаунт команды",
+  "admin.plugins.key.team.notice":
+    "Войди под аккаунтом команды, а не под своим.",
+  "admin.plugins.key.mine.connected":
+    "Подключено. Помощник с этими инструментами использует твой {title} от твоего имени. {note}",
+  "admin.plugins.key.mine.tryConnect":
+    "Подключи свой аккаунт, чтобы попробовать этот коннектор. {note}",
+  "admin.plugins.key.oauthAcct.connected":
+    "Подключено. Помощник с этими инструментами использует твой {title} от твоего имени. Все остальные подключают свой.",
+  "admin.plugins.key.oauthAcct.connect":
+    "Подключи свой аккаунт, чтобы попробовать этот коннектор. Настройка завершена и без него, и он получает доступ только к твоим документам.",
+  "admin.plugins.key.connected": "Подключено",
+  "admin.plugins.key.connect": "Подключить",
+  "admin.plugins.key.instance.title": "Хост экземпляра",
+  "admin.plugins.key.instance.desc":
+    "Этот поставщик даёт каждому клиенту собственное имя хоста. Перед сохранением оно проверяется по шаблону поставщика.",
+  "admin.plugins.key.docs.builtin": "Документация",
+  "admin.plugins.key.docs.vendor": "Документация поставщика",
+  "admin.plugins.key.docs.builtinDesc":
+    "Что предлагают эти инструменты, от тех, кто их поддерживает.",
+  "admin.plugins.key.docs.vendorDesc":
+    "Что предлагает этот сервер, от тех, кто его поддерживает.",
+  "admin.plugins.key.redirect.dynamic":
+    "Установка сама регистрирует свой URI перенаправления. У поставщика добавлять ничего не нужно.",
+  "admin.plugins.key.redirect.manual":
+    "Добавь это в разрешённые URI перенаправления клиента у поставщика, точно как написано. Один неверный символ приведёт там к ошибке, в которой {product} не упоминается.",
+  "admin.plugins.key.redirect.noUrl":
+    "У этой установки нет публичного URL, поэтому никто не может завершить подключение. Задай {env}.",
+  "admin.plugins.key.tools.refresh": "Обновить инструменты",
+  "admin.plugins.key.tools.grant": "Выдать инструменты…",
+  "admin.plugins.key.tools.description":
+    "Помощник видит только те инструменты, которые ему выданы. Каждый вызов проверяется в момент выполнения, поэтому отзыв доступа действует со следующего вызова.",
+  "admin.plugins.key.tools.title": "Инструменты",
+  "admin.plugins.key.tools.empty":
+    "Инструментов в списке нет. Обнови инструменты, чтобы проверить снова.",
+  "admin.plugins.key.tools.writes": "вносит изменения",
+  "admin.plugins.key.tools.reads": "читает",
+  "admin.plugins.key.byBot": "По помощнику",
+  "admin.plugins.key.byBot.hidden":
+    "Скрыто из твоего списка. Включай или выключай действия этого приложения по одному.",
+  "admin.plugins.key.byBot.shown":
+    "Включай или выключай действия этого приложения по одному.",
+  "admin.plugins.key.gone.description":
+    "Этот поставщик больше их не перечисляет. Ни один помощник их не видит и не может вызвать. Доступ по-прежнему сохранён и вернётся, если поставщик снова перечислит инструмент. Чтобы убрать его, используй страницу самого помощника.",
+  "admin.plugins.key.gone.title": "Выдано, но больше не перечисляется",
+  "admin.plugins.key.gone.row": "{title} не перечисляет{asOf}.",
+  "admin.plugins.key.gone.asOf": " по состоянию на последнее обновление",
+  "admin.plugins.key.dlg.client": "Клиент OAuth для {title}",
+  "admin.plugins.key.dlg.instance": "Хост экземпляра для {title}",
+  "admin.plugins.key.dlg.token": "Токен доступа для {title}",
+  "admin.plugins.key.dlg.clientDesc":
+    "Из консоли поставщика. Секрет сохраняется в хранилище этой установки и больше никогда не показывается.",
+  "admin.plugins.key.dlg.instanceDesc":
+    "Твоё собственное имя хоста у этого поставщика. Перед сохранением оно проверяется по шаблону поставщика.",
+  "admin.plugins.key.dlg.tokenDesc":
+    "Сохраняется в хранилище этой установки и больше никогда не показывается.",
+  "admin.plugins.key.dlg.clientId": "ID клиента",
+  "admin.plugins.key.dlg.clientSecret": "Секрет клиента",
+  "admin.plugins.key.gr.title": "Выдать инструменты",
+  "admin.plugins.key.gr.description":
+    "Каждая выдача — отдельная строка в Аудите. Инструменты, которые вносят изменения, при каждом вызове по-прежнему проверяются по границам.",
+  "admin.plugins.key.gr.to": "Кому",
+  "admin.plugins.key.gr.reads": "Читает",
+  "admin.plugins.key.gr.writes": "Вносит изменения",
+  "admin.plugins.key.gr.selectAll": "Выбрать все",
+  "admin.plugins.key.gr.button": "Выдать",
+  "admin.plugins.key.gr.progress": "Выдаётся {current} из {total}…",
+  "admin.plugins.key.gr.summary": {
+    one: "Выдать {count} инструмент: {names}.",
+    few: "Выдать {count} инструмента: {names}.",
+    many: "Выдать {count} инструментов: {names}.",
+    other: "Выдать {count} инструмента: {names}.",
+  },
+  "admin.plugins.key.gr.changing": {
+    one: "{count} вносит изменения.",
+    few: "{count} вносят изменения.",
+    many: "{count} вносят изменения.",
+    other: "{count} вносит изменения.",
+  },
+  "admin.home.reach.desc":
+    "Чего помощник может касаться за пределами {product} и какие на это есть ограничения.",
+  "admin.home.credentials.desc": "Ключи и токены этой установки.",
+  "admin.home.boundaries.desc":
+    "То, что ни один помощник не должен делать никогда.",
+  "admin.home.approvals.desc":
+    "О чём помощники участников должны спрашивать, прежде чем действовать.",
+  "admin.home.computers.desc":
+    "Машины, на которых помощники запускают инструменты.",
+  "admin.home.do.desc":
+    "Приложения, навыки и элементы интерфейса, которые может использовать любой помощник.",
+  "admin.home.plugins.desc":
+    "Сервисы, до которых может добраться {product}, и какие помощники могут ими пользоваться.",
+  "admin.home.skills.desc":
+    "Именованные инструкции, которые любой может запустить через /.",
+  "admin.home.learning.desc":
+    "Учиться на завершённых разговорах и просматривать предложенные навыки.",
+  "admin.home.components.desc":
+    "Собственные элементы, которые помощник может нарисовать в разговоре.",
+  "admin.home.playground.desc":
+    "Напиши компонент и смотри, как он отрисовывается по мере набора.",
+  "admin.home.engines.desc":
+    "ИИ-движки, на которых работают участники, и может ли каждый из них отвечать сейчас.",
+  "admin.home.people.desc":
+    "Все, кто входил в систему, кто администраторы и у кого отозван доступ.",
+  "admin.home.enterprise.desc":
+    "Роли и группы, обязательный SSO, SCIM, сетевая политика, списки разрешённых MCP и моделей, Action Recording.",
+  "admin.home.idp.desc":
+    "Поставщик SAML или OpenID Connect твоей компании, подбирается по домену электронной почты.",
+  "admin.home.audit.desc": "Каждое действие в {product} и кто его совершил.",
+  "admin.home.description":
+    "Настройки для всех в этой установке. Изменение здесь затрагивает каждого человека и каждого помощника.",
+  "admin.plugins.directoryError":
+    "Не удалось загрузить настройки плагинов. Перезагрузи страницу.",
+  "admin.components.description":
+    "Чем может отвечать каждый помощник. Каждый опубликованный компонент включён для каждого помощника. Выключи один, и этот помощник его не увидит. Изменения и отказы видны в Аудите.",
+  "admin.components.loadError":
+    "Не удалось загрузить компоненты. Перезагрузи страницу.",
+  "admin.components.emptyTitle": "Компонентов пока нет",
+  "admin.components.emptyDesc":
+    "Компоненты, которые могут использовать твои помощники, появятся здесь.",
+  "admin.audit.silence.quiet": "Молчит {seconds} с",
+  "admin.audit.silence.nothing": "{quiet}, ничего не сказав",
+  "admin.audit.silence.after": {
+    one: "{quiet}, после {count} фрагмента",
+    few: "{quiet}, после {count} фрагментов",
+    many: "{quiet}, после {count} фрагментов",
+    other: "{quiet}, после {count} фрагмента",
+  },
+  "admin.compDetail.title": "Компоненты",
+  "admin.compDetail.noSuch.title": "Такого компонента нет",
+  "admin.compDetail.noSuch.description": "Компонента с таким именем нет.",
+  "admin.compDetail.noSuch.hint":
+    "Возможно, его переименовали, или эта установка больше его не содержит.",
+  "admin.compDetail.back": "Назад к компонентам",
+  "admin.compDetail.grant.noBots": "Помощников пока нет",
+  "admin.compDetail.grant.all": {
+    one: "Все помощники ({count})",
+    few: "Все помощники ({count})",
+    many: "Все помощники ({count})",
+    other: "Все помощники ({count})",
+  },
+  "admin.compDetail.grant.none": "Нет помощников",
+  "admin.compDetail.grant.some": "{granted} из {total} помощников",
+  "admin.compDetail.fn.none": "В этой установке нет функций данных",
+  "admin.compDetail.fn.nothing":
+    "Ничего. Он показывает только то, что передаёт ему помощник.",
+  "admin.compDetail.notPublished":
+    "Не опубликован. Ни один помощник его не видит.",
+  "admin.compDetail.config.title": "Настройка",
+  "admin.compDetail.config.description":
+    "Для чего нужен этот компонент и какие помощники могут отвечать с его помощью.",
+  "admin.compDetail.notInBuild.title": "Нет в этой сборке",
+  "admin.compDetail.notInBuild.description":
+    "{product} не может его отрисовать. Настройки ниже ни на что не влияют.",
+  "admin.compDetail.published": "Опубликован",
+  "admin.compDetail.published.on": "Помощники могут отвечать с его помощью.",
+  "admin.compDetail.published.off":
+    "Ни один помощник не может его использовать.",
+  "admin.compDetail.published.changes":
+    "В описании есть неопубликованные изменения.",
+  "admin.compDetail.description": "Описание",
+  "admin.compDetail.nothingYet": "Пока ничего",
+  "admin.compDetail.availableTo": "Доступен для",
+  "admin.compDetail.canRead": "Может читать",
+  "admin.compDetail.details": "Подробности",
+  "admin.compDetail.kind": "Вид",
+  "admin.compDetail.calledAs": "Вызывается как",
+  "admin.compDetail.lastChanged": "Последнее изменение",
+  "admin.compDetail.by": "от {name}",
+  "admin.compDetail.descDlg.description":
+    "То, что модель читает, когда решает его использовать. Это ни на что не влияет, пока компонент не опубликован.",
+  "admin.compDetail.grantsDlg.description":
+    "Выключи помощника, и он никогда не узнает, что этот компонент существует. Изменения применяются сразу.",
+  "admin.compDetail.grantsDlg.empty": "Помощников пока нет.",
+  "admin.compDetail.fnDlg.description":
+    "Данные, которые этот компонент может получать, чтобы отрисовать себя. Это отдельно от «Доступен для». Если всё выключено, он показывает только то, что передаёт ему помощник. Каждое чтение видно в Аудите. Изменения применяются сразу.",
+  "admin.compDetail.fnDlg.empty": "В этой установке нет функций данных.",
+  "admin.computers.description":
+    "Браузер каждого помощника и профиль, который он хранит. Профиль держит помощника в системе. Сброс выводит помощника из всех сервисов.",
+  "admin.computers.loadError":
+    "Не удалось загрузить компьютеры. Обнови страницу.",
+  "admin.computers.shared.lead": "Все помощники делят один компьютер.",
+  "admin.computers.shared.before":
+    "У них общие входы, файлы и сеанс. Помощник может добраться до того, куда вошёл другой. Задай",
+  "admin.computers.shared.after": "чтобы у каждого помощника был свой.",
+  "admin.computers.perBot":
+    "У каждого помощника свой компьютер, со своим контейнером, файлами и профилем браузера.",
+  "admin.computers.list.title": "Компьютеры в этой установке",
+  "admin.computers.list.error": "Не удалось загрузить список.",
+  "admin.computers.list.empty":
+    "Компьютеров пока нет. Он появляется, когда помощник впервые открывает страницу.",
+  "admin.computers.running": "Браузер работает с {time}",
+  "admin.computers.notRunning":
+    "Браузер не работает. Он запустится, когда помощнику снова понадобится.",
+  "admin.computers.egress.unknown": "Исходящий трафик не сообщён",
+  "admin.computers.egress.direct": "Выходит напрямую",
+  "admin.computers.egress.via": "Выходит через {egress}",
+  "admin.computers.updateAvailable": "Есть обновление",
+  "admin.computers.update": "Обновить компьютер",
+  "admin.computers.working": "Выполняется…",
+  "admin.computers.stop": "Остановить браузер",
+  "admin.computers.reset": "Сбросить",
+  "admin.computers.resetTitle": "Сбросить компьютер помощника {name}?",
+  "admin.computers.resetDesc":
+    "Его профиль удаляется. Помощник выходит из всех сервисов и начинает с нуля. Отменить это нельзя.",
+  "admin.computers.resetting": "Сброс…",
+  "admin.computers.resetIt": "Сбросить",
+  "admin.computers.updateTitle": "Обновить компьютер помощника {name}?",
+  "admin.computers.updateDesc":
+    "Он переходит на образ компьютера, который эта установка использует сейчас. Его файлы и входы сохраняются. Если он работает, он перезапустится и прервёт то, что делает.",
+  "admin.computers.updating": "Обновление…",
+  "admin.computers.updateIt": "Обновить",
+  "admin.computers.foot.stopLead": "Остановить",
+  "admin.computers.foot.stopRest":
+    "закрывает браузер и сохраняет его входы. Он запустится снова, когда помощнику понадобится.",
+  "admin.computers.foot.resetLead": "Сбросить",
+  "admin.computers.foot.resetRest":
+    "удаляет профиль и выводит помощника из всех сервисов.",
+  "admin.computers.foot.updateLead": "Обновить компьютер",
+  "admin.computers.foot.updateRest":
+    "появляется, когда компьютер работает на более старом образе. Он переводит компьютер на новый и сохраняет его файлы и входы.",
+  "admin.computers.foot.audit": "Все три видны в",
+  "admin.computers.host.description":
+    "Выбери папки, которые помощник может читать на этом компьютере. Приложение для компьютера спрашивает перед каждым изменением или командой. Доступ заканчивается, когда ты останавливаешь {product}.",
+  "admin.computers.host.title": "Папки на этом компьютере",
+  "admin.computers.host.offline":
+    "Приложение для компьютера не в сети. Открой его, чтобы одобрить папки или запустить команды.",
+  "admin.computers.host.noBots":
+    "Помощников пока нет. Создай одного, затем выбери его папки.",
+  "admin.computers.host.choose": "Выбрать папку",
+  "admin.computers.host.waiting": "Ожидание…",
+  "admin.computers.host.readOnlyNote":
+    "Папки только для чтения. Когда помощнику нужно записать, приложение для компьютера сначала спросит тебя.",
+  "admin.computers.host.stopAccess": "Остановить доступ к папкам",
+  "admin.computers.host.stopping": "Остановка…",
+  "admin.computers.host.viewAudit": "Смотреть аудит",
+  "admin.computers.host.readOnly": "Только чтение",
+  "admin.computers.host.revoke": "Отозвать",
+  "admin.computers.host.revoking": "Отзыв…",
+  "admin.computers.host.pendingFrom": "{label} от {owner}.",
+  "admin.computers.host.pendingFromFor": "{label} от {owner} для {name}.",
+  "admin.computers.host.folders": {
+    one: "{count} папка только для чтения",
+    few: "{count} папки только для чтения",
+    many: "{count} папок только для чтения",
+    other: "{count} папки только для чтения",
+  },
+  "admin.computers.host.requests": {
+    one: "{count} ожидающий запрос",
+    few: "{count} ожидающих запроса",
+    many: "{count} ожидающих запросов",
+    other: "{count} ожидающего запроса",
+  },
+  "admin.computers.host.none": "Нет одобренных папок.",
+  "admin.computers.host.owner": "владелец компьютера",
+  "admin.computers.host.p.write":
+    "Изменение файла ждёт одобрения или завершения",
+  "admin.computers.host.p.run": "Команда ждёт одобрения или завершения",
+  "admin.computers.host.p.list": "Список файлов",
+  "admin.computers.host.p.read": "Чтение файла",
+  "admin.computers.host.p.stop": "Остановка работы с папками",
+  "admin.computers.host.p.default": "Доступ к папкам ждёт одобрения",
+  "admin.learning.description":
+    "Учись на завершённых разговорах, просматривай навыки, которые предлагает Intelligence, и давай опубликованные навыки помощникам.",
+  "admin.learning.auto.assigned":
+    "{product} автоматически назначил этому проекту Intelligence контейнер «{container}». Ты можешь изменить его здесь.",
+  "admin.learning.auto.absent":
+    "В этом проекте Intelligence ещё нет контейнера Learning «{container}». Ничего не собирается.",
+  "admin.learning.auto.notEntitled":
+    "Тариф этого проекта Intelligence не включает Learning. Контейнер не назначен.",
+  "admin.learning.auto.unavailable":
+    "Не удалось связаться с Intelligence, чтобы найти контейнер Learning этого проекта. {product} попробует снова.",
+  "admin.learning.target.container": "ID контейнера: {label}",
+  "admin.learning.target.revision": "Точная ревизия (необязательно)",
+  "admin.learning.target.revisionAria": "Ревизия: {label}",
+  "admin.learning.target.latest": "Последняя опубликованная",
+  "admin.learning.create.busy": "Создание…",
+  "admin.learning.create.button": "Создать контейнер {container}",
+  "admin.learning.create.note":
+    "Использует учётные данные этой установки, а не ключ времени выполнения.",
+  "admin.learning.create.how": "Чтобы создать его: ",
+  "admin.learning.part.title": "Участие",
+  "admin.learning.part.description":
+    "Изменения контейнера действуют для новых разговоров. Существующие сохраняют первый контейнер. Контейнеры должны уже существовать в том же проекте Intelligence. Пока ты не сохранишь здесь, {product} использует контейнер openbot этого проекта.",
+  "admin.learning.part.loading": "Загрузка настроек Learning…",
+  "admin.learning.part.turnOn":
+    "Включить автоматическое обучение и доставку навыков",
+  "admin.learning.part.default": "По умолчанию",
+  "admin.learning.part.hint":
+    "Без значения по умолчанию помощники без собственного контейнера остаются в стороне. ID состоит из 1–64 строчных букв, цифр и одиночных дефисов. Оставь ревизию пустой, чтобы использовать последние опубликованные навыки.",
+  "admin.learning.part.perBot": "Участие по помощникам",
+  "admin.learning.part.botListError":
+    "Не удалось загрузить список помощников. Сохранённые настройки каждого помощника ниже.",
+  "admin.learning.part.botAria": "Участие: {name}",
+  "admin.learning.part.inherit": "Использовать значение установки по умолчанию",
+  "admin.learning.part.exclude": "Исключить из Learning",
+  "admin.learning.part.container": "Использовать конкретный контейнер",
+  "admin.learning.part.saving": "Сохранение…",
+  "admin.learning.part.save": "Сохранить настройки Learning",
+  "admin.learning.part.saved": "Настройки сохранены.",
+  "admin.learning.rev.title": "Проверить и опубликовать",
+  "admin.learning.rev.description":
+    "Intelligence изучает завершённые разговоры и предлагает навыки. Просмотри и опубликуй их в Intelligence. Помощники используют только опубликованные навыки.",
+  "admin.learning.rev.showFor": "Показать контейнер для",
+  "admin.learning.rev.default": "Значение установки по умолчанию",
+  "admin.learning.rev.checking": "Проверка Intelligence…",
+  "admin.learning.rev.invalid":
+    "Выбранный контейнер или его инструментирование недоступны.",
+  "admin.learning.rev.selection":
+    "Выбери помощника или задай контейнер по умолчанию.",
+  "admin.learning.rev.none": "Контейнер Learning не назначен.",
+  "admin.learning.rev.threads": "Готовые цепочки",
+  "admin.learning.rev.candidates": "Кандидаты на проверку",
+  "admin.learning.rev.published": "Опубликованные навыки",
+  "admin.learning.rev.insights": "Выводы",
+  "admin.learning.rev.running": "Идёт анализ.",
+  "admin.learning.rev.latest": "Последний анализ: {status}.",
+  "admin.learning.rev.noRun": "Анализ ещё не запускался.",
+  "admin.learning.rev.manage": "Управлять Learning в Intelligence",
+  "admin.learning.rev.reviewCandidates": "Просмотреть кандидатов в навыки",
+  "admin.learning.rev.viewRuns": "Смотреть запуски анализа",
+  "admin.learning.del.title": "Доставка навыков",
+  "admin.learning.del.checking": "Проверка доставки…",
+  "admin.learning.del.off": "Для этого помощника доставка выключена.",
+  "admin.learning.del.waiting": "Ожидание первого проверенного снимка навыков.",
+  "admin.learning.del.stale":
+    "Используется последний проверенный снимок. Обновление ожидается.",
+  "admin.learning.del.ok": "Есть проверенный снимок.",
+  "admin.learning.del.revision": "Загруженная ревизия: {revision}",
+  "admin.learning.del.lastChecked": "Последняя проверка:",
+  "admin.learning.rev.refresh": "Обновить статус",
+  "admin.learning.rev.footer":
+    "Для управления Learning нужны твой аккаунт Intelligence и доступ к проекту. {product} хранит учётные данные проекта на сервере. Если выключить Learning здесь, настройки и назначения разговоров сохраняются. Расписания и публикация остаются в Intelligence.",
+  "admin.playground.validJson": "{label} должно быть корректным JSON: {reason}",
+  "admin.playground.invalidJson": "некорректный JSON",
+  "admin.playground.notObject":
+    "{label} должно быть объектом JSON, а не {kind}.",
+  "admin.playground.schemaLabel": "Аргументы (JSON Schema)",
+  "admin.playground.sampleLabel": "Пример аргументов",
+  "admin.playground.fixBeforeSave": "Исправь поля JSON перед сохранением.",
+  "admin.playground.draftSaved": "Черновик сохранён.",
+  "admin.playground.published": "Опубликовано.",
+  "admin.playground.description":
+    "Напиши компонент и опубликуй его без повторного развёртывания. Твои правки — это черновик. Разговоры показывают только опубликованное.",
+  "admin.playground.saveDraft": "Сохранить черновик",
+  "admin.playground.publish": "Опубликовать",
+  "admin.playground.title": "Название",
+  "admin.playground.titlePlaceholder": "Карточка возврата",
+  "admin.playground.told": "Что говорится о нём модели",
+  "admin.playground.toldPlaceholder":
+    "Покажи возврат с суммой, причиной и статусом.",
+  "admin.playground.preview": "Предпросмотр",
+  "admin.playground.noSample": "Пример аргументов недоступен.",
+  "admin.playground.fixBeforePreview":
+    "Исправь поля JSON перед предпросмотром.",
+  "admin.playground.saved.title": "Сохранено здесь",
+  "admin.playground.saved.empty":
+    "Пока ничего не сохранено. Сохрани черновик, чтобы увидеть его здесь.",
+  "admin.playground.saved.published": "опубликован, ревизия {revision}",
+  "admin.playground.saved.draftOnly":
+    "только черновик, ни один помощник не может его отрисовать",
+  "admin.playground.saved.edited": "изменён после публикации",
+  "admin.playground.open": "Открыть",
+  "admin.playground.delete": "Удалить",
+  "admin.playground.saved.note":
+    "Публикация делает его доступным каждому помощнику. Чтобы выключить его для одного помощника, используй страницу «Компоненты интерфейса».",
+  "admin.playground.del.title": "Удалить {name}?",
+  "admin.playground.del.description":
+    "Он удаляется из этой установки, и ни один помощник не может его отрисовать. Отменить это нельзя.",
+  "admin.playground.del.confirm": "Удалить",
+  "admin.plugins.tool.title": "Инструмент",
+  "admin.plugins.tool.noTool":
+    "У этого коннектора нет инструмента с таким именем.",
+  "admin.plugins.tool.removed":
+    "Возможно, его удалили с тех пор, как список инструментов обновлялся в последний раз.",
+  "admin.plugins.tool.notOn": "Этот коннектор не включён.",
+  "admin.plugins.tool.noDesc": "У этого инструмента нет описания.",
+  "admin.plugins.tool.writeDesc":
+    "Этот инструмент что-то меняет у поставщика. На него действуют границы для записи.",
+  "admin.plugins.tool.readDesc":
+    "Этот инструмент только читает. Границы для записи на него не действуют.",
+  "admin.plugins.tool.what": "Что он делает",
+  "admin.plugins.tool.effect": "Действие",
+  "admin.plugins.tool.effectDesc":
+    "Задаётся коннектором, а не именем инструмента. Всё неизвестное считается записью.",
+  "admin.plugins.tool.bots.title": "Помощники",
+  "admin.plugins.tool.bots.description":
+    "Помощник может вызывать этот инструмент, только пока его переключатель включён. Выключение действует со следующего вызова.",
+  "admin.plugins.tool.bots.empty":
+    "Помощников пока нет. Создай одного, чтобы дать ему этот инструмент.",
+  "admin.plugins.tool.hidden": "Скрыт из твоего списка.",
+  "admin.plugins.tool.canCall":
+    "Может вызывать этот инструмент. Каждый вызов по-прежнему проверяется по границам и записывается в Аудит.",
+  "admin.plugins.tool.noToken":
+    "Разрешено, но у этого помощника нет токена обратного вызова. Каждый вызов отклоняется. Выпусти его на странице помощника или задай AGENT_TOOL_TOKEN.",
+  "admin.plugins.tool.cantCall":
+    "Не может вызывать этот инструмент. Помощник его никогда не видит.",
+  "admin.plugins.tool.aria": "Разрешить помощнику {bot} вызывать {tool}",
+  "admin.plugins.bot.title": "Помощник",
+  "admin.plugins.bot.notOn": "Нет включённого приложения с таким именем.",
+  "admin.plugins.bot.nothing": "Здесь нечего давать помощнику.",
+  "admin.plugins.bot.notBot.title": "Это не помощник",
+  "admin.plugins.bot.notBot.description": "Помощника с таким именем нет.",
+  "admin.plugins.bot.notBot.hint":
+    "Возможно, его удалили после того, как ты открыл эту страницу.",
+  "admin.plugins.bot.noDesc": "У этого действия нет описания.",
+  "admin.plugins.bot.destroys": "уничтожает данные",
+  "admin.plugins.bot.description":
+    "Какие действия {app} может вызывать {bot}. Выключение одного действует со следующего вызова.",
+  "admin.plugins.bot.pageTitle": "{bot} и {app}",
+  "admin.plugins.bot.noActions":
+    "{app} не перечисляет действий. Обнови его инструменты, чтобы проверить снова.",
+  "admin.plugins.bot.searchAria": "Искать действия {app}",
+  "admin.plugins.bot.searchPlaceholder": "Искать по названию действия",
+  "admin.plugins.bot.wouldHold": {
+    one: "Тогда у этого помощника был бы {count} инструмент из этого приложения.",
+    few: "Тогда у этого помощника было бы {count} инструмента из этого приложения.",
+    many: "Тогда у этого помощника было бы {count} инструментов из этого приложения.",
+    other:
+      "Тогда у этого помощника было бы {count} инструмента из этого приложения.",
+  },
+  "admin.plugins.bot.turnOnReads": "Включить все действия только для чтения",
+  "admin.plugins.bot.reads.title": "Чтение",
+  "admin.plugins.bot.reads.description":
+    "Эти только читают. Границы для записи на них не действуют.",
+  "admin.plugins.bot.reads.noMatch":
+    "Ничего, что только читает, не соответствует «{query}».",
+  "admin.plugins.bot.reads.none": "В {app} нет действий только для чтения.",
+  "admin.plugins.bot.writes.title": "Что-то меняет",
+  "admin.plugins.bot.writes.description":
+    "Эти что-то меняют у поставщика. На них действуют границы для записи.",
+  "admin.plugins.bot.writes.noMatch":
+    "Ничего, что что-то меняет, не соответствует «{query}».",
+  "admin.plugins.bot.writes.none":
+    "В {app} нет действий, которые что-то меняют.",
+  "admin.plugins.bot.shared.title":
+    "Разрешить помощнику {bot} использовать общий аккаунт {app}?",
+  "admin.plugins.bot.allowing": "Разрешение…",
+  "admin.plugins.bot.allow": "Разрешить",
+  "admin.shared.sentence.write":
+    "Любой, кто может пользоваться этим помощником, может делать это от имени общего аккаунта.",
+  "admin.shared.sentence.read":
+    "Любой, кто может пользоваться этим помощником, может читать то, что может читать этот аккаунт.",
+  "admin.shared.owner": "Только его владелец",
+  "admin.shared.named": "Поимённо: {who}",
+  "admin.shared.team": "Все",
+  "admin.shared.legend":
+    "Кто может использовать общий аккаунт через этого помощника",
+  "admin.shared.outside":
+    "Сообщения извне (почта, Slack, вебхуки) могут им пользоваться",
+  "admin.shared.skipped": {
+    one: "Пропущено {count} действие из перечисленных этим приложением, потому что имя инструмента может состоять только из букв, цифр, подчёркиваний и дефисов: ",
+    few: "Пропущено {count} действия из перечисленных этим приложением, потому что имя инструмента может состоять только из букв, цифр, подчёркиваний и дефисов: ",
+    many: "Пропущено {count} действий из перечисленных этим приложением, потому что имя инструмента может состоять только из букв, цифр, подчёркиваний и дефисов: ",
+    other:
+      "Пропущено {count} действия из перечисленных этим приложением, потому что имя инструмента может состоять только из букв, цифр, подчёркиваний и дефисов: ",
+  },
+  "admin.vocab.browse": "Обзор: {name}",
+  "admin.vocab.dirDesc.composio":
+    "Несколько сотен приложений. Каждый человек подключает свой аккаунт.",
+  "admin.vocab.dirDesc.arcade":
+    "Приложения, которые здесь никто не проверял. Каждый человек подключает свой аккаунт.",
+  "admin.vocab.readFailure":
+    "Не удалось загрузить каталог приложений {name}. Обнови страницу.",
+  "admin.vocab.moreApps": "Приложения {name}. Здесь их никто не проверял.",
+  "admin.vocab.notSetUp":
+    "Не настроено. Задай {envVar} в этой установке, чтобы просматривать его приложения.",
+  "admin.vocab.connection":
+    "Доступ через {name}, где хранится собственный аккаунт каждого человека.",
+  "admin.vocab.reach.description":
+    "{name} хранит аккаунт. Эта установка отправляет один ключ и то, кто спрашивает. Каждый человек подключает свой, и помощник видит только то, что может видеть этот человек. Вставлять токен не нужно.",
+  "admin.vocab.reach.badge": "Через {name}",
+  "admin.vocab.disconnect": "Отключение также завершает аккаунт в {name}.",
+  "admin.vocab.trip.stem":
+    "{name} одобряет по одному действию, поэтому подключать целое приложение не нужно.",
+  "admin.vocab.trip.below": "Разреши ниже нужные действия.",
+  "admin.vocab.trip.settings": "Разреши их в разделе «Подключения».",
+  "admin.vocab.keyMissing":
+    "Задай {envVar} в этой установке. Пока этого нет, этот аккаунт нельзя ни подключить, ни отключить здесь. Приложение остаётся включённым, а выданные ему права на инструменты сохраняются.",
+  "admin.vocab.siblings": {
+    one: "Отключение также завершит твой доступ к приложению {names}, использующему это же подключение.",
+    few: "Отключение также завершит твой доступ к приложениям {names}, использующим это же подключение.",
+    many: "Отключение также завершит твой доступ к приложениям {names}, использующим это же подключение.",
+    other:
+      "Отключение также завершит твой доступ к приложениям {names}, использующим это же подключение.",
+  },
+  "admin.vocab.unansweredMore": {
+    one: "Не удалось проверить ещё {count} приложение, оно тоже может быть затронуто.",
+    few: "Не удалось проверить ещё {count} приложения, они тоже могут быть затронуты.",
+    many: "Не удалось проверить ещё {count} приложений, они тоже могут быть затронуты.",
+    other:
+      "Не удалось проверить ещё {count} приложения, они тоже могут быть затронуты.",
+  },
+  "admin.vocab.unansweredOnly": {
+    one: "Не удалось проверить {count} приложение на этом подключении, поэтому отключение может затронуть и его.",
+    few: "Не удалось проверить {count} приложения на этом подключении, поэтому отключение может затронуть и их.",
+    many: "Не удалось проверить {count} приложений на этом подключении, поэтому отключение может затронуть и их.",
+    other:
+      "Не удалось проверить {count} приложения на этом подключении, поэтому отключение может затронуть и их.",
+  },
+  "admin.vocab.join2": "{a} и {b}",
+  "admin.vocab.joinMany": "{list} и {last}",
+  "admin.skills.write": "Написать навык",
+  "admin.skills.description":
+    "Именованные инструкции, которые каждый может запустить через /. Навык не добавляет доступа. Он может лишь попросить помощника использовать то, что у него уже есть.",
+  "admin.skills.installed.title": "Установлено",
+  "admin.skills.installed.description":
+    "Для всех в этой установке. Свои навыки каждый пишет на своей странице «Навыки».",
+  "admin.skills.loadError": "Не удалось загрузить навыки. Обнови страницу.",
+  "admin.skills.empty":
+    "Навыков пока нет. Напиши один кнопкой «Написать навык».",
+  "admin.skills.dlg.title": "Написать навык для всех",
+  "admin.skills.dlg.description":
+    "Люди вводят slug после /. Тогда помощник следует инструкциям. Им может пользоваться каждый, а ты выбираешь, у каких помощников он есть.",
+  "admin.skills.slug": "Slug",
+  "admin.skills.title": "Название",
+  "admin.skills.summary": "Краткое описание",
+  "admin.skills.summaryPlaceholder": "Одна строка",
+  "admin.skills.instructions": "Инструкции",
+  "admin.skills.instructionsPlaceholder":
+    "Что должен делать помощник, когда используется этот навык.",
+  "admin.skills.install": "Установить навык",
+  "engines.intro":
+    "Движок — это то, что думает за каждого помощника. Сначала отвечают твои собственные входы, пока ты не выберешь другой порядок; всё платное остаётся выключенным, пока ты сам его не включишь.",
+  "engines.loadFailed": "Не удалось загрузить движки. Обнови страницу.",
+  "engines.fallback": "Не удалось получить список движков.",
+  "engines.noEngines": "Пока нет ни одного движка.",
+  "engines.statesTitle": "Движки и их состояние",
+  "engines.sectionsLabel": "Разделы движков",
+  "engines.tab.overview": "Обзор",
+  "engines.tab.providers": "Поставщики",
+  "engines.tab.members": "Назначения помощников",
+  "engines.tab.usage": "Использование",
+  "engines.asideLabel": "Ключи и расходы",
+  "engines.keys.title": "Ключи",
+  "engines.keys.text":
+    "Здесь будут храниться только ключи шлюзов. Твои входы в Claude и ChatGPT FreeDuet никогда не сохраняет.",
+  "engines.keys.notBuilt":
+    "Ключ добавляется на карточке его движка. Он хранится в этой установке и больше никогда не показывается.",
+  "engines.spending.title": "Расходы",
+  "engines.spending.text":
+    "Расходы на этой странице пока не показываются. Платный движок работает, только если эта установка это разрешает.",
+  "engines.today": "Сегодня",
+  "engines.reason.off":
+    "Движки в этой установке выключены (FREEDUET_ROUTER=off), поэтому показывать нечего.",
+  "engines.reason.not_set_up":
+    "В этой установке не настроен ни один агент FreeDuet, поэтому показывать нечего: движков нет.",
+  "engines.reason.unreachable":
+    "Агент FreeDuet не ответил, поэтому сейчас движки прочитать нельзя. Эта страница спрашивает снова каждые 30 секунд.",
+  "engines.state.ready": "Готов",
+  "engines.state.degraded": "Готов, но недавно были ошибки",
+  "engines.state.limitedAt": "Достиг лимита, до {at}",
+  "engines.state.limited": "Пока достиг лимита",
+  "engines.state.outOfCreditAt": "Кредит закончился, повторная попытка: {at}",
+  "engines.state.outOfCredit": "Кредит закончился",
+  "engines.state.notAnsweringAt": "Не отвечает, повторная попытка: {at}",
+  "engines.state.notAnswering": "Пока не отвечает",
+  "engines.state.checking": "Проверяем, отвечает ли он снова",
+  "engines.state.gatewayKey":
+    "Его шлюз не принял ключ. Проверь ключ, который ты ему дал.",
+  "engines.state.signedOut":
+    "Вход не выполнен: войди снова через собственный вход этого движка",
+  "engines.state.refusedWhy": "Не запущен: {reason}",
+  "engines.state.refused": "Не запущен: причина неизвестна.",
+  "engines.state.unknown": "Состояние неизвестно",
+  "engines.state.toolsAsText":
+    "В последнем ответе он записал вызовы инструментов текстом, а не использовал их: выбери модель, которая поддерживает инструменты",
+  "engines.pill.working": "Работает",
+  "engines.pill.checking": "Проверка",
+  "engines.pill.limited": "Лимит",
+  "engines.pill.outOfCredit": "Нет кредита",
+  "engines.pill.notAnswering": "Не отвечает",
+  "engines.pill.signedOut": "Нет входа",
+  "engines.pill.locked": "Заблокирован",
+  "engines.pill.unknown": "Неизвестно",
+  "engines.members.title": "Кто чем пользуется",
+  "engines.members.description":
+    "Движки, которые пробует каждый помощник, в порядке, в котором он их пробует, и что происходит, когда один из них исчерпан. Изменение действует со следующего сообщения помощника, и его можно отменить.",
+  "engines.members.col.member": "Помощник",
+  "engines.members.col.order": "Порядок движков",
+  "engines.members.col.switching": "Когда движок исчерпан",
+  "engines.order.note":
+    "Стрелками можно сдвинуть движок на одно место. Твои собственные входы идут первыми, пока ты не выберешь иначе: если после перемещения бесплатный или платный движок окажется перед ними, сначала нужно будет это подтвердить.",
+  "engines.order.warnTitle.free_before_login":
+    "Бесплатный движок ответит раньше твоего входа",
+  "engines.order.warnTitle.paid_before_free_or_login":
+    "Платный движок окажется перед бесплатным движком или входом",
+  "engines.order.warnText.free_before_login":
+    "Если это облачный сервис, сообщения этого помощника сначала уйдут к этому поставщику, и он может их хранить. Его ответы тоже могут быть хуже по качеству, чем ответы твоего входа.",
+  "engines.order.warnText.paid_before_free_or_login":
+    "Платный движок отвечает раньше следующих за ним движков, поэтому его ответы могут стоить денег. Если он стоит в списке первым, каждое сообщение может стоить денег, начиная с первого. Он работает, только когда ты включил платные движки и задал свои лимиты.",
+  "engines.order.newLabel": "Новый порядок:",
+  "engines.order.tick": "Я понимаю, использовать этот порядок",
+  "engines.order.confirm": "Подтвердить",
+  "engines.order.tickLabel":
+    "Я понимаю, использовать этот порядок для помощника {name}",
+  "engines.order.confirmLabel": "Подтвердить новый порядок для {name}",
+  "engines.order.cancelLabel": "Отменить новый порядок для {name}",
+  "engines.order.own": "Твой порядок: входы не на первом месте",
+  "engines.order.recommended": "Использовать рекомендуемый порядок",
+  "engines.order.recommendedLabel":
+    "Использовать рекомендуемый порядок для {name}",
+  "engines.order.moveUp": "Поднять {engine} выше для {name}",
+  "engines.order.moveDown": "Опустить {engine} ниже для {name}",
+  "engines.order.saveFailed": "Не удалось сохранить порядок.",
+  "engines.claude.default": "По умолчанию для подписки",
+  "engines.claude.effort.low": "Низкое",
+  "engines.claude.effort.medium": "Среднее",
+  "engines.claude.effort.high": "Высокое",
+  "engines.claude.effort.xhigh": "Очень высокое",
+  "engines.claude.effort.max": "Максимальное",
+  "engines.claude.effortLabel": "Усилие",
+  "engines.claude.note":
+    "Только для Claude Code. Модель, недоступная твоей подписке, завершает этот ход собственной ошибкой Claude Code. Ничего не отключается, а «По умолчанию для подписки» отменяет выбор.",
+  "engines.claude.modelAria": "Модель Claude для {name}",
+  "engines.claude.effortAria": "Усилие Claude для {name}",
+  "engines.claude.saved":
+    "Выбор Claude сохранён. Он действует со следующего сообщения.",
+  "engines.members.saveFailed": "Не удалось сохранить твой выбор.",
+  "engines.members.undoFailed": "Не удалось отменить это изменение.",
+  "engines.mode.groupLabel": "Когда движок исчерпан, для {name}",
+  "engines.mode.controlLabel": "{label} для {name}",
+  "engines.mode.undoLabel": "Отменить изменение для {name}",
+  "engines.mode.automatic.label": "Переключать автоматически",
+  "engines.mode.automatic.effect":
+    "Когда движок исчерпан, отвечает следующий, и тебе сообщают, какой именно.",
+  "engines.mode.askFirst.label": "Сначала спросить меня",
+  "engines.mode.askFirst.effect":
+    "Когда движок исчерпан, тебя спрашивают: переключить, подождать или назвать другой движок.",
+  "engines.leftOut.line": "Не используется: {engine}, потому что {why}.",
+  "engines.leftOut.locked": "файл установки этого не разрешает",
+  "engines.leftOut.disabled": "он выключен",
+  "engines.leftOut.paid_gateway":
+    "это платный шлюз, а FreeDuet пока такие не запускает",
+  "engines.leftOut.metered_off": "платные движки выключены",
+  "engines.leftOut.cap_zero": "его лимит расходов равен нулю",
+  "engines.leftOut.not_set_up": "он не настроен в этой установке",
+  "engines.leftOut.other": "он не будет запущен",
+  "engines.chain.none":
+    "Сейчас ни один движок не может отвечать за этого помощника.",
+  "engines.chain.one": "Пробует только {engine}.",
+  "engines.chain.many": "Пробует {list}.",
+  "engines.chain.then": ", затем ",
+  "engines.pin":
+    "Закреплён за движком {engine} файлом установки: он никогда не переключается на другой движок.",
+  "engines.alone":
+    "Для этого помощника настроен только {engine}, поэтому переключаться пока не на что. Твой выбор сохранится на будущее, когда будет на что переключаться.",
+  "engines.source.yours": "Твой выбор. Файл установки говорит: {mode}.",
+  "engines.source.file": "Из файла установки.",
+  "engines.block.not_at_the_computer":
+    "Меняй это на компьютере, где работает FreeDuet.",
+  "engines.block.not_paired_with_the_computer":
+    "Сначала свяжи этот браузер с компьютером, где работает FreeDuet: запусти там `bash scripts/open.sh` и открой ссылку здесь.",
+  "engines.block.agent_too_old": "Обнови FreeDuet, чтобы это изменить.",
+  "engines.block.choices_unreadable":
+    "Твой выбор прочитать не удалось, поэтому действуют настройки установки. Ничего из выбранного тобой не потеряно.",
+  "engines.saved": "Сохранено. Действует со следующего сообщения помощника.",
+  "engines.undone":
+    "Отменено. Прежняя настройка действует со следующего сообщения помощника.",
+  "engines.providers.title": "Добавить движок",
+  "engines.providers.description":
+    "Включи движок, вставь его ключ и нажми «Сохранить», затем нажми «Проверить». Изменение действует со следующего сообщения.",
+  "engines.providers.pickerLabel": "Поставщик",
+  "engines.providers.blurb.ollama":
+    "Модели, которые работают на твоём компьютере.",
+  "engines.providers.blurb.llamacpp":
+    "Сервер llama.cpp на твоём компьютере или в твоей сети.",
+  "engines.providers.blurb.lmstudio":
+    "Локальный сервер LM Studio на твоём компьютере.",
+  "engines.providers.blurb.freellmapi":
+    "Роутер, который ты запускаешь сам: он собирает бесплатные тарифы многих поставщиков за одним адресом.",
+  "engines.providers.blurb.groq":
+    "Быстрые открытые модели, бесплатно с дневными лимитами.",
+  "engines.providers.blurb.google": "Модели Gemini, бесплатно с лимитами.",
+  "engines.providers.blurb.mistral":
+    "Модели Mistral на бесплатном плане, с лимитами.",
+  "engines.providers.blurb.openrouter":
+    "Только модели, которые ничего не стоят: идентификатор, заканчивающийся на :free, или openrouter/free.",
+  "engines.providers.blurb.cloudflare":
+    "Открытые модели в Cloudflare, бесплатно с дневной квотой. Впиши в адрес свой собственный аккаунт.",
+  "engines.providers.blurb.cerebras": "Очень быстрые открытые модели.",
+  "engines.providers.blurb.anthropic-api":
+    "Claude за кредиты с оплатой по факту использования.",
+  "engines.providers.tag.local": "Локально",
+  "engines.providers.tag.router": "Для опытных: свой роутер",
+  "engines.providers.tag.free": "Бесплатно с лимитами",
+  "engines.providers.tag.trial": "Пробный, нужна карта",
+  "engines.providers.tag.paid": "Платный",
+  "engines.providers.cloudWarning":
+    "Данные, отправленные в этот сервис, покидают твой компьютер.",
+  "engines.providers.routerWarning":
+    "Твои сообщения идут на роутер, а он передаёт их бесплатным поставщикам, которых ты включил внутри него. Они покидают твой компьютер, и эти поставщики могут их хранить.",
+  "engines.providers.routerAdvanced":
+    "Вариант для опытных, не рекомендуемый по умолчанию: сам проект описывает себя как предназначенный только для личных экспериментов. FreeDuet его не устанавливает и не запускает. Ключи твоих поставщиков остаются внутри него; FreeDuet хранит только один токен доступа, который он тебе выдаёт.",
+  "engines.providers.routerAddress":
+    "Его собственный порт по умолчанию, 3001, занят FreeDuet. Запусти его на другом порту и напиши адрес с /v1 в конце. На этом компьютере достаточно http. Вне этого компьютера принимается только твоя собственная сеть (адрес LAN или имя .local) и только по https. Публичный хост отклоняется.",
+  "engines.providers.address": "Адрес сервера",
+  "engines.providers.loadList": "Загрузить список",
+  "engines.providers.saveSettings": "Сохранить настройки",
+  "engines.providers.test": "Проверить",
+  "engines.providers.freeModelsNote":
+    "Бесплатные модели часто меняются и могут хранить то, что ты отправляешь.",
+  "engines.providers.freeModelsLoading":
+    "Загружаем бесплатные модели, которые умеют работать с инструментами.",
+  "engines.providers.freeModelsStale":
+    "Сейчас не удалось связаться с OpenRouter. Это последний загруженный список.",
+  "engines.providers.freeModelsFallback":
+    "Сейчас не удалось связаться с OpenRouter. Предлагается только бесплатный роутер.",
+  "engines.providers.freeRouterLabel":
+    "openrouter/free (OpenRouter сам выбирает бесплатную модель)",
+  "engines.providers.keySaved":
+    "Ключ сохранён. Он больше никогда не показывается.",
+  "engines.providers.keyPlaceholder": "Вставь ключ сюда",
+  "engines.providers.notOnKey":
+    "Ещё не включён. Вставь ключ и нажми «Сохранить».",
+  "engines.providers.notOnSettings":
+    "Ещё не включён. Выбери модель и нажми «Сохранить настройки».",
+  "engines.providers.settingsSaved":
+    "Сохранено. Действует со следующего сообщения.",
+  "engines.providers.keyRemoved": "Ключ удалён. Движок выключен.",
+  "engines.providers.lockedOwnFile":
+    "Ты написал собственный файл движков, поэтому эти карточки только показывают его. Меняй его там.",
+  "engines.providers.users.paid":
+    "Выключен, пока не появятся лимиты расходов. До тех пор FreeDuet не позволит платному движку работать.",
+  "engines.providers.users.trial":
+    "Его бесплатный тариф — пробный и требует карту, поэтому FreeDuet не предлагает его как бесплатный. Он остаётся выключенным.",
+  "engines.providers.users.members":
+    "Для помощников: да, после их входа в Claude. Для лёгких помощников: да.",
+  "engines.providers.users.notYet":
+    "Для помощников: пока нет. Для лёгких помощников: да.",
+  "engines.providers.check.ok": "Он ответил. Работает.",
+  "engines.providers.check.key_rejected":
+    "Ключ не принят. Проверь его и сохрани снова.",
+  "engines.providers.check.model_missing":
+    "Сервер не знает такой модели. Проверь название модели.",
+  "engines.providers.check.rate_limited":
+    "Лимит или кредит пока исчерпан. Попробуй позже.",
+  "engines.providers.check.other":
+    "Никто не ответил, или ответ не удалось понять.",
+  "engines.providers.freeNote":
+    "«Бесплатно» — это пометка FreeDuet, взятая из условий поставщика. Некоторые поставщики (например, Google) выставляют тебе счёт, если для твоего проекта включена оплата.",
+  "engines.providers.useFor": "Использовать для",
+  "engines.providers.useForNone":
+    "Пока им не пользуется ни один помощник. Лёгкие помощники пользуются. Отметь помощников, которым можно отправлять свою работу в этот сервис.",
+  "engines.providers.warn.inbox": "Отправляет твою почту в этот сервис.",
+  "engines.providers.warn.concierge":
+    "Отправляет твои бронирования в этот сервис.",
+  "engines.providers.modelsEmpty": "Список пуст. Впиши название модели.",
+  "engines.providers.modelsLoaded": {
+    one: "Загружена {count} модель. Выбери одну в поле.",
+    few: "Загружено {count} модели. Выбери одну в поле.",
+    many: "Загружено {count} моделей. Выбери одну в поле.",
+    other: "Загружено {count} модели. Выбери одну в поле.",
+  },
+  "engines.providers.switchOn": "Включить {name}",
+  "engines.providers.changeFailed": "Не удалось это изменить.",
+  "engines.providers.keySaveFailed": "Не удалось сохранить ключ.",
+  "engines.providers.listFailed": "Не удалось загрузить список.",
+  "engines.providers.keyRemoveFailed": "Не удалось удалить ключ.",
+  "engines.providers.saveFailed": "Не удалось это сохранить.",
+  "engines.providers.testFailed": "Не удалось выполнить проверку.",
+  "engines.tokens.title": "Токены",
+  "engines.tokens.description":
+    "Что каждый помощник использовал на каждом движке, как сообщил сам движок. Дни считаются по UTC.",
+  "engines.tokens.fallback": "Не удалось загрузить количество токенов.",
+  "engines.tokens.empty": "Пока не засчитан ни один ход.",
+  "engines.tokens.unavailable": "Количество токенов сейчас недоступно.",
+  "engines.tokens.problem":
+    "Не удалось прочитать файл, в котором хранятся подсчёты, поэтому некоторых чисел может не хватать.",
+  "engines.tokens.notReported": "не сообщено",
+  "engines.tokens.col.engine": "Движок",
+  "engines.tokens.col.week": "Последние 7 дней",
+  "engines.tokens.allMembers": "Все помощники",
+  "engines.tokens.note":
+    "Вход считает все токены, которые получила модель, включая кэшированные. Каждая строка считает попытки движка: повторная попытка на том же движке считается снова. Попытка, о которой движок ничего не сообщил, добавляет время, но не токены. Время измеряется здесь, от начала до конца каждой попытки.",
+  "engines.tokens.savedWeek": "Сэкономлено за последние 7 дней",
+  "engines.tokens.savedNote":
+    "Сэкономлено — это токены, прошедшие через бесплатные движки, в облаке или на твоём компьютере. Твоя подписка Claude Code стоит фиксированно, а платные движки стоят денег, поэтому ни то, ни другое не учитывается.",
+  "engines.tokens.currencyHelp":
+    "Нажми на сумму, чтобы переключаться между евро и долларами.",
+  "engines.tokens.reference":
+    "По прайс-листу {model} ({input} за вход, {output} за выход на миллион токенов, {date}); {euro} = {rate} ({rateDate}).",
+  "engines.tokens.under": "меньше {amount}",
+  "engines.tokens.nothingYet": "пока ничего",
+  "engines.tokens.plus": "плюс {time}",
+  "engines.tokens.toDollars": "{amount}. Показывать суммы в долларах",
+  "engines.tokens.toEuros": "{amount}. Показывать суммы в евро",
+  "engines.tokens.amount": "{amount} токенов",
+  "engines.tokens.timeLocal": "{time} на твоей собственной GPU",
+  "engines.tokens.timeCloud": "{time} на бесплатном облачном движке",
+  "engines.tokens.and": " и ",
+  "engines.tokens.timeTail": "{parts}, токены не сообщены",
+  "engines.tokens.cell": "{input} вход · {output} выход",
+  "engines.tokens.partial": "сообщено {reported} из {total} попыток",
+  "engines.dur.under": "меньше 1 мин",
+  "engines.dur.min": "{minutes} мин",
+  "engines.dur.hourMin": "{hours} ч {minutes} мин",
+  "engines.usage.bySource": "По источнику",
+  "engines.usage.byMember": "По помощнику",
+  "engines.usage.time": "Время",
+  "engines.usage.source.person": "Ты",
+  "engines.usage.source.routine": "Рутины",
+  "engines.usage.source.handoff": "Между помощниками",
+  "engines.usage.source.other": "Другое",
+  "engines.usage.source.unknown": "Раньше (не записано)",
+  "engines.usage.title": "Куда ушли последние 7 дней",
+  "engines.usage.note":
+    "Доли считаются от токенов, о которых сообщили движки (вход плюс выход), а при выборе «Время» — от времени; попытки без сообщённых токенов добавляют только время. «Ты» — это твои собственные сообщения, «Рутины» — рутины и проверки, «Между помощниками» — передачи, а «Другое» — всё остальное, например собственные запуски развёртывания.",
+  "engines.usage.nothing": "За последние 7 дней ничего не засчитано.",
+  "engines.usage.chartsFailed":
+    "Не удалось построить графики использования. Таблица ниже не затронута.",
+  "engines.usage.restMembers": "Другие помощники",
+  "engines.usage.limitTitle": "Лимиты плана",
+  "engines.usage.limitNone": "Сейчас ни один движок не удерживается лимитом.",
+  "engines.usage.limitNote":
+    "Процент от недельного лимита твоего плана не показывается: подписка не сообщает его FreeDuet. Движок говорит о лимите, только когда достиг его, и указывает время, когда ожидается возвращение.",
+  "engines.usage.range": "с {from} по {to}, дни по UTC",
+  "engines.usage.splitBy": "Разбить по",
+  "engines.usage.measure": "Мера",
+  "engines.usage.perDay": "{title}: {metric} в день",
+  "engines.usage.perDayUtc": "{title}: {metric} в день, UTC",
+  "engines.usage.day": "День",
+  // connections-begin
+  "connections.connect": "Подключить",
+  "connections.reconnect": "Подключить заново",
+  "connections.connected": "Подключено",
+  "connections.teamAccount": "Аккаунт команды",
+  "connections.disconnect": "Отключить",
+  "connections.disconnecting": "Отключаем…",
+  "connections.startFailed":
+    "Не удалось начать подключение, поэтому ничего не подключено. Попробуй ещё раз или, если это повторяется, спроси администратора.",
+  "connections.list.auth.no-broker":
+    "Подключение приложений ещё не настроено, поэтому ничего не записано. Попроси администратора настроить его.",
+  "connections.list.auth.not-supported":
+    "Приложения здесь подключаются один раз кнопкой «Подключить» на странице приложения. Действия по одному не разрешаются.",
+  "connections.list.auth.missing-handle":
+    "В этой ссылке не сказано, какую авторизацию она завершает, поэтому ничего не сделано. Начни заново со страницы приложения.",
+  "connections.list.auth.no-attempt":
+    "Нет авторизации, которую ты мог бы завершить. Возможно, она истекла или была начата в другом сеансе. Начни заново со страницы приложения.",
+  "connections.list.auth.vendor-unavailable":
+    "Приложение не ответило, когда {product} пытался завершить эту авторизацию, поэтому ничего не записано. Попробуй открыть ссылку ещё раз через минуту.",
+  "connections.list.auth.not-your-authorization":
+    "Эта ссылка не соответствует авторизации, которая у тебя сейчас выполняется, поэтому ничего не записано. Заверши её во вкладке, где ты её начал, или начни заново со страницы приложения.",
+  "connections.list.auth.not-finished":
+    "Эта авторизация ещё не завершена, поэтому ничего не записано. Заверши её в приложении, затем открой ссылку снова.",
+  "connections.list.auth.authorization-failed":
+    "Приложение не завершило эту авторизацию, поэтому ничего не записано. Начни заново со страницы приложения.",
+  "connections.list.auth.context-changed":
+    "Аккаунт этого приложения изменился, пока авторизация была открыта, поэтому ничего не записано. Доступ, выданный прежнему аккаунту, удалён. Начни заново со страницы приложения.",
+  "connections.list.auth.not-permitted":
+    "Ты больше не можешь подключить аккаунт этого приложения, поэтому ничего не записано. Твой доступ или настройка приложения изменились, пока авторизация была открыта. Спроси администратора, если ты ожидал, что сможешь её завершить.",
+  "connections.list.auth.cancelled":
+    "Эта авторизация была отменена в момент завершения, поэтому ничего не записано. Доступ, который она дала, удалён.",
+  "connections.list.auth.cancelled-left-live":
+    "Эта авторизация была отменена в момент завершения, поэтому ничего не записано. Доступ, который она дала, удалить не удалось, поэтому приложение всё ещё может разрешать действие, которое ты отменил. Чтобы удалить его, отключи приложение на его странице, затем подключи заново и авторизуй только то, что хочешь.",
+  "connections.list.auth.not-recorded":
+    "Не удалось записать эту авторизацию, поэтому ничего не сохранено. Начни заново со страницы приложения или, если это повторяется, спроси администратора.",
+  "connections.list.description":
+    "Приложения и аккаунты, которыми твои помощники пользуются от твоего имени. Открой одно, чтобы подключить его или изменить.",
+  "connections.list.connectFailed":
+    "Не удалось подключить этот аккаунт. Ничего не сохранено. Попробуй ещё раз.",
+  "connections.list.title": "Твои подключения",
+  "connections.list.loading": "Загружаем подключения…",
+  "connections.list.loadError":
+    "Не удалось загрузить твои подключения. Обнови страницу или, если это повторяется, спроси администратора.",
+  "connections.list.empty":
+    "Пока нечего подключать. Приложения появятся здесь, когда администратор их включит.",
+  "connections.list.count": "{inUse} используется · всего {total}",
+  "connections.list.search": "Искать подключения",
+  "connections.list.noMatch": "По запросу «{query}» ничего не найдено.",
+  "connections.list.linksError":
+    "Не удалось загрузить GitHub и Slack, поэтому их нет в списке. Обнови страницу.",
+  "connections.list.connectNamed": "Подключить {title}",
+  "connections.list.reconnectNamed": "Подключить {title} заново",
+  "connections.app.landed": "Ты только что разрешил действие: {action}.",
+  "connections.app.pendingTitle": "Аккаунт",
+  "connections.app.loadError":
+    "Не удалось загрузить это подключение. Обнови страницу или, если это повторяется, спроси администратора.",
+  "connections.app.appLoadError":
+    "Не удалось загрузить это приложение. Обнови страницу или, если это повторяется, спроси администратора.",
+  "connections.app.notSetUp":
+    "{title} ещё не настроен. Администратор должен включить его, прежде чем кто-либо сможет его подключить.",
+  "connections.app.sharedDesc":
+    "Общий для твоей организации. Помощники действуют от имени аккаунта команды.",
+  "connections.app.brokeredDesc":
+    "Помощники используют это от твоего имени и видят только то, что видишь ты.",
+  "connections.app.reassurance":
+    "Ни один помощник не может использовать это от твоего имени.",
+  "connections.app.tripPerAction": "Ниже разреши нужные тебе действия.",
+  "connections.app.tripConnect":
+    "При подключении ты перейдёшь в {title}, чтобы одобрить доступ.",
+  "connections.app.connectedDesc":
+    "Помощники, которым ты разрешил, пользуются твоим аккаунтом {title} от твоего имени. Отключение убирает их доступ везде.",
+  "connections.app.notYours": "Это приложение ты не подключаешь сам.",
+  "connections.app.oneShared":
+    "Помощники пользуются для этого приложения одним общим аккаунтом, одинаковым для всех.",
+  "connections.app.noApp": "В {product} нет приложения с таким названием.",
+  "connections.app.yourAccount": "Твой аккаунт",
+  "connections.app.notAvailable":
+    "Пока недоступно. Сначала администратор должен это включить.",
+  "connections.app.connectedAsYou":
+    "Помощники, которым ты разрешил, используют это от твоего имени и видят только то, что видишь ты.",
+  "connections.app.notConnected":
+    "Ни один помощник не может использовать это от твоего имени. При подключении ты перейдёшь в {vendor}, чтобы одобрить доступ.",
+  "connections.app.disconnectedDone":
+    "Отключено. {product} больше не может пользоваться твоим аккаунтом {vendor}.",
+  "connections.app.disconnectedUnconfirmed":
+    "Отключено здесь. {vendor} этого не подтвердил, поэтому удали {product} также в настройках доступа сторонних приложений своего аккаунта {vendor}.",
+  "connections.app.accessDesc":
+    "Что ты разрешил, как это записал {vendor}. Это может быть меньше, чем запрашивал {product}.",
+  "connections.app.access": "Доступ",
+  "connections.app.allowed": "Разрешено",
+  "connections.app.vendorDidntSay": "{vendor} не сообщил.",
+  "connections.identity.toolsDesc":
+    "Позволяет твоим помощникам читать и изменять твои репозитории от твоего имени. Это подключается отдельно от твоего аккаунта выше.",
+  "connections.identity.tools": "Инструменты",
+  "connections.identity.githubTools": "Инструменты GitHub",
+  "connections.identity.notConnected": "Не подключено",
+  "connections.mail.neverRun": "Ещё не запускалось.",
+  "connections.mail.lastRun": {
+    one: "Последний запуск {when}: {count} сообщение. Всего {total}.",
+    few: "Последний запуск {when}: {count} сообщения. Всего {total}.",
+    many: "Последний запуск {when}: {count} сообщений. Всего {total}.",
+    other: "Последний запуск {when}: {count} сообщения. Всего {total}.",
+  },
+  "connections.mail.on": "Включено. {activity}",
+  "connections.mail.off": "Выключено",
+  "connections.mail.switchOff": "Выключить",
+  "connections.mail.switchOn": "Включить",
+  "connections.mail.delete": "Удалить",
+  "connections.mail.lastProblem": "Последняя проблема: {error}",
+  "connections.mail.description":
+    "Постоянные правила, о которых ты попросил в чате. Твои помощники хранят их и применяют к новой почте каждые несколько минут; это не фильтры Gmail. Удаление правила не отменяет того, что оно уже сделало.",
+  "connections.mail.title": "Правила для почты",
+  "connections.mail.search": "Искать правила для почты",
+  "connections.mail.statusLabel": "Статус правила",
+  "connections.mail.allStatuses": "Все статусы",
+  "connections.mail.optActive": "Активно",
+  "connections.mail.optPaused": "Приостановлено",
+  "connections.mail.active": "Активно",
+  "connections.mail.paused": "Приостановлено",
+  "connections.mail.noMatch": "Нет правил, подходящих под эти фильтры.",
+  "connections.mail.paging": {
+    one: "{from}–{to} из {count} правила",
+    few: "{from}–{to} из {count} правил",
+    many: "{from}–{to} из {count} правил",
+    other: "{from}–{to} из {count} правила",
+  },
+  "connections.mail.previous": "Назад",
+  "connections.mail.next": "Далее",
+  "connections.secret.aMember": "Помощник",
+  "connections.secret.doneMemberCal":
+    "Подключено. {name} теперь может читать твою почту и календарь от твоего имени.",
+  "connections.secret.doneMember":
+    "Подключено. {name} теперь может читать твою почту от твоего имени.",
+  "connections.secret.doneBotsCal":
+    "Подключено. Помощники, которым ты разрешил, теперь могут читать твою почту и календарь от твоего имени.",
+  "connections.secret.doneBots":
+    "Подключено. Помощники, которым ты разрешил, теперь могут читать твою почту от твоего имени.",
+  "connections.secret.notAvailable":
+    "Пока недоступно. Сначала администратор должен это включить.",
+  "connections.secret.statusError":
+    "Не удалось узнать, подключил ли ты это. Обнови страницу или, если это повторяется, спроси администратора.",
+  "connections.secret.yourAccount": "Твой аккаунт",
+  "connections.secret.connectedCal":
+    "Подключено как {address}. Твой календарь тоже подключён. Помощники, которым ты разрешил, используют это от твоего имени.",
+  "connections.secret.connectedNoCal":
+    "Подключено как {address}. Календарь не подключён. Помощники, которым ты разрешил, используют это от твоего имени.",
+  "connections.secret.notConnected":
+    "Ни один помощник не может использовать это от твоего имени. Вставь ниже пароль приложения, чтобы подключить свой Gmail.",
+  "connections.secret.useDifferent": "Использовать другой пароль приложения",
+  "connections.secret.disconnected":
+    "Отключено. {product} больше не может читать твою почту и календарь. Чтобы пароль приложения точно перестал работать, удали его ещё и на {url}.",
+  "connections.secret.formDesc":
+    "Два шага в Google, затем вставь то, что он выдаст. Ничего не сохраняется, пока Gmail не примет это.",
+  "connections.secret.connectTitle": "Подключить",
+  "connections.secret.memberWillUse":
+    "{name} будет пользоваться этим почтовым ящиком.",
+  "connections.secret.step1Lead":
+    "Включи двухэтапную аутентификацию для своего аккаунта Google, затем создай пароль приложения на",
+  "connections.secret.step1Tail":
+    ". Назови его {product} и скопируй шестнадцать букв.",
+  "connections.secret.step2Lead":
+    "Чтобы твои помощники видели и твой календарь: в Google Календаре открой «Настройки», выбери свой календарь и скопируй его",
+  "connections.secret.step2Link": "Секретный адрес в формате iCal",
+  "connections.secret.step2Tail": ". Этот шаг необязателен.",
+  "connections.secret.address": "Твой адрес Gmail",
+  "connections.secret.password": "Пароль приложения",
+  "connections.secret.passwordHint":
+    "Шестнадцать букв от Google, с пробелами или без. Не твой обычный пароль.",
+  "connections.secret.calendar": "Секретный адрес календаря (необязательно)",
+  "connections.secret.calendarHint":
+    "Любой, у кого есть этот адрес, может читать твой календарь, поэтому он хранится так же бережно, как пароль.",
+  "connections.secret.checking": "Проверяем через Gmail…",
+  "connections.secret.canDoTitle": "Что это позволяет твоим помощникам",
+  "connections.secret.canDoDesc":
+    "Пароль приложения открывает весь твой почтовый ящик, поэтому стоит знать, что это даёт.",
+  "connections.secret.canDo":
+    "Твои помощники могут искать и читать твою почту и смотреть твой календарь. Они не могут ничего удалять, перемещать или помечать. Ответ уходит только после того, как ты его одобришь, и только тем, кто уже есть в переписке. Ты можешь отключить это в любой момент и в любое время удалить пароль приложения в Google.",
+  "connections.mode.goesShared": "Общий аккаунт будет отключён.",
+  "connections.mode.goesNoShared": "Общий аккаунт не подключён.",
+  "connections.mode.goesPersonal": {
+    one: "Будет отключён {count} личный аккаунт.",
+    few: "Будут отключены {count} личных аккаунта.",
+    many: "Будут отключены {count} личных аккаунтов.",
+    other: "Будут отключены {count} личного аккаунта.",
+  },
+  "connections.mode.makeShared": "Сделать {title} общим",
+  "connections.mode.makePersonal": "Сделать {title} личным",
+  "connections.mode.titleShared": "Сделать один аккаунт {title} общим?",
+  "connections.mode.titlePersonal": "Дать каждому собственный аккаунт {title}?",
+  "connections.mode.checking": "Проверяем, что это изменит…",
+  "connections.mode.everyone":
+    "Все, кто пользуется помощником с этим приложением, будут действовать от имени этого одного аккаунта.",
+  "connections.cancel": "Отмена",
+  "connections.dir.description":
+    "Каталог приложений {name}. Добавь приложение, чтобы его инструменты стали доступны помощникам. Каждый человек всё равно подключает свой аккаунт, прежде чем что-либо будет прочитано.",
+  "connections.dir.appsTitle": "Приложения",
+  "connections.dir.appsDesc":
+    "Ищи по названию. Здесь никто не проверял эти приложения.",
+  "connections.dir.searchAria": "Искать приложения {name}",
+  "connections.dir.searchPlaceholder": "Искать по названию приложения",
+  "connections.dir.noMatch":
+    "Ни одно приложение {name} не подходит под «{query}».",
+  "connections.dir.none": "{name} не вернул ни одного приложения.",
+  "connections.dir.actions": {
+    one: "{count} действие",
+    few: "{count} действия",
+    many: "{count} действий",
+    other: "{count} действия",
+  },
+  "connections.dir.added": "Добавлено",
+  "connections.dir.adding": "Добавляем…",
+  "connections.dir.add": "Добавить",
+  "connections.grants.consentFailed":
+    "{product} ответил без ссылки на согласие, поэтому ничего не разрешено. Попробуй ещё раз или, если это повторяется, спроси администратора.",
+  "connections.grants.title": "Действия",
+  "connections.grants.readError":
+    "Сейчас не удалось прочитать, что разрешает этот аккаунт.",
+  "connections.grants.retry": "Повторить",
+  "connections.grants.description":
+    "Сгруппировано по разрешению, которое запрашивает каждое действие. Это совпадает с тем, что показывает экран согласия.",
+  "connections.grants.search": "Искать действия",
+  "connections.grants.wholeApp": "Всё в этом приложении, одобряется вместе",
+  "connections.grants.noPermission": "Не запрашивает собственного разрешения",
+  "connections.grants.needs": "Требуется {scopes}",
+  "connections.grants.authorize": "Разрешить",
+  "connections.grants.hidden": {
+    one: "Ещё {count} действие пока не разрешено. Найди его поиском.",
+    few: "Ещё {count} действия пока не разрешены. Найди нужное поиском.",
+    many: "Ещё {count} действий пока не разрешены. Найди нужное поиском.",
+    other: "Ещё {count} действия пока не разрешено. Найди нужное поиском.",
+  },
+  "connections.grants.noMatch": "Ни одно действие не подходит под этот поиск.",
+  "connections.grants.before": "Прежде чем разрешить: {action}",
+  "connections.grants.continue": "Перейти к согласию",
+  "connections.grants.notRequired": "Разрешение не требуется.",
+  "connections.grants.authorized": "Разрешено.",
+  "connections.grants.notYet": "Пока не разрешено.",
+  "connections.grants.notYetAdmin":
+    "Пока не разрешено. Разрешить может администратор.",
+  "connections.grants.missing":
+    "Не хватает: {missing}. Администратор должен это задать. Разрешение этого не исправит.",
+  "connections.grants.missingSetting":
+    "Не хватает настройки. Администратор должен её задать. Разрешение этого не исправит.",
+  "connections.grants.unknown": "Сейчас не удалось прочитать это. {reason}",
+  "connections.row.connectKey":
+    "Это приложение подключается по ключу, а не через страницу входа, поэтому ничего не подключено. Обнови страницу и снова нажми «Подключить».",
+  "connections.row.noAuth":
+    "Для {title} аккаунт не нужен. Помощники, у которых оно есть, могут пользоваться им как есть.",
+  "connections.row.verified":
+    "Подключено с твоим ключом. Последняя проверка: {date}.",
+  "connections.row.failedCheck":
+    "Твой ключ не прошёл проверку в {title}. Дело может быть в ключе или в самом {title}. Твой аккаунт по-прежнему подключён. Нажми «Проверить снова», чтобы попробовать ещё раз, или отключи и подключи с новым ключом.",
+  "connections.row.noSafeCheck":
+    "Подключено с твоим ключом. В {title} он не проверялся. В тот момент у {title} не было безопасного способа проверить ключ. Это касается приложения, а не твоего ключа.",
+  "connections.row.unchecked":
+    "Подключено с твоим ключом. В {title} он не проверялся.",
+  "connections.row.keyStillWorks":
+    "Отключено. Твой ключ по-прежнему работает в {title}. Измени его там, чтобы остановить любой доступ.",
+  "connections.row.asksForKey":
+    "{title} подключается по ключу, который у тебя уже есть. «Подключить» запросит его.",
+  "connections.row.signedIn": "Вход выполнен через {title}. {description}",
+  "connections.row.yourAccount": "Твой аккаунт",
+  "connections.row.keyMissing": "Нет ключа",
+  "connections.row.recheck": "Проверить снова",
+  "connections.row.rechecking": "Проверяем…",
+  "connections.row.perAction": "Одобряется для каждого действия",
+  "connections.row.connectYour": "Подключить свой аккаунт",
+  "connections.row.checkingNeeds": "Проверяем, что нужно приложению…",
+  "connections.row.noNeeds":
+    "Не удалось выяснить, что нужно этому приложению. Закрой это окно и попробуй ещё раз.",
+  // connections-end
+  // computer-begin
+  "computer.tool.readPage": "",
+  "computer.tool.readPageCount": { one: "", other: "" },
+  "computer.tool.filledIn": "",
+  "computer.tool.choseIn": "",
+  "computer.tool.clicked": "",
+  "computer.tool.pressed": "",
+  "computer.tool.listedFiles": "",
+  "computer.tool.itemsInWorkspace": { one: "", other: "" },
+  "computer.tool.nothingSaved": "",
+  "computer.tool.readFile": "",
+  "computer.tool.ranCommand": "",
+  "computer.tool.addedToFile": "",
+  "computer.tool.savedFile": "",
+  "computer.tool.scrolled": "",
+  "computer.signIn.waiting": "",
+  "computer.signIn.signedIn": "",
+  "computer.signIn.failed": "",
+  "computer.signIn.open": "",
+  "computer.signIn.dialogTitle": "",
+  "computer.signIn.dialogBody": "",
+  "computer.output.truncated": "",
+  "computer.output.nothing": "",
+  "computer.output.timedOut": "",
+  "computer.output.exitCode": "",
+  "computer.activity.ran": "",
+  "computer.activity.read": "",
+  "computer.activity.saved": "",
+  "computer.activity.listed": "",
+  "computer.activity.workspace": "",
+  "computer.activity.refused": "",
+  "computer.activity.empty": "",
+  "computer.control.handBack": "",
+  "computer.control.take": "",
+  "computer.control.finishing": "",
+  "computer.control.close": "",
+  "computer.control.open": "",
+  "computer.panel.sidebar": "",
+  "computer.live.cantShow": "",
+  "computer.live.drivingLabel": "",
+  "computer.live.label": "",
+  "computer.view.aPage": "",
+  "computer.view.openedDuring": "",
+  "computer.view.noPage": "",
+  "computer.view.cantShow": "",
+  "computer.view.cantShowHelp": "",
+  "computer.view.blank": "",
+  "computer.view.waiting": "",
+  "computer.view.unavailable": "",
+  "computer.view.alt": "",
+  "computer.view.open": "",
+  "computer.view.youHaveControl": "",
+  "computer.view.botNeedsYou": "",
+  "computer.view.cancelRequest": "",
+  "computer.view.finishingBot": "",
+  "computer.view.recovery": "",
+  "computer.view.interrupted": "",
+  "computer.view.secretNeedsHost": "",
+  "computer.view.secretNeedsPage": "",
+  "computer.view.secretType": "",
+  "computer.view.secretPlaceholder": "",
+  "computer.view.secretGoesHost": "",
+  "computer.view.secretGoesPage": "",
+  "computer.view.sending": "",
+  "computer.view.send": "",
+  "computer.view.checking": "",
+  "computer.view.drivingOpen": "",
+  "computer.view.botHas": "",
+  "computer.view.dialog": "",
+  "computer.view.close": "",
+  "computer.view.turnAlt": "",
+  "computer.view.finishingYou": "",
+  "computer.view.drivingClick": "",
+  "computer.handoff.noCall": "",
+  "computer.handoff.answered": "",
+  "computer.handoff.running": "",
+  "computer.handoff.unreachable": "",
+  "computer.handoff.couldntResume": "",
+  "computer.handoff.waiting": "",
+  "computer.handoff.paused": "",
+  "computer.handoff.stopWaiting": "",
+  "computer.handoff.resume": "",
+  "computer.demo.everyWeekday": "",
+  "computer.demo.everyDay": "",
+  "computer.demo.everyMonday": "",
+  "computer.demo.everyHour": "",
+  "computer.demo.scheduled": "",
+  "computer.demo.seeRoutines": "",
+  "computer.demo.when": "",
+  "computer.demo.custom": "",
+  "computer.demo.cron": "",
+  "computer.demo.reportIn": "",
+  "computer.demo.onlyConversation": "",
+  "computer.demo.inputs": "",
+  "computer.demo.title": "",
+  "computer.demo.intro": "",
+  "computer.demo.recording": { one: "", other: "" },
+  "computer.demo.left": "",
+  "computer.demo.limitReached": "",
+  "computer.demo.stop": "",
+  "computer.demo.name": "",
+  "computer.demo.namePlaceholder": "",
+  "computer.demo.record": "",
+  "computer.demo.takeControl": "",
+  "computer.demo.entry": { one: "", other: "" },
+  "computer.demo.stoppedAtLimit": "",
+  "computer.demo.edit": "",
+  "computer.demo.runSchedule": "",
+  "computer.demo.reviewDraft": "",
+  "computer.demo.reviewTitle": "",
+  "computer.demo.reviewHelp": "",
+  "computer.demo.saveUse": "",
+  "computer.demo.couldntSave": "",
+  "computer.demo.ready": "",
+  // computer-end
+};

@@ -53,13 +53,16 @@ import {
   useMessageScroller,
 } from "@/components/ui/message-scroller";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ClaudeConnectCard } from "@/freeduet/claude-connect-card";
 import { claudeProblemOf } from "@/freeduet/claude-connect";
+import { ClaudeConnectCard } from "@/freeduet/claude-connect-card";
+import { englishT, type T, useT } from "@/freeduet/i18n/provider";
 import { type CardLanguage, cardTime } from "@/freeduet/person-language/cards";
 import {
   useCardLanguage,
   useCardText,
 } from "@/freeduet/person-language/use-card-text";
+import { HandoffFiles } from "@/freeduet/handoff-files";
+import { HandoffWorkCard } from "@/freeduet/work-status/work-card";
 import { approvalInboxOptions } from "@/lib/approvals";
 import { currentUserQueryOptions } from "@/lib/auth/queries";
 import { attachmentUrl } from "@/lib/channels/attachments";
@@ -69,6 +72,10 @@ import {
   readCheckIn,
 } from "@/lib/channels/check-in";
 import { readFirstDay } from "@/lib/channels/first-day";
+import {
+  type UnreadItem,
+  useFirstUnreadScroll,
+} from "@/lib/channels/first-unread";
 import { readMorningBrief } from "@/lib/channels/morning-brief";
 import { readResponsibilityTurn } from "@/lib/channels/responsibility-turn";
 import { readFiring } from "@/lib/channels/routine-firing";
@@ -213,9 +220,10 @@ const RESTORING_ANSWER_LINES = [
 ] as const;
 
 function RestoringTranscript() {
+  const t = useT();
   return (
     // One announcement, with every bar hidden from it: nine empty shapes read aloud is worse.
-    <div aria-label="Loading this conversation" role="status">
+    <div aria-label={t("chat.loadingConversation")} role="status">
       <div aria-hidden="true" className="flex justify-end pb-7">
         <Skeleton className="h-10 w-64 rounded-xl bg-muted/40 motion-reduce:animate-none" />
       </div>
@@ -249,6 +257,7 @@ function RestoringTranscript() {
  */
 export function ReadAloudControl({ reply }: { reply: string }) {
   const enabled = useReadAloudEnabled();
+  const t = useT();
   const [speaking, setSpeaking] = useState(false);
   if (!enabled || !speechAvailable()) return null;
   return (
@@ -272,14 +281,15 @@ export function ReadAloudControl({ reply }: { reply: string }) {
       }}
       type="button"
     >
-      {speaking ? "Stop reading" : "Read aloud"}
+      {speaking ? t("chat.stopReading") : t("chat.readAloud")}
     </button>
   );
 }
 
 function Thinking() {
+  const t = useT();
   // The film's three dots in a grey bubble. The word stays for screen readers, in a `status`.
-  return <TypingDots label="Thinking" />;
+  return <TypingDots label={t("chat.thinking")} />;
 }
 
 /**
@@ -377,6 +387,7 @@ function parkedTiles(attachments: readonly Attachment[]): SentAttachment[] {
 function describeParked(
   text: string,
   files: readonly SentAttachment[],
+  fallback: string,
 ): string {
   if (text) {
     return text;
@@ -385,7 +396,7 @@ function describeParked(
     .map((file) => file.filename)
     .filter((filename) => filename !== undefined);
 
-  return named.length > 0 ? named.join(", ") : "attachment";
+  return named.length > 0 ? named.join(", ") : fallback;
 }
 
 /**
@@ -418,6 +429,7 @@ function Queued({
    * pictures above the words — because this IS their message, just not yet run.
    */
   const files = parkedTiles(attachments);
+  const t = useT();
 
   return (
     <MessageRow align="end">
@@ -447,7 +459,7 @@ function Queued({
            * `status` rather than `alert`, matching the thinking line: a person who has just chosen
            * to queue something is not being interrupted by the news that it is queued.
            */}
-          <span role="status">Queued</span>
+          <span role="status">{t("chat.queued")}</span>
           {onRemove ? (
             <button
               /*
@@ -460,18 +472,33 @@ function Queued({
                * `describeParked`. An attachment-only message named the label after an empty string
                * and read as "Remove queued message:", which is the same nothing three times over.
                */
-              aria-label={`Remove queued message: ${describeParked(text, files)}`}
+              aria-label={t("chat.removeQueued", {
+                what: describeParked(text, files, t("chat.attachmentLower")),
+              })}
               className="ml-2 underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
               onClick={onRemove}
               type="button"
             >
-              Remove
+              {t("chat.remove")}
             </button>
           ) : null}
         </MessageFooter>
       </MessageContent>
     </MessageRow>
   );
+}
+
+/** D172: "Read newest" opens the conversation at its first unread message; see `lib/channels/first-unread`. */
+function ScrollToFirstUnread({
+  items,
+  restoring,
+}: {
+  items: ReadonlyArray<UnreadItem>;
+  restoring: boolean;
+}) {
+  const { scrollToEnd, scrollToMessage } = useMessageScroller();
+  useFirstUnreadScroll(items, restoring, { scrollToEnd, scrollToMessage });
+  return null;
 }
 
 /**
@@ -646,6 +673,7 @@ function Arriving({
  * the part a person wrote and the only part addressed to them.
  */
 function RoutineFiring({ instruction }: { instruction: string }) {
+  const t = useT();
   const responsibility = readResponsibilityTurn(instruction);
   if (responsibility) {
     return <ResponsibilityFiring raw={instruction} turn={responsibility} />;
@@ -654,7 +682,7 @@ function RoutineFiring({ instruction }: { instruction: string }) {
     <div className="flex min-w-0 items-baseline gap-2 text-muted-foreground text-sm">
       <DuetIcon className="shrink-0 translate-y-0.5" name="clock" size={16} />
       <span className="min-w-0">
-        <span className="font-medium">Routine ran.</span>{" "}
+        <span className="font-medium">{t("chat.routineRan")}</span>{" "}
         <span className="whitespace-pre-wrap">{instruction}</span>
       </span>
     </div>
@@ -760,7 +788,10 @@ function FirstDayAnswer({ delay, text }: { delay: number; text: string }) {
 }
 
 /** The two answers to the first day's "who you are": the app's, not the model's. */
-export const FIRST_DAY_REPLIES = ["Sounds right", "Something's off"] as const;
+export const FIRST_DAY_REPLIES = [
+  englishT("chat.firstDayYes"),
+  englishT("chat.firstDayNo"),
+] as const;
 
 /**
  * Where the first day stands in a conversation: the first-day message's place, whether it read
@@ -808,11 +839,17 @@ export function firstDayOf(items: readonly TranscriptItem[]): {
  * are, so it draws them with the same chips, and a tap goes out as the person's own words.
  */
 function FirstDayReplies() {
+  const t = useT();
+  // The chips are the person's own words once tapped, so they read in the app's language.
+  const replies = useMemo(
+    () => [t("chat.firstDayYes"), t("chat.firstDayNo")],
+    [t],
+  );
   return (
     <MessageRow align="start">
       <MessageContent>
         <Arriving delay={0}>
-          <ReplyChips replies={FIRST_DAY_REPLIES} />
+          <ReplyChips replies={replies} />
         </Arriving>
       </MessageContent>
     </MessageRow>
@@ -879,18 +916,19 @@ function ResponsibilityFiring({
   raw: string;
   turn: { instruction: string; trigger: string };
 }) {
+  const t = useT();
   return (
     <div className="flex min-w-0 items-baseline gap-2 text-muted-foreground text-sm">
       <DuetIcon className="shrink-0 translate-y-0.5" name="clock" size={16} />
       <div className="min-w-0">
         <p>
-          <span className="font-medium">Responsibility ran.</span> Trigger:{" "}
-          {describeTrigger(turn.trigger)}
+          <span className="font-medium">{t("chat.responsibilityRan")}</span>{" "}
+          {t("chat.trigger")} {describeTrigger(turn.trigger)}
         </p>
         <p className="whitespace-pre-wrap">{turn.instruction}</p>
         <details className="group mt-1">
           <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded-sm text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
-            Details
+            {t("chat.details")}
             <DuetIcon
               className="rotate-90 transition-transform group-open:-rotate-90 motion-reduce:transition-none"
               name="chevronRight"
@@ -937,9 +975,12 @@ const TranscriptMessage = memo(function TranscriptMessage({
   /** A new execution of an already accepted task reply, never another person submission. */
   replay?: boolean;
 }) {
+  const t = useT();
   const isUser = role === "user";
   if (isUser && replay) {
-    return <p className="type-label text-duet-ink-3">Trying again.</p>;
+    return (
+      <p className="type-label text-duet-ink-3">{t("chat.tryingAgain")}</p>
+    );
   }
   if (!isUser && firstDayAnswer) {
     return <FirstDayAnswer delay={delay} text={text} />;
@@ -1009,7 +1050,7 @@ const TranscriptMessage = memo(function TranscriptMessage({
                 <span className="whitespace-pre-wrap">
                   {origin && (
                     <span className="mr-1.5 inline-flex items-center rounded bg-foreground/10 px-1.5 py-0.5 align-middle text-foreground/70 text-xs">
-                      via {origin.via}
+                      {t("chat.via", { source: origin.via })}
                     </span>
                   )}
                   {invoked ? (
@@ -1370,6 +1411,7 @@ function useDocumentIsGone(url: string, ask: boolean): boolean {
 
 function SentAttachmentTile({ attachment }: { attachment: SentAttachment }) {
   const [failedToLoad, setFailedToLoad] = useState(false);
+  const t = useT();
   const { filename, modality, url } = attachment;
   /*
    * An off-site url is treated as a missing file, whatever kind of file it says it is.
@@ -1417,7 +1459,7 @@ function SentAttachmentTile({ attachment }: { attachment: SentAttachment }) {
         role="note"
       >
         <DuetIcon name="alert" size={24} />
-        <p className="text-sm">{unavailableSentence(filename)}</p>
+        <p className="text-sm">{unavailableSentence(t, filename)}</p>
       </div>
     );
   }
@@ -1429,9 +1471,11 @@ function SentAttachmentTile({ attachment }: { attachment: SentAttachment }) {
         <div className="min-w-0">
           {/* `title` because the tile is fixed-width and a long name is cut, not wrapped. */}
           <p className="truncate font-medium text-sm" title={filename}>
-            {filename ?? "Untitled file"}
+            {filename ?? t("chat.untitledFile")}
           </p>
-          <p className="text-muted-foreground text-xs">Attachment</p>
+          <p className="text-muted-foreground text-xs">
+            {t("chat.attachment")}
+          </p>
         </div>
       </div>
     );
@@ -1440,7 +1484,11 @@ function SentAttachmentTile({ attachment }: { attachment: SentAttachment }) {
   return (
     <AttachmentLightbox filename={filename} url={url}>
       <img
-        alt={filename ? `Attachment: ${filename}` : "Attachment"}
+        alt={
+          filename
+            ? t("chat.attachmentNamed", { name: filename })
+            : t("chat.attachment")
+        }
         className="size-32 rounded-xl object-cover"
         onError={() => setFailedToLoad(true)}
         src={url}
@@ -1459,10 +1507,10 @@ function SentAttachmentTile({ attachment }: { attachment: SentAttachment }) {
  * A file with no name still gets a sentence rather than a blank: the reader clicked on something,
  * and "this attachment" is the honest way to refer to a thing whose name we never had.
  */
-function unavailableSentence(filename?: string): string {
+function unavailableSentence(t: T, filename?: string): string {
   return filename
-    ? `${filename} is unavailable.`
-    : "This attachment is unavailable.";
+    ? t("chat.unavailableNamed", { name: filename })
+    : t("chat.unavailable");
 }
 
 /**
@@ -1501,6 +1549,7 @@ export function LightboxPicture({
   url: string;
 }) {
   const [failedToLoad, setFailedToLoad] = useState(false);
+  const t = useT();
 
   if (failedToLoad) {
     return (
@@ -1515,7 +1564,7 @@ export function LightboxPicture({
         role="note"
       >
         <DuetIcon name="alert" size={32} />
-        <p className="text-sm">{unavailableSentence(filename)}</p>
+        <p className="text-sm">{unavailableSentence(t, filename)}</p>
       </div>
     );
   }
@@ -1556,7 +1605,8 @@ function AttachmentLightbox({
   filename?: string;
   url: string;
 }) {
-  const label = filename ?? "Attachment";
+  const t = useT();
+  const label = filename ?? t("chat.attachment");
   /*
    * Controlled only so that clicking the dark space around the picture closes it, the way every
    * lightbox a reader has used does. The popup covers the viewport (see below), so it — not the
@@ -1571,7 +1621,12 @@ function AttachmentLightbox({
         // tab to a raw image file is not the promise this makes. `block` so the tile is not sitting
         // on a text baseline with a stray gap under it.
         className="block cursor-zoom-in overflow-hidden rounded-xl"
-        render={<button aria-label={`Open ${label}`} type="button" />}
+        render={
+          <button
+            aria-label={t("chat.openNamed", { name: label })}
+            type="button"
+          />
+        }
       >
         {children}
       </DialogTrigger>
@@ -1601,7 +1656,7 @@ function AttachmentLightbox({
         <DialogClose
           render={
             <button
-              aria-label="Close"
+              aria-label={t("chat.close")}
               className="absolute top-4 right-4 grid size-9 place-items-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
               type="button"
             />
@@ -1621,9 +1676,9 @@ function AttachmentLightbox({
  * a person can read instead. An unknown type falls back to its own name rather than to something
  * vague: whoever registered it will recognise it, and nobody else can act on either wording.
  */
-function activityName(activityType: string): string {
+function activityName(activityType: string, t: T): string {
   return activityType === "open-generative-ui"
-    ? "This Bot's generated interface"
+    ? t("chat.generatedInterface")
     : activityType;
 }
 
@@ -1648,6 +1703,7 @@ const TranscriptActivity = memo(function TranscriptActivity({
   message: ActivityMessage;
 }) {
   const { renderActivityMessage } = useRenderActivityMessage();
+  const t = useT();
   const drawn =
     message.activityType === VOICE_CHAT_ACTIVITY ? (
       <VoiceChatCard call={message.content.call as VoiceChatEntry} />
@@ -1658,7 +1714,7 @@ const TranscriptActivity = memo(function TranscriptActivity({
 
   return (
     <Arriving delay={delay}>
-      <ToolRenderBoundary name={activityName(message.activityType)}>
+      <ToolRenderBoundary name={activityName(message.activityType, t)}>
         {drawn}
       </ToolRenderBoundary>
     </Arriving>
@@ -1755,7 +1811,9 @@ const TranscriptToolCall = memo(function TranscriptToolCall({
          * Tasks. The card is the stored request, drawn by the same component and decided through the same
          * route as everywhere else.
          */}
+        {handoffCards ? <HandoffWorkCard bot={handoffTarget(args)} /> : null}
         {handoffCards ? <HandoffApprovals bot={handoffTarget(args)} /> : null}
+        {handoffCards ? <HandoffFiles bot={handoffTarget(args)} /> : null}
       </ToolRenderBoundary>
     </Arriving>
   );
@@ -2345,6 +2403,7 @@ export function ChatTranscript({
         {/* A floating disc, like the shell's own controls. */}
         <MessageScrollerButton className="size-11 rounded-full border-0 bg-duet-card text-duet-ink shadow-duet-float hover:bg-duet-card hover:text-duet-ink data-[direction=end]:bottom-[calc(var(--duet-dock,0px)+16px)]" />
         <ScrollNewestQueuedIntoView newest={queued.at(-1)?.id ?? null} />
+        <ScrollToFirstUnread items={items} restoring={restoring} />
       </MessageScroller>
     </MessageScrollerProvider>
   );

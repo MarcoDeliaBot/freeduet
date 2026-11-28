@@ -8,6 +8,7 @@ import {
   ItemDescription,
   ItemTitle,
 } from "@/components/ui/item";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
 import { clearTeamBotConsentsMutationOptions } from "@/lib/team-bots";
 
 /**
@@ -19,10 +20,11 @@ import { clearTeamBotConsentsMutationOptions } from "@/lib/team-bots";
  */
 export function TeamBotConsents() {
   const clear = useMutation(clearTeamBotConsentsMutationOptions());
+  const { t } = useAppLanguage();
   return (
     <PageSection
-      description="A Bot shared with you uses its owner's apps. It uses yours only where you said yes in a conversation."
-      title="Shared Bots"
+      description={t("settings.sharedBotsDescription")}
+      title={t("settings.sharedBots")}
     >
       {clear.error ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
@@ -32,11 +34,11 @@ export function TeamBotConsents() {
       <PageRows>
         <Item size="sm">
           <ItemContent>
-            <ItemTitle>Apps you let shared Bots use</ItemTitle>
+            <ItemTitle>{t("settings.appsSharedBots")}</ItemTitle>
             <ItemDescription>
               {clear.isSuccess
-                ? "Reset. Each shared Bot will ask again."
-                : "Forget every answer, so each shared Bot asks again."}
+                ? t("settings.resetDone")
+                : t("settings.resetDescription")}
             </ItemDescription>
           </ItemContent>
           <ItemActions>
@@ -46,7 +48,7 @@ export function TeamBotConsents() {
               size="sm"
               variant="outline"
             >
-              Reset
+              {t("settings.reset")}
             </Button>
           </ItemActions>
         </Item>

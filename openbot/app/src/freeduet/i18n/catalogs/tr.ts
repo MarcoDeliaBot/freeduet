@@ -1,0 +1,2925 @@
+import type { Catalog } from "../translate";
+import type { EN } from "./en";
+
+/*
+ * Turkish (D181, stage 2): natural and short, with "sen" (informal), the address the site's Turkish page and the
+ * Turkish approval cards use. The words are the ones those already use: "onay" (approval), "devir" (hand-off),
+ * "rutin" (routine), "motor" (engine), "posta" (mail), "üye" (member), and "Full access" kept as it is. A Bot is
+ * "asistan", the site's word for the assistants. A password is "parola", the cards' word (the site says "şifre").
+ * The approval cards (openbot/shared/approval-text-tr.ts) still say "Bot", so "Bot" and "asistan" should be made
+ * to agree. A Turkish noun after a number stays singular, so the `one` and `other` forms of a plural are the same
+ * text. Not yet checked by a person who reads Turkish.
+ */
+export const tr: Catalog<typeof EN> = {
+  "sign.title": "Giriş yap: {product}",
+  "sign.continueWith": "{provider} ile devam et",
+  "sign.opening": "{provider} açılıyor…",
+  "sign.openError": "{provider} girişi açılamadı. Tekrar dene.",
+  "sign.ssoRequired": "Kuruluşun, şirket hesabınla giriş yapmanı istiyor.",
+  "sign.pairLead":
+    "Bu tarayıcı henüz {product} ile eşleştirilmedi. Uygulamanın çalıştığı bilgisayarda",
+  "sign.pairTail":
+    " komutunu çalıştır: {product} burada açılır, hemen kullanıma hazır olur.",
+  "sign.notSetUp": "Giriş henüz ayarlanmadı. Önce bir yönetici ayarlamalı.",
+  "sign.or": "veya",
+  "sign.emailPlaceholder": "sen@sirket.com",
+  "sign.openingCompany": "Açılıyor…",
+  "sign.continueCompany": "Şirket hesabınla devam et",
+  "sign.adminSignIn": "Yönetici girişi",
+  "sign.noCompany": "Bu adres için şirket girişi ayarlanmamış.",
+  "shell.menu": "Menü",
+  "shell.everything": "Her şey",
+  "shell.everythingLine": "Her kanaldaki tüm sohbet bağlamı",
+  "shell.channelsError": "Kanalların yüklenemedi. Sayfayı yenile.",
+  "shell.channels": "Kanallar",
+  "shell.newChannel": "Yeni kanal",
+  "shell.archived": "Arşivlenmiş",
+  "shell.archivedChannels": "Arşivlenmiş kanallar",
+  "shell.unarchive": "Arşivden çıkar",
+  "shell.unarchiveNamed": "{name} arşivden çıkar",
+  "shell.earlier": "Daha önceki konuşmalar",
+  "shell.manage": "Yönet",
+  "shell.signOut": "Çıkış yap",
+  "nav.bots": "Asistanlar",
+  "nav.connections": "Bağlantılar",
+  "nav.capabilities": "Yetenekler",
+  "nav.routines": "Rutinler",
+  "nav.approvalRules": "Onay kuralları",
+  "nav.admin": "Yönetici",
+  "nav.dashboard": "Gösterge paneli",
+  "nav.settings": "Ayarlar",
+  "tab.main": "Ana",
+  "tab.chat": "Sohbet",
+  "tab.tasks": "Görevler",
+  "tab.make": "Oluştur",
+  "tab.waiting": "{tab}, {badge} bekliyor",
+  "header.chat": "{product} sohbeti",
+  "header.settings": "Ayarların",
+  "header.back": "Geri",
+  "header.more": "Daha fazla",
+  "composer.ask": "Her şeyi sor",
+  "composer.message": "Mesaj",
+  "composer.queue": "Mesajı sıraya al",
+  "composer.send": "Mesajı gönder",
+  "composer.stop": "Asistanı durdur",
+  "composer.showCall": "Sesli aramayı göster",
+  "composer.startCall": "Sesli aramayı başlat",
+  "composer.callBot": "Bu asistanı ara",
+  "composer.callUnsupported":
+    "Sesli aramalar için mikrofon ve güvenli (HTTPS) bir bağlantı gerekir",
+  "composer.speak": "Sesle mesaj yaz",
+  "composer.dictateTitle": "Yapman gereken her şeyi söyle",
+  "composer.attach": "Dosya ekle",
+  "composer.moreUnavailable": "Diğer mesaj seçenekleri kullanılamıyor",
+  "composer.messageNamed": "{name} için mesaj",
+  "chat.botsError": "Asistanların yüklenemedi. Sayfayı yenile.",
+  "chat.noBots": "Henüz asistan yok.",
+  "chat.conversationError": "Konuşman yüklenemedi. Sayfayı yenile.",
+  "chat.stillStarting": "Konuşma hâlâ başlıyor. Birazdan tekrar dene.",
+  "chat.startError": "Konuşma başlatılamadı. Tekrar dene.",
+  "attention.questions": { one: "{count} soru", other: "{count} soru" },
+  "attention.approvals": { one: "{count} onay", other: "{count} onay" },
+  "attention.handoffs": {
+    one: "{count} takılı kalmış devir",
+    other: "{count} takılı kalmış devir",
+  },
+  "attention.unread": {
+    one: "{count} okunmamış konuşma",
+    other: "{count} okunmamış konuşma",
+  },
+  "attention.needYou": {
+    one: "{count} şey senin ilgini bekliyor",
+    other: "{count} şey senin ilgini bekliyor",
+  },
+  "attention.open": "{summary}. Bunlarla ilgilenmek için Asistanlar'ı aç.",
+  "attention.unreadMessages": "Okunmamış mesajlar",
+  "bots.new": "Yeni asistan",
+  "bots.purpose":
+    "Senin asistanların ve seninle paylaşılanlar. Her birinin ne yaptığına ve senden ne istediğine bak.",
+  "bots.loadError": "Asistanların yüklenemedi. Sayfayı yenile.",
+  "bots.needsYou": "Senin ilgini bekliyor",
+  "bots.pinned": "Sabitlenmiş",
+  "bots.yours": "Sana ait",
+  "bots.shared": "Seninle paylaşılan",
+  "bots.allPinned": "Tüm asistanların yukarıda sabitli.",
+  "bots.allNeedYou": "Tüm asistanların “Senin ilgini bekliyor” bölümünde.",
+  "bots.none":
+    "Henüz hiç asistanın yok. “Yeni asistan” düğmesiyle bir tane oluştur.",
+  "bots.nobodyShared": "Henüz kimse seninle bir asistan paylaşmadı.",
+  "bots.hide": "Gizle",
+  "bots.show": "Göster",
+  "bots.hidden": "Gizli",
+  "bots.hiddenDescription": {
+    one: "Gizlediğin {count} asistan. Yalnızca listen değişir.",
+    other: "Gizlediğin {count} asistan. Yalnızca listen değişir.",
+  },
+  "bots.paused": "Duraklatıldı",
+  "bots.message": "Yaz",
+  "bots.wroteIn": {
+    one: "{name}, okumadığın {count} konuşmada yazdı.",
+    other: "{name}, okumadığın {count} konuşmada yazdı.",
+  },
+  "bots.readNewest": "En yenisini oku",
+  "bots.resuming": "Devam ettiriliyor…",
+  "bots.pausedResume": "Duraklatıldı. Devam ettir",
+  "botPage.purpose": "Bu asistanın senin için ne yaptığı ve nasıl kurulduğu.",
+  "botPage.fallbackTitle": "Asistan",
+  "botPage.openError": "Bu asistan açılamadı. Seninle paylaşılmamış olabilir.",
+  "profile.forYou": "Senin için",
+  "profile.settingsError": "Bu asistanın ayarları yüklenemedi. Sayfayı yenile.",
+  "profile.active": "Etkin",
+  "profile.pausedDescription":
+    "Duraklatıldı. Yeniden açana kadar senin için hiçbir şey çalışmaz.",
+  "profile.activeDescription":
+    "Senin için rutinlerini, sorumluluklarını, devirlerini ve takiplerini yürütür.",
+  "profile.notifications": "Bildirimler",
+  "profile.notifyDescription":
+    "{level}. Kenar çubuğundaki rozetler her zaman görünür.",
+  "profile.notify.all": "Her şey",
+  "profile.notify.needsInput": "Yalnızca bana ihtiyacı olduğunda",
+  "profile.notify.none": "Hiçbiri (yalnızca rozetler)",
+  "profile.browserNotifications": "Tarayıcı bildirimleri",
+  "profile.browserOff":
+    "Bu tarayıcıda kapalı. Bir asistan senden bir şey istediğinde haber almak için aç.",
+  "profile.turnOn": "Aç",
+  "profile.startConversation": "Bir konuşma başlat.",
+  "stalled.what": "{name} bitirmedi: {task}",
+  "stalled.why": "Neden: {reason}.",
+  "stalled.retryError": "Tekrar denenemedi. Zaten çalışıyor olabilir.",
+  "stalled.dismissError": "Kapatılamadı. Zaten çalışıyor olabilir.",
+  "stalled.dismissing": "Kapatılıyor…",
+  "stalled.dismissed": "Kapatıldı",
+  "stalled.dismiss": "Kapat",
+  "stalled.retrying": "Tekrar deneniyor…",
+  "stalled.queued": "Yeniden sıraya alındı",
+  "stalled.retry": "Tekrar dene",
+  "stalled.open": "Konuşmayı aç",
+  "dash.title": "Gösterge paneli",
+  "dash.notAvailable": "Henüz kullanılamıyor",
+  "dash.tokensNotCounted": "Bugün henüz sayılan bir tur yok.",
+  "dash.countsUnavailable": "Token sayıları şu an kullanılamıyor.",
+  "dash.enginesLink": "Motorları yönet",
+  "dash.teamLink": "Tüm üyeler",
+  "dash.waitingForYou": "Seni bekliyor",
+  "dash.available": "Kullanılabilir",
+  "dash.loading": "Ekibin yükleniyor…",
+  "dash.nothingWaits": "Seni bekleyen bir şey yok.",
+  "dash.thingsWait": {
+    one: "{count} şey seni bekliyor.",
+    other: "{count} şey seni bekliyor.",
+  },
+  "dash.partialCount": "{turns} denemenin {reported} tanesi bir sayı bildirdi",
+  "dash.inputPlusOutput": "Giriş ve çıkış, her motorun bildirdiği gibi",
+  "dash.nothingSaved": "Bugün henüz hiçbir şey ücretsiz bir motordan geçmedi",
+  "dash.firstFor": {
+    one: "{count} üye için ilk",
+    other: "{count} üye için ilk",
+  },
+  "dash.members": { one: "{count} üye", other: "{count} üye" },
+  "dash.indicators": "Göstergeler",
+  "dash.tokensToday": "Bugünkü token sayısı",
+  "dash.savedToday": "Bugün ücretsiz motorlarla tasarruf edilen",
+  "dash.waitingSub": "Sorular, onaylar ve takılı kalmış devirler",
+  "dash.nextRoutine": "Sonraki rutin",
+  "dash.noRoutine": "Planlanmış bir rutin yok.",
+  "dash.team": "Ekip",
+  "dash.engines": "Motorlar",
+  "dash.noEngine": "Henüz kurulu bir motor yok.",
+  "dash.perMemberAria": "Üye başına token",
+  "dash.perMember": "Üye başına token, bugün",
+  "dash.foot":
+    "Sayılar her motorun bildirdiği değerlerdir ve UTC günlerine göre hesaplanır. Son etkinlik günlüğü ve plan limiti göstergesi henüz kullanılamıyor.",
+  "voice.heardNothing":
+    "Hiçbir şey duymadım. Tekrar denemek için mikrofona dokun ya da yaz.",
+  "voice.tapWhenDone": "Bittiğinde mikrofona dokun",
+  "voice.discard": "Vazgeç",
+  "voice.start": "Dikteyi başlat",
+  "voice.stopAndSend": "Dikteyi durdur ve gönder",
+  "voice.typeInstead": "Bunun yerine yaz",
+  "voice.retry": "Tekrar dene",
+  "voice.recordAgain": "Yeniden kaydet",
+  "voice.writing": "Söylediklerini yazıyorum…",
+  "voice.listeningStop": "Dinliyorum… duraksadığında duracağım",
+  "voice.listening": "Dinliyorum, konuşmaya başlayabilirsin",
+  "voice.permission": "Mikrofon izni bekleniyor…",
+  "voice.widget.unavailable": "",
+  "voice.widget.connecting": "",
+  "voice.widget.speaking": "",
+  "voice.widget.working": "",
+  "voice.widget.muted": "",
+  "voice.widget.listening": "",
+  "voice.widget.ready": "",
+  "voice.widget.label": "",
+  "voice.widget.duration": "",
+  "voice.widget.expand": "",
+  "voice.widget.expandTitle": "",
+  "voice.widget.end": "",
+  "voice.widget.endTitle": "",
+  "voice.widget.returnChat": "",
+  "voice.widget.returnChatTitle": "",
+  "voice.widget.settings": "",
+  "voice.widget.captions": "",
+  "voice.widget.captionsEmpty": "",
+  "voice.widget.you": "",
+  "voice.widget.youMuted": "",
+  "voice.widget.youNamed": "",
+  "voice.widget.mute": "",
+  "voice.widget.unmute": "",
+  "voice.widget.muteTitle": "",
+  "voice.session.slow": "",
+  "voice.session.timeLimit": "",
+  "voice.session.muteFailed": "",
+  "voice.session.lost": "",
+  "voice.session.startFailed": "",
+  "voice.session.transcriptLimit": "",
+  "voice.session.responseFailed": "",
+  "voice.session.serviceError": "",
+  "voice.webrtc.unsupported": "",
+  "voice.webrtc.playback": "",
+  "voice.webrtc.lost": "",
+  "voice.webrtc.micGone": "",
+  "voice.webrtc.channelFailed": "",
+  "voice.webrtc.ended": "",
+  "voice.webrtc.unreadable": "",
+  "voice.webrtc.connectFailed": "",
+  "voice.webrtc.invalid": "",
+  "voice.webrtc.notConnected": "",
+  "voice.websocket.audio": "",
+  "voice.websocket.config": "",
+  "voice.websocket.address": "",
+  "voice.websocket.startFailed": "",
+  "voice.websocket.connect": "",
+  "voice.websocket.closed": "",
+  "voice.websocket.notConnected": "",
+  "voice.websocket.invalid": "",
+  "voice.websocket.slow": "",
+  "voice.websocket.micGone": "",
+  "voice.connection.unsupported": "",
+  "voice.connection.unavailable": "",
+  "voice.connection.transport": "",
+  "dictation.controls.dictate": "",
+  "dictation.controls.cancel": "",
+  "dictation.controls.transcribing": "",
+  "dictation.controls.listening": "",
+  "dictation.controls.duration": "",
+  "dictation.controls.stop": "",
+  "dictation.controls.stopTitle": "",
+  "dictation.controls.send": "",
+  "dictation.recording.secure": "",
+  "dictation.recording.noRecorder": "",
+  "dictation.recording.noFormat": "",
+  "dictation.recording.tooLarge": "",
+  "dictation.recording.stopped": "",
+  "dictation.recording.interrupted": "",
+  "dictation.recording.empty": "",
+  "dictation.recording.noSpeech": "",
+  "dictation.recording.failed": "",
+  "dictation.session.denied": "",
+  "dictation.session.startFailed": "",
+  "dictation.session.finishFailed": "",
+  "dictation.session.transcribeFailed": "",
+  "home.bots": "Ekibini tanı ve her asistanı yönet.",
+  "home.capabilities": "Beceriler ve bellek.",
+  "home.connectionsLabel": "Hesaplar, uygulamalar ve posta kuralları",
+  "home.connections": "Bir hesap, bir uygulama ya da postanı bağla.",
+  "home.setupLabel": "Kurulum listesi",
+  "home.setup": "Neyin kurulu, neyin eksik olduğuna bak.",
+  "home.approvalsLabel": "Onay kuralları ve Full access",
+  "home.approvals": "Bir asistanın sana sormadan neler yapabileceği.",
+  "home.passwordsLabel": "Parolalar",
+  "home.passwords": "Ekibinin kullanabileceği parolalar.",
+  "home.routines": "Kendiliğinden tekrar eden işler ve haftalık görünüm.",
+  "home.notifications": "Güncellemelerin sana ulaştığı yerler.",
+  "home.admin":
+    "Bilgisayarlar, kimlik bilgileri, sınırlar, kişiler ve denetim kaydı.",
+  "home.engines":
+    "Her asistana hangi motorun, hangi sırayla yanıt verdiği ve bugün ne kadar kullanıldığı. Sırayı sen değiştirene kadar aboneliğin ilk sırada kalır.",
+  "home.safety": "Güvenlik",
+  "home.jobs": "İşler",
+  "home.system": "Sistem",
+  "settings.description":
+    "Ekibini, bağlı hesaplarını ve kişisel tercihlerini yönet.",
+  "settings.sections": "Ayar bölümleri",
+  "settings.workspace": "Çalışma alanı",
+  "settings.preferences": "Tercihler",
+  "settings.devices": "Cihazlar ve bilgi",
+  "settings.appearance": "Görünüm",
+  "settings.matchPhone": "Telefonla aynı",
+  "settings.light": "Açık",
+  "settings.dark": "Koyu",
+  "settings.voice": "Ses",
+  "settings.shortcuts": "Klavye kısayolları",
+  "language.section": "Dil",
+  "language.title": "Uygulama dili",
+  "language.description":
+    "Menülerin ve düğmelerin dili. Ekibin sana, sohbette ayarlanan dilde yazar.",
+  "language.auto": "Otomatik (tarayıcı)",
+  "settings.descriptionPlain":
+    "{product} senin için nasıl görünür ve nasıl çalışır.",
+  "wide.yourTeam": "Ekibin",
+  "wide.team": "Ekip",
+  "wide.stateWaiting": "Seni bekliyor",
+  "wide.stateWorking": "Üzerinde çalışıyor",
+  "wide.memberLabel": "{name}, {line}",
+  "chat.loadingConversation": "Bu konuşma yükleniyor",
+  "chat.readAloud": "Sesli oku",
+  "chat.stopReading": "Okumayı durdur",
+  "chat.thinking": "Düşünüyor",
+  "chat.queued": "Sırada",
+  "chat.removeQueued": "Sıradaki mesajı kaldır: {what}",
+  "chat.remove": "Kaldır",
+  "chat.routineRan": "Rutin çalıştı.",
+  "chat.firstDayYes": "Doğru gibi",
+  "chat.firstDayNo": "Bir terslik var",
+  "chat.tryingAgain": "Tekrar deniyor.",
+  "chat.responsibilityRan": "Sorumluluk çalıştı.",
+  "chat.trigger": "Tetikleyici:",
+  "chat.details": "Ayrıntılar",
+  "chat.via": "{source} üzerinden",
+  "chat.untitledFile": "Adsız dosya",
+  "chat.attachment": "Ek",
+  "chat.attachmentLower": "ek",
+  "chat.attachmentNamed": "Ek: {name}",
+  "chat.unavailableNamed": "{name} kullanılamıyor.",
+  "chat.unavailable": "Bu ek kullanılamıyor.",
+  "chat.openNamed": "{name} aç",
+  "chat.close": "Kapat",
+  "chat.generatedInterface": "Bu asistanın oluşturduğu arayüz",
+  "chat.usedBrowser": "Tarayıcıyı kullandı",
+  "chat.hostAndMore": "{host} ve {amount} daha",
+  "chat.searchedWeb": "web'de arama yaptı",
+  "chat.readPages": {
+    one: "{amount} sayfa okudu",
+    other: "{amount} sayfa okudu",
+  },
+  "chat.browsedPages": {
+    one: "{amount} sayfada gezindi",
+    other: "{amount} sayfada gezindi",
+  },
+  "chat.usedBrowserPhrase": "tarayıcıyı kullandı",
+  "chat.usedNamed": "{name} kullandı",
+  "chat.usedConnectors": {
+    one: "{amount} bağlayıcı kullandı",
+    other: "{amount} bağlayıcı kullandı",
+  },
+  "chat.usedTools": {
+    one: "{amount} araç kullandı",
+    other: "{amount} araç kullandı",
+  },
+  "chat.andJoin": "{head} ve {last}",
+  "chat.inProgress": "Devam ediyor",
+  "chat.waitingForYou": "Seni bekliyor",
+  "chat.notCompleted": "Tamamlanmadı",
+  "chat.blocked": "Engellendi",
+  "chat.didntWork": "Çalışmadı",
+  "chat.couldntFinishStep": "Bu adımı tamamlayamadım.",
+  "chat.issues": {
+    one: "{amount} sorun",
+    other: "{amount} sorun",
+  },
+  "settings.addRepository": "Depo ekle",
+  "settings.approvals": "Onaylar",
+  "settings.appsSharedBots":
+    "Paylaşılan asistanların kullanmasına izin verdiğin uygulamalar",
+  "settings.backToApp": "Uygulamaya dön",
+  "settings.cancel": "İptal",
+  "settings.cannotMakeCode":
+    "Kod, bilgisayara eşleştirilmiş tarayıcıda oluşturulur. Bu tarayıcı kod oluşturamaz.",
+  "settings.cantLink":
+    "Henüz {provider} hesabını bağlayamazsın. Önce bir yönetici bunu ayarlamalı.",
+  "settings.changesDescription":
+    "Bir asistanın sohbetten değiştirdiği ayarlar. Geri al, eski değeri yedi gün boyunca geri koyar; bunu yalnızca ayar hâlâ değişikliğin belirlediği değeri tutuyorsa yapar.",
+  "settings.changesEmpty": "Sohbetten yapılmış henüz bir değişiklik yok.",
+  "settings.changesLoading": "Değişiklikler yükleniyor…",
+  "settings.changesTitle": "Sohbette yapılan değişiklikler",
+  "settings.charactersOf": "{used} / {limit} karakter",
+  "settings.checkLinkError":
+    "Bu hesabı bağlayıp bağlayamayacağın kontrol edilemedi: {error}",
+  "settings.code": "Kod",
+  "settings.codeExpires":
+    "Kod bir kez çalışır ve 10 dakika içinde geçersiz olur.",
+  "settings.codeRanOut": "Bu kodun süresi doldu. Yeni bir kod oluştur.",
+  "settings.componentsGallery": "Bileşen galerisi",
+  "settings.computer": "Bilgisayar",
+  "settings.connect": "Bağla",
+  "settings.connectEvents": "Olayları bağla",
+  "settings.connectNamed": "{name} bağla",
+  "settings.copied": "Kopyalandı",
+  "settings.copy": "Kopyala",
+  "settings.copyFailed": "Kopyalanamadı. Kodu seçip kendin kopyala.",
+  "settings.deliveriesEmpty": "Henüz teslimat yok.",
+  "settings.deliveriesTitle": "Son teslimatlar",
+  "settings.deploymentOwn": "kurulumun kendi dili",
+  "settings.devicesDescription":
+    "Telefonundaki {product} uygulamasına giriş yap ve buraya eklemek için bildirimleri aç.",
+  "settings.devicesEmpty": "Henüz cihaz yok.",
+  "settings.devicesTitle": "Cihazların",
+  "settings.disconnect": "Bağlantıyı kes",
+  "settings.disconnectError": "{name} bağlantısı kesilemedi: {error}",
+  "settings.disconnectNamed": "{name} bağlantısını kes",
+  "settings.done": "Tamam",
+  "settings.emphasisBot": "Asistan adı",
+  "settings.emphasisConversation": "Konuşma başlığı",
+  "settings.emphasisDescription":
+    "Kenar çubuğunda hangi satırın öne çıkacağını seç.",
+  "settings.emphasisPreview": "Mesaj listesi önizlemesi",
+  "settings.emphasisTitle": "Mesaj listesinde vurgu",
+  "settings.general": "Genel",
+  "settings.githubConnectError": "GitHub bağlanamadı: {error}",
+  "settings.githubLinkFailed": "GitHub hesabın bağlanamadı. Tekrar dene.",
+  "settings.githubLinked": "GitHub hesabın bağlı.",
+  "settings.githubTaken":
+    "Bu GitHub hesabı {product} içinde başka birine bağlı. GitHub'a başka bir hesapla giriş yapıp tekrar dene ya da bir yöneticiye sor.",
+  "settings.kindDecision": "Kararlar",
+  "settings.kindDecisionDescription":
+    "Bir asistanın harekete geçmeden önce ihtiyaç duyduğu onaylar.",
+  "settings.kindProgress": "İlerleme",
+  "settings.kindProgressDescription":
+    "Takip etmediğin işlerden gelen yanıtlar ve sonuçlar.",
+  "settings.kindQuestion": "Sorular",
+  "settings.kindQuestionDescription":
+    "Bir asistanın sana sorduğu ve yanıtını beklediği şeyler.",
+  "settings.languageChanged": "Ekip için dil: eskiden {from}, şimdi {to}.",
+  "settings.lastSeen": "son görülme: {when}",
+  "settings.levelAll": "her şey",
+  "settings.levelNeedsInput": "yalnızca sana ihtiyacı olduğunda",
+  "settings.linkBroughtCode":
+    "Bağlantı bir kod getirdi. Bu tarayıcıya bir ad ver ve Eşleştir düğmesine bas.",
+  "settings.linkSlack": "Slack hesabını bağla",
+  "settings.linked": "Bağlı",
+  "settings.loadAccountError": "Hesabın yüklenemedi: {error}",
+  "settings.loading": "Yükleniyor…",
+  "settings.localAddress":
+    "Bu adres yalnızca bu bilgisayarda çalışır. Telefonun, FreeDuet'in dışarıdan erişildiği adresi kullanması gerekir; bunu telefonda aç ve kodu Ayarlar'a yaz.",
+  "settings.madeWhen": "oluşturuldu: {when}",
+  "settings.makeCode": "Kod oluştur",
+  "settings.memberAdded": "{member} senin ekibine eklendi.",
+  "settings.name": "Ad",
+  "settings.nameChanged": "{bot}: ona verdiğin ad eskiden {from}, şimdi {to}.",
+  "settings.nameOwn": "kendi adı",
+  "settings.needsReconnect": "Yeniden bağlanmalı",
+  "settings.needsReconnectHandle": "Yeniden bağlanmalı · @{handle}",
+  "settings.noItalianVoice":
+    "Bu bilgisayarda yerel bir İtalyanca ses yok, bu yüzden yanıtlar burada sesli okunamaz.",
+  "settings.notLinked": "Bağlı değil",
+  "settings.notSetUp": "Ayarlanmadı",
+  "settings.notifyChanged": "{bot}: bildirimler eskiden {from}, şimdi {to}.",
+  "settings.pairThisDescription":
+    "FreeDuet'in çalıştığı bilgisayarda Ayarlar'ı aç, “Bir telefon veya başka bir tarayıcı eşleştir” bölümünde Kod oluştur düğmesine bas, sonra gösterdiği bağlantıyı aç ya da kodu buraya yaz.",
+  "settings.pairThisTitle": "Bu tarayıcıyı eşleştir",
+  "settings.pairedDescription":
+    "Eşleştirilmiş bir telefon veya başka bir tarayıcı bu tarayıcı gibi çalışır. Birini iptal edersen, bir sonraki isteğinde erişimi kesilir ve oturumu kapatılır.",
+  "settings.pairedDone": "Bu tarayıcı bilgisayarla eşleştirildi.",
+  "settings.pairedTitle": "Bir telefon veya başka bir tarayıcı eşleştir",
+  "settings.phone": "Telefon",
+  "settings.phoneOrBrowser": "Telefon veya başka tarayıcı",
+  "settings.qrLabel": "Eşleştirme bağlantılı QR kodu",
+  "settings.readAloudDescription":
+    "Her asistan yanıtının altına bir Sesli oku düğmesi ekler. Yalnızca bu bilgisayardaki bir sesi kullanır; hiçbir şey başka yere gönderilmez.",
+  "settings.readAloudTitle": "Yanıtları sesli oku",
+  "settings.rename": "Yeniden adlandır",
+  "settings.repositories": "Depolar",
+  "settings.repositoriesDescription":
+    "Buraya bir depo ekle, sonra GitHub'da aşağıdaki adresle ve aynı gizli anahtarla bir webhook ekle. Deponun olayları, örneğin issues.opened, bundan sonra bir sorumluluğu başlatabilir.",
+  "settings.repositoriesEmpty":
+    "Henüz depo yok. “Depo ekle” ile bir tane ekle.",
+  "settings.repository": "Depo",
+  "settings.reset": "Sıfırla",
+  "settings.resetDescription":
+    "Her yanıtı unut; böylece paylaşılan her asistan yeniden sorar.",
+  "settings.resetDone": "Sıfırlandı. Paylaşılan her asistan yeniden soracak.",
+  "settings.revoke": "İptal et",
+  "settings.routingDescription":
+    "Uzaktayken her güncelleme türünün nereye gideceği. Web'deki {product} her zaman her şeyi gösterir.",
+  "settings.routingError":
+    "Güncellemelerinin nereye gittiği yüklenemedi. Sayfayı yenile.",
+  "settings.routingTitle": "Güncellemeler nereye gider",
+  "settings.runsOut":
+    "Telefonda, senin hesabınla oturum açıp bunu tara ya da bağlantıyı aç; ya da Ayarlar'ı aç ve kodu yaz. Bir kez çalışır ve {time} içinde süresi dolar.",
+  "settings.sameSecret":
+    "GitHub'da webhook eklerken aynı gizli anahtarı kullan.",
+  "settings.sampleBot": "Genel Asistan",
+  "settings.sampleTitle": "Gelecek haftayı planla",
+  "settings.save": "Kaydet",
+  "settings.saved": "Kaydedildi",
+  "settings.saving": "Kaydediliyor…",
+  "settings.setup": "Kurulum",
+  "settings.sharedBots": "Paylaşılan asistanlar",
+  "settings.sharedBotsDescription":
+    "Seninle paylaşılan bir asistan, sahibinin uygulamalarını kullanır. Senin uygulamalarını yalnızca bir konuşmada evet dediğin yerde kullanır.",
+  "settings.slackCodeError": "Slack kodu oluşturulamadı: {error}",
+  "settings.standingDescription":
+    "Her konuşmadaki her asistan için geçerlidir. Bir asistanın rolü ne yaptığını söyler. Bu ise, yazım tarzın gibi, bunun nasıl yapılmasını istediğini söyler.",
+  "settings.standingTitle": "Kalıcı talimatlar",
+  "settings.switchLabel": "{kind}, {transport} üzerinden",
+  "settings.thisBrowserTag": "(bu tarayıcı)",
+  "settings.toneChanged": "{bot}: ton eskiden {from}, şimdi {to}.",
+  "settings.undo": "Geri al",
+  "settings.undoFailed": "Değişiklik geri alınamadı. Tekrar dene.",
+  "settings.undoGone": "Geri alma artık mümkün değil",
+  "settings.undoing": "Geri alınıyor…",
+  "settings.undone": "Geri alındı",
+  "settings.webhookSecret": "Webhook gizli anahtarı",
+  "settings.yourAccount": "Hesabın",
+  "bot.activity.kindRoutine": "Rutin",
+  "bot.activity.kindResponsibility": "Sorumluluk",
+  "bot.activity.kindHandoff": "Devredilen görev",
+  "bot.activity.kindApproval": "Onay",
+  "bot.activity.kindQuestion": "Soru",
+  "bot.activity.kindFollowUp": "Takip",
+  "bot.activity.needsYou": "senin ilgini bekliyor",
+  "bot.activity.stop": "Durdur",
+  "bot.activity.stopping": "Durduruluyor…",
+  "bot.activity.cancelling": "İptal ediliyor…",
+  "bot.activity.open": "Aç",
+  "bot.activity.title": "Etkinlik",
+  "bot.activity.scheduled": "Planlandı",
+  "bot.activity.completed": "Tamamlandı",
+  "bot.activity.emptyInProgress":
+    "Çalışan ya da senin için bekleyen bir şey yok.",
+  "bot.activity.emptyScheduled": "Planlanmış bir şey yok.",
+  "bot.activity.emptyCompleted": "Henüz tamamlanan bir şey yok.",
+  "bot.activity.loadError":
+    "Bu asistanın etkinliği yüklenemedi. Sayfayı yenile.",
+  "bot.settings.heading": "Bu asistanın ayarları",
+  "bot.area.responsibilities": "Sorumluluklar",
+  "bot.area.reaching": "Seninle iletişim",
+  "bot.area.memory": "Bellek",
+  "bot.area.access": "Beceriler ve erişim",
+  "bot.area.sharing": "Paylaşım",
+  "bot.settings.activeCount": {
+    one: "{count} etkin",
+    other: "{count} etkin",
+  },
+  "bot.settings.noneActive": "Hiçbiri etkin değil",
+  "bot.settings.ruleCount": {
+    one: "{count} kural",
+    other: "{count} kural",
+  },
+  "bot.settings.noRules": "Kural yok",
+  "bot.settings.routineCount": {
+    one: "{count} rutin",
+    other: "{count} rutin",
+  },
+  "bot.settings.noRoutines": "Rutin yok",
+  "bot.access.skillsDescription":
+    "Bu asistanla kullanmak için bir beceriyi aç. Bir konuşmada çalıştırmak için / yaz.",
+  "bot.access.yourSkills": "Becerilerin",
+  "bot.access.skillsError": "Becerilerin yüklenemedi. Sayfayı yenile.",
+  "bot.access.noSkills": "Henüz beceri yok.",
+  "bot.access.writeOne": "Bir tane yaz",
+  "bot.access.title": "Neleri kullanabilir",
+  "bot.access.grantedDescription":
+    "Bu asistanın kullanabileceği uygulamalar ve beceriler ile her uygulamanın senin için hazır olup olmadığı. Başka hiçbir şeyi kullanamaz.",
+  "bot.access.grantedError":
+    "Bu asistanın neleri kullanabileceği yüklenemedi. Sayfayı yenile.",
+  "bot.access.readyError":
+    "Her uygulamanın senin için hazır olup olmadığı kontrol edilemedi. Sayfayı yenile.",
+  "bot.access.noApps":
+    "Henüz uygulama yok. Bunları bir yöneticinin eklemesi gerekiyor. O zamana kadar bu asistan yalnızca seninle konuşabilir.",
+  "bot.access.toolsAndMore": "{list} ve {count} daha",
+  "bot.access.toolCount": {
+    one: "{count} araç",
+    other: "{count} araç",
+  },
+  "bot.access.skillLabel": "Beceri",
+  "bot.access.manageNamed": "Bu asistandaki {title} öğesini yönet",
+  "bot.reset.conversations": {
+    one: "{count} konuşma",
+    other: "{count} konuşma",
+  },
+  "bot.reset.memorySources": {
+    one: "{count} bellek kaynağı",
+    other: "{count} bellek kaynağı",
+  },
+  "bot.reset.memories": {
+    one: "{count} içe aktarılmış bellek",
+    other: "{count} içe aktarılmış bellek",
+  },
+  "bot.reset.routines": {
+    one: "{count} rutin",
+    other: "{count} rutin",
+  },
+  "bot.reset.responsibilities": {
+    one: "{count} sorumluluk",
+    other: "{count} sorumluluk",
+  },
+  "bot.reset.followUps": {
+    one: "{count} planlanmış takip",
+    other: "{count} planlanmış takip",
+  },
+  "bot.reset.formedMemories": {
+    one: "{count} asistanın oluşturduğu bellek",
+    other: "{count} asistanın oluşturduğu bellek",
+  },
+  "bot.reset.research": {
+    one: "{count} arka plan araştırması",
+    other: "{count} arka plan araştırması",
+  },
+  "bot.reset.standing": {
+    one: "{count} kalıcı izin",
+    other: "{count} kalıcı izin",
+  },
+  "bot.reset.title": "{name} sıfırlansın mı?",
+  "bot.reset.description":
+    "Bu işlem, {name} adlı asistanın seninle olan her şeyini siler. Başkalarının konuşmaları ve verileri kalır. Bunu geri alamazsın.",
+  "bot.reset.planError":
+    "Sıfırlamanın neyi sileceği kontrol edilemedi. Tekrar dene.",
+  "bot.reset.done": "Tamam. {name} seninle sıfırdan başlıyor.",
+  "bot.reset.nothing": "Senin silebileceğin bir şey yok.",
+  "bot.reset.willDelete": "Bu şunları silecek:",
+  "bot.reset.sharedKept": {
+    one: "{count} konuşma başka kişilerle ya da asistanlarla paylaşılıyor ve korunacak.",
+    other:
+      "{count} konuşma başka kişilerle ya da asistanlarla paylaşılıyor ve korunacak.",
+  },
+  "bot.reset.memoriesKept":
+    "Kendin bir asistana anlattığın bellek kayıtları korunur.",
+  "bot.reset.resetting": "Sıfırlanıyor…",
+  "bot.reset.submit": "Sil ve sıfırla",
+  "bot.manage.pinnedAssigned":
+    "Bir yönetici bu asistanı sana atadı. Asistan listenin en üstünde kalır.",
+  "bot.manage.pinnedOn":
+    "Asistan listenin en üstünde. Yalnızca senin listen değişir.",
+  "bot.manage.pinnedOff":
+    "Asistanı listenin en üstünde tut. Yalnızca senin listen değişir.",
+  "bot.manage.hiddenAssigned":
+    "Bir yönetici bu asistanı sana atadı. Gizleyemezsin.",
+  "bot.manage.hiddenOn":
+    "Asistan, listendeki “Gizli” bölümünde. Yalnızca senin listen değişir.",
+  "bot.manage.hiddenOff":
+    "Asistanı listenden gizle. Yalnızca senin listen değişir.",
+  "bot.manage.duplicate": "Kopyasını oluştur",
+  "bot.manage.duplicateDescription":
+    "Kendi kopyanı oluştur. Konuşmaları ve anahtarları kopyalanmaz.",
+  "bot.manage.resetDescription":
+    "Onunla olan konuşmalarını, senin için hatırladıklarını ve planlanmış işlerini sil. Önce listeyi göreceksin.",
+  "bot.manage.delete": "Sil",
+  "bot.manage.deleteDescription": "Herkes için siler. Bunu geri alamazsın.",
+  "bot.manage.deleteTitle": "{name} silinsin mi?",
+  "bot.manage.deleteConfirm": "Herkes için silinir. Bunu geri alamazsın.",
+  "bot.manage.deleting": "Siliniyor…",
+  "bot.setup.title": "Başlık",
+  "bot.setup.whatItDoes": "Ne yapar",
+  "bot.setup.identity": "Kimlik",
+  "bot.setup.systemOwned": "Sistem sahipli",
+  "bot.setup.systemOwnedDescription":
+    "{product} ile birlikte gelir. Bir kişiye ait değildir.",
+  "bot.setup.visibility": "Görünürlük",
+  "bot.setup.visiblePrivate":
+    "Yalnızca sen görebilirsin ve onunla konuşma başlatabilirsin.",
+  "bot.setup.visiblePublic":
+    "{product} üzerindeki herkes onu bulabilir ve kullanabilir.",
+  "bot.setup.private": "Özel",
+  "bot.setup.public": "Herkese açık",
+  "bot.setup.saveError": "Kaydedilemedi. Tekrar dene.",
+  "bot.setup.checkField": "Bu alanı kontrol et ve tekrar dene.",
+  "bot.setup.connection": "Bağlantı",
+  "bot.setup.builtIn": "Yerleşik",
+  "bot.setup.agentUrl": "Ajan URL'si",
+  "bot.setup.builtInDescription":
+    "{product} içinde çalışır. Bağlanacak bir şey yok.",
+  "bot.sharing.published": "Yayımlandı",
+  "bot.sharing.toWholeTeam": "Tüm ekibe",
+  "bot.sharing.toPeople": "Şu kişilere: {who}",
+  "bot.sharing.groupNamed": "{name} grubu",
+  "bot.sharing.teamPrivate": "Herkesin bu asistanla olan konuşmaları özeldir.",
+  "bot.sharing.notVisibleYet":
+    "Ekip arkadaşların, gerçek bir adı ve açıklaması olana kadar onu göremez.",
+  "bot.sharing.unpublish": "Yayımdan kaldır",
+  "bot.sharing.link": "Bağlantı",
+  "bot.sharing.linkDescription": "Onunla özel bir konuşma açar.",
+  "bot.sharing.copyLink": "Bağlantıyı kopyala",
+  "bot.sharing.publicNotPublished":
+    "Ekibe yayımlanmadı. Herkese açık olduğu için {product} üzerindeki herkes onu zaten kullanabilir.",
+  "bot.sharing.onlyYouCanUse": "Yayımlanmadı. Yalnızca sen kullanabilirsin.",
+  "bot.sharing.notPublished": "Yayımlanmadı.",
+  "bot.sharing.whoPublishedTo": "Kime yayımlandığı",
+  "bot.sharing.publish": "Yayımla",
+  "bot.sharing.publishNote":
+    "Yayımlamak görünürlüğünü değiştirmez. Yayımı istediğin zaman kaldırabilirsin.",
+  "bot.sharing.audience": "Hedef kitle",
+  "bot.sharing.notPublishedSummary": "Yayımlanmadı",
+  "bot.sharing.theWholeTeam": "Tüm ekip",
+  "bot.sharing.specificPeople": "Belirli kişiler veya gruplar",
+  "bot.sharing.peopleCount": {
+    one: "{count} kişi",
+    other: "{count} kişi",
+  },
+  "bot.sharing.groupCount": {
+    one: "{count} grup",
+    other: "{count} grup",
+  },
+  "bot.sharing.assignToGroups": "Gruplara ata",
+  "bot.sharing.assignDescription":
+    "Bu asistanı, her grup üyesinin asistan listesinin en üstüne sabitler. Tüm ekip için * kullan.",
+  "bot.sharing.publishedTo": "Yayımlandığı yer",
+  "bot.sharing.peopleByEmail": "E-postayla kişiler",
+  "bot.sharing.commaSeparated": "Virgülle ayrılmış",
+  "bot.sharing.groups": "Gruplar",
+  "bot.sharing.update": "Güncelle",
+  "bot.sharing.publishToTeam": "Ekibe yayımla",
+  "bot.sharing.assignNamed": "{name} öğesini bir gruba ata",
+  "bot.sharing.assignNote":
+    "Her üyenin asistan listesinin en üstüne sabitlenir.",
+  "bot.sharing.groupOrStar": "Grup veya *",
+  "bot.sharing.wholeTeamPlaceholder": "Tüm ekip için *",
+  "bot.sharing.assign": "Ata",
+  "bot.sharing.removeNamed": "{name} kaldır",
+  "bot.sharing.wholeTeam": "Tüm ekip",
+  "bot.sharing.notAssigned": "Hiçbir gruba atanmadı.",
+  "bot.sharing.assignRow": "Bir gruba ata",
+  "bot.page.accessPurpose":
+    "Bu asistanın kullanabileceği beceriler, uygulamalar ve diğer asistanlar.",
+  "bot.page.approvalsPurpose":
+    "Bu asistanın sana önce sormadan neler yapabileceği.",
+  "bot.page.memoryPurpose":
+    "Bu asistanın öğrendiği uygulamalar ve senin için arka planda yaptığı araştırmalar.",
+  "bot.page.memoryPointer":
+    "Asistanlarının senin hakkında hatırladıkları şurada yer alır",
+  "bot.page.reachPurpose":
+    "Bu asistanla olan konuşmana Slack, Microsoft Teams ya da kısa mesajla devam et.",
+  "bot.page.responsibilitiesPurpose":
+    "Bu asistanın senin için üzerinde çalıştığı süregelen hedefler. Her çalıştırmayı neyin başlattığını ve neyi bulduğunu gör.",
+  "bot.page.routinesPurpose":
+    "Bu asistanın senin için bir takvime göre yaptığı işler. Birini kapat, hemen çalıştır ya da sil.",
+  "bot.page.setupPurpose":
+    "Bu asistanın kim olduğu, onu kimin bulabileceği ve nerede çalıştığı.",
+  "bot.page.sharingPurpose":
+    "Bu asistanı başka kimler kullanabilir. Herkesin bu asistanla olan konuşmaları özeldir.",
+  // The Bot sub-pages' contents (D181 stage 2e): memory sources, suggestions, reaching you, responsibilities
+  // and routines, the summaries of lib/agents/bot-summaries.ts and the time phrases of lib/relative-time.ts.
+  // Shared words reuse their existing keys (`botPage.fallbackTitle` is "Bot"); `bot.choose` is "Choose a Bot".
+  "bot.choose": "Bir asistan seç",
+  "memory.addSource": "Kaynak ekle",
+  "memory.title": "Uygulama kaynakları",
+  "memory.description":
+    "Bağladığın ve bu asistanın okuyabildiği uygulamalar burada görünür; daha fazlasını ekleyebilirsin. Kaynaklar 15 dakikada bir yenilenir. İçeriklerini yalnızca bu asistan görür.",
+  "memory.empty": "Henüz kaynak yok. “Kaynak ekle” ile bir tane ekle.",
+  "memory.upToDate": "Güncel",
+  "memory.off": "Kapalı",
+  "memory.lastRead": "Son okuma: {when}",
+  "memory.syncNow": "Şimdi eşitle",
+  "memory.readNamed": "{name} kaynağını oku",
+  "memory.addTitle": "Kaynak ekle",
+  "memory.addDescription":
+    "{product} onu şimdi okur, açık kaldığı sürece de 15 dakikada bir okur.",
+  "memory.enterNumber": "{name} için bir sayı gir.",
+  "memory.cantShow":
+    "Bunun, {product} tarafından gösterilemeyen ayarları var. Başka birini seç.",
+  "memory.checkSettings": "Kaynak ayarlarını kontrol et.",
+  "memory.whatToRead": "Okunacaklar",
+  "memory.chooseWhat": "Neyin okunacağını seç",
+  "memory.sourceName": "Kaynak adı",
+  "memory.chooseValue": "Bir değer seç",
+  "memory.reading": "Kaynak okunuyor…",
+  "memory.addAndSync": "Kaynağı ekle ve eşitle",
+  "suggestions.everyHour": "Saatte bir",
+  "suggestions.every4Hours": "4 saatte bir",
+  "suggestions.twiceDay": "Günde iki kez",
+  "suggestions.onceDay": "Günde bir kez",
+  "suggestions.everyMinutes": {
+    one: "Her {count} dakikada bir",
+    other: "Her {count} dakikada bir",
+  },
+  "suggestions.yourBot": "Senin asistanın",
+  "suggestions.title": "Önerilen sonraki adımlar",
+  "suggestions.from": "Kaynak: {app}",
+  "suggestions.connectedApp": "bağlı bir uygulama",
+  "suggestions.openRecord": "Kaydı aç",
+  "suggestions.startTask": "Görev olarak başlat",
+  "suggestions.empty":
+    "Şu an öneri yok. Arka plan araştırması açık asistanlar sonraki adımları burada önerir.",
+  "suggestions.turnOnResearch": "Araştırmayı aç",
+  "suggestions.researchDescription":
+    "Bu asistan için sen açana kadar kapalıdır, yöneticin onu herkes için açmış olmadıkça. Açıkken dört saatte bir zaten okuyabildiği uygulamalara göz atar, gözden geçirmen için anılar oluşturur ve sonraki adımları önerir. Yalnızca okuyabilir: mesaj gönderemez, bir uygulamada hiçbir şeyi değiştiremez, tarayıcı ya da bilgisayar kullanamaz. Kapatırsan veya kaldırırsan öyle kalır.",
+  "suggestions.researchTitle": "Arka plan araştırması",
+  "suggestions.researchOff": "Arka plan araştırması kapalı.",
+  "suggestions.turnOnDialog": "Arka plan araştırmasını aç",
+  "suggestions.turnOnDescription":
+    "Bir zamanlamaya göre okur ve önerilerini içinde bulunduğu bir kanala iletir.",
+  "suggestions.deliverTo": "Önerilerin teslim edileceği yer",
+  "suggestions.chooseChannel": "Bir kanal seç",
+  "suggestions.howOften": "Ne sıklıkla",
+  "suggestions.focus": "Neye bakılsın (isteğe bağlı)",
+  "suggestions.off": "Kapalı",
+  "suggestions.researchingNow": "Şu an araştırıyor",
+  "suggestions.lastRan": "Son çalışma: {when}",
+  "suggestions.turnOff": "Kapat",
+  "reaching.linkSlack": "Slack'i bağla",
+  "reaching.linkTeams": "Microsoft Teams'i bağla",
+  "reaching.connectPhone": "Bir telefon bağla",
+  "reaching.sumSlack": "Bir konuşmayı Slack'ten sürdür.",
+  "reaching.sumTeams": "Bir konuşmayı Microsoft Teams'ten sürdür.",
+  "reaching.sumSms": "Bir konuşmayı kısa mesajla sürdür.",
+  "reaching.codeOnWay": "Bir doğrulama kodu yolda. Bitirmek için kodu gir.",
+  "reaching.linkReady":
+    "Bağlantı kodun gönderilmeye hazır. Tekrar görmek için bunu aç.",
+  "reaching.smsNotSet":
+    "Kısa mesajlar henüz kurulmadı. Önce bir yöneticinin bunları açması gerekiyor.",
+  "reaching.notSet":
+    "Henüz kurulmadı. Önce bir yöneticinin Slack ve Teams'i açması gerekiyor.",
+  "reaching.pointerBefore":
+    "Cihazların, son teslimatlar ve her tür güncellemenin nereye gittiği şurada:",
+  "reaching.connected": "Bağlı hedefler",
+  "reaching.noDestinations": "Bağlı hedef yok.",
+  "reaching.optedOut":
+    "STOP yazan bir mesaj gönderdin. Devam etmek için START yaz ve gönder.",
+  "reaching.disconnect": "Bağlantıyı kes",
+  "reaching.channelNote":
+    "Başkalarının okuyabildiği bir Slack veya Teams kanalında asistan sana doğrudan mesajla yanıt verir.",
+  "reaching.connectTitle": "Bir konuşma bağla",
+  "reaching.oneAtATime":
+    "Her hesap veya telefon numarası aynı anda tek bir konuşmayla çalışır. Burada bağlarsan, şu an bağlı olduğu konuşmadan alınıp buraya taşınır.",
+  "reaching.conversation": "Konuşma",
+  "reaching.chooseConversation": "Bir konuşma seç",
+  "reaching.loadMore": "Daha fazla konuşma yükle",
+  "reaching.phoneNumber": "Telefon numarası",
+  "reaching.sendCode": "Doğrulama kodu gönder",
+  "reaching.verificationCode": "Doğrulama kodu",
+  "reaching.confirmPhone": "Telefonu onayla",
+  "reaching.linkExpires": {
+    one: "Bu mesajı {count} dakika içinde {platform} üzerindeki {product} uygulamasına gönder. Bu mesaj, o hesabı bu konuşmaya ve bu asistana bağlar.",
+    other:
+      "Bu mesajı {count} dakika içinde {platform} üzerindeki {product} uygulamasına gönder. Bu mesaj, o hesabı bu konuşmaya ve bu asistana bağlar.",
+  },
+  "responsibilities.new": "Yeni sorumluluk",
+  "responsibilities.title": "Hedefler",
+  "responsibilities.empty":
+    "Henüz sorumluluk yok. “Yeni sorumluluk” ile bir tane ekle.",
+  "responsibilities.emptyBot":
+    "Bu asistanın henüz sorumluluğu yok. “Yeni sorumluluk” ile bir tane ekle.",
+  "routines.neverRun": "Henüz çalışmadı",
+  "routines.running": "Çalışıyor…",
+  "routines.missed": "Kaçırıldı: {when}",
+  "routines.failed": "Başarısız: {when}",
+  "routines.skipped": "Atlandı: {when}",
+  "routines.ran": "Çalıştı: {when}",
+  "routines.finished": "Bitti: {when}",
+  "routines.noRuns": "Henüz çalıştırma yok.",
+  "routines.runNow": "Şimdi çalıştır",
+  "routines.triggered": "Tetiklendi",
+  "routines.scheduled": "Planlandı",
+  "routines.sweepChecked":
+    "{product} bunları en son {when} kontrol etti. O yeniden başlayana kadar hiçbiri çalışmayacak. Bu devam ederse bir yöneticiye sor.",
+  "routines.sweepNever":
+    "{product} henüz rutinleri çalıştırmaya başlamadı, bu yüzden bunların hiçbiri çalışmayacak. Bir yöneticiden bunu kurmasını iste.",
+  "routines.notRunning": "Rutinler çalışmıyor.",
+  "routines.loadError": "Rutinlerin yüklenemedi. Sayfayı yenile.",
+  "routines.emptyBot":
+    "Bu asistanın henüz rutini yok. Ona “her hafta içi saat 9'da, bana gönder…” gibi bir şey sorarsan burada görünür.",
+  "routines.empty":
+    "Henüz rutin yok. Bir asistana “her hafta içi saat 9'da, bana gönder…” gibi bir şey sorarsan burada görünür.",
+  "routines.enableAria": "{schedule} zamanlanmış rutini etkinleştir",
+  "routines.channelGone": "Konuşma silindi",
+  "routines.untitledChannel": "Adsız konuşma",
+  "routines.due": "Zamanı geldi",
+  "routines.next": "Sonraki: {when}",
+  "routines.runNowTitle":
+    "Şimdi, gerçekten çalıştırır. Asistan işi yapar ve konuşmada paylaşır.",
+  "routines.pausedTurnOn": "Bu rutin duraklatıldı. Önce onu aç.",
+  "routines.runNowAria": "{schedule} zamanlanmış rutini şimdi çalıştır",
+  "routines.historyAria": "{schedule} zamanlanmış rutinin çalıştırma geçmişi",
+  "routines.history": "Geçmiş",
+  "routines.deleteAria": "{schedule} zamanlanmış rutini sil",
+  "routines.deleteTitle": "“{schedule}” silinsin mi?",
+  "routines.deleteDescription":
+    "Bu rutin kalıcı olarak durur. Bunu geri alamazsın.",
+  "routines.week": "Hafta",
+  "routines.nextRuns": "Sonraki çalıştırmalar",
+  "routines.viewAria": "Görüntüle",
+  "summary.nothingGranted": "Hiçbir şey verilmedi",
+  "summary.skills": {
+    one: "{count} beceri",
+    other: "{count} beceri",
+  },
+  "summary.apps": {
+    one: "{count} uygulama",
+    other: "{count} uygulama",
+  },
+  "summary.everyonePublic": "Herkes (herkese açık)",
+  "summary.notShared": "Paylaşılmıyor",
+  "summary.specificPeople": "Belirli kişiler ve gruplar",
+  "summary.onlyIn": "Yalnızca {product} içinde",
+  "summary.nothingConnected": "Hiçbir şey bağlı değil",
+  "summary.sources": {
+    one: "{count} kaynak",
+    other: "{count} kaynak",
+  },
+  "summary.researchOn": "Arka plan araştırması açık",
+  "summary.researchOnAfter": "arka plan araştırması açık",
+  "time.justNow": "az önce",
+  "time.minutesAgo": {
+    one: "{count} dk önce",
+    other: "{count} dk önce",
+  },
+  "time.hoursAgo": {
+    one: "{count} sa önce",
+    other: "{count} sa önce",
+  },
+  "time.yesterday": "dün",
+  "time.daysAgo": {
+    one: "{count} gün önce",
+    other: "{count} gün önce",
+  },
+  "time.weeksAgo": {
+    one: "{count} hafta önce",
+    other: "{count} hafta önce",
+  },
+  "time.recently": "yakın zamanda",
+  // Stage 2f (D181): the approval rules, the responsibility dialog, the routine history, Passwords.
+  "approvals.behaviour.allow": "Sormadan harekete geç",
+  "approvals.behaviour.preApproved": "Önceden onaylıysa harekete geç",
+  "approvals.behaviour.ask": "Harekete geçmeden önce sor",
+  "approvals.behaviour.handOff": "Sana devret",
+  "approvals.host.ask": "Her seferinde sor",
+  "approvals.host.allow": "Her zaman izin ver",
+  "approvals.host.never": "Asla",
+  "approvals.teamRule": "{label} (ekip kuralı)",
+  "approvals.matchOn": "{scope} üzerinde",
+  "approvals.matchFor": "{bot} için",
+  "approvals.locked": "Kilitli",
+  "approvals.behaviourFor": "{tool} için davranış",
+  "approvals.formLead":
+    "Bir araç veya uygulama ve bir asistanın onu kullanmadan önce ne yaptığı.",
+  "approvals.formHelp":
+    "Her şeyle eşleşmek için * kullan. mcp/gmail/* her Gmail aracı anlamına gelir. *.example.com hedefi, o sitedeki her sayfa anlamına gelir.",
+  "approvals.field.tool": "Araç veya uygulama",
+  "approvals.field.effect": "Eylem türü",
+  "approvals.field.scope": "Hedef",
+  "approvals.field.scopeHint": "*, bir site, bir klasör, bir asistanın adı",
+  "approvals.field.bot": "Asistan",
+  "approvals.field.botHint": "* her asistan için",
+  "approvals.field.behaviour": "Davranış",
+  "approvals.saveRule": "Kuralı kaydet",
+  "approvals.addRule": "Kural ekle",
+  "approvals.rulesOff":
+    "Bir yönetici kişisel kuralları kapattı. Seninkiler saklanır ama uygulanmaz.",
+  "approvals.bot.lead":
+    "Eşleşen kurallardan en kısıtlayıcı olan geçerlidir. “Sor” kuralı, “izin ver” kuralına üstün gelir. Her asistan için olan kurallar şurada:",
+  "approvals.bot.settingsLink": "Ayarlar → Onaylar",
+  "approvals.bot.title": "Kurallar",
+  "approvals.bot.empty": "Bu asistan için kural yok.",
+  "approvals.adminLead": "Ekip ayarları ve paylaşılan hesap istekleri şurada:",
+  "approvals.adminLink": "Yönetici → Onaylar",
+  "approvals.before.title": "Bir asistan harekete geçmeden önce",
+  "approvals.before.askTitle": "Değişiklik yapmadan önce sor",
+  "approvals.before.askLine":
+    "Bir asistanın web sitelerinde, bağlı uygulamalarda ve dosyalarda yaptığı değişiklikleri sen incelersin.",
+  "approvals.before.autoTitle": "Otomatik inceleme",
+  "approvals.before.autoEnforced": "Bir yönetici bunu zorunlu kılıyor.",
+  "approvals.before.autoLine":
+    "Bir asistan hesaplarını etkileyebilecek veya bilgi paylaşabilecek bir şey yapmadan önce {product} bunu isteğinle ve kurallarınla karşılaştırır. Karar veremezse sana sorar.",
+  "approvals.before.hostTitle": "Bilgisayarındaki komutlar",
+  "approvals.before.hostLimited": "Bir yönetici bunu “{limit}” ile sınırlıyor.",
+  "approvals.before.hostLine":
+    "{product} masaüstü uygulaması yine de her komutu çalışmadan önce sana gösterir.",
+  "approvals.every.lead":
+    "Eşleşen kurallardan en kısıtlayıcı olan geçerlidir. “Sor” kuralı, “izin ver” kuralına üstün gelir. Ekip kuralları kilitlidir. Parolalar ve güvenlik ayarları her zaman sana devredilir; aşağıdan bir asistan için Full access'i açmadıkça ödemeler de öyle. Tek bir asistanın kuralları şurada:",
+  "approvals.every.botPage": "o asistanın sayfası",
+  "approvals.every.title": "Her asistan için kurallar",
+  "approvals.every.empty": "Henüz kural yok.",
+  "approvals.other.lead":
+    "Bunlar açabildiğin hiçbir asistanla eşleşmiyor. Yine de eşleştikleri her asistan için geçerlidir. İstemediklerini kaldır.",
+  "approvals.other.title": "Diğer asistanlar için kurallar",
+  "approvals.page.description":
+    "Asistanların bir şeyi değiştirmeden önce ne zaman soracağını seç. Buradaki kurallar hepsi için geçerlidir.",
+  "approvals.admin.description":
+    "Üyelerin asistanlarının harekete geçmeden önce neyi sorması gerektiği, herkes için kurallar ve paylaşılan hesapları kullanma istekleri.",
+  "approvals.team.title": "Ekip ayarları",
+  "approvals.team.enforce": "Herkes için otomatik incelemeyi zorunlu kıl",
+  "approvals.team.custom": "Üyelerin kişisel kural belirlemesine izin ver",
+  "approvals.team.hostTitle": "Üyelerin bilgisayarlarındaki komutlar, en fazla",
+  "approvals.team.hostLine":
+    "Bir üyenin kendi daha kısıtlayıcı ayarı yine geçerlidir.",
+  "approvals.team.rulesLead":
+    "Bunlar her üyenin asistanları için geçerlidir. Üyeler bunları değiştiremez.",
+  "approvals.team.rulesTitle": "Ekip kuralları",
+  "approvals.team.empty": "Ekip kuralı yok.",
+  "approvals.team.addRule": "Ekip kuralı ekle",
+  "approvals.shared.title": "Paylaşılan hesap istekleri",
+  "approvals.shared.wants": "{bot}, paylaşılan {account} hesabını istiyor",
+  "approvals.shared.why.refusedCall":
+    "Bir eylem engellendi. Bu asistan onaylanandan daha fazla kişiye ulaşıyor.",
+  "approvals.shared.why.publish":
+    "Sahibi, ona kimlerin ulaşabileceğini genişletti.",
+  "approvals.shared.why.trigger":
+    "Sahibi, dışarıdan gelen mesajların onu yönlendirmesine izin veren bir tetikleyici ekledi.",
+  "approvals.shared.why.grant": "Ona uygulamanın eylemleri verildi.",
+  "approvals.shared.now": "Şimdi:",
+  "approvals.shared.notApproved": "Onaylanmadı",
+  "approvals.shared.asked": "İstenen:",
+  "approvals.shared.approve": "Onayla",
+  "approvals.shared.decline": "Reddet",
+  "tasks.updated": "{ago} güncellendi",
+  "routines.status.running": "Çalışıyor",
+  "routines.status.succeeded": "Başarılı",
+  "routines.status.failed": "Başarısız",
+  "routines.status.skipped": "Atlandı",
+  "routines.status.waiting": "Seni bekliyor",
+  "routines.status.missed": "Kaçırıldı",
+  "routines.history.empty":
+    "Henüz çalışma yok. Bir rutin tetiklendiğinde veya sen Şimdi çalıştır'a bastıktan sonra burada bir çalışma görünür.",
+  "routines.history.aBot": "Bir asistan",
+  "routines.history.latest": {
+    one: "En son {count} çalıştırma gösteriliyor.",
+    other: "En son {count} çalıştırma gösteriliyor.",
+  },
+  "routines.history.deleted": "Sonradan silinmiş bir rutin",
+  "routines.history.waitingNote":
+    "Onayını bekliyor. Yanıtlamak için konuşmayı aç.",
+  "responsibilities.status.completed": "Tamamlandı",
+  "responsibilities.summary.paused":
+    "Sen devam ettirene kadar hiçbir şey onu başlatmaz",
+  "responsibilities.summary.trigger": "{kind} tetikleyici",
+  "responsibilities.summary.starts": "{starts} ile başlar",
+  "responsibilities.summary.asked": "İstendiğinde çalışır",
+  "responsibilities.source.manual": "Elle",
+  "responsibilities.source.schedule": "Zamanlama",
+  "responsibilities.source.connector": "Bağlı uygulama",
+  "responsibilities.progress": "İlerleme",
+  "responsibilities.lastResult": "Son sonuç",
+  "responsibilities.activeOn": "Olayları ve tetikleyicileri onu başlatır.",
+  "responsibilities.activeOff": "Duraklatıldı. Tetikleyicileri onu başlatmaz.",
+  "responsibilities.runNowLine":
+    "Şimdi, gerçekten çalıştırır. Asistan işi yapar, paylaşım yapabilir ve eylemlerde bulunabilir.",
+  "responsibilities.complete": "Tamamla",
+  "responsibilities.completeLine":
+    "Bitti olarak işaretle. Bundan sonra hiçbir şey onu başlatmaz.",
+  "responsibilities.field.title": "Başlık",
+  "responsibilities.field.instruction": "Talimat",
+  "responsibilities.field.criteria": "Başarı ölçütleri",
+  "responsibilities.events": "Olaylar",
+  "responsibilities.saving": "Kaydediliyor…",
+  "responsibilities.run.queued": "Sırada",
+  "responsibilities.run.waiting":
+    "{kind} bekliyor. Bu asistanın sayfasının üstünde veya konuşmada yanıtla.",
+  "responsibilities.runs": "Çalıştırmalar",
+  "responsibilities.viewRuns": "Çalıştırmaları gör",
+  "responsibilities.hideRuns": "Çalıştırmaları gizle",
+  "passwords.description":
+    "Bir asistanı bir web sitesinde oturum açtırırken kaydettiğin girişler. Asistanlar bunları asla görmez ve her kullanımı sen onaylarsın.",
+  "passwords.saved": "Kayıtlı girişler",
+  "passwords.loadError": "Parolaların yüklenemedi. Sayfayı yenile.",
+  "passwords.off":
+    "Bir yönetici kayıtlı parolaları kapattı. Girişlerin saklanır ama sunulmaz.",
+  "passwords.empty":
+    "Kayıtlı giriş yok. Bir asistanı bir web sitesinde oturum açtırırken Parolalara Kaydet'i seç.",
+  "passwords.lastUsed": "son kullanım {date}",
+  "passwords.neverUsed": "hiç kullanılmadı",
+  "passwords.deleteAria": "{origin} için girişi sil",
+  "settings.notificationsPage":
+    "Yanında olmadığında asistanlarının güncellemelerinin sana nereden ulaştığı. Her asistanın ne kadar gönderdiğini kendi sayfasında ayarlarsın.",
+  "fullaccess.label.noPayments": "Ödemesiz Full access",
+  "fullaccess.label.full": "Full access",
+  "fullaccess.off": "Kapalı",
+  "fullaccess.description":
+    "Varsayılan olarak güvenli: asistanların göndermeden, ödeme yapmadan, imzalamadan, rezervasyon yapmadan veya silmeden önce sana sorar. Her asistan için bunları sormadan yapmasına izin vermeyi seçebilirsin.",
+  "fullaccess.offTerm": "Kapalı:",
+  "fullaccess.offText":
+    "asistan göndermeden, ödeme yapmadan, imzalamadan, rezervasyon yapmadan veya silmeden önce sorar.",
+  "fullaccess.noPaymentsTerm": "Ödemesiz Full access:",
+  "fullaccess.noPaymentsText":
+    "sormadan gönderir, imzalar, rezervasyon yapar ve siler. Ödemeler ve satın almalar yine sana sorulur.",
+  "fullaccess.fullTerm": "Full access:",
+  "fullaccess.fullText":
+    "ayrıca sormadan ödeme yapar ve satın alır. Harcama sınırları gelene kadar tutar için bir sınır yoktur (v0.4 için planlandı).",
+  "fullaccess.askTitle": "{name} için {label} verilsin mi?",
+  "fullaccess.give": "{label} ver",
+  "fullaccess.full.p1":
+    "{name} önce sana sormadan gönderecek, ödeme yapacak, imzalayacak, rezervasyon yapacak ve silecek. Bir e-posta ya da web sayfası gibi okuduklarına göre hareket edebilir; bu yüzden bunu yalnızca bu konuda ona güveniyorsan aç.",
+  "fullaccess.full.p2":
+    "Ödeyebileceği tutarın bir sınırı yok: harcama sınırları henüz yok (v0.4 için planlandı). Ödemelerin ve satın almaların sana sormaya devam etmesi için bunun yerine Ödemesiz Full access'i seç.",
+  "fullaccess.full.p3":
+    "Parolalar ve güvenlik ayarları yine senin onayını gerektirir. Otomatik bir gözden geçirici kuruluysa, gözden geçiriciyi kapatmış olsan bile üyenin kendi bilgisayarında çalıştırdığı her komutu ve betiği bir kez de o okur; hiçbiri kurulu değilse komutlar okunmaz. Bu, kendi sohbetlerinde istediklerin için geçerlidir; rutinler ve check-in'ler için geçerli değildir. İstediğin zaman kapatabilirsin ve hemen durur.",
+  "fullaccess.noPayments.p1":
+    "{name} önce sana sormadan gönderecek, imzalayacak, rezervasyon yapacak ve silecek. Ödemeler ve satın almalar yine sana sorulur. Bir e-posta ya da web sayfası gibi okuduklarına göre hareket edebilir; bu yüzden bunu yalnızca bu konuda ona güveniyorsan aç.",
+  "fullaccess.noPayments.p2":
+    "Uygulama bir ödemeyi yerleşik kontrolleriyle tanır; bu yüzden yalnızca bir ödemeden söz eden bir mesaj da sorabilir, olağandışı yazılmış bir ödeme ise yakalanmayabilir. Parolalar ve güvenlik ayarları yine senin onayını gerektirir. Otomatik bir gözden geçirici kuruluysa, gözden geçiriciyi kapatmış olsan bile üyenin kendi bilgisayarında bir parola, bir güvenlik ayarı ya da bu yolla yapılan bir ödeme için çalıştırdığı her komutu ve betiği bir kez de o okur; hiçbiri kurulu değilse komutlar okunmaz. Bu, kendi sohbetlerinde istediklerin için geçerlidir; rutinler ve check-in'ler için geçerli değildir. İstediğin zaman kapatabilirsin ve hemen durur.",
+  "fullaccess.noBots": "Henüz asistan yok.",
+  "fullaccess.legend": "{name} için erişim",
+  "fullaccess.radioAria": "{name} için {label}",
+  "fullaccess.summary.off":
+    "Göndermeden, ödeme yapmadan, imzalamadan, rezervasyon yapmadan veya silmeden önce sorar.",
+  "fullaccess.summary.noPayments":
+    "Sormadan hareket eder; yalnızca ödemeler ve satın almalar yine sana sorulur. {since} tarihinden beri.",
+  "fullaccess.summary.full":
+    "Ödemeler dahil sormadan hareket eder, tutar için sınır yoktur. {since} tarihinden beri.",
+  "fullaccess.doneTitle": "Sormadan yapılanlar",
+  "fullaccess.doneDescription":
+    "Full access'i olan bir asistanın sana sormadan yaptıkları, en yeniden başlayarak.",
+  "fullaccess.nothingYet": "Henüz yok.",
+  "approvals.audience.owner": "Yalnızca sahibi",
+  "approvals.audience.team": "Herkes",
+  "approvals.audience.outside": ", ve dışarıdan gelen girdi",
+  "approvals.audience.nobody": "Kimse belirtilmemiş",
+  "approvals.audience.groups": {
+    one: "{names} grubu",
+    other: "{names} grupları",
+  },
+  "approvals.audience.people": { one: "{count} kişi", other: "{count} kişi" },
+  "approvals.audience.join": "{a} ve {b}",
+  "access.req.title": "İstekler",
+  "access.req.loadError": "Erişim istekleri yüklenemedi. Sayfayı yenile.",
+  "access.req.descApp":
+    "Bu uygulamayı isteyen kişiler. Onayla, istediklerini hemen yapar.",
+  "access.req.descAll":
+    "Bir uygulamanın açılmasını, bir asistana verilmesini veya bağlanmasını isteyen kişiler. Onayla, istediklerini hemen yapar.",
+  "access.req.aBot": "bir asistan",
+  "access.req.theBot": "asistan",
+  "access.req.somebody": "Birisi",
+  "access.req.enable": "{bot} için {app} uygulamasını aç",
+  "access.req.grantMore":
+    "{bot} için {app} uygulamasından daha fazlasını ver: {list}",
+  "access.req.grant": "{bot} için {app} uygulamasını ver",
+  "access.req.connectShared": "Paylaşılan {app} hesabını bağla",
+  "access.req.asked": "{who} {when} istedi{forBot}.",
+  "access.req.forBot": ", {bot} için",
+  "access.req.approving": "Onaylanıyor…",
+  "access.req.botPage": "{app} altındaki asistan sayfası",
+  "access.req.toolRead": "{name} (salt okunur)",
+  "access.req.toolWrite": "{name} (bir şeyi değiştirir)",
+  "access.req.gives":
+    "Onaylamak, {bot} için tam olarak şu araçları verir, başka hiçbir şey vermez: {list}.",
+  "access.req.readOnly":
+    "Onaylamak, {bot} için yalnızca {app} uygulamasının salt okunur eylemlerini verir. Diğerlerini {page} sayfasında seç.",
+  "access.req.canSend": {
+    one: "{names} kişinin adına gönderebilir.",
+    other: "{names} her biri kişinin adına gönderebilir.",
+  },
+  "access.req.unreviewed": {
+    one: "Gözden geçirilmiş hiçbir liste {names} aracının {app} içinde ne yaptığını söylemiyor; bu yüzden kişinin adına gönderebilir.",
+    other:
+      "Gözden geçirilmiş hiçbir liste {names} araçlarının {app} içinde ne yaptığını söylemiyor; bu yüzden her biri kişinin adına gönderebilir.",
+  },
+  "access.req.neverGives": {
+    one: "Onaylamak asla böyle bir araç vermez: ayarlarda, {page} sayfasında izin ver.",
+    other:
+      "Onaylamak asla böyle araçlar vermez: ayarlarda, {page} sayfasında izin ver.",
+  },
+  "access.req.and": "{a} ve {b}",
+  "passwords.saveTo": "Parolalara Kaydet",
+  "responsibilities.run.waitKind.approval": "Onayını",
+  "responsibilities.run.waitKind.question": "Yanıtını",
+  "responsibilities.run.waitKind.handoff": "Devralmanı",
+  "responsibilities.run.waitKind.signIn": "Oturum açmanı",
+  "responsibilities.run.waitKind.other": "Seni",
+  "responsibilities.new.description":
+    "Süren bir hedef. Asistan, seçtiğin konuşmada bunun üzerinde çalışır.",
+  "responsibilities.new.chooseConversation": "Bir konuşma seç",
+  "responsibilities.new.loadMore": "Daha fazla konuşma yükle",
+  "responsibilities.new.titleExample": "Müşteri raporunu güncel tut",
+  "responsibilities.new.criteriaExample":
+    "Rapor, mevcut çeyreğin grafiğini ve bir kaynak bağlantısını içerir.",
+  "responsibilities.new.eventSource": "Olay kaynağı",
+  "responsibilities.new.source.none": "İstendiğinde çalıştır",
+  "responsibilities.new.githubHelp":
+    "Olaylar, {link} içinde bağladığın depolardan gelir.",
+  "responsibilities.new.eventType": "Olay türü",
+  "responsibilities.new.creating": "Oluşturuluyor…",
+  "responsibilities.new.create": "Sorumluluk oluştur",
+  "triggers.kind.email": "E-posta",
+  "triggers.help.webhook":
+    "Bu URL'ye Authorization başlığıyla ya da Standard Webhooks imza başlıklarıyla JSON olarak POST gönder. 200, alındığı anlamına gelir; çalıştırmanın bittiği anlamına gelmez.",
+  "triggers.help.github":
+    "Deponun Settings → Webhooks bölümünde payload URL'yi bu URL, content type'ı application/json ve secret'ı anahtar olarak ayarla.",
+  "triggers.help.linear":
+    "Linear'da Settings → API → Webhooks: URL'yi ayarla, sonra Linear'ın gösterdiği signing secret'ı buraya yapıştır.",
+  "triggers.help.sentry":
+    "Bir Sentry iç entegrasyonunda webhook URL'sini ayarla, sonra entegrasyonun client secret'ını buraya yapıştır.",
+  "triggers.help.pagerduty":
+    "PagerDuty'de Integrations → Generic Webhooks (v3): URL'yi ayarla, sonra oluşturulurken gösterilen secret'ı buraya yapıştır.",
+  "triggers.help.email":
+    "Bir çalıştırmayı başlatmak için bu adrese posta gönder ya da ilet.",
+  "triggers.help.slack":
+    "Bu asistanın aldığı Slack olaylarında başlar. Tetikleyiciyi eklemeden önce gönderilen mesajlar yok sayılır.",
+  "triggers.slack.mention": "Asistandan söz edilir",
+  "triggers.slack.phrase": "Bir mesaj bir ifade içerir",
+  "triggers.slack.reaction": "Bir tepki eklenir",
+  "triggers.slack.message": "Herhangi bir mesaj",
+  "triggers.f.inChannels": "{channels} içinde",
+  "triggers.f.everyChannel": "asistanın bulunduğu her kanalda",
+  "triggers.f.mention": "asistandan söz edildiğinde",
+  "triggers.f.anyMessage": "herhangi bir mesajda",
+  "triggers.f.phrases": "{phrases} içeren mesajlarda",
+  "triggers.f.or": " veya ",
+  "triggers.f.reactions": "tepkilerde",
+  "triggers.f.slack": "{what} {where} (çalışma alanı {team})",
+  "triggers.f.events": "olaylar {types}",
+  "triggers.f.everyEvent": "her olay",
+  "triggers.f.where": "{path} = {equals} olduğunda",
+  "triggers.f.from": "{from} tarafından",
+  "triggers.f.fromSenders": "{senders} tarafından (doğrulanmış)",
+  "triggers.title": "Tetikleyiciler",
+  "triggers.add": "Tetikleyici ekle",
+  "triggers.notActive.paused":
+    "Bu sorumluluk duraklatıldı. Tetikleyicileri onu başlatmaz.",
+  "triggers.notActive.completed":
+    "Bu sorumluluk tamamlandı. Tetikleyicileri onu başlatmaz.",
+  "triggers.none":
+    "Tetikleyici yok. Şimdi çalıştır'a bastığında ya da yukarıdaki olaylarda çalışır.",
+  "triggers.removeForGood": "Kalıcı olarak kaldır",
+  "triggers.keep": "Tut",
+  "triggers.runOnAria": "Bu {kind} tetikleyicisinde çalıştır",
+  "triggers.postTo": "POST gönderilecek adres",
+  "triggers.copyUrl": "URL'yi kopyala",
+  "triggers.copyAddress": "Adresi kopyala",
+  "triggers.emailOff":
+    "E-posta {product} içinde henüz kurulmadı; bu yüzden bu adres posta alamaz. Bir yöneticinin bunu açması gerekir.",
+  "triggers.key": "Anahtar",
+  "triggers.copyKey": "Anahtarı kopyala",
+  "triggers.copyHeader": "Başlığı kopyala",
+  "triggers.showKey": "Anahtarı göster",
+  "triggers.replaceKey": "Anahtarı değiştir",
+  "triggers.secretSaved": "Signing secret kaydedildi",
+  "triggers.secretWaiting": "Signing secret bekleniyor",
+  "triggers.secret": "Signing secret",
+  "triggers.pasteNew": "Değiştirmek için yeni bir secret yapıştır",
+  "triggers.paste": "Signing secret'ı yapıştır",
+  "triggers.saveSecret": "Secret'ı kaydet",
+  "triggers.addDescription":
+    "{product} dışında, bu sorumluluğu başlatan bir şey.",
+  "triggers.slackTeam": "Slack takım kimliği",
+  "triggers.fireOn": "Tetikleme koşulu",
+  "triggers.phrases": "İfadeler (virgülle ayrılmış)",
+  "triggers.reactions": "Tepkiler (boş: hepsi)",
+  "triggers.channelIds":
+    "Kanal kimlikleri (boş: asistanın bulunduğu tüm kanallar)",
+  "triggers.eventTypes": "Olay türleri",
+  "triggers.onlyWhen": "Yalnızca şu alan",
+  "triggers.equals": "şuna eşitse",
+  "triggers.repository": "Depo (isteğe bağlı)",
+  "triggers.senders": "İzin verilen göndericiler (boş: hiç kimse)",
+  "triggers.secretLater": "Signing secret (sonra eklenebilir)",
+  "triggers.adding": "Ekleniyor…",
+  "triggers.addKind": "{kind} tetikleyicisi ekle",
+  "triggers.example.webhook": "deploy.finished (boş: hepsi)",
+  "routines.cal.intro":
+    "Açık olan rutinler için önümüzdeki {days} gün. Saatler senin saat diliminde.",
+  "routines.cal.none": "Henüz rutin yok, bu yüzden planlanmış bir şey yok.",
+  "routines.cal.noneOn":
+    "Bu rutinlerin hiçbiri açık değil, bu yüzden hiçbiri çalışmayacak.",
+  "routines.cal.nothing": "Önümüzdeki {days} günde planlanmış bir şey yok.",
+  "routines.cal.truncated":
+    "Bu {days} günün yalnızca ilk {max} çalıştırması listelendi.",
+  "routines.cal.paused": {
+    one: "{count} rutin duraklatıldı, bu yüzden burada listelenmedi. Ne zaman çalıştığını görmek için birini aç.",
+    other:
+      "{count} rutin duraklatıldı, bu yüzden burada listelenmedi. Ne zaman çalıştığını görmek için birini aç.",
+  },
+  "routines.week.nothing":
+    "Bu haftanın geri kalanı için planlanmış bir şey yok.",
+  "routines.week.label": "Bu hafta",
+  "routines.week.today": "bugün",
+  "routines.week.now": "Şimdi, {time}",
+  "routines.week.next": "Sıradaki:",
+  "routines.week.nothingElse": "Bu hafta başka planlanmış bir şey yok.",
+  "routines.week.truncated":
+    "Önümüzdeki günlerin yalnızca ilk çalıştırmaları listelendi; bu yüzden çok sık çalışan bir rutin her gün görünmeyebilir.",
+  "routines.week.historyError":
+    "Daha önce gerçekleşen çalıştırmalar yüklenemedi, bu yüzden gösterilmiyor.",
+  "routines.week.note":
+    "Saatler senin saat diliminde. Saatte birden sık çalışan bir rutin, gün için tek bir blok olarak görünür.",
+  "routines.week.summary": "{count} çalıştırma, her ~{minutes} dk",
+  "routines.week.gone": "{label}, konuşma silindi",
+  "routines.card.label": "Rutin",
+  "routines.card.cancelled": "Rutin iptal edildi",
+  "routines.card.readError": "Bu rutin okunamadı.",
+  "routines.card.reading": "Bu rutin okunuyor…",
+  "routines.card.gone": "Bu rutin artık yok",
+  "routines.card.cannotSend":
+    "Bu konuşma şu anda mesaj kabul edemiyor. Değişikliği aşağıdaki mesaj kutusuna yaz.",
+  "routines.card.confirm": "Bu rutin iptal edilsin mi?",
+  "routines.card.yes": "Evet, iptal et",
+  "routines.card.no": "Hayır, tut",
+  "routines.card.pause": "Duraklat",
+  "routines.card.resume": "Sürdür",
+  "routines.card.edit": "Düzenle",
+  "routines.card.whatChange": "Ne değişmeli?",
+  "routines.card.send": "Değişikliği gönder",
+  "routines.card.writeBelow": "Değişikliği aşağıdaki mesaj kutusuna yaz.",
+  "routines.card.close": "Kapat",
+  "admin.boundaries.title": "Sınırlar",
+  "admin.boundaries.descLead":
+    "Bir asistanın bilgisayarıyla neler yapabileceği ve neler yapamayacağı. Her eylem gerçekleşmeden önce kontrol edilir. Reddedilenler,",
+  "admin.boundaries.descAudit": "Denetim",
+  "admin.boundaries.descTail":
+    "bölümünde, onları reddeden kuralla birlikte görünür.",
+  "admin.boundaries.whenTitle": "Bir kural eşleştiğinde",
+  "admin.boundaries.whenDesc":
+    "Eylemi durdur, ya da kaydet ve geçmesine izin ver. Kaydetmek, bir kuralı hiçbir şeyi reddetmeden önce gerçek etkinlik üzerinde denemeni sağlar.",
+  "admin.boundaries.modeEnforce": "Eylemi durdur",
+  "admin.boundaries.modeRecord": "Kaydet ve izin ver",
+  "admin.boundaries.modeEnforceNote":
+    "Asistan durdurulur ve hangi kuralın onu reddettiği söylenir.",
+  "admin.boundaries.modeRecordNote":
+    "Hiçbir şey durdurulmaz. Her eşleşme, reddedilmiş gibi kaydedilir.",
+  "admin.boundaries.neverTitle": "Asistanlar asla yapamaz",
+  "admin.boundaries.neverLead":
+    "Önce kontrol edilir. Bir eşleşme eylemi durdurur ve asistana hangi kuralın onu reddettiği söylenir. Kurallar CEL ile yazılır. Şunları kontrol edebilirler:",
+  "admin.boundaries.neverMid1": ", öğe, basılan",
+  "admin.boundaries.neverMid2": ", dosya, çalıştırılan",
+  "admin.boundaries.neverMid3": "ve harici araçlar için",
+  "admin.boundaries.neverMid4": "değerleri.",
+  "admin.boundaries.neverMid5": "çalıştırmayı neyin başlattığını söyler:",
+  "admin.boundaries.neverTail":
+    "Zamanlanmış bir çalıştırma sahibi olarak davranır, bu yüzden",
+  "admin.boundaries.neverTail2":
+    "tek başına bunu söyleyemez. Değerlendirilemeyen bir kural eşleşme sayılır. Bir yazım hatası asla bir eylemin geçmesine izin vermez.",
+  "admin.boundaries.or": "veya",
+  "admin.boundaries.noRules":
+    "Kural yok. Her eyleme izin verilir ve kaydedilir.",
+  "admin.boundaries.remove": "Kaldır",
+  "admin.boundaries.ruleLabel": "CEL ile yazılmış bir kural",
+  "admin.boundaries.testing": "Test ediliyor…",
+  "admin.boundaries.testFirst": "Önce test et",
+  "admin.boundaries.addRule": "Kural ekle",
+  "admin.boundaries.preset.form": "Asla form gönderme",
+  "admin.boundaries.preset.formCost":
+    "Asistanın başka yerlerde Enter'a basmasını da engeller. Bir form, herhangi bir alanda Enter ile gönderilebilir. Bir menüden ya da tarih alanından seçim yapmayı kapsamaz; bunların değişikliği bir formu kendiliğinden gönderebilir.",
+  "admin.boundaries.preset.password": "Asla parola alanına yazma",
+  "admin.boundaries.preset.passwordCost":
+    "Etiketi farklı olan bir parola kutusu kapsanmaz. Kural etiketle eşleşir.",
+  "admin.boundaries.preset.social": "Sosyal medyadan uzak dur",
+  "admin.boundaries.preset.socialCost":
+    "Yalnızca bu iki ana makine. Başka yerden oraya yönlendiren bir bağlantıya izin verilir.",
+  "admin.boundaries.otherwiseTitle": "Aksi halde yapabilirler",
+  "admin.boundaries.otherwiseDesc":
+    "Yukarıdaki listenin yakalamadığı her şey için geçerlidir. Burada boş bir liste hiçbir şeye izin vermez ve her eylem reddedilir.",
+  "admin.boundaries.allowAll": "true, yukarıda reddedilmeyen her şey",
+  "admin.boundaries.saved":
+    "Kaydedildi. Herhangi bir asistanın bir sonraki eylemi için geçerli olur.",
+  "admin.boundaries.footer":
+    "Değişiklikler herhangi bir asistanın bir sonraki eylemi için geçerli olur. Yeniden başlatmadan sonra da kalır.",
+  "admin.boundaries.dry.none":
+    "Test edilecek kayıtlı bilgisayar eylemi henüz yok. Kural geçerli. Asistanlar harekete geçtikten sonra neyi yakaladığını göreceksin.",
+  "admin.boundaries.dry.zero":
+    "Kaydedilen son {scanned} eylemde test edildi. Bu kural hiçbirini reddetmezdi. Yine de gelecekteki eylemlerle eşleşebilir.",
+  "admin.boundaries.dry.some":
+    "Kaydedilen son {scanned} eylemde test edildi. Bu kural {refused} tanesini reddederdi.",
+  "admin.boundaries.dry.wouldRefuse": "Reddederdi",
+  "admin.boundaries.dry.wouldAllow": "Şimdi izin verirdi",
+  "admin.boundaries.dry.on": "“{name}” üzerinde",
+  "admin.boundaries.dry.running": "çalıştırıyor",
+  "admin.boundaries.dry.touching": "{file} dosyasına dokunuyor",
+  "admin.boundaries.dry.first":
+    "İlk {shown} gösteriliyor. Yukarıdaki sayı kontrol edilen her şeyi kapsar.",
+  "admin.people.title": "Kişiler",
+  "admin.people.desc":
+    "Giriş yapmış herkes. Yöneticiler bu ekranları açabilir. Diğer herkes asistanlarla konuşur.",
+  "admin.people.whoTitle": "Kimler burada",
+  "admin.people.whoDesc":
+    "INITIAL_ADMIN_EMAILS içindeki adresler her zaman yöneticidir. Bunları buradan değiştiremezsin.",
+  "admin.people.stopped": {
+    one: "{count} bilgisayar durduruldu",
+    other: "{count} bilgisayar durduruldu",
+  },
+  "admin.people.stoppedFailed": ". {failed} tanesi durdurulamadı",
+  "admin.people.disksKept": ". Diskleri korunur.",
+  "admin.people.searchLabel": "Kişi ara",
+  "admin.people.searchPlaceholder": "Ada veya adrese göre ara",
+  "admin.people.loadError": "Kişiler yüklenemedi. Sayfayı yenile.",
+  "admin.people.noMatch": "“{query}” ile eşleşen kimse yok.",
+  "admin.people.nobody":
+    "Henüz kimse giriş yapmadı. Kişiler giriş yapınca burada görünür.",
+  "admin.people.lastSignedIn": "son giriş {date}",
+  "admin.people.neverSignedIn": "hiç giriş yapmadı",
+  "admin.people.noProvider": "sağlayıcı yok",
+  "admin.people.accessRemoved": "Erişim kaldırıldı",
+  "admin.people.adminByConfig": "Yapılandırmadan yönetici",
+  "admin.people.stopComputers": "Bilgisayarları durdur",
+  "admin.people.restore": "Geri yükle",
+  "admin.people.remove": "Kaldır",
+  "admin.people.adminSwitch": "Yönetici: {email}",
+  "admin.people.loading": "Yükleniyor…",
+  "admin.people.showMore": "Daha fazla göster",
+  "admin.boundaries.and": "ve",
+  "admin.credentials.title": "Kimlik bilgileri",
+  "admin.credentials.add": "Kimlik bilgisi ekle",
+  "admin.credentials.desc":
+    "Bu kurulumun anahtarları ve belirteçleri. {product}, kaydedilen bir sırrı bir daha asla göstermez.",
+  "admin.credentials.dialogDesc":
+    "Bu kurulum için kaydedilir. Sırrı bir daha göremezsin.",
+  "admin.credentials.type": "Tür",
+  "admin.credentials.model": "Model",
+  "admin.credentials.connector": "Bağlayıcı",
+  "admin.credentials.provider": "Sağlayıcı",
+  "admin.credentials.keyId": "Anahtar kimliği",
+  "admin.credentials.secret": "Sır",
+  "admin.credentials.replaces":
+    "Bu anahtarın zaten etkin bir kimlik bilgisi var. Kaydetmek onu değiştirir ve eskisini iptal eder.",
+  "admin.credentials.saveError": "Kimlik bilgisi kaydedilemedi. Tekrar dene.",
+  "admin.credentials.cancel": "Vazgeç",
+  "admin.credentials.saving": "Kaydediliyor…",
+  "admin.credentials.save": "Kimlik bilgisini kaydet",
+  "admin.credentials.savedTitle": "Kayıtlı kimlik bilgileri",
+  "admin.credentials.loadError":
+    "Kimlik bilgileri yüklenemedi. Sayfayı yenile.",
+  "admin.credentials.empty":
+    "Henüz kimlik bilgisi yok. Kimlik bilgisi ekle ile bir tane ekle.",
+  "admin.credentials.revoked": "iptal edildi",
+  "admin.credentials.active": "etkin",
+  "admin.credentials.revoke": "İptal et",
+  "admin.idp.title": "Kimlik sağlayıcılar",
+  "admin.idp.add": "Sağlayıcı ekle",
+  "admin.idp.desc":
+    "Şirketinin kendi SAML veya OpenID Connect sağlayıcısı. Kişiler e-postalarıyla giriş yapar, sağlayıcıyı e-postanın alan adı belirler.",
+  "admin.idp.registeredTitle": "Kayıtlı",
+  "admin.idp.registeredDesc":
+    "Google, Microsoft ve Okta ortamda ayarlanır. Burada görünmezler.",
+  "admin.idp.loadError": "Kimlik sağlayıcılar yüklenemedi. Sayfayı yenile.",
+  "admin.idp.empty":
+    "Henüz kimlik sağlayıcı yok. Kimlik ekibinden aldığın metaverilerle bir tane ekle.",
+  "admin.idp.remove": "Kaldır",
+  "admin.idp.dialogTitle": "Kimlik sağlayıcı ekle",
+  "admin.idp.name": "Ad",
+  "admin.idp.domain": "E-posta alan adı",
+  "admin.idp.domainNote":
+    "Bu alan adında adresi olan herkes buradan giriş yapar. Birden fazlasını virgülle ayır.",
+  "admin.idp.issuer": "Veren",
+  "admin.idp.signOnUrl": "Oturum açma URL'si",
+  "admin.idp.metadata": "Metaveri XML",
+  "admin.idp.metadataNote":
+    "Kimlik ekibinden gelen dosya. İmza sertifikasını içerir.",
+  "admin.idp.clientId": "İstemci kimliği",
+  "admin.idp.clientSecret": "İstemci sırrı",
+  "admin.idp.cancel": "Vazgeç",
+  "admin.idp.adding": "Ekleniyor…",
+  "admin.idp.addShort": "Ekle",
+  "admin.audit.decision.bot.declined": "Asistan reddetti",
+  "admin.audit.decision.agent.stream_stalled": "Asistan yanıt vermeyi bıraktı",
+  "admin.audit.decision.computer.policy_loaded": "Başlangıçta sınır",
+  "admin.audit.decision.computer.isolation_loaded": "Başlangıçta yalıtım",
+  "admin.audit.decision.computer.control_taken": "Bir kişi kontrolü aldı",
+  "admin.audit.decision.computer.control_released":
+    "Kontrol asistana geri döndü",
+  "admin.audit.decision.computer.help_requested": "Asistan yardım istedi",
+  "admin.audit.decision.computer.secret_requested": "Asistan bir sır istedi",
+  "admin.audit.decision.computer.secret_supplied": "Bir kişi bir sır verdi",
+  "admin.audit.decision.computer.reset": "Bilgisayar sıfırlandı",
+  "admin.audit.decision.computer.updated": "Bilgisayar güncellendi",
+  "admin.audit.decision.computer.stopped": "Bir kişi durdura bastı",
+  "admin.audit.decision.component.granted": "Bu asistana verildi",
+  "admin.audit.decision.component.revoked": "Bu asistandan alındı",
+  "admin.audit.decision.component.published":
+    "Yayımlandı. Her asistan kullanabilir",
+  "admin.audit.decision.component.unpublished":
+    "Yayından kaldırıldı. Hiçbir asistan kullanamaz",
+  "admin.audit.decision.component.draft_saved":
+    "Taslak kaydedildi, henüz yayımlanmadı",
+  "admin.audit.decision.component.refused": "Reddedildi",
+  "admin.audit.decision.component.function_granted": "Bunu okuyabilir",
+  "admin.audit.decision.component.function_revoked": "Artık bunu okuyamaz",
+  "admin.audit.decision.component.function_called": "Gerçek veri okundu",
+  "admin.audit.decision.component.function_refused": "Reddedildi",
+  "admin.audit.decision.component.function_failed": "Okunamadı",
+  "admin.audit.decision.mcp.tools_discovered":
+    "Bir çalıştırma için sunulan araçlar",
+  "admin.audit.decision.mcp.call_succeeded": "Bu asistan adına çağrıldı",
+  "admin.audit.decision.mcp.call_rejected": "Engellendi",
+  "admin.audit.decision.mcp.call_failed": "Sunucu yanıt vermedi",
+  "admin.audit.decision.mcp.callback_refused":
+    "Hangi asistan olduğu doğrulanamadı",
+  "admin.audit.decision.configuration.changed": "Yapılandırma değişti",
+  "admin.audit.decision.credential.created": "Kimlik bilgisi kaydedildi",
+  "admin.audit.discovery.under-floor":
+    "Araç sayısı az olduğu için hepsi sunuldu",
+  "admin.audit.discovery.nothing-declared":
+    "Hiçbir beceri bu araçlardan hiçbirini bildirmiyor",
+  "admin.audit.discovery.unavailable": "Seçilemedi, bu yüzden hepsi sunuldu",
+  "admin.audit.discovery.nothing-chosen":
+    "Hiçbir beceri uygulanmadı, bu yüzden hepsi sunuldu",
+  "admin.audit.discovery.selected": "Beceriye göre seçildi",
+  "admin.audit.title": "Denetim",
+  "admin.audit.desc":
+    "Bir asistanın yaptığı her eylem ve bu kurulumun politikasının reddettiği her eylem.",
+  "admin.audit.export": "CSV dışa aktar",
+  "admin.audit.exporting": "Dışa aktarılıyor…",
+  "admin.audit.refresh": "Yenile",
+  "admin.audit.exportFailed":
+    "Denetim olayları dışa aktarılamadı. Tekrar dene.",
+  "admin.audit.filter.all": "Hepsi",
+  "admin.audit.filter.computer": "Bilgisayar eylemleri",
+  "admin.audit.filter.blocked": "Engellenenler",
+  "admin.audit.filter.didNot": "Gerçekleşmeyenler",
+  "admin.audit.filter.nobody": "Kimse izlemiyor",
+  "admin.audit.capped":
+    "Dosyada en yeni {count} olay var, hepsi değil. Kalanını dışa aktarmak için filtreyi veya tarihleri daralt.",
+  "admin.audit.loadError": "Denetim kaydı yüklenemedi. Sayfayı yenile.",
+  "admin.audit.empty": "Bu filtreyle eşleşen olay henüz yok.",
+  "admin.audit.col.when": "Ne zaman",
+  "admin.audit.col.what": "Ne",
+  "admin.audit.col.on": "Üzerinde",
+  "admin.audit.col.bot": "Asistan",
+  "admin.audit.col.startedBy": "Başlatan",
+  "admin.audit.col.decision": "Karar",
+  "admin.audit.by.routine": "Bir rutin",
+  "admin.audit.by.handedOnBy": "{name} devretti",
+  "admin.audit.by.handedOn": "Devredildi",
+  "admin.audit.by.memory": "Bir bellek kaynağı",
+  "admin.audit.by.responsibility": "Bir sorumluluk",
+  "admin.audit.by.deployment": "Bu kurulum",
+  "admin.audit.by.remote": "Bilgisayarla eşleştirilmemiş bir tarayıcı",
+  "admin.audit.by.person": "Bir kişi",
+  "admin.audit.routed.mention": "Kişi bu asistanı seçti",
+  "admin.audit.routed.default": "Varsayılan asistana gönderildi",
+  "admin.audit.routed.meant": "Amaçlanan asistana gönderildi",
+  "admin.audit.toolsOf": "{granted} araçtan {offered} tanesi",
+  "admin.audit.blocked": "Engellendi",
+  "admin.audit.didNot": "Gerçekleşmedi",
+  "admin.audit.allowed": "İzin verildi",
+  "admin.audit.reportedByBot": ", asistanın kendisi bildirdi",
+  "admin.audit.dryRun": "deneme: kaydedildi, uygulanmadı",
+  "admin.nav.back": "Uygulamaya dön",
+  "admin.nav.overview": "Genel bakış",
+  "admin.nav.reach": "Asistanların erişebildikleri",
+  "admin.nav.do": "Asistanların yapabildikleri",
+  "admin.nav.in": "Kimler girebilir",
+  "admin.nav.happened": "Neler oldu",
+  "admin.nav.credentials": "Kimlik bilgileri",
+  "admin.nav.boundaries": "Sınırlar",
+  "admin.nav.approvals": "Onaylar",
+  "admin.nav.computers": "Bilgisayarlar",
+  "admin.nav.plugins": "Eklentiler",
+  "admin.nav.skills": "Beceriler",
+  "admin.nav.learning": "Otomatik öğrenme",
+  "admin.nav.components": "Arayüz bileşenleri",
+  "admin.nav.playground": "Playground",
+  "admin.nav.people": "Kişiler",
+  "admin.nav.idp": "Kimlik sağlayıcılar",
+  "admin.nav.audit": "Denetim",
+  "admin.enterprise.mode.allow_all": "Tüm ağ erişimine izin ver",
+  "admin.enterprise.mode.defaults_plus_allowlist":
+    "Varsayılanlar artı ekip izin listesi",
+  "admin.enterprise.mode.allowlist_only": "Yalnızca ekip izin listesi",
+  "admin.enterprise.noPolicy":
+    "Politika yok. Asistanların bilgisayarları kümenin izin verdiği her yere ulaşabilir",
+  "admin.enterprise.locked": " · kilitli",
+  "admin.enterprise.loadError":
+    "Kurumsal denetimler yüklenemedi. Sayfayı yenile.",
+  "admin.enterprise.title": "Kurumsal denetimler",
+  "admin.enterprise.description":
+    "Üyelerin neleri kullanabileceği, asistanların bilgisayarlarının ağa nasıl eriştiği ve nelerin kaydedildiği. Her değişiklik Denetim'de görünür.",
+  "admin.enterprise.signin.description":
+    "{env} içindeki adresler, acil giriş yolu olarak her zaman sosyal girişi kullanabilir. Bu girişlerin her biri Denetim'de görünür.",
+  "admin.enterprise.signin.title": "Giriş",
+  "admin.enterprise.sso.title": "SSO zorunlu olsun",
+  "admin.enterprise.sso.on":
+    "Kişiler yalnızca kayıtlı bir SAML veya OpenID Connect sağlayıcısı üzerinden giriş yapabilir.",
+  "admin.enterprise.sso.off":
+    "Kişiler Google, Microsoft veya Okta ile de giriş yapabilir.",
+  "admin.enterprise.scim.title": "SCIM sağlama",
+  "admin.enterprise.scim.on":
+    "Dizin temel URL'si {url}, taşıyıcı belirteci {env}. Sağlamanın kaldırılması oturumları sonlandırır, adresi engeller, bağlayıcıların kimlik bilgilerini geri alır ve bilgisayarlarını durdurur.",
+  "admin.enterprise.scim.unsetUrl": "(BETTER_AUTH_URL ayarla)",
+  "admin.enterprise.scim.off":
+    "Kapalı. Okta, Entra veya başka bir dizinden sağlamayı kabul etmek için {env} ayarla.",
+  "admin.enterprise.on": "Açık",
+  "admin.enterprise.off": "Kapalı",
+  "admin.enterprise.cap.description":
+    "Her anahtar tüm kuruluş için geçerlidir. Bir rol bunu geçersiz kılabilir ve bir dizin grubu, kuruluşun kapalı tuttuğu bir yetenek alabilir.",
+  "admin.enterprise.cap.title": "Yetenekler",
+  "admin.enterprise.cap.offFor":
+    "Bir rol veya grup açmadıkça herkes için kapalı.",
+  "admin.enterprise.over.title": "Rol ve grup istisnaları",
+  "admin.enterprise.over.none": "Yok. Herkes yukarıdaki anahtarları alır",
+  "admin.enterprise.over.set": "{count} ayarlı",
+  "admin.enterprise.net.description":
+    "Asistanların bilgisayarlarının nereye bağlanabileceği. Değişiklikler çalışan bilgisayarlara yeniden başlatma olmadan saniyeler içinde ulaşır. Bir grup politikası, kilitli değilse kuruluşunkinin yerini alır.",
+  "admin.enterprise.net.title": "Ağ",
+  "admin.enterprise.net.org": "Kuruluş",
+  "admin.enterprise.net.group": "Grup: {name}",
+  "admin.enterprise.net.addGroup": "Grup politikası ekle",
+  "admin.enterprise.mcp.description":
+    "İzin listesi açıkken asistanlar yalnızca burada onaylanan MCP sunucularındaki araçları çağırabilir. Başka herhangi bir sunucuya yapılan çağrılar reddedilir.",
+  "admin.enterprise.mcp.title": "MCP sunucuları",
+  "admin.enterprise.mcp.only": "Yalnızca onaylı sunucular",
+  "admin.enterprise.mcp.approved": "{count} onaylı",
+  "admin.enterprise.mcp.offDesc":
+    "Kapalı. Asistanlar erişimleri olan her kayıtlı sunucuyu kullanabilir.",
+  "admin.enterprise.mcp.onlyAria": "Yalnızca onaylı MCP sunucuları",
+  "admin.enterprise.mcp.approveAria": "{name} için onay ver",
+  "admin.enterprise.models.description":
+    "Yerleşik asistan {model} ile çalışır. Uzak bir asistan kendi modelini seçer ve bildirdiği model kaydedilir.",
+  "admin.enterprise.models.configured": "bu kurulumda yapılandırılmış model",
+  "admin.enterprise.models.title": "Modeller",
+  "admin.enterprise.models.allowlist": "Model izin listesi",
+  "admin.enterprise.models.allowlistOn":
+    "Listede olmayan bir modelle çalışan yerleşik asistan, çalışmadan önce reddedilir.",
+  "admin.enterprise.models.allowlistOff": "Kapalı. Her model kullanılabilir.",
+  "admin.enterprise.models.allowed": "İzin verilen modeller",
+  "admin.enterprise.models.none": "Listelenen yok",
+  "admin.enterprise.models.listDesc":
+    "Satır başına bir model, sağlayıcı/model biçiminde, örneğin {example}.",
+  "admin.enterprise.rec.description":
+    "Denetim olaylarını ve asistan eylemlerini OpenTelemetry toplayıcına veya SIEM'ine akıtmak için {env} ayarla. Bunlar {tag} etiketiyle işaretlenir.",
+  "admin.enterprise.rec.title": "Kayıt ve dışa aktarma",
+  "admin.enterprise.rec.action": "Action Recording",
+  "admin.enterprise.rec.actionOn":
+    "Asistanların çalıştırdığı kabuk komutları sırlar çıkarılarak kaydedilir ve {days} gün saklanır.",
+  "admin.enterprise.rec.actionOff":
+    "Kapalı. Komutlar yalnızca Denetim'de görünür.",
+  "admin.enterprise.rec.otel": "OpenTelemetry dışa aktarma",
+  "admin.enterprise.rec.otelOn": "OTLP/HTTP üzerinden dışa aktarılıyor.",
+  "admin.enterprise.rec.otelOff": "Kurulmadı. Sunucuda {env} ayarla.",
+  "admin.enterprise.comp.description":
+    "Bir bilgisayarı durdurmak üzerinde çalışan asistanları sonlandırır ve diskini korur. Asistan bir sonraki oturumda yepyeni bir bilgisayar alır. Tek bir kişinin bilgisayarlarını durdurmak için Kişiler'e git.",
+  "admin.enterprise.comp.title": "Bilgisayarlar",
+  "admin.enterprise.comp.stopInactive": "Etkin olmayan bilgisayarları durdur",
+  "admin.enterprise.comp.afterDays": "{days} gün kullanılmadıktan sonra",
+  "admin.enterprise.usage.error":
+    "Model kullanımı yüklenemedi. Sayfayı yenile.",
+  "admin.enterprise.usage.empty": "Son 30 günde asistan çalıştırması yok.",
+  "admin.enterprise.usage.runs":
+    "30 günde {people} {who} tarafından {runs} çalıştırma",
+  "admin.enterprise.usage.person": "kişi",
+  "admin.enterprise.usage.people": "kişi",
+  "admin.enterprise.usage.refused": " · izin listesi dışında {count}",
+  "admin.enterprise.recorded.error":
+    "Kaydedilen eylemler yüklenemedi. Sayfayı yenile.",
+  "admin.enterprise.recorded.empty": "Henüz kaydedilmiş komut yok.",
+  "admin.enterprise.recorded.local": "Üyenin makinesi",
+  "admin.enterprise.recorded.bot": "Asistan {id}",
+  "admin.enterprise.sweep.stopping": "Durduruluyor…",
+  "admin.enterprise.sweep.now": "Etkin olmayan bilgisayarları şimdi durdur",
+  "admin.enterprise.sweep.stopped": "{count} durduruldu.",
+  "admin.enterprise.ov.admins": "Yöneticiler",
+  "admin.enterprise.ov.members": "Üyeler",
+  "admin.enterprise.ov.group": "Grup: {name}",
+  "admin.enterprise.ov.scope": "Kapsam",
+  "admin.enterprise.ov.groupNote":
+    "Bir grup yalnızca ekleyebilir. Ver, kuruluş yeteneği kapalı tutsa bile üyelerine onu verir.",
+  "admin.enterprise.ov.roleNote":
+    "Bir rolün ayarı, o role sahip herkes için kuruluş anahtarının yerini alır.",
+  "admin.enterprise.ov.forScope": "{scope} için {title}",
+  "admin.enterprise.ov.inherit": "Devral",
+  "admin.enterprise.ov.grant": "Ver",
+  "admin.enterprise.netd.org": "Kuruluş ağ politikası",
+  "admin.enterprise.netd.group": "Grup ağ politikası",
+  "admin.enterprise.netd.groupLabel": "Grup",
+  "admin.enterprise.netd.mode": "Mod",
+  "admin.enterprise.netd.allowlist": "İzin listesi",
+  "admin.enterprise.netd.help":
+    "Satır başına bir tane. Bir alan adı alt alan adlarını da kapsar. *.ad yalnızca alt alan adlarını kapsar. Bir IP aralığı portları listeleyebilir. Varsayılanlar {first} ve {more} diğer paket ve kaynak ana bilgisayarıdır.",
+  "admin.enterprise.netd.lock":
+    "Grupların bu politikanın yerini alamaması için kilitle",
+  "admin.enterprise.netd.remove": "Politikayı kaldır",
+  "admin.enterprise.days.label": "Kullanılmayan gün sayısı",
+  "admin.enterprise.days.help": "0 kapatır. Saatlik denetlenir.",
+  "admin.plugins.title": "Eklentiler",
+  "admin.plugins.description":
+    "Bu kurulumun nelere ulaşabildiği ve hangi asistanların bunları kullanabildiği. Eklediğin bir eklenti herkes içindir. Hangi asistanların araçlarını alacağını eklentinin sayfasında seçersin.",
+  "admin.plugins.loadError": "Eklentiler yüklenemedi. Sayfayı yenile.",
+  "admin.plugins.connected.description":
+    "Herkes için eklendi. Kurmak ve hangi asistanların araçlarını alacağını seçmek için birini aç.",
+  "admin.plugins.connected.title": "Bağlı",
+  "admin.plugins.connected.empty":
+    "Henüz bağlı bir şey yok. Aşağıdaki listeden birini seç.",
+  "admin.plugins.explore.description":
+    "İncelenmiş, birinci taraf sunucular. Eklemek için birini aç.",
+  "admin.plugins.explore.title": "Eklentileri keşfet",
+  "admin.plugins.explore.empty": "Katalogdaki her eklenti bağlı.",
+  "admin.plugins.notAdded": "Eklenmedi",
+  "admin.plugins.more.title": "Daha fazla uygulama",
+  "admin.plugins.sum.notConnected": "Bağlı değil",
+  "admin.plugins.sum.noTools": "Henüz araç yok",
+  "admin.plugins.sum.tools": { one: "{count} araç", other: "{count} araç" },
+  "admin.plugins.sum.toolsNoBots": "{tools} · asistan yok",
+  "admin.plugins.sum.bots": {
+    one: "{count} asistan",
+    other: "{count} asistan",
+  },
+  "admin.plugins.requests": { one: "{count} istek", other: "{count} istek" },
+  "admin.plugins.key.grant.none": "Asistan yok",
+  "admin.plugins.key.grant.one": "1 asistan",
+  "admin.plugins.key.grant.all": "Tüm asistanlar",
+  "admin.plugins.key.grant.some": "{total} asistandan {held}",
+  "admin.plugins.key.held.none": "Araç yok",
+  "admin.plugins.key.held.one": "1 araç",
+  "admin.plugins.key.held.all": "Tüm araçlar",
+  "admin.plugins.key.held.some": "{total} araçtan {held}",
+  "admin.plugins.key.notApproved": "Onaylanmadı",
+  "admin.plugins.key.unreadableTitle": "Hesabın",
+  "admin.plugins.key.unreadable":
+    "Burada bir hesap bağlayıp bağlamadığın yüklenemedi. Sayfayı yenile; sorun sürerse bu kurulumun günlüklerini kontrol et.",
+  "admin.plugins.key.noConsent":
+    "{product} için geri bir onay bağlantısı gelmedi, bu yüzden hiçbir şey bağlanmadı. Tekrar dene; sorun sürerse bu bağlayıcının kurulumunu kontrol et.",
+  "admin.plugins.key.reassurance":
+    "Kurulum onsuz da tamamdır ve yalnızca belgelerine ulaşır.",
+  "admin.plugins.key.notPlugin.description":
+    "Bu adda ne burada ne de katalogda bir eklenti yok.",
+  "admin.plugins.key.notPlugin.title": "Bir eklenti değil",
+  "admin.plugins.key.notPlugin.empty": "Yapılandırılacak bir şey yok.",
+  "admin.plugins.key.enable.title": "Bu kurulum için etkinleştir",
+  "admin.plugins.key.enable.on":
+    "Asistanlara araçları verilebilir. Bunu kapatmak eklentiyi kaldırır ve her asistanın araçlarına erişimini siler.",
+  "admin.plugins.key.enable.off":
+    "Hiçbir asistan bu sağlayıcıya ulaşamaz. Kurmak ve asistanlara araçlarını vermek için aç.",
+  "admin.plugins.key.enable.aria":
+    "{title} eklentisini bu kurulum için etkinleştir",
+  "admin.plugins.key.whose.title": "Kimin hesabı",
+  "admin.plugins.key.whose.shared": "Herkes için tek ortak hesap.",
+  "admin.plugins.key.whose.personal": "Herkes kendi hesabını bağlar.",
+  "admin.plugins.key.whose.makePersonal": "Kişisel yap",
+  "admin.plugins.key.whose.makeShared": "Ortak yap",
+  "admin.plugins.key.conn.oauth":
+    "Bu sağlayıcı, soran kişi olarak yanıt verir. Kurulum bir OAuth istemcisi kaydeder ve herkes kendi hesabını bağlar. Bir asistan yalnızca o kişinin görebildiğini görür.",
+  "admin.plugins.key.conn.secret":
+    "Bu sağlayıcı, soran kişi olarak yanıt verir. Herkes kendi uygulama parolasını Bağlantılar sayfasına yapıştırır. Burada kaydedilecek bir şey yok ve kurulum kendine ait bir parola tutmaz.",
+  "admin.plugins.key.conn.builtin":
+    "Bu kuruluma yerleşik. Ulaşılacak bir sağlayıcı ve saklanacak bir kimlik bilgisi yok. Bir çağrı, onu isteyen kişi olarak çalışır.",
+  "admin.plugins.key.conn.bearer":
+    "Bu kurulumun sağlayıcıya gönderdiği. Herkes için tek bir kimlik bilgisi.",
+  "admin.plugins.key.conn.title": "Bağlantı",
+  "admin.plugins.key.builtin.desc":
+    "Kurulacak bir şey yok. Bu araçlar bu kurulumun içinde, kendi verileri üzerinde çalışır.",
+  "admin.plugins.key.builtin.badge": "Yerleşik",
+  "admin.plugins.key.secret.title": "Uygulama parolası",
+  "admin.plugins.key.secret.desc":
+    "Herkes kendisininkini Google'da oluşturur ve Bağlantılar sayfasına yapıştırır. Posta kutusunun tamamına ulaşır, bu yüzden asistanların neler yapabileceğini aşağıda verdiğin araçlar belirler.",
+  "admin.plugins.key.secret.badge": "Kişi başına",
+  "admin.plugins.key.reach.title": "Buna nasıl ulaşılır",
+  "admin.plugins.key.token.title": "Erişim belirteci",
+  "admin.plugins.key.token.desc":
+    "Bu sağlayıcıya yapılan her çağrıyla birlikte gönderilir.",
+  "admin.plugins.key.saved": "Kaydedildi",
+  "admin.plugins.key.notSet": "Ayarlanmadı",
+  "admin.plugins.key.client.title": "OAuth istemcisi",
+  "admin.plugins.key.client.selfDesc":
+    "Bu kurulum, ilk bağlantıda kendini sağlayıcıya kaydeder. Yapıştırılacak bir şey yok.",
+  "admin.plugins.key.client.selfBadge": "Kendini kaydeder",
+  "admin.plugins.key.client.desc":
+    "Bu kurulumu sağlayıcıya tanıtır. Tek başına kimsenin belgelerine ulaşamaz.",
+  "admin.plugins.key.client.registered": "Kayıtlı",
+  "admin.plugins.key.client.notRegistered": "Kayıtlı değil",
+  "admin.plugins.key.team.connected":
+    "Bağlı{who}. Bu araçlara sahip her asistan bu hesap olarak davranır.",
+  "admin.plugins.key.team.as": " ({name} olarak)",
+  "admin.plugins.key.team.by": " ({name} tarafından)",
+  "admin.plugins.key.team.disconnected":
+    "Bağlı bir ekip hesabı yok. Bu araçlara sahip asistanlar reddedilir.",
+  "admin.plugins.key.team.heading": "Ekip hesabı",
+  "admin.plugins.key.team.notice":
+    "Kendi hesabınla değil, ekip hesabıyla giriş yap.",
+  "admin.plugins.key.mine.connected":
+    "Bağlı. Bu araçlara sahip bir asistan {title} hesabını sen olarak kullanır. {note}",
+  "admin.plugins.key.mine.tryConnect":
+    "Bu bağlayıcıyı denemek için kendi hesabını bağla. {note}",
+  "admin.plugins.key.oauthAcct.connected":
+    "Bağlı. Bu araçlara sahip bir asistan {title} hesabını sen olarak kullanır. Diğer herkes kendi hesabını bağlar.",
+  "admin.plugins.key.oauthAcct.connect":
+    "Bu bağlayıcıyı denemek için kendi hesabını bağla. Kurulum onsuz da tamamdır ve yalnızca belgelerine ulaşır.",
+  "admin.plugins.key.connected": "Bağlı",
+  "admin.plugins.key.connect": "Bağla",
+  "admin.plugins.key.instance.title": "Örnek ana bilgisayarı",
+  "admin.plugins.key.instance.desc":
+    "Bu sağlayıcı her müşteriye kendi ana bilgisayar adını verir. Kaydedilmeden önce sağlayıcının desenine göre denetlenir.",
+  "admin.plugins.key.docs.builtin": "Belgeler",
+  "admin.plugins.key.docs.vendor": "Sağlayıcının belgeleri",
+  "admin.plugins.key.docs.builtinDesc":
+    "Bu araçların neler sunduğu, onları sürdürenlerden.",
+  "admin.plugins.key.docs.vendorDesc":
+    "Bu sunucunun neler sunduğu, onu sürdürenlerden.",
+  "admin.plugins.key.redirect.dynamic":
+    "Kurulum yönlendirme URI'sini kendisi kaydeder. Sağlayıcıda eklenecek bir şey yok.",
+  "admin.plugins.key.redirect.manual":
+    "Bunu sağlayıcıda istemcinin yetkili yönlendirme URI'lerine, tam olarak yazıldığı gibi ekle. Tek bir yanlış karakter orada hata verir ve hata {product} adını anmaz.",
+  "admin.plugins.key.redirect.noUrl":
+    "Bu kurulumun herkese açık bir URL'si yok, bu yüzden kimse bağlantıyı tamamlayamaz. {env} ayarla.",
+  "admin.plugins.key.tools.refresh": "Araçları yenile",
+  "admin.plugins.key.tools.grant": "Araç ver…",
+  "admin.plugins.key.tools.description":
+    "Bir asistan yalnızca kendisine verilen araçları görür. Her çağrı gerçekleştiği anda denetlenir, bu yüzden bir erişimi kaldırmak bir sonraki çağrıdan itibaren geçerli olur.",
+  "admin.plugins.key.tools.title": "Araçlar",
+  "admin.plugins.key.tools.empty":
+    "Listelenen araç yok. Tekrar denetlemek için araçları yenile.",
+  "admin.plugins.key.tools.writes": "değişiklik yapar",
+  "admin.plugins.key.tools.reads": "okur",
+  "admin.plugins.key.byBot": "Asistana göre",
+  "admin.plugins.key.byBot.hidden":
+    "Listenden gizlendi. Bu uygulamanın eylemlerini tek tek aç veya kapat.",
+  "admin.plugins.key.byBot.shown":
+    "Bu uygulamanın eylemlerini tek tek aç veya kapat.",
+  "admin.plugins.key.gone.description":
+    "Bu sağlayıcı artık bunları listelemiyor. Hiçbir asistan bunları görmez ve hiçbiri çağıramaz. Erişim hâlâ kayıtlıdır ve sağlayıcı aracı yeniden listelerse geri gelir. Kaldırmak için asistanın kendi sayfasını kullan.",
+  "admin.plugins.key.gone.title": "Verilmiş ama artık listelenmiyor",
+  "admin.plugins.key.gone.row": "{title} listelemiyor{asOf}.",
+  "admin.plugins.key.gone.asOf": " (son yenilemeye göre)",
+  "admin.plugins.key.dlg.client": "{title} için OAuth istemcisi",
+  "admin.plugins.key.dlg.instance": "{title} için örnek ana bilgisayarı",
+  "admin.plugins.key.dlg.token": "{title} için erişim belirteci",
+  "admin.plugins.key.dlg.clientDesc":
+    "Sağlayıcının konsolundan. Sır, bu kurulumun kasasına kaydedilir ve bir daha asla gösterilmez.",
+  "admin.plugins.key.dlg.instanceDesc":
+    "Bu sağlayıcıdaki kendi ana bilgisayar adın. Kaydedilmeden önce sağlayıcının desenine göre denetlenir.",
+  "admin.plugins.key.dlg.tokenDesc":
+    "Bu kurulumun kasasına kaydedilir ve bir daha asla gösterilmez.",
+  "admin.plugins.key.dlg.clientId": "İstemci kimliği",
+  "admin.plugins.key.dlg.clientSecret": "İstemci sırrı",
+  "admin.plugins.key.gr.title": "Araç ver",
+  "admin.plugins.key.gr.description":
+    "Her verme işlemi Denetim'de ayrı bir satırdır. Değişiklik yapan araçlar her çağrıda yine sınırlara göre denetlenir.",
+  "admin.plugins.key.gr.to": "Kime",
+  "admin.plugins.key.gr.reads": "Okur",
+  "admin.plugins.key.gr.writes": "Değişiklik yapar",
+  "admin.plugins.key.gr.selectAll": "Tümünü seç",
+  "admin.plugins.key.gr.button": "Ver",
+  "admin.plugins.key.gr.progress": "{total} araçtan {current} veriliyor…",
+  "admin.plugins.key.gr.summary": {
+    one: "{names} için {count} araç ver.",
+    other: "{names} için {count} araç ver.",
+  },
+  "admin.plugins.key.gr.changing": {
+    one: "{count} tanesi değişiklik yapar.",
+    other: "{count} tanesi değişiklik yapar.",
+  },
+  "admin.home.reach.desc":
+    "Bir asistanın {product} dışında nelere dokunabileceği ve bunun sınırları.",
+  "admin.home.credentials.desc": "Bu kurulumun anahtarları ve belirteçleri.",
+  "admin.home.boundaries.desc": "Hiçbir asistanın asla yapamayacağı şeyler.",
+  "admin.home.approvals.desc":
+    "Üyelerin asistanlarının harekete geçmeden önce neyi sorması gerektiği.",
+  "admin.home.computers.desc": "Asistanların araçları çalıştırdığı makineler.",
+  "admin.home.do.desc":
+    "Her asistanın kullanabileceği uygulamalar, beceriler ve arayüz parçaları.",
+  "admin.home.plugins.desc":
+    "{product} ürününün ulaşabildiği hizmetler ve hangi asistanların bunları kullanabildiği.",
+  "admin.home.skills.desc":
+    "Herkesin / ile çalıştırabileceği adlandırılmış yönergeler.",
+  "admin.home.learning.desc":
+    "Biten konuşmalardan öğren ve önerdiği becerileri incele.",
+  "admin.home.components.desc":
+    "Bir asistanın konuşmada çizebileceği özel parçalar.",
+  "admin.home.playground.desc":
+    "Bir bileşen yaz ve yazarken nasıl çizildiğini izle.",
+  "admin.home.engines.desc":
+    "Üyelerin üzerinde çalıştığı yapay zekâ motorları ve her birinin şu an yanıt verip veremediği.",
+  "admin.home.people.desc":
+    "Giriş yapmış herkes, yöneticilerin kimler olduğu ve erişimi kaldırılanlar.",
+  "admin.home.enterprise.desc":
+    "Roller ve gruplar, zorunlu SSO, SCIM, ağ politikası, MCP ve model izin listeleri, Action Recording.",
+  "admin.home.idp.desc":
+    "Şirketinin SAML veya OpenID Connect sağlayıcısı, e-posta alan adına göre eşleştirilir.",
+  "admin.home.audit.desc":
+    "{product} içinde yapılan her eylem ve onu kimin yaptığı.",
+  "admin.home.description":
+    "Bu kurulumdaki herkes için ayarlar. Burada yapılan bir değişiklik her kişiyi ve her asistanı etkiler.",
+  "admin.plugins.directoryError":
+    "Eklenti ayarları yüklenemedi. Sayfayı yenile.",
+  "admin.components.description":
+    "Her asistanın neyle yanıt verebileceği. Yayımlanan her bileşen her asistan için açıktır. Birini kapatırsan o asistan onu hiç görmez. Değişiklikler ve reddedilenler Denetim'de görünür.",
+  "admin.components.loadError": "Bileşenler yüklenemedi. Sayfayı yenile.",
+  "admin.components.emptyTitle": "Henüz bileşen yok",
+  "admin.components.emptyDesc":
+    "Asistanlarının kullanabileceği bileşenler burada görünür.",
+  "admin.audit.silence.quiet": "{seconds} sn sessiz",
+  "admin.audit.silence.nothing": "{quiet}, hiçbir şey söylemeden",
+  "admin.audit.silence.after": {
+    one: "{quiet}, {count} parçadan sonra",
+    other: "{quiet}, {count} parçadan sonra",
+  },
+  "admin.compDetail.title": "Bileşenler",
+  "admin.compDetail.noSuch.title": "Böyle bir bileşen yok",
+  "admin.compDetail.noSuch.description": "Bu adda bir bileşen yok.",
+  "admin.compDetail.noSuch.hint":
+    "Yeniden adlandırılmış olabilir ya da bu kurulum artık onu içermiyor.",
+  "admin.compDetail.back": "Bileşenlere dön",
+  "admin.compDetail.grant.noBots": "Henüz asistan yok",
+  "admin.compDetail.grant.all": {
+    one: "{count} asistanın hepsi",
+    other: "{count} asistanın hepsi",
+  },
+  "admin.compDetail.grant.none": "Asistan yok",
+  "admin.compDetail.grant.some": "{total} asistandan {granted} tanesi",
+  "admin.compDetail.fn.none": "Bu kurulumda veri işlevi yok",
+  "admin.compDetail.fn.nothing":
+    "Hiçbiri. Yalnızca asistanın ona ilettiğini gösterir.",
+  "admin.compDetail.notPublished": "Yayımlanmadı. Hiçbir asistan onu göremez.",
+  "admin.compDetail.config.title": "Yapılandırma",
+  "admin.compDetail.config.description":
+    "Bu bileşenin ne işe yaradığı ve hangi asistanların onunla yanıt verebileceği.",
+  "admin.compDetail.notInBuild.title": "Bu sürümde yok",
+  "admin.compDetail.notInBuild.description":
+    "{product} onu çizemiyor. Aşağıdaki ayarların hiçbir etkisi yok.",
+  "admin.compDetail.published": "Yayımlandı",
+  "admin.compDetail.published.on": "Asistanlar onunla yanıt verebilir.",
+  "admin.compDetail.published.off": "Hiçbir asistan onu kullanamaz.",
+  "admin.compDetail.published.changes":
+    "Açıklamada yayımlanmamış değişiklikler var.",
+  "admin.compDetail.description": "Açıklama",
+  "admin.compDetail.nothingYet": "Henüz hiçbir şey yok",
+  "admin.compDetail.availableTo": "Kullanabilecekler",
+  "admin.compDetail.canRead": "Okuyabilir",
+  "admin.compDetail.details": "Ayrıntılar",
+  "admin.compDetail.kind": "Tür",
+  "admin.compDetail.calledAs": "Çağrılma adı",
+  "admin.compDetail.lastChanged": "Son değişiklik",
+  "admin.compDetail.by": "{name} tarafından",
+  "admin.compDetail.descDlg.description":
+    "Modelin bunu kullanmaya karar verirken okuduğu metin. Bileşen yayımlanana kadar hiçbir etkisi olmaz.",
+  "admin.compDetail.grantsDlg.description":
+    "Bir asistanı kapatırsan bu bileşenin var olduğunu hiç öğrenmez. Değişiklikler hemen geçerli olur.",
+  "admin.compDetail.grantsDlg.empty": "Henüz asistan yok.",
+  "admin.compDetail.fnDlg.description":
+    "Bu bileşenin kendini çizmek için çekebileceği veriler. Bu, “Kullanabilecekler”den ayrıdır. Hepsi kapalıyken yalnızca asistanın ona ilettiğini gösterir. Her okuma Denetim’de görünür. Değişiklikler hemen geçerli olur.",
+  "admin.compDetail.fnDlg.empty": "Bu kurulumda veri işlevi yok.",
+  "admin.computers.description":
+    "Her asistanın tarayıcısı ve tuttuğu profil. Profil, asistanı oturum açık tutar. Sıfırlamak asistanın her yerdeki oturumunu kapatır.",
+  "admin.computers.loadError": "Bilgisayarlar yüklenemedi. Sayfayı yenile.",
+  "admin.computers.shared.lead":
+    "Tüm asistanlar tek bir bilgisayarı paylaşıyor.",
+  "admin.computers.shared.before":
+    "Girişlerini, dosyalarını ve oturumunu paylaşıyorlar. Bir asistan, başkasının oturum açtığı şeylere ulaşabilir. Her asistana kendi bilgisayarını vermek için",
+  "admin.computers.shared.after": "ayarla.",
+  "admin.computers.perBot":
+    "Her asistanın kendi bilgisayarı var; kendi konteyneri, dosyaları ve tarayıcı profili de ona ait.",
+  "admin.computers.list.title": "Bu kurulumdaki bilgisayarlar",
+  "admin.computers.list.error": "Liste yüklenemedi.",
+  "admin.computers.list.empty":
+    "Henüz bilgisayar yok. Bir asistan ilk kez bir sayfa açtığında bir tane görünür.",
+  "admin.computers.running": "Tarayıcı {time} tarihinden beri çalışıyor",
+  "admin.computers.notRunning":
+    "Çalışan tarayıcı yok. Asistanın ona yeniden ihtiyacı olduğunda başlar.",
+  "admin.computers.egress.unknown": "Çıkış bildirilmedi",
+  "admin.computers.egress.direct": "Doğrudan çıkıyor",
+  "admin.computers.egress.via": "{egress} üzerinden çıkıyor",
+  "admin.computers.updateAvailable": "Güncelleme var",
+  "admin.computers.update": "Bilgisayarı güncelle",
+  "admin.computers.working": "Çalışıyor…",
+  "admin.computers.stop": "Tarayıcıyı durdur",
+  "admin.computers.reset": "Sıfırla",
+  "admin.computers.resetTitle":
+    "{name} asistanının bilgisayarı sıfırlansın mı?",
+  "admin.computers.resetDesc":
+    "Profili silinir. Asistanın tüm hizmetlerdeki oturumu kapanır ve sıfırdan başlar. Bunu geri alamazsın.",
+  "admin.computers.resetting": "Sıfırlanıyor…",
+  "admin.computers.resetIt": "Sıfırla",
+  "admin.computers.updateTitle":
+    "{name} asistanının bilgisayarı güncellensin mi?",
+  "admin.computers.updateDesc":
+    "Bu kurulumun şimdi çalıştırdığı bilgisayar imajına geçer. Dosyaları ve girişleri korunur. Çalışıyorsa yeniden başlar ve yaptığı işi durdurur.",
+  "admin.computers.updating": "Güncelleniyor…",
+  "admin.computers.updateIt": "Güncelle",
+  "admin.computers.foot.stopLead": "Durdur",
+  "admin.computers.foot.stopRest":
+    "tarayıcıyı kapatır ve girişlerini korur. Asistanın ona yeniden ihtiyacı olduğunda tekrar başlar.",
+  "admin.computers.foot.resetLead": "Sıfırla",
+  "admin.computers.foot.resetRest":
+    "profili siler ve asistanın her yerdeki oturumunu kapatır.",
+  "admin.computers.foot.updateLead": "Bilgisayarı güncelle",
+  "admin.computers.foot.updateRest":
+    "bir bilgisayar daha eski bir imaj çalıştırdığında görünür. Bilgisayarı yenisine geçirir ve dosyalarını ve girişlerini korur.",
+  "admin.computers.foot.audit": "Üçü de şurada görünür:",
+  "admin.computers.host.description":
+    "Bir asistanın bu bilgisayarda okuyabileceği klasörleri seç. Masaüstü uygulaması her düzenlemeden veya komuttan önce sorar. Erişim, {product} uygulamasını durdurduğunda biter.",
+  "admin.computers.host.title": "Bu bilgisayardaki klasörler",
+  "admin.computers.host.offline":
+    "Masaüstü uygulaması çevrimdışı. Klasörleri onaylamak veya komut çalıştırmak için onu aç.",
+  "admin.computers.host.noBots":
+    "Henüz asistan yok. Bir tane oluştur, sonra klasörlerini seç.",
+  "admin.computers.host.choose": "Klasör seç",
+  "admin.computers.host.waiting": "Bekleniyor…",
+  "admin.computers.host.readOnlyNote":
+    "Klasörler salt okunurdur. Bir asistanın yazması gerektiğinde masaüstü uygulaması önce sana sorar.",
+  "admin.computers.host.stopAccess": "Klasör erişimini durdur",
+  "admin.computers.host.stopping": "Durduruluyor…",
+  "admin.computers.host.viewAudit": "Denetimi gör",
+  "admin.computers.host.readOnly": "Salt okunur",
+  "admin.computers.host.revoke": "İptal et",
+  "admin.computers.host.revoking": "İptal ediliyor…",
+  "admin.computers.host.pendingFrom": "{owner} tarafından {label}.",
+  "admin.computers.host.pendingFromFor":
+    "{owner} tarafından {name} için {label}.",
+  "admin.computers.host.folders": {
+    one: "{count} salt okunur klasör",
+    other: "{count} salt okunur klasör",
+  },
+  "admin.computers.host.requests": {
+    one: "{count} bekleyen istek",
+    other: "{count} bekleyen istek",
+  },
+  "admin.computers.host.none": "Onaylanmış klasör yok.",
+  "admin.computers.host.owner": "masaüstünün sahibi",
+  "admin.computers.host.p.write":
+    "Dosya değişikliği onayı veya tamamlanmayı bekliyor",
+  "admin.computers.host.p.run": "Komut onayı veya tamamlanmayı bekliyor",
+  "admin.computers.host.p.list": "Dosyalar listeleniyor",
+  "admin.computers.host.p.read": "Bir dosya okunuyor",
+  "admin.computers.host.p.stop": "Klasör işi durduruluyor",
+  "admin.computers.host.p.default": "Klasör erişimi onay bekliyor",
+  "admin.learning.description":
+    "Biten konuşmalardan öğren, Intelligence’ın önerdiği becerileri gözden geçir ve yayımlanmış becerileri asistanlara ver.",
+  "admin.learning.auto.assigned":
+    "{product}, bu Intelligence projesine “{container}” konteynerini otomatik olarak atadı. Bunu buradan değiştirebilirsin.",
+  "admin.learning.auto.absent":
+    "Bu Intelligence projesinde henüz “{container}” Learning konteyneri yok. Hiçbir şey toplanmıyor.",
+  "admin.learning.auto.notEntitled":
+    "Bu Intelligence projesinin planı Learning’i içermiyor. Hiçbir konteyner atanmadı.",
+  "admin.learning.auto.unavailable":
+    "Bu projenin Learning konteynerini bulmak için Intelligence’a ulaşılamadı. {product} yeniden deneyecek.",
+  "admin.learning.target.container": "{label} konteyner kimliği",
+  "admin.learning.target.revision": "Tam revizyon (isteğe bağlı)",
+  "admin.learning.target.revisionAria": "{label} revizyonu",
+  "admin.learning.target.latest": "Son yayımlanan",
+  "admin.learning.create.busy": "Oluşturuluyor…",
+  "admin.learning.create.button": "{container} konteynerini oluştur",
+  "admin.learning.create.note":
+    "Çalışma zamanı anahtarını değil, bu kurulumun kimlik bilgisini kullanır.",
+  "admin.learning.create.how": "Oluşturmak için: ",
+  "admin.learning.part.title": "Katılım",
+  "admin.learning.part.description":
+    "Konteyner değişiklikleri yeni konuşmalara uygulanır. Mevcut olanlar ilk konteynerlerini korur. Konteynerler aynı Intelligence projesinde zaten var olmalıdır. Burada kaydedene kadar {product}, o projenin openbot konteynerini kullanır.",
+  "admin.learning.part.loading": "Learning ayarları yükleniyor…",
+  "admin.learning.part.turnOn": "Otomatik öğrenmeyi ve beceri teslimini aç",
+  "admin.learning.part.default": "Varsayılan",
+  "admin.learning.part.hint":
+    "Varsayılan yoksa kendi konteyneri olmayan asistanlar dışarıda kalır. Kimlikler 1 ila 64 küçük harf, rakam ve tek tire içerir. En son yayımlanan becerileri kullanmak için revizyonu boş bırak.",
+  "admin.learning.part.perBot": "Asistan başına katılım",
+  "admin.learning.part.botListError":
+    "Asistan listesi yüklenemedi. Her asistan için kayıtlı ayarlar aşağıda.",
+  "admin.learning.part.botAria": "{name} katılımı",
+  "admin.learning.part.inherit": "Kurulumun varsayılanını kullan",
+  "admin.learning.part.exclude": "Learning dışında tut",
+  "admin.learning.part.container": "Belirli bir konteyner kullan",
+  "admin.learning.part.saving": "Kaydediliyor…",
+  "admin.learning.part.save": "Learning ayarlarını kaydet",
+  "admin.learning.part.saved": "Ayarlar kaydedildi.",
+  "admin.learning.rev.title": "Gözden geçir ve yayımla",
+  "admin.learning.rev.description":
+    "Intelligence biten konuşmaları inceler ve beceriler önerir. Bunları Intelligence’ta gözden geçir ve yayımla. Asistanlar yalnızca yayımlanmış becerileri kullanır.",
+  "admin.learning.rev.showFor": "Konteyneri şunun için göster",
+  "admin.learning.rev.default": "Kurulumun varsayılanı",
+  "admin.learning.rev.checking": "Intelligence denetleniyor…",
+  "admin.learning.rev.invalid":
+    "Seçilen konteyner veya enstrümantasyonu kullanılamıyor.",
+  "admin.learning.rev.selection":
+    "Bir asistan seç veya varsayılan bir konteyner belirle.",
+  "admin.learning.rev.none": "Atanmış bir Learning konteyneri yok.",
+  "admin.learning.rev.threads": "Hazır iş parçacıkları",
+  "admin.learning.rev.candidates": "İncelenecek adaylar",
+  "admin.learning.rev.published": "Yayımlanmış beceriler",
+  "admin.learning.rev.insights": "İçgörüler",
+  "admin.learning.rev.running": "Bir analiz çalışıyor.",
+  "admin.learning.rev.latest": "Son analiz: {status}.",
+  "admin.learning.rev.noRun": "Henüz hiç analiz çalışmadı.",
+  "admin.learning.rev.manage": "Learning’i Intelligence’ta yönet",
+  "admin.learning.rev.reviewCandidates": "Beceri adaylarını gözden geçir",
+  "admin.learning.rev.viewRuns": "Analiz çalıştırmalarını gör",
+  "admin.learning.del.title": "Beceri teslimi",
+  "admin.learning.del.checking": "Teslim denetleniyor…",
+  "admin.learning.del.off": "Bu asistan için teslim kapalı.",
+  "admin.learning.del.waiting":
+    "İlk doğrulanmış beceri anlık görüntüsü bekleniyor.",
+  "admin.learning.del.stale":
+    "Son doğrulanmış anlık görüntü kullanılıyor. Bir yenileme bekliyor.",
+  "admin.learning.del.ok": "Doğrulanmış bir anlık görüntü var.",
+  "admin.learning.del.revision": "Yüklenen revizyon: {revision}",
+  "admin.learning.del.lastChecked": "Son denetim:",
+  "admin.learning.rev.refresh": "Durumu yenile",
+  "admin.learning.rev.footer":
+    "Learning’i yönetmek için Intelligence hesabın ve proje erişimin gerekir. {product} proje kimlik bilgilerini sunucuda tutar. Learning’i buradan kapatmak ayarları ve konuşma atamalarını korur. Zamanlamalar ve yayımlama Intelligence’ta kalır.",
+  "admin.playground.validJson": "{label} geçerli bir JSON olmalı: {reason}",
+  "admin.playground.invalidJson": "geçersiz JSON",
+  "admin.playground.notObject":
+    "{label} bir JSON nesnesi olmalı, {kind} olamaz.",
+  "admin.playground.schemaLabel": "Argümanlar (JSON Schema)",
+  "admin.playground.sampleLabel": "Örnek argümanlar",
+  "admin.playground.fixBeforeSave": "Kaydetmeden önce JSON alanlarını düzelt.",
+  "admin.playground.draftSaved": "Taslak kaydedildi.",
+  "admin.playground.published": "Yayımlandı.",
+  "admin.playground.description":
+    "Bir bileşen yaz ve yeniden dağıtmadan yayımla. Düzenlemelerin bir taslaktır. Konuşmalar yalnızca yayımlananı gösterir.",
+  "admin.playground.saveDraft": "Taslağı kaydet",
+  "admin.playground.publish": "Yayımla",
+  "admin.playground.title": "Başlık",
+  "admin.playground.titlePlaceholder": "İade kartı",
+  "admin.playground.told": "Modele bunun hakkında söylenenler",
+  "admin.playground.toldPlaceholder":
+    "Bir iadeyi tutarı, nedeni ve durumuyla göster.",
+  "admin.playground.preview": "Önizleme",
+  "admin.playground.noSample": "Örnek argümanlar kullanılamıyor.",
+  "admin.playground.fixBeforePreview":
+    "Önizlemeden önce JSON alanlarını düzelt.",
+  "admin.playground.saved.title": "Burada kayıtlı",
+  "admin.playground.saved.empty":
+    "Henüz kayıtlı bir şey yok. Burada görmek için bir taslak kaydet.",
+  "admin.playground.saved.published": "yayımlandı, revizyon {revision}",
+  "admin.playground.saved.draftOnly": "yalnızca taslak, hiçbir asistan çizemez",
+  "admin.playground.saved.edited": "yayımlandıktan sonra düzenlendi",
+  "admin.playground.open": "Aç",
+  "admin.playground.delete": "Sil",
+  "admin.playground.saved.note":
+    "Yayımlamak onu her asistana sunar. Tek bir asistan için kapatmak için Arayüz bileşenleri sayfasını kullan.",
+  "admin.playground.del.title": "{name} silinsin mi?",
+  "admin.playground.del.description":
+    "Bu kurulumdan kaldırılır ve hiçbir asistan onu çizemez. Bunu geri alamazsın.",
+  "admin.playground.del.confirm": "Sil",
+  "admin.plugins.tool.title": "Araç",
+  "admin.plugins.tool.noTool": "Bu bağlayıcıda bu adda bir araç yok.",
+  "admin.plugins.tool.removed":
+    "Araç listesi en son yenilendiğinden beri kaldırılmış olabilir.",
+  "admin.plugins.tool.notOn": "Bu bağlayıcı açık değil.",
+  "admin.plugins.tool.noDesc": "Bu aracın açıklaması yok.",
+  "admin.plugins.tool.writeDesc":
+    "Bu araç sağlayıcıda bir şeyi değiştirir. Yazmalarla ilgili sınırlar ona uygulanır.",
+  "admin.plugins.tool.readDesc":
+    "Bu araç yalnızca okur. Yazmalarla ilgili sınırlar ona uygulanmaz.",
+  "admin.plugins.tool.what": "Ne yapar",
+  "admin.plugins.tool.effect": "Etki",
+  "admin.plugins.tool.effectDesc":
+    "Aracın adı değil, bağlayıcı belirler. Bilinmeyen her şey yazma sayılır.",
+  "admin.plugins.tool.bots.title": "Asistanlar",
+  "admin.plugins.tool.bots.description":
+    "Bir asistan bu aracı yalnızca anahtarı açıkken çağırabilir. Kapatmak bir sonraki çağrıdan itibaren geçerli olur.",
+  "admin.plugins.tool.bots.empty":
+    "Henüz asistan yok. Bu aracı vermek için bir tane oluştur.",
+  "admin.plugins.tool.hidden": "Listenden gizlendi.",
+  "admin.plugins.tool.canCall":
+    "Bu aracı çağırabilir. Her çağrı yine sınırlara karşı denetlenir ve Denetim’e kaydedilir.",
+  "admin.plugins.tool.noToken":
+    "İzin verildi, ancak bu asistanın geri çağrı belirteci yok. Her çağrı reddedilir. Sayfasından bir tane oluştur veya AGENT_TOOL_TOKEN ayarla.",
+  "admin.plugins.tool.cantCall": "Bu aracı çağıramaz. Asistan onu hiç görmez.",
+  "admin.plugins.tool.aria":
+    "{bot} asistanının {tool} aracını çağırmasına izin ver",
+  "admin.plugins.bot.title": "Asistan",
+  "admin.plugins.bot.notOn": "Bu adda açık bir uygulama yok.",
+  "admin.plugins.bot.nothing": "Burada bir asistana verilecek bir şey yok.",
+  "admin.plugins.bot.notBot.title": "Asistan değil",
+  "admin.plugins.bot.notBot.description": "Bu adda bir asistan yok.",
+  "admin.plugins.bot.notBot.hint":
+    "Bu sayfayı açtıktan sonra silinmiş olabilir.",
+  "admin.plugins.bot.noDesc": "Bu eylemin açıklaması yok.",
+  "admin.plugins.bot.destroys": "bir şeyleri yok eder",
+  "admin.plugins.bot.description":
+    "{bot} asistanının çağırabileceği {app} eylemleri. Birini kapatmak bir sonraki çağrıdan itibaren geçerli olur.",
+  "admin.plugins.bot.pageTitle": "{bot} ve {app}",
+  "admin.plugins.bot.noActions":
+    "{app} hiç eylem listelemiyor. Yeniden denetlemek için araçlarını yenile.",
+  "admin.plugins.bot.searchAria": "{app} eylemlerinde ara",
+  "admin.plugins.bot.searchPlaceholder": "Eylem adına göre ara",
+  "admin.plugins.bot.wouldHold": {
+    one: "Bu asistanın bu uygulamadan {count} aracı olurdu.",
+    other: "Bu asistanın bu uygulamadan {count} aracı olurdu.",
+  },
+  "admin.plugins.bot.turnOnReads": "Yalnızca okuyan tüm eylemleri aç",
+  "admin.plugins.bot.reads.title": "Okumalar",
+  "admin.plugins.bot.reads.description":
+    "Bunlar yalnızca okur. Yazmalarla ilgili sınırlar onlara uygulanmaz.",
+  "admin.plugins.bot.reads.noMatch":
+    "Yalnızca okuyan hiçbir şey “{query}” ile eşleşmiyor.",
+  "admin.plugins.bot.reads.none":
+    "{app} uygulamasında yalnızca okuyan eylem yok.",
+  "admin.plugins.bot.writes.title": "Bir şeyleri değiştirir",
+  "admin.plugins.bot.writes.description":
+    "Bunlar sağlayıcıda bir şeyi değiştirir. Yazmalarla ilgili sınırlar onlara uygulanır.",
+  "admin.plugins.bot.writes.noMatch":
+    "Bir şeyleri değiştiren hiçbir şey “{query}” ile eşleşmiyor.",
+  "admin.plugins.bot.writes.none":
+    "{app} uygulamasında bir şeyleri değiştiren eylem yok.",
+  "admin.plugins.bot.shared.title":
+    "{bot} asistanı paylaşılan {app} hesabını kullansın mı?",
+  "admin.plugins.bot.allowing": "İzin veriliyor…",
+  "admin.plugins.bot.allow": "İzin ver",
+  "admin.shared.sentence.write":
+    "Bu asistanı kullanabilen herkes bunu paylaşılan hesap olarak yapabilir.",
+  "admin.shared.sentence.read":
+    "Bu asistanı kullanabilen herkes bu hesabın okuyabildiğini okuyabilir.",
+  "admin.shared.owner": "Yalnızca sahibi",
+  "admin.shared.named": "Adı verilenler: {who}",
+  "admin.shared.team": "Herkes",
+  "admin.shared.legend":
+    "Paylaşılan hesabı bu asistan üzerinden kimler kullanabilir",
+  "admin.shared.outside":
+    "Dışarıdan gelen mesajlar (e-posta, Slack, webhook’lar) onu kullanabilir",
+  "admin.shared.skipped": {
+    one: "Bu uygulamanın listelediği bir eylem dışarıda bırakıldı, çünkü bir aracın adı yalnızca harf, rakam, alt çizgi ve tire kullanabilir: ",
+    other:
+      "Bu uygulamanın listelediği {count} eylem dışarıda bırakıldı, çünkü bir aracın adı yalnızca harf, rakam, alt çizgi ve tire kullanabilir: ",
+  },
+  "admin.vocab.browse": "{name} uygulamalarına göz at",
+  "admin.vocab.dirDesc.composio":
+    "Birkaç yüz uygulama. Herkes kendi hesabını bağlar.",
+  "admin.vocab.dirDesc.arcade":
+    "Burada kimsenin incelemediği uygulamalar. Herkes kendi hesabını bağlar.",
+  "admin.vocab.readFailure":
+    "{name} uygulama dizini yüklenemedi. Sayfayı yenile.",
+  "admin.vocab.moreApps":
+    "{name} uygulamaları. Burada kimse onları incelemedi.",
+  "admin.vocab.notSetUp":
+    "Kurulmadı. Uygulamalarına göz atmak için bu kurulumda {envVar} ayarla.",
+  "admin.vocab.connection":
+    "Herkesin kendi hesabını tutan {name} üzerinden ulaşılır.",
+  "admin.vocab.reach.description":
+    "Hesabı {name} tutar. Bu kurulum bir anahtar ve kimin istediğini gönderir. Herkes kendi hesabını bağlar ve bir asistan yalnızca o kişinin görebildiğini görür. Yapıştıracak belirteç yok.",
+  "admin.vocab.reach.badge": "{name} üzerinden",
+  "admin.vocab.disconnect":
+    "Bağlantıyı kesmek {name} üzerindeki hesabı da sonlandırır.",
+  "admin.vocab.trip.stem":
+    "{name} her seferinde bir eylemi onaylar, bu yüzden tüm uygulama için bağlanacak bir şey yok.",
+  "admin.vocab.trip.below": "İstediğin eylemleri aşağıda yetkilendir.",
+  "admin.vocab.trip.settings": "Bunları Bağlantılar’dan yetkilendir.",
+  "admin.vocab.keyMissing":
+    "Bu kurulumda {envVar} ayarla. O zamana kadar bu hesap burada bağlanamaz veya bağlantısı kesilemez. Uygulama açık kalır ve araç izinleri geçerliliğini korur.",
+  "admin.vocab.siblings": {
+    one: "Bağlantıyı kesmek, bu bağlantıyı paylaşan {names} için erişimini de sonlandırır.",
+    other:
+      "Bağlantıyı kesmek, bu bağlantıyı paylaşan {names} için erişimini de sonlandırır.",
+  },
+  "admin.vocab.unansweredMore": {
+    one: "Başka {count} uygulama denetlenemedi ve o da etkilenebilir.",
+    other: "Başka {count} uygulama denetlenemedi ve onlar da etkilenebilir.",
+  },
+  "admin.vocab.unansweredOnly": {
+    one: "Bu bağlantıdaki {count} uygulama denetlenemedi, bu yüzden bağlantıyı kesmek onu da sonlandırabilir.",
+    other:
+      "Bu bağlantıdaki {count} uygulama denetlenemedi, bu yüzden bağlantıyı kesmek onları da sonlandırabilir.",
+  },
+  "admin.vocab.join2": "{a} ve {b}",
+  "admin.vocab.joinMany": "{list} ve {last}",
+  "admin.skills.write": "Beceri yaz",
+  "admin.skills.description":
+    "Herkesin / ile çalıştırabileceği adlandırılmış talimatlar. Bir beceri erişim eklemez. Yalnızca bir asistandan zaten sahip olduğunu kullanmasını isteyebilir.",
+  "admin.skills.installed.title": "Kurulu",
+  "admin.skills.installed.description":
+    "Bu kurulumdaki herkes için. Herkes kendininkini Beceriler sayfasında yazar.",
+  "admin.skills.loadError": "Beceriler yüklenemedi. Sayfayı yenile.",
+  "admin.skills.empty": "Henüz beceri yok. Beceri yaz ile bir tane yaz.",
+  "admin.skills.dlg.title": "Herkes için bir beceri yaz",
+  "admin.skills.dlg.description":
+    "Kişiler / işaretinden sonra slug’ı yazar. Asistan da talimatları izler. Herkes kullanabilir ve hangi asistanlarda olacağını sen seçersin.",
+  "admin.skills.slug": "Slug",
+  "admin.skills.title": "Başlık",
+  "admin.skills.summary": "Özet",
+  "admin.skills.summaryPlaceholder": "Tek satır",
+  "admin.skills.instructions": "Talimatlar",
+  "admin.skills.instructionsPlaceholder":
+    "Bu beceri kullanıldığında asistanın ne yapması gerektiği.",
+  "admin.skills.install": "Beceriyi kur",
+  "engines.intro":
+    "Motor, her üye için düşünme işini yapan şeydir. Başka bir sıra seçmediğin sürece önce kendi girişlerin yanıt verir; ücretli olan her şey sen açana kadar kapalı kalır.",
+  "engines.loadFailed": "Motorlar yüklenemedi. Sayfayı yenile.",
+  "engines.fallback": "Motorlar listelenemedi.",
+  "engines.noEngines": "Henüz bildirilen bir motor yok.",
+  "engines.statesTitle": "Motorlar ve durumları",
+  "engines.sectionsLabel": "Motor bölümleri",
+  "engines.tab.overview": "Genel bakış",
+  "engines.tab.providers": "Sağlayıcılar",
+  "engines.tab.members": "Asistan atamaları",
+  "engines.tab.usage": "Kullanım",
+  "engines.asideLabel": "Anahtarlar ve harcama",
+  "engines.keys.title": "Anahtarlar",
+  "engines.keys.text":
+    "Burada yalnızca ağ geçitlerinin anahtarları tutulacak. Claude ve ChatGPT girişlerini FreeDuet asla saklamaz.",
+  "engines.keys.notBuilt":
+    "Anahtar, motorun kendi kartından eklenir. Bu kurulumda saklanır ve bir daha gösterilmez.",
+  "engines.spending.title": "Harcama",
+  "engines.spending.text":
+    "Harcama bu sayfada henüz gösterilmiyor. Ücretli bir motor, yalnızca bu kurulum izin veriyorsa çalışır.",
+  "engines.today": "Bugün",
+  "engines.reason.off":
+    "Motorlar bu kurulumda kapalı (FREEDUET_ROUTER=off), bu yüzden gösterilecek bir şey yok.",
+  "engines.reason.not_set_up":
+    "Bu kurulumda hiçbir FreeDuet ajanı ayarlanmamış, bu yüzden gösterilecek motor yok.",
+  "engines.reason.unreachable":
+    "FreeDuet ajanı yanıt vermedi, bu yüzden motorlar şu an okunamıyor. Bu sayfa her 30 saniyede bir yeniden sorar.",
+  "engines.state.ready": "Hazır",
+  "engines.state.degraded": "Hazır, ama yakın zamanda hata verdi",
+  "engines.state.limitedAt": "Sınırına ulaştı, şu zamana kadar: {at}",
+  "engines.state.limited": "Şimdilik sınırına ulaştı",
+  "engines.state.outOfCreditAt": "Kredisi bitti, yeniden deneme zamanı: {at}",
+  "engines.state.outOfCredit": "Kredisi bitti",
+  "engines.state.notAnsweringAt": "Yanıt vermiyor, yeniden deneme zamanı: {at}",
+  "engines.state.notAnswering": "Şimdilik yanıt vermiyor",
+  "engines.state.checking": "Yeniden yanıt verip vermediği kontrol ediliyor",
+  "engines.state.gatewayKey":
+    "Ağ geçidi anahtarı kabul etmedi. Verdiğin anahtarı kontrol et.",
+  "engines.state.signedOut":
+    "Oturum kapalı: motorun kendi girişiyle yeniden giriş yap",
+  "engines.state.refusedWhy": "Çalıştırılmadı: {reason}",
+  "engines.state.refused": "Çalıştırılmadı: neden bilinmiyor.",
+  "engines.state.unknown": "Durum bilinmiyor",
+  "engines.state.toolsAsText":
+    "Son yanıtında araç çağrılarını kullanmak yerine metin olarak yazdı: araçları destekleyen bir model seç",
+  "engines.pill.working": "Çalışıyor",
+  "engines.pill.checking": "Kontrol ediliyor",
+  "engines.pill.limited": "Sınırda",
+  "engines.pill.outOfCredit": "Kredi bitti",
+  "engines.pill.notAnswering": "Yanıt vermiyor",
+  "engines.pill.signedOut": "Oturum kapalı",
+  "engines.pill.locked": "Kilitli",
+  "engines.pill.unknown": "Bilinmiyor",
+  "engines.members.title": "Kim neyi kullanıyor",
+  "engines.members.description":
+    "Her üyenin denediği motorlar, denediği sırayla ve bir motor bittiğinde ne olacağı. Değişiklik üyenin sonraki mesajından itibaren geçerli olur ve geri alabilirsin.",
+  "engines.members.col.member": "Üye",
+  "engines.members.col.order": "Motor sırası",
+  "engines.members.col.switching": "Bir motor bittiğinde",
+  "engines.order.note":
+    "Bir motoru bir yer taşımak için okları kullan. Başka türlü seçmedikçe kendi girişlerin önce gelir: bir taşıma ücretsiz ya da ücretli bir motoru onların önüne koyuyorsa, önce onaylaman istenir.",
+  "engines.order.warnTitle.free_before_login":
+    "Ücretsiz bir motor, kendi girişinden önce yanıt verir",
+  "engines.order.warnTitle.paid_before_free_or_login":
+    "Ücretli bir motor, ücretsiz bir motorun ya da bir girişin önüne geçer",
+  "engines.order.warnText.free_before_login":
+    "Bu bir bulut hizmetiyse, bu üyenin mesajları önce o sağlayıcıya gider ve sağlayıcı bunları saklayabilir. Yanıtları da girişinin yanıtlarından daha düşük kalitede olabilir.",
+  "engines.order.warnText.paid_before_free_or_login":
+    "Ücretli bir motor, kendisinden sonraki motorlardan önce yanıt verir; bu yüzden verdiği yanıtlar para tutabilir. Listede ilk sıradaysa, her mesaj ilkinden itibaren para tutabilir. Yalnızca ücretli motorları açıp sınırlarını belirledikten sonra çalışır.",
+  "engines.order.newLabel": "Yeni sıra:",
+  "engines.order.tick": "Anladım, bu sırayı kullan",
+  "engines.order.confirm": "Onayla",
+  "engines.order.tickLabel": "Anladım, {name} için bu sırayı kullan",
+  "engines.order.confirmLabel": "{name} için yeni sırayı onayla",
+  "engines.order.cancelLabel": "{name} için yeni sırayı iptal et",
+  "engines.order.own": "Senin sıran: girişler ilk sırada değil",
+  "engines.order.recommended": "Önerilen sırayı kullan",
+  "engines.order.recommendedLabel": "{name} için önerilen sırayı kullan",
+  "engines.order.moveUp": "{name} için {engine} motorunu yukarı taşı",
+  "engines.order.moveDown": "{name} için {engine} motorunu aşağı taşı",
+  "engines.order.saveFailed": "Sıra kaydedilemedi.",
+  "engines.claude.default": "Aboneliğin varsayılanı",
+  "engines.claude.effort.low": "Düşük",
+  "engines.claude.effort.medium": "Orta",
+  "engines.claude.effort.high": "Yüksek",
+  "engines.claude.effort.xhigh": "Çok yüksek",
+  "engines.claude.effort.max": "En yüksek",
+  "engines.claude.effortLabel": "Çaba",
+  "engines.claude.note":
+    "Yalnızca Claude Code için. Aboneliğinin kullanamadığı bir model, o turu Claude Code'un kendi hatasıyla bitirir. Hiçbir şey kapatılmaz ve “Aboneliğin varsayılanı” seçimi geri alır.",
+  "engines.claude.modelAria": "{name} için Claude modeli",
+  "engines.claude.effortAria": "{name} için Claude çabası",
+  "engines.claude.saved":
+    "Claude seçimi kaydedildi. Sonraki mesajdan itibaren geçerli olur.",
+  "engines.members.saveFailed": "Seçimin kaydedilemedi.",
+  "engines.members.undoFailed": "Bu değişiklik geri alınamadı.",
+  "engines.mode.groupLabel": "{name} için, bir motor bittiğinde",
+  "engines.mode.controlLabel": "{name} için {label}",
+  "engines.mode.undoLabel": "{name} için değişikliği geri al",
+  "engines.mode.automatic.label": "Otomatik geçiş yap",
+  "engines.mode.automatic.effect":
+    "Bir motor bittiğinde sıradaki yanıt verir ve hangisi olduğu sana söylenir.",
+  "engines.mode.askFirst.label": "Önce bana sor",
+  "engines.mode.askFirst.effect":
+    "Bir motor bittiğinde sana sorulur: geçilsin mi, beklensin mi, yoksa başka bir motor mu söylersin.",
+  "engines.leftOut.line": "Kullanılmıyor: {engine}, çünkü {why}.",
+  "engines.leftOut.locked": "kurulumun dosyası buna izin vermiyor",
+  "engines.leftOut.disabled": "kapalı",
+  "engines.leftOut.paid_gateway":
+    "ücretli bir ağ geçidi; FreeDuet bunları henüz çalıştırmıyor",
+  "engines.leftOut.metered_off": "ücretli motorlar kapalı",
+  "engines.leftOut.cap_zero": "harcama sınırı sıfır",
+  "engines.leftOut.not_set_up": "bu kurulumda ayarlanmamış",
+  "engines.leftOut.other": "çalışmayacak",
+  "engines.chain.none": "Şu an bu üye için yanıt verebilecek motor yok.",
+  "engines.chain.one": "Yalnızca {engine} denenir.",
+  "engines.chain.many": "{list} denenir.",
+  "engines.chain.then": ", sonra ",
+  "engines.pin":
+    "Kurulumun dosyası tarafından {engine} motoruna sabitlendi: asla başka bir motora geçmez.",
+  "engines.alone":
+    "Bu üye için yalnızca {engine} ayarlı, bu yüzden henüz geçilecek bir şey yok. Seçimin, geçilecek bir şey olunca kullanılmak üzere saklanır.",
+  "engines.source.yours":
+    "Senin seçimin. Kurulumun dosyası şunu söylüyor: {mode}.",
+  "engines.source.file": "Kurulumun dosyasından.",
+  "engines.block.not_at_the_computer":
+    "Bunları FreeDuet'in çalıştığı bilgisayarda değiştir.",
+  "engines.block.not_paired_with_the_computer":
+    "Önce bu tarayıcıyı FreeDuet'in çalıştığı bilgisayarla eşleştir: orada `bash scripts/open.sh` komutunu çalıştır ve bağlantıyı burada aç.",
+  "engines.block.agent_too_old": "Bunu değiştirmek için FreeDuet'i güncelle.",
+  "engines.block.choices_unreadable":
+    "Seçimlerin okunamadı, bu yüzden kurulumun ayarları kullanılıyor. Seçtiğin hiçbir şey kaybolmadı.",
+  "engines.saved":
+    "Kaydedildi. Üyenin sonraki mesajından itibaren geçerli olur.",
+  "engines.undone":
+    "Geri alındı. Önceki ayar, üyenin sonraki mesajından itibaren geçerli olur.",
+  "engines.providers.title": "Motor ekle",
+  "engines.providers.description":
+    "Bir motoru aç, anahtarını yapıştır ve Kaydet'e bas, sonra Test'e bas. Değişiklik sonraki mesajdan itibaren geçerli olur.",
+  "engines.providers.pickerLabel": "Sağlayıcı",
+  "engines.providers.blurb.ollama": "Kendi bilgisayarında çalışan modeller.",
+  "engines.providers.blurb.llamacpp":
+    "Kendi bilgisayarında ya da ağında çalışan bir llama.cpp sunucusu.",
+  "engines.providers.blurb.lmstudio":
+    "Kendi bilgisayarındaki LM Studio'nun yerel sunucusu.",
+  "engines.providers.blurb.freellmapi":
+    "Kendi çalıştırdığın, birçok sağlayıcının ücretsiz katmanlarını tek bir adresin arkasında toplayan bir yönlendirici.",
+  "engines.providers.blurb.groq":
+    "Hızlı açık modeller, günlük sınırlarla ücretsiz.",
+  "engines.providers.blurb.google": "Gemini modelleri, sınırlarla ücretsiz.",
+  "engines.providers.blurb.mistral":
+    "Ücretsiz planda Mistral modelleri, sınırlarla.",
+  "engines.providers.blurb.openrouter":
+    "Yalnızca hiçbir şeye mal olmayan modeller: :free ile biten bir kimlik ya da openrouter/free.",
+  "engines.providers.blurb.cloudflare":
+    "Cloudflare üzerindeki açık modeller, günlük bir kotayla ücretsiz. Adrese kendi hesabını yaz.",
+  "engines.providers.blurb.cerebras": "Çok hızlı açık modeller.",
+  "engines.providers.blurb.anthropic-api":
+    "Kullandıkça öde kredileriyle Claude.",
+  "engines.providers.tag.local": "Yerel",
+  "engines.providers.tag.router": "Gelişmiş: kendi yönlendiricin",
+  "engines.providers.tag.free": "Sınırlarla ücretsiz",
+  "engines.providers.tag.trial": "Deneme, kart gerekir",
+  "engines.providers.tag.paid": "Ücretli",
+  "engines.providers.cloudWarning":
+    "Bu hizmete gönderilen veriler bilgisayarından çıkar.",
+  "engines.providers.routerWarning":
+    "Mesajların yönlendiriciye gider; yönlendirici bunları içinde açtığın ücretsiz sağlayıcılara iletir. Mesajlar bilgisayarından çıkar ve bu sağlayıcılar onları saklayabilir.",
+  "engines.providers.routerAdvanced":
+    "Gelişmiş seçenek, önerilen bir varsayılan değil: proje kendini yalnızca kişisel deneme amaçlı olarak tanımlıyor. FreeDuet onu kurmaz ya da çalıştırmaz. Sağlayıcı anahtarların onun içinde kalır; FreeDuet yalnızca onun sana verdiği tek erişim belirtecini saklar.",
+  "engines.providers.routerAddress":
+    "Kendi varsayılan portu olan 3001, FreeDuet'in portudur. Onu başka bir portta çalıştır ve adresi sonunda /v1 olacak şekilde yaz. Bu bilgisayarda http yeterlidir. Bu bilgisayarın dışında yalnızca kendi ağın kabul edilir (bir LAN adresi ya da bir .local adı) ve https ile. Herkese açık bir ana makine reddedilir.",
+  "engines.providers.address": "Sunucu adresi",
+  "engines.providers.loadList": "Listeyi yükle",
+  "engines.providers.saveSettings": "Ayarları kaydet",
+  "engines.providers.test": "Test",
+  "engines.providers.freeModelsNote":
+    "Ücretsiz modeller sık değişir ve gönderdiklerini saklayabilir.",
+  "engines.providers.freeModelsLoading":
+    "Araç kullanabilen ücretsiz modeller yükleniyor.",
+  "engines.providers.freeModelsStale":
+    "OpenRouter'a şu an ulaşılamadı. Bu, en son yüklenen listedir.",
+  "engines.providers.freeModelsFallback":
+    "OpenRouter'a şu an ulaşılamadı. Yalnızca ücretsiz yönlendirici sunuluyor.",
+  "engines.providers.freeRouterLabel":
+    "openrouter/free (OpenRouter ücretsiz bir model seçer)",
+  "engines.providers.keySaved": "Anahtar kaydedildi. Bir daha gösterilmez.",
+  "engines.providers.keyPlaceholder": "Anahtarı buraya yapıştır",
+  "engines.providers.notOnKey":
+    "Henüz açık değil. Anahtarı yapıştır ve Kaydet'e bas.",
+  "engines.providers.notOnSettings":
+    "Henüz açık değil. Bir model seç ve Ayarları kaydet'e bas.",
+  "engines.providers.settingsSaved":
+    "Kaydedildi. Sonraki mesajdan itibaren geçerli olur.",
+  "engines.providers.keyRemoved": "Anahtar kaldırıldı. Motor kapalı.",
+  "engines.providers.lockedOwnFile":
+    "Kendi motor dosyanı yazdın, bu yüzden bu kartlar onu yalnızca gösterir. Değişikliği orada yap.",
+  "engines.providers.users.paid":
+    "Harcama sınırları gelene kadar kapalı. FreeDuet, o zamana kadar ücretli bir motorun çalışmasına izin vermez.",
+  "engines.providers.users.trial":
+    "Ücretsiz katmanı kart gerektiren bir deneme olduğu için FreeDuet onu ücretsiz olarak sunmaz. Kapalı kalır.",
+  "engines.providers.users.members":
+    "Üyeler için: evet, Claude girişlerinden sonra. Hafif asistanlar için: evet.",
+  "engines.providers.users.notYet":
+    "Üyeler için: henüz değil. Hafif asistanlar için: evet.",
+  "engines.providers.check.ok": "Yanıt verdi. Çalışıyor.",
+  "engines.providers.check.key_rejected":
+    "Anahtar kabul edilmedi. Kontrol et ve yeniden kaydet.",
+  "engines.providers.check.model_missing":
+    "Sunucu bu modeli tanımıyor. Model adını kontrol et.",
+  "engines.providers.check.rate_limited":
+    "Sınır ya da kredi şimdilik tükendi. Daha sonra yeniden dene.",
+  "engines.providers.check.other":
+    "Hiçbir şey yanıt vermedi ya da yanıt anlaşılamadı.",
+  "engines.providers.freeNote":
+    "“Ücretsiz”, FreeDuet'in sağlayıcının koşullarından aldığı etikettir. Bazı sağlayıcılar (örneğin Google), projen için faturalandırma açıksa sana fatura keser.",
+  "engines.providers.useFor": "Kullanım alanı",
+  "engines.providers.useForNone":
+    "Henüz hiçbir üye kullanmıyor. Hafif asistanlar kullanıyor. Çalışmalarını bu hizmete göndermesine izin vereceğin üyeleri işaretle.",
+  "engines.providers.warn.inbox": "Postanı bu hizmete gönderir.",
+  "engines.providers.warn.concierge": "Rezervasyonlarını bu hizmete gönderir.",
+  "engines.providers.modelsEmpty": "Liste boş. Model adını yaz.",
+  "engines.providers.modelsLoaded": {
+    one: "{count} model yüklendi. Kutudan birini seç.",
+    other: "{count} model yüklendi. Kutudan birini seç.",
+  },
+  "engines.providers.switchOn": "{name} motorunu aç",
+  "engines.providers.changeFailed": "Bu değiştirilemedi.",
+  "engines.providers.keySaveFailed": "Anahtar kaydedilemedi.",
+  "engines.providers.listFailed": "Liste yüklenemedi.",
+  "engines.providers.keyRemoveFailed": "Anahtar kaldırılamadı.",
+  "engines.providers.saveFailed": "Bu kaydedilemedi.",
+  "engines.providers.testFailed": "Test çalıştırılamadı.",
+  "engines.tokens.title": "Tokenlar",
+  "engines.tokens.description":
+    "Her üyenin her motorda kullandığı miktar, motorun kendi bildirdiği şekilde. Günler UTC'ye göre sayılır.",
+  "engines.tokens.fallback": "Token sayıları yüklenemedi.",
+  "engines.tokens.empty": "Henüz sayılan bir tur yok.",
+  "engines.tokens.unavailable": "Token sayıları şu an kullanılamıyor.",
+  "engines.tokens.problem":
+    "Sayıları tutan dosya okunamadı, bu yüzden bazı sayılar eksik olabilir.",
+  "engines.tokens.notReported": "bildirilmedi",
+  "engines.tokens.col.engine": "Motor",
+  "engines.tokens.col.week": "Son 7 gün",
+  "engines.tokens.allMembers": "Tüm üyeler",
+  "engines.tokens.note":
+    "Giriş, modele verilen her tokeni sayar, önbellektekiler dahil. Her satır motor denemelerini sayar: aynı motorda yeniden deneme yeniden sayılır. Motorun hiçbir şey bildirmediği bir deneme süre ekler, token eklemez. Süre burada, her denemenin başından sonuna kadar ölçülür.",
+  "engines.tokens.savedWeek": "Son 7 günde tasarruf edilen",
+  "engines.tokens.savedNote":
+    "Tasarruf, bulutta ya da kendi bilgisayarında ücretsiz motorlardan geçen tokenlar demektir. Claude Code aboneliğin sabit ücretlidir ve ücretli motorlar para tutar, bu yüzden ikisi de sayılmaz.",
+  "engines.tokens.currencyHelp":
+    "Avro ile dolar arasında geçmek için bir tutara tıkla.",
+  "engines.tokens.reference":
+    "{model} liste fiyatlarıyla (milyon tokenda {input} giriş, {output} çıkış, {date}); {euro} = {rate} ({rateDate}).",
+  "engines.tokens.under": "{amount} altında",
+  "engines.tokens.nothingYet": "henüz yok",
+  "engines.tokens.plus": "artı {time}",
+  "engines.tokens.toDollars": "{amount}. Tutarları dolar olarak göster",
+  "engines.tokens.toEuros": "{amount}. Tutarları avro olarak göster",
+  "engines.tokens.amount": "{amount} token",
+  "engines.tokens.timeLocal": "kendi GPU'nda {time}",
+  "engines.tokens.timeCloud": "ücretsiz bir bulut motorunda {time}",
+  "engines.tokens.and": " ve ",
+  "engines.tokens.timeTail": "{parts}, token bildirilmedi",
+  "engines.tokens.cell": "{input} giriş · {output} çıkış",
+  "engines.tokens.partial": "{total} denemenin {reported} tanesi bildirildi",
+  "engines.dur.under": "1 dk altında",
+  "engines.dur.min": "{minutes} dk",
+  "engines.dur.hourMin": "{hours} sa {minutes} dk",
+  "engines.usage.bySource": "Kaynağa göre",
+  "engines.usage.byMember": "Üyeye göre",
+  "engines.usage.time": "Süre",
+  "engines.usage.source.person": "Sen",
+  "engines.usage.source.routine": "Rutinler",
+  "engines.usage.source.handoff": "Üyeler arası",
+  "engines.usage.source.other": "Diğer",
+  "engines.usage.source.unknown": "Daha önce (kaydedilmedi)",
+  "engines.usage.title": "Son 7 günün dağılımı",
+  "engines.usage.note":
+    "Paylar, motorların bildirdiği tokenlara (giriş artı çıkış) göredir; Süre seçiliyse süreye göredir. Token bildirmeyen denemeler yalnızca süre ekler. “Sen” kendi mesajların, “Rutinler” rutinler ve check-in'ler, “Üyeler arası” devirler, “Diğer” ise bir dağıtımın kendi çalıştırmaları gibi geri kalan her şeydir.",
+  "engines.usage.nothing": "Son 7 günde hiçbir şey sayılmadı.",
+  "engines.usage.chartsFailed":
+    "Kullanım grafikleri çizilemedi. Aşağıdaki tablo etkilenmedi.",
+  "engines.usage.restMembers": "Diğer üyeler",
+  "engines.usage.limitTitle": "Plan sınırları",
+  "engines.usage.limitNone":
+    "Şu an hiçbir motor bir sınır yüzünden bekletilmiyor.",
+  "engines.usage.limitNote":
+    "Planının haftalık sınırının yüzdesi gösterilmez: abonelik bunu FreeDuet'e bildirmez. Bir motor bunu yalnızca bir sınıra ulaştığında, geri dönmesi beklenen saatle birlikte söyler.",
+  "engines.usage.range": "{from} – {to}, UTC günleri",
+  "engines.usage.splitBy": "Ayır",
+  "engines.usage.measure": "Ölçü",
+  "engines.usage.perDay": "{title}: günlük {metric}",
+  "engines.usage.perDayUtc": "{title}: günlük {metric}, UTC",
+  "engines.usage.day": "Gün",
+  // connections-begin
+  "connections.connect": "Bağlan",
+  "connections.reconnect": "Yeniden bağlan",
+  "connections.connected": "Bağlı",
+  "connections.teamAccount": "Ekip hesabı",
+  "connections.disconnect": "Bağlantıyı kes",
+  "connections.disconnecting": "Bağlantı kesiliyor…",
+  "connections.startFailed":
+    "Bağlanma başlatılamadı, bu yüzden hiçbir şey bağlanmadı. Yeniden dene; sürerse bir yöneticiye sor.",
+  "connections.list.auth.no-broker":
+    "Uygulama bağlama henüz ayarlanmamış, bu yüzden hiçbir şey kaydedilmedi. Bir yöneticiden ayarlamasını iste.",
+  "connections.list.auth.not-supported":
+    "Buradaki uygulamalar, uygulamanın sayfasındaki Bağlan ile bir kez bağlanır. Eylem eylem yetkilendirilmezler.",
+  "connections.list.auth.missing-handle":
+    "Bu bağlantı hangi yetkilendirmeyi tamamladığını söylemiyor, bu yüzden hiçbir şey yapılmadı. Uygulamanın sayfasından yeniden başla.",
+  "connections.list.auth.no-attempt":
+    "Tamamlayabileceğin devam eden bir yetkilendirme yok. Süresi dolmuş ya da başka bir oturumda başlamış olabilir. Uygulamanın sayfasından yeniden başla.",
+  "connections.list.auth.vendor-unavailable":
+    "{product} o yetkilendirmeyi tamamlamaya çalışırken uygulama yanıt vermedi, bu yüzden hiçbir şey kaydedilmedi. Birazdan bağlantıyı yeniden dene.",
+  "connections.list.auth.not-your-authorization":
+    "Bu bağlantı, devam eden yetkilendirmenle eşleşmiyor, bu yüzden hiçbir şey kaydedilmedi. Onu başlattığın sekmede tamamla ya da uygulamanın sayfasından yeniden başla.",
+  "connections.list.auth.not-finished":
+    "O yetkilendirme henüz tamamlanmadı, bu yüzden hiçbir şey kaydedilmedi. Uygulamada tamamla, sonra bağlantıyı yeniden aç.",
+  "connections.list.auth.authorization-failed":
+    "Uygulama o yetkilendirmeyi tamamlamadı, bu yüzden hiçbir şey kaydedilmedi. Uygulamanın sayfasından yeniden başla.",
+  "connections.list.auth.context-changed":
+    "Yetkilendirme açıkken uygulamanın hesabı değişti, bu yüzden hiçbir şey kaydedilmedi. Eski hesaba verilen erişim kaldırıldı. Uygulamanın sayfasından yeniden başla.",
+  "connections.list.auth.not-permitted":
+    "Artık o uygulamanın hesabını bağlayamazsın, bu yüzden hiçbir şey kaydedilmedi. Yetkilendirme açıkken erişimin ya da uygulamanın kurulumu değişti. Tamamlamayı bekliyorsan bir yöneticiye sor.",
+  "connections.list.auth.cancelled":
+    "O yetkilendirme tamamlanırken iptal edildi, bu yüzden hiçbir şey kaydedilmedi. Verdiği erişim kaldırıldı.",
+  "connections.list.auth.cancelled-left-live":
+    "O yetkilendirme tamamlanırken iptal edildi, bu yüzden hiçbir şey kaydedilmedi. Verdiği erişim kaldırılamadı, bu yüzden uygulama iptal ettiğin eyleme hâlâ izin veriyor olabilir. Kaldırmak için uygulamanın sayfasından bağlantıyı kes, sonra yeniden bağlan ve yalnızca istediğini yetkilendir.",
+  "connections.list.auth.not-recorded":
+    "O yetkilendirme kaydedilemedi, bu yüzden hiçbir şey kaydedilmedi. Uygulamanın sayfasından yeniden başla; sürerse bir yöneticiye sor.",
+  "connections.list.description":
+    "Asistanlarının senin adına kullandığı uygulamalar ve hesaplar. Bağlamak ya da değiştirmek için birini aç.",
+  "connections.list.connectFailed":
+    "O hesap bağlanamadı. Hiçbir şey kaydedilmedi. Yeniden dene.",
+  "connections.list.title": "Bağlantıların",
+  "connections.list.loading": "Bağlantılar yükleniyor…",
+  "connections.list.loadError":
+    "Bağlantıların yüklenemedi. Sayfayı yenile; sürerse bir yöneticiye sor.",
+  "connections.list.empty":
+    "Henüz bağlanacak bir şey yok. Uygulamalar, bir yönetici onları açtıktan sonra burada görünür.",
+  "connections.list.count": "{inUse} kullanımda · toplam {total}",
+  "connections.list.search": "Bağlantılarda ara",
+  "connections.list.noMatch": "“{query}” ile eşleşen bir şey yok.",
+  "connections.list.linksError":
+    "GitHub ve Slack yüklenemedi, bu yüzden listelenmediler. Sayfayı yenile.",
+  "connections.list.connectNamed": "{title} uygulamasına bağlan",
+  "connections.list.reconnectNamed": "{title} uygulamasına yeniden bağlan",
+  "connections.app.landed": "Az önce {action} eylemini yetkilendirdin.",
+  "connections.app.pendingTitle": "Hesap",
+  "connections.app.loadError":
+    "Bu bağlantı yüklenemedi. Sayfayı yenile; sürerse bir yöneticiye sor.",
+  "connections.app.appLoadError":
+    "Bu uygulama yüklenemedi. Sayfayı yenile; sürerse bir yöneticiye sor.",
+  "connections.app.notSetUp":
+    "{title} henüz ayarlanmamış. Kimse bağlayamadan önce bir yönetici onu açmalı.",
+  "connections.app.sharedDesc":
+    "Kuruluşun tarafından paylaşılıyor. Asistanlar ekip hesabı olarak davranır.",
+  "connections.app.brokeredDesc":
+    "Asistanlar bunu senin adına kullanır ve yalnızca senin görebildiğini görür.",
+  "connections.app.reassurance": "Hiçbir asistan bunu senin adına kullanamaz.",
+  "connections.app.tripPerAction": "Aşağıdan istediğin eylemleri yetkilendir.",
+  "connections.app.tripConnect":
+    "Bağlanmak, erişimi onaylaman için seni {title} uygulamasına götürür.",
+  "connections.app.connectedDesc":
+    "İzin verdiğin asistanlar {title} hesabını senin adına kullanır. Bağlantıyı kesmek, onların erişimini her yerde kaldırır.",
+  "connections.app.notYours": "Bu uygulamayı kendin bağlamazsın.",
+  "connections.app.oneShared":
+    "Asistanlar bu uygulama için herkes için aynı olan tek bir paylaşılan hesap kullanır.",
+  "connections.app.noApp": "{product} içinde bu adda bir uygulama yok.",
+  "connections.app.yourAccount": "Hesabın",
+  "connections.app.notAvailable":
+    "Henüz kullanılamıyor. Önce bir yönetici bunu açmalı.",
+  "connections.app.connectedAsYou":
+    "İzin verdiğin asistanlar bunu senin adına kullanır ve yalnızca senin görebildiğini görür.",
+  "connections.app.notConnected":
+    "Hiçbir asistan bunu senin adına kullanamaz. Bağlanmak, erişimi onaylaman için seni {vendor} uygulamasına götürür.",
+  "connections.app.disconnectedDone":
+    "Bağlantı kesildi. {product} artık {vendor} hesabını kullanamaz.",
+  "connections.app.disconnectedUnconfirmed":
+    "Burada bağlantı kesildi. {vendor} bunu onaylamadı, bu yüzden {product} uygulamasını {vendor} hesabının üçüncü taraf erişim ayarlarından da kaldır.",
+  "connections.app.accessDesc":
+    "İzin verdiklerin, {vendor} tarafından kaydedildiği şekilde. Bu, {product} uygulamasının istediğinden az olabilir.",
+  "connections.app.access": "Erişim",
+  "connections.app.allowed": "İzin verildi",
+  "connections.app.vendorDidntSay": "{vendor} söylemedi.",
+  "connections.identity.toolsDesc":
+    "Asistanlarının, senin depolarını senin adına okumasına ve değiştirmesine izin verir. Bunu yukarıdaki hesabından ayrı olarak bağlarsın.",
+  "connections.identity.tools": "Araçlar",
+  "connections.identity.githubTools": "GitHub araçları",
+  "connections.identity.notConnected": "Bağlı değil",
+  "connections.mail.neverRun": "Henüz çalışmadı.",
+  "connections.mail.lastRun": {
+    one: "Son çalışma {when}: {count} mesaj. Toplam {total}.",
+    other: "Son çalışma {when}: {count} mesaj. Toplam {total}.",
+  },
+  "connections.mail.on": "Açık. {activity}",
+  "connections.mail.off": "Kapalı",
+  "connections.mail.switchOff": "Kapat",
+  "connections.mail.switchOn": "Aç",
+  "connections.mail.delete": "Sil",
+  "connections.mail.lastProblem": "Son sorun: {error}",
+  "connections.mail.description":
+    "Sohbette istediğin kalıcı kurallar. Asistanların bunları tutar ve birkaç dakikada bir yeni postaya uygular; bunlar Gmail filtreleri değildir. Bir kuralı silmek, onun daha önce yaptıklarını geri almaz.",
+  "connections.mail.title": "Posta kuralları",
+  "connections.mail.search": "Posta kurallarında ara",
+  "connections.mail.statusLabel": "Kural durumu",
+  "connections.mail.allStatuses": "Tüm durumlar",
+  "connections.mail.optActive": "Etkin",
+  "connections.mail.optPaused": "Duraklatıldı",
+  "connections.mail.active": "Etkin",
+  "connections.mail.paused": "Duraklatıldı",
+  "connections.mail.noMatch": "Bu filtrelerle eşleşen kural yok.",
+  "connections.mail.paging": {
+    one: "{count} kuraldan {from}–{to}",
+    other: "{count} kuraldan {from}–{to}",
+  },
+  "connections.mail.previous": "Önceki",
+  "connections.mail.next": "Sonraki",
+  "connections.secret.aMember": "Bir üye",
+  "connections.secret.doneMemberCal":
+    "Bağlandı. {name} artık postanı ve takvimini senin adına okuyabilir.",
+  "connections.secret.doneMember":
+    "Bağlandı. {name} artık postanı senin adına okuyabilir.",
+  "connections.secret.doneBotsCal":
+    "Bağlandı. İzin verdiğin asistanlar artık postanı ve takvimini senin adına okuyabilir.",
+  "connections.secret.doneBots":
+    "Bağlandı. İzin verdiğin asistanlar artık postanı senin adına okuyabilir.",
+  "connections.secret.notAvailable":
+    "Henüz kullanılamıyor. Önce bir yönetici bunu açmalı.",
+  "connections.secret.statusError":
+    "Bunu bağlayıp bağlamadığın yüklenemedi. Sayfayı yenile; sürerse bir yöneticiye sor.",
+  "connections.secret.yourAccount": "Hesabın",
+  "connections.secret.connectedCal":
+    "{address} olarak bağlandı. Takvimin de bağlı. İzin verdiğin asistanlar bunu senin adına kullanır.",
+  "connections.secret.connectedNoCal":
+    "{address} olarak bağlandı. Hiçbir takvim bağlı değil. İzin verdiğin asistanlar bunu senin adına kullanır.",
+  "connections.secret.notConnected":
+    "Hiçbir asistan bunu senin adına kullanamaz. Gmail'ini bağlamak için aşağıya bir uygulama parolası yapıştır.",
+  "connections.secret.useDifferent": "Farklı bir uygulama parolası kullan",
+  "connections.secret.disconnected":
+    "Bağlantı kesildi. {product} artık postanı ya da takvimini okuyamaz. Uygulama parolasının çalışmayı kesmesinden emin olmak için onu {url} adresinde de sil.",
+  "connections.secret.formDesc":
+    "Google'da iki adım, sonra verdiklerini yapıştır. Gmail kabul etmedikçe hiçbir şey kaydedilmez.",
+  "connections.secret.connectTitle": "Bağlan",
+  "connections.secret.memberWillUse": "{name} bu posta kutusunu kullanacak.",
+  "connections.secret.step1Lead":
+    "Google hesabın için 2 Adımlı Doğrulamayı aç, sonra şu adreste bir uygulama parolası oluştur:",
+  "connections.secret.step1Tail":
+    ". Adını {product} koy ve on altı harfi kopyala.",
+  "connections.secret.step2Lead":
+    "Asistanlarının takvimini de görmesine izin vermek için: Google Takvim'de Ayarlar'ı aç, takvimini seç ve şunu kopyala:",
+  "connections.secret.step2Link": "iCal biçiminde gizli adres",
+  "connections.secret.step2Tail": ". Bu isteğe bağlıdır.",
+  "connections.secret.address": "Gmail adresin",
+  "connections.secret.password": "Uygulama parolası",
+  "connections.secret.passwordHint":
+    "Google'dan gelen on altı harf, boşluklu ya da boşluksuz. Her zamanki parolan değil.",
+  "connections.secret.calendar": "Takvimin gizli adresi (isteğe bağlı)",
+  "connections.secret.calendarHint":
+    "Bu adrese sahip olan herkes takvimini okuyabilir, bu yüzden parola kadar dikkatle saklanır.",
+  "connections.secret.checking": "Gmail ile kontrol ediliyor…",
+  "connections.secret.canDoTitle":
+    "Bu, asistanlarının neler yapmasına izin verir",
+  "connections.secret.canDoDesc":
+    "Bir uygulama parolası tüm posta kutunu açar, bu yüzden bunun ne yaptığını bilmekte fayda var.",
+  "connections.secret.canDo":
+    "Asistanların postanı arayıp okuyabilir ve takvimine bakabilir. Hiçbir şeyi silemez, taşıyamaz ya da etiketleyemez. Bir yanıt, ancak sen onayladıktan sonra ve yalnızca iletide zaten bulunan kişilere gönderilir. İstediğin zaman bağlantıyı kesebilirsin ve uygulama parolasını Google'da dilediğin zaman silebilirsin.",
+  "connections.mode.goesShared": "Paylaşılan hesabın bağlantısı kesilecek.",
+  "connections.mode.goesNoShared": "Bağlı bir paylaşılan hesap yok.",
+  "connections.mode.goesPersonal": {
+    one: "{count} kişisel hesabın bağlantısı kesilecek.",
+    other: "{count} kişisel hesabın bağlantısı kesilecek.",
+  },
+  "connections.mode.makeShared": "{title} uygulamasını paylaşılan yap",
+  "connections.mode.makePersonal": "{title} uygulamasını kişisel yap",
+  "connections.mode.titleShared": "Tek bir {title} hesabı paylaşılsın mı?",
+  "connections.mode.titlePersonal": "Herkese kendi {title} hesabı verilsin mi?",
+  "connections.mode.checking": "Bunun neyi değiştireceği kontrol ediliyor…",
+  "connections.mode.everyone":
+    "Bu uygulamayla bir asistan kullanan herkes bu tek hesap olarak davranacak.",
+  "connections.cancel": "İptal",
+  "connections.dir.description":
+    "{name} uygulama dizini. Araçlarını asistanların kullanımına açmak için bir uygulama ekle. Her kişi, uygulama bir şey okumadan önce yine de kendi hesabını bağlar.",
+  "connections.dir.appsTitle": "Uygulamalar",
+  "connections.dir.appsDesc":
+    "Ada göre ara. Burada kimse bu uygulamaları incelemedi.",
+  "connections.dir.searchAria": "{name} uygulamalarında ara",
+  "connections.dir.searchPlaceholder": "Uygulama adına göre ara",
+  "connections.dir.noMatch": "“{query}” ile eşleşen bir {name} uygulaması yok.",
+  "connections.dir.none": "{name} hiçbir uygulama döndürmedi.",
+  "connections.dir.actions": { one: "{count} eylem", other: "{count} eylem" },
+  "connections.dir.added": "Eklendi",
+  "connections.dir.adding": "Ekleniyor…",
+  "connections.dir.add": "Ekle",
+  "connections.grants.consentFailed":
+    "{product} bir onay bağlantısı olmadan yanıt verdi, bu yüzden hiçbir şey yetkilendirilmedi. Yeniden dene; sürerse bir yöneticiye sor.",
+  "connections.grants.title": "Eylemler",
+  "connections.grants.readError":
+    "Bu hesabın şu an nelere izin verdiği okunamadı.",
+  "connections.grants.retry": "Yeniden dene",
+  "connections.grants.description":
+    "Her eylemin istediği izne göre gruplandı. Bu, onay ekranının gösterdiğiyle eşleşir.",
+  "connections.grants.search": "Eylemlerde ara",
+  "connections.grants.wholeApp": "Bu uygulamadaki her şey, birlikte onaylanır",
+  "connections.grants.noPermission": "Kendine ait bir izin istemez",
+  "connections.grants.needs": "{scopes} gerekir",
+  "connections.grants.authorize": "Yetkilendir",
+  "connections.grants.hidden": {
+    one: "Henüz yetkilendirilmemiş {count} eylem daha var. Bulmak için ara.",
+    other:
+      "Henüz yetkilendirilmemiş {count} eylem daha var. Birini bulmak için ara.",
+  },
+  "connections.grants.noMatch": "Bu aramayla eşleşen eylem yok.",
+  "connections.grants.before": "{action} eylemini yetkilendirmeden önce",
+  "connections.grants.continue": "Onaya devam et",
+  "connections.grants.notRequired": "Yetkilendirme gerekmez.",
+  "connections.grants.authorized": "Yetkilendirildi.",
+  "connections.grants.notYet": "Henüz yetkilendirilmedi.",
+  "connections.grants.notYetAdmin":
+    "Henüz yetkilendirilmedi. Bir yönetici yetkilendirebilir.",
+  "connections.grants.missing":
+    "{missing} eksik. Bir yönetici bunu ayarlamalı. Yetkilendirmek bunu düzeltemez.",
+  "connections.grants.missingSetting":
+    "Bir ayar eksik. Bir yönetici bunu ayarlamalı. Yetkilendirmek bunu düzeltemez.",
+  "connections.grants.unknown": "Bu şu an okunamadı. {reason}",
+  "connections.row.connectKey":
+    "Bu uygulama bir giriş sayfasıyla değil, bir anahtarla bağlanır, bu yüzden hiçbir şey bağlanmadı. Sayfayı yenile ve Bağlan'a yeniden bas.",
+  "connections.row.noAuth":
+    "{title} için bir hesap gerekmez. Ona sahip olan asistanlar onu olduğu gibi kullanabilir.",
+  "connections.row.verified": "Anahtarınla bağlandı. Son kontrol: {date}.",
+  "connections.row.failedCheck":
+    "Anahtarın {title} ile yapılan bir kontrolü geçemedi. Sorun anahtar ya da {title} olabilir. Hesabın hâlâ bağlı. Yeniden denemek için Yeniden kontrol et'e bas ya da bağlantıyı kes ve yeni bir anahtarla bağlan.",
+  "connections.row.noSafeCheck":
+    "Anahtarınla bağlandı. {title} ile kontrol edilmedi. O sırada {title} bir anahtarı kontrol etmenin güvenli bir yoluna sahip değildi. Bu, anahtarınla değil, uygulamayla ilgili.",
+  "connections.row.unchecked":
+    "Anahtarınla bağlandı. {title} ile kontrol edilmedi.",
+  "connections.row.keyStillWorks":
+    "Bağlantı kesildi. Anahtarın {title} üzerinde hâlâ çalışıyor. Tüm erişimi durdurmak için onu orada değiştir.",
+  "connections.row.asksForKey":
+    "{title}, zaten sahip olduğun bir anahtarla bağlanır. Bağlan onu ister.",
+  "connections.row.signedIn": "{title} ile giriş yapıldı. {description}",
+  "connections.row.yourAccount": "Hesabın",
+  "connections.row.keyMissing": "Anahtar yok",
+  "connections.row.recheck": "Yeniden kontrol et",
+  "connections.row.rechecking": "Kontrol ediliyor…",
+  "connections.row.perAction": "Eylem eylem onaylanır",
+  "connections.row.connectYour": "Hesabını bağla",
+  "connections.row.checkingNeeds":
+    "Uygulamanın neye ihtiyaç duyduğu kontrol ediliyor…",
+  "connections.row.noNeeds":
+    "Bu uygulamanın neye ihtiyaç duyduğu öğrenilemedi. Bunu kapat ve yeniden dene.",
+  // connections-end
+  // computer-begin
+  "computer.tool.readPage": "",
+  "computer.tool.readPageCount": { one: "", other: "" },
+  "computer.tool.filledIn": "",
+  "computer.tool.choseIn": "",
+  "computer.tool.clicked": "",
+  "computer.tool.pressed": "",
+  "computer.tool.listedFiles": "",
+  "computer.tool.itemsInWorkspace": { one: "", other: "" },
+  "computer.tool.nothingSaved": "",
+  "computer.tool.readFile": "",
+  "computer.tool.ranCommand": "",
+  "computer.tool.addedToFile": "",
+  "computer.tool.savedFile": "",
+  "computer.tool.scrolled": "",
+  "computer.signIn.waiting": "",
+  "computer.signIn.signedIn": "",
+  "computer.signIn.failed": "",
+  "computer.signIn.open": "",
+  "computer.signIn.dialogTitle": "",
+  "computer.signIn.dialogBody": "",
+  "computer.output.truncated": "",
+  "computer.output.nothing": "",
+  "computer.output.timedOut": "",
+  "computer.output.exitCode": "",
+  "computer.activity.ran": "",
+  "computer.activity.read": "",
+  "computer.activity.saved": "",
+  "computer.activity.listed": "",
+  "computer.activity.workspace": "",
+  "computer.activity.refused": "",
+  "computer.activity.empty": "",
+  "computer.control.handBack": "",
+  "computer.control.take": "",
+  "computer.control.finishing": "",
+  "computer.control.close": "",
+  "computer.control.open": "",
+  "computer.panel.sidebar": "",
+  "computer.live.cantShow": "",
+  "computer.live.drivingLabel": "",
+  "computer.live.label": "",
+  "computer.view.aPage": "",
+  "computer.view.openedDuring": "",
+  "computer.view.noPage": "",
+  "computer.view.cantShow": "",
+  "computer.view.cantShowHelp": "",
+  "computer.view.blank": "",
+  "computer.view.waiting": "",
+  "computer.view.unavailable": "",
+  "computer.view.alt": "",
+  "computer.view.open": "",
+  "computer.view.youHaveControl": "",
+  "computer.view.botNeedsYou": "",
+  "computer.view.cancelRequest": "",
+  "computer.view.finishingBot": "",
+  "computer.view.recovery": "",
+  "computer.view.interrupted": "",
+  "computer.view.secretNeedsHost": "",
+  "computer.view.secretNeedsPage": "",
+  "computer.view.secretType": "",
+  "computer.view.secretPlaceholder": "",
+  "computer.view.secretGoesHost": "",
+  "computer.view.secretGoesPage": "",
+  "computer.view.sending": "",
+  "computer.view.send": "",
+  "computer.view.checking": "",
+  "computer.view.drivingOpen": "",
+  "computer.view.botHas": "",
+  "computer.view.dialog": "",
+  "computer.view.close": "",
+  "computer.view.turnAlt": "",
+  "computer.view.finishingYou": "",
+  "computer.view.drivingClick": "",
+  "computer.handoff.noCall": "",
+  "computer.handoff.answered": "",
+  "computer.handoff.running": "",
+  "computer.handoff.unreachable": "",
+  "computer.handoff.couldntResume": "",
+  "computer.handoff.waiting": "",
+  "computer.handoff.paused": "",
+  "computer.handoff.stopWaiting": "",
+  "computer.handoff.resume": "",
+  "computer.demo.everyWeekday": "",
+  "computer.demo.everyDay": "",
+  "computer.demo.everyMonday": "",
+  "computer.demo.everyHour": "",
+  "computer.demo.scheduled": "",
+  "computer.demo.seeRoutines": "",
+  "computer.demo.when": "",
+  "computer.demo.custom": "",
+  "computer.demo.cron": "",
+  "computer.demo.reportIn": "",
+  "computer.demo.onlyConversation": "",
+  "computer.demo.inputs": "",
+  "computer.demo.title": "",
+  "computer.demo.intro": "",
+  "computer.demo.recording": { one: "", other: "" },
+  "computer.demo.left": "",
+  "computer.demo.limitReached": "",
+  "computer.demo.stop": "",
+  "computer.demo.name": "",
+  "computer.demo.namePlaceholder": "",
+  "computer.demo.record": "",
+  "computer.demo.takeControl": "",
+  "computer.demo.entry": { one: "", other: "" },
+  "computer.demo.stoppedAtLimit": "",
+  "computer.demo.edit": "",
+  "computer.demo.runSchedule": "",
+  "computer.demo.reviewDraft": "",
+  "computer.demo.reviewTitle": "",
+  "computer.demo.reviewHelp": "",
+  "computer.demo.saveUse": "",
+  "computer.demo.couldntSave": "",
+  "computer.demo.ready": "",
+  // computer-end
+};

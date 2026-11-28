@@ -67,6 +67,7 @@ import { PLACEHOLDER_COMMANDS } from "./sources";
 import { type AgentOption, buildTriggers } from "./triggers";
 import { useDictation } from "./use-dictation";
 import { VoiceSheet } from "./voice-sheet";
+import { useT } from "@/freeduet/i18n/provider";
 
 /**
  * The SDK's upload failure, derived rather than imported for the reason `attachments.ts` records
@@ -349,9 +350,11 @@ export function Composer({
   droppedAttachments,
   // Nothing parked is the right answer for every caller without a queue, which is most of them.
   queuedAttachmentCount = 0,
-  placeholder = "Ask anything",
+  placeholder: placeholderProp,
   onTextChange,
 }: ComposerProps) {
+  const t = useT();
+  const placeholder = placeholderProp ?? t("composer.ask");
   const [value, setValue] = useState<Segment[]>(
     initialValue ? [{ type: "text", text: initialValue }] : [],
   );
@@ -392,7 +395,9 @@ export function Composer({
     },
     disabled || voiceCall?.active === true,
   );
-  if (voiceSheet && !dictation.busy) setVoiceSheet(false);
+  // A quiet stop with nothing said leaves a hint on the sheet, so it stays until the person acts.
+  if (voiceSheet && !dictation.busy && !dictation.state.notice)
+    setVoiceSheet(false);
   /** `autoFocus` has been honoured once, and is not owed again for the life of this composer. */
   const claimedAutoFocus = useRef(false);
   /**
@@ -1406,7 +1411,7 @@ export function Composer({
    * the two it is about to do. "Send" on a button that will not send for another minute is a small
    * lie told to exactly the people who cannot see the queue it lands in.
    */
-  const sendLabel = parking ? "Queue message" : "Send message";
+  const sendLabel = parking ? t("composer.queue") : t("composer.send");
   const draftEmpty = draft.isEmpty && draft.attachments.length === 0;
   const callAction = draftEmpty ? voiceCall : undefined;
   /**
@@ -1433,7 +1438,7 @@ export function Composer({
   );
   const primaryAction = canStop ? (
     <Button
-      aria-label="Stop the Bot"
+      aria-label={t("composer.stop")}
       className={actionClassName}
       data-testid="composer-stop"
       onClick={onStop}
@@ -1446,13 +1451,15 @@ export function Composer({
     </Button>
   ) : callAction ? (
     <Button
-      aria-label={callAction.active ? "Show voice call" : "Start voice call"}
+      aria-label={
+        callAction.active ? t("composer.showCall") : t("composer.startCall")
+      }
       title={
         callAction.supported
           ? callAction.active
-            ? "Show voice call"
-            : "Call this Bot"
-          : "Voice calls need a microphone and a secure (HTTPS) connection"
+            ? t("composer.showCall")
+            : t("composer.callBot")
+          : t("composer.callUnsupported")
       }
       className={actionClassName}
       disabled={disabled || dictation.busy || !callAction.supported}
@@ -1470,10 +1477,10 @@ export function Composer({
     </Button>
   ) : voiceAction ? (
     <Button
-      aria-label="Speak a message"
+      aria-label={t("composer.speak")}
       title={
         dictation.supported
-          ? "Say everything you need to do"
+          ? t("composer.dictateTitle")
           : recordingUnsupportedMessage()
       }
       className={actionClassName}
@@ -1659,7 +1666,7 @@ export function Composer({
               <div className="flex items-center gap-2.5">
                 {attachmentsEnabled ? (
                   <Button
-                    aria-label="Attach a file"
+                    aria-label={t("composer.attach")}
                     className="size-[44px] shrink-0 self-end rounded-full text-duet-ink-2"
                     // The button stays, and stays labelled: a conversation that cannot take another
                     // message has not lost the ability to attach, it has lost the message. Swapping it
@@ -1674,7 +1681,7 @@ export function Composer({
                   </Button>
                 ) : (
                   <Button
-                    aria-label="More message options unavailable"
+                    aria-label={t("composer.moreUnavailable")}
                     className="size-[44px] shrink-0 self-end rounded-full text-duet-ink-2 disabled:opacity-100"
                     disabled
                     size="icon"
@@ -1685,7 +1692,7 @@ export function Composer({
                   </Button>
                 )}
                 <PromptArea
-                  aria-label="Message"
+                  aria-label={t("composer.message")}
                   className={cn(
                     "duet-composer-editor min-w-0 flex-1 self-center border-0 bg-transparent p-0 py-[6.5px] text-[1.0625rem] text-duet-ink leading-[1.4375rem] tracking-[-0.011em] shadow-none",
                     editorClassName,
@@ -1717,6 +1724,10 @@ export function Composer({
           <VoiceSheet
             canSend={canSendRecording}
             dictation={dictation}
+            onType={() => {
+              editAfterSheet.current = true;
+              dictation.session.cancel();
+            }}
             open={voiceSheet}
           />
         ) : null}
@@ -1753,7 +1764,7 @@ export function Composer({
               onRemove={discardAttachment}
             />
             <PromptArea
-              aria-label="Message"
+              aria-label={t("composer.message")}
               autoGrow
               className={cn(
                 "w-full border-0 bg-transparent p-0 text-sm shadow-none",
@@ -1774,7 +1785,7 @@ export function Composer({
           <div className="flex items-center justify-between">
             {attachmentsEnabled ? (
               <Button
-                aria-label="Attach a file"
+                aria-label={t("composer.attach")}
                 className="size-7 rounded-full p-0"
                 disabled={disabled}
                 onClick={() => fileInputRef.current?.click()}

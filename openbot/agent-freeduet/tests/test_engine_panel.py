@@ -925,3 +925,24 @@ def test_a_local_engine_card_change_keeps_its_place_and_a_new_chain_gets_it_appe
     panel.apply_change("ollama", model="qwen2.5:14b")
     assert _shown("chef") == wanted
     assert all("ollama-member" in ids for ids in _chef_file()["chains"].values())
+
+
+def test_a_free_cloud_engine_enabled_for_a_member_with_no_own_order_leaves_a_login_first(data):
+    from freeduet.engines import ordered_chain
+
+    panel.save_key("openrouter", "sk-or-v1-CANARYkey0123456789")
+    panel.apply_change("openrouter", enabled=True, model="openrouter/free")
+    panel.apply_change("openrouter", members=["chef"])
+    chain = ordered_chain("chef", load_engines())
+    assert "openrouter-member" in [engine.id for engine in chain]
+    assert chain[0].billing == "subscription"
+
+
+def test_removing_a_key_that_was_never_saved_is_a_clean_answer_and_changes_no_file(client, data):
+    before = sorted(path.name for path in data.iterdir())
+    answer = client.delete("/engines/panel/groq/key", headers=AUTH)
+    assert answer.status_code == 200 and answer.json() == {"keySaved": False}
+    assert sorted(path.name for path in data.iterdir()) == before
+    assert not (data / "keys").exists() and not (data / "engines.yaml").exists()
+    panel.remove_key("groq")
+    assert sorted(path.name for path in data.iterdir()) == before

@@ -1,0 +1,171 @@
+/* Who is working (D168): light tokens of their own, like dashboard.css, so the card and the dots read the same wherever they sit. */
+.fd-ws {
+  --w-card: #fff;
+  --w-line: #e2e8f0;
+  --w-ink: #1e293b;
+  --w-ink2: #475569;
+  --w-working: #147a3a;
+  --w-wait: #b45309;
+  --w-idle: #94a3b8;
+  --w-stuck: #c8402a;
+}
+.fd-ws-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--w-line);
+  border-radius: 14px;
+  background: var(--w-card);
+  color: var(--w-ink);
+  font-size: 14px;
+  line-height: 20px;
+  text-decoration: none;
+  min-height: 44px;
+}
+a.fd-ws-card:hover {
+  border-color: #c5cfdd;
+}
+a.fd-ws-card:focus-visible {
+  outline: 3px solid rgba(100, 48, 171, 0.35);
+  outline-offset: 2px;
+}
+.fd-ws-card[data-state="stuck"] {
+  border-color: #f0b7ab;
+}
+.fd-ws-card[data-state="waiting"] {
+  border-color: #f5d08a;
+}
+.fd-ws-text {
+  flex: 1;
+  min-width: 0;
+}
+.fd-ws-title {
+  display: block;
+  color: var(--w-ink2);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fd-ws-open {
+  color: var(--w-ink2);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.fd-ws-dot {
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--w-idle);
+}
+.fd-ws-dot[data-state="working"] {
+  background: var(--w-working);
+  animation: fd-ws-pulse 1.8s ease-in-out infinite;
+}
+.fd-ws-dot[data-state="waiting"] {
+  background: var(--w-wait);
+}
+.fd-ws-dot[data-state="stuck"] {
+  background: var(--w-stuck);
+}
+.fd-ws-dot[data-state="done"] {
+  background: var(--w-working);
+}
+.fd-ws-dot[data-state="queued"] {
+  background: var(--w-idle);
+}
+@keyframes fd-ws-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fd-ws-dot[data-state="working"] {
+    animation: none;
+  }
+}
+
+/*
+ * D180: a ring around a member's face, drawn only while there is something to say (nothing when idle).
+ * It sits outside the face (3px gap, 2px line), so the mascot is never covered. The parent is position: relative.
+ */
+.fd-ws-ring {
+  --r-gap: 7px;
+  --r-line: 2px;
+  position: absolute;
+  inset: calc(var(--r-gap) * -1);
+  border-radius: 999px;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+.fd-ws-ring[data-state="working"] {
+  background: conic-gradient(
+    from 0deg,
+    rgba(100, 48, 171, 0) 0%,
+    #6430ab 35%,
+    #1fb5b0 70%,
+    rgba(31, 181, 176, 0) 100%
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--r-line)),
+    #000 calc(100% - var(--r-line))
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - var(--r-line)),
+    #000 calc(100% - var(--r-line))
+  );
+  animation: fd-ws-spin 2.4s linear infinite;
+}
+.fd-ws-ring[data-state="waiting"] {
+  border: var(--r-line) solid #d98a0b;
+  animation: fd-ws-ring-pulse 2s ease-in-out infinite;
+}
+.fd-ws-ring[data-state="stuck"] {
+  border: var(--r-line) dashed #c8402a;
+}
+.fd-ws-ring[data-state="done"] {
+  border: var(--r-line) solid #1f9d55;
+  animation: fd-ws-ring-fade 4s ease-out forwards;
+}
+@keyframes fd-ws-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes fd-ws-ring-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+@keyframes fd-ws-ring-fade {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fd-ws-ring[data-state="working"] {
+    animation: none;
+    background: conic-gradient(from 0deg, #6430ab, #1fb5b0, #6430ab);
+  }
+  .fd-ws-ring[data-state="waiting"] {
+    animation: none;
+  }
+}

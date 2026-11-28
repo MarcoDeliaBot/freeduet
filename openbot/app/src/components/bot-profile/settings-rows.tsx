@@ -22,9 +22,10 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { type T, useT } from "@/freeduet/i18n/provider";
 import {
   accessSummary,
-  countLabel,
   memorySummary,
   reachSummary,
   setupSummary,
@@ -61,7 +62,18 @@ type Row = {
  * One row per area of this Bot's configuration, each stating its current answer and opening the page
  * that changes it. Sharing is for its owner, administrators, and anyone it is published to.
  */
+/** "3 rules", or the none line, in the app's language: the catalogue's plural shape. */
+function countWords(
+  t: T,
+  count: number,
+  plural: MessageId,
+  none: MessageId,
+): string {
+  return count === 0 ? t(none) : t(plural, { count });
+}
+
 export function BotSettingsRows({ agent }: { agent: AgentProfile }) {
+  const t = useT();
   const me = useQuery(currentUserQueryOptions()).data;
   const routines = useQuery(routinesQueryOptions());
   const plugins = useQuery(agentPluginsQueryOptions(agent.id));
@@ -80,22 +92,22 @@ export function BotSettingsRows({ agent }: { agent: AgentProfile }) {
   const rows: Row[] = [
     {
       to: "/bots/$agentId/responsibilities",
-      title: "Responsibilities",
+      title: t("bot.area.responsibilities"),
       icon: IconTargetArrow,
       summary: goals.data
-        ? countLabel(
+        ? countWords(
+            t,
             goals.data.filter(
               (goal) => goal.agentId === agent.id && goal.status === "active",
             ).length,
-            "active",
-            "active",
-            "None active",
+            "bot.settings.activeCount",
+            "bot.settings.noneActive",
           )
         : "",
     },
     {
       to: "/bots/$agentId/reach",
-      title: "Reaching you",
+      title: t("bot.area.reaching"),
       icon: IconDeviceMobile,
       summary: reach.data
         ? reachSummary(
@@ -109,7 +121,7 @@ export function BotSettingsRows({ agent }: { agent: AgentProfile }) {
     },
     {
       to: "/bots/$agentId/memory",
-      title: "Memory",
+      title: t("bot.area.memory"),
       icon: IconBrain,
       summary:
         sources.data && research.data
@@ -124,37 +136,37 @@ export function BotSettingsRows({ agent }: { agent: AgentProfile }) {
     },
     {
       to: "/bots/$agentId/approvals",
-      title: "Approval rules",
+      title: t("nav.approvalRules"),
       icon: IconChecks,
       summary: approvals.data
-        ? countLabel(
+        ? countWords(
+            t,
             approvals.data.rules.filter(
               (rule) =>
                 rule.botId !== "*" && ruleCoversBot(rule.botId, agent.id),
             ).length,
-            "rule",
-            "rules",
-            "No rules",
+            "bot.settings.ruleCount",
+            "bot.settings.noRules",
           )
         : "",
     },
     {
       to: "/bots/$agentId/routines",
-      title: "Routines",
+      title: t("nav.routines"),
       icon: IconClock,
       summary: routines.data
-        ? countLabel(
+        ? countWords(
+            t,
             routines.data.routines.filter((row) => row.agentId === agent.id)
               .length,
-            "routine",
-            "routines",
-            "No routines",
+            "bot.settings.routineCount",
+            "bot.settings.noRoutines",
           )
         : "",
     },
     {
       to: "/bots/$agentId/access",
-      title: "Skills and access",
+      title: t("bot.area.access"),
       icon: IconPuzzle,
       summary: plugins.data
         ? accessSummary(
@@ -167,7 +179,7 @@ export function BotSettingsRows({ agent }: { agent: AgentProfile }) {
       ? [
           {
             to: "/bots/$agentId/sharing" as const,
-            title: "Sharing",
+            title: t("bot.area.sharing"),
             icon: IconUsersGroup,
             summary: teamBots.data
               ? sharingSummary(published, agent.visibility)
@@ -177,14 +189,14 @@ export function BotSettingsRows({ agent }: { agent: AgentProfile }) {
       : []),
     {
       to: "/bots/$agentId/setup",
-      title: "Setup",
+      title: t("settings.setup"),
       icon: IconSettings,
       summary: setupSummary(agent),
     },
   ];
 
   return (
-    <PageSection title="Settings for this Bot">
+    <PageSection title={t("bot.settings.heading")}>
       <PageRows>
         {rows.map(({ to, title, icon: Icon, summary }, index) => (
           <Fragment key={to}>

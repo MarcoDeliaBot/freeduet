@@ -141,7 +141,14 @@ export type ReadPageResult = {
   notRead?: string;
   elapsedMs?: number;
 };
-export type ReadPagesInput = { urls: string[] };
+/**
+ * The engines `computer_read_pages` may read in (D156). Chromium is the member's own browser and the
+ * default; Firefox and WebKit (Safari's engine) are read-only checks in a private browser of their own.
+ * The computer keeps the same list (`agent-computer/src/browser-engine.ts`), and a test pins the two.
+ */
+export const READ_PAGES_ENGINES = ["chromium", "firefox", "webkit"] as const;
+export type ReadPagesEngine = (typeof READ_PAGES_ENGINES)[number];
+export type ReadPagesInput = { urls: string[]; engine?: ReadPagesEngine };
 export type ReadPagesPage = {
   /** The address that was asked for, as given. */
   url: string;

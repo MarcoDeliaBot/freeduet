@@ -7,7 +7,9 @@ import {
   render,
   waitFor,
 } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { Composer } from "@/components/channels/composer/composer";
+import { ActiveBotProvider, useActiveBot } from "@/lib/copilot/active-bot";
 import { deploymentKeys } from "@/lib/deployment/queries";
 import * as recording from "@/lib/dictation/recording";
 import { queryClient } from "@/query-client";
@@ -148,7 +150,9 @@ test("opening the sheet starts recording", async () => {
   const sheet = await openSheet(view);
   expect(dictation.start).toHaveBeenCalledTimes(1);
   expect(sheet.getAttribute("aria-modal")).toBe("true");
-  expect(view.queryByText("Tap ↑ when you're done") !== null).toBe(true);
+  expect(view.queryByText("Tap the microphone when you're done") !== null).toBe(
+    true,
+  );
   // The sheet carries the recording; the composer under it does not swap in a second set of controls.
   expect(hasButton(view, "Cancel dictation")).toBe(false);
 });
@@ -165,9 +169,11 @@ test("× throws the words away, even once they were being written down", async (
   expect(message(view).textContent).toBe("");
 
   await openSheet(view);
-  fireEvent.click(view.getByRole("button", { name: "Send" }));
+  fireEvent.click(
+    view.getByRole("button", { name: "Stop dictation and send" }),
+  );
   await waitFor(() =>
-    expect(view.getByRole("status").textContent).toBe("Writing it down…"),
+    expect(view.getByRole("status").textContent).toBe("Writing what you said…"),
   );
   fireEvent.click(view.getByRole("button", { name: "Discard" }));
   await waitFor(() => expect(sheetOpen(view)).toBe(false));
@@ -181,9 +187,11 @@ test("↑ sends the words as the person's message, once", async () => {
   const dictation = stubDictation();
   const { view, sent } = renderChatComposer();
   await openSheet(view);
-  fireEvent.click(view.getByRole("button", { name: "Send" }));
+  fireEvent.click(
+    view.getByRole("button", { name: "Stop dictation and send" }),
+  );
   await waitFor(() =>
-    expect(view.getByRole("status").textContent).toBe("Writing it down…"),
+    expect(view.getByRole("status").textContent).toBe("Writing what you said…"),
   );
   expect(sent).toEqual([]);
   await dictation.land();
@@ -205,7 +213,9 @@ test("↑ parks the words behind a turn in flight, through the composer's own qu
     },
   });
   await openSheet(view);
-  fireEvent.click(view.getByRole("button", { name: "Send" }));
+  fireEvent.click(
+    view.getByRole("button", { name: "Stop dictation and send" }),
+  );
   await dictation.land();
   await waitFor(() => expect(queued).toEqual([WORDS]));
   expect(sent).toEqual([]);
@@ -217,7 +227,7 @@ test("Type instead puts the words in the draft to edit, and sends nothing", asyn
   await openSheet(view);
   fireEvent.click(view.getByRole("button", { name: "Type instead" }));
   await waitFor(() =>
-    expect(view.getByRole("status").textContent).toBe("Writing it down…"),
+    expect(view.getByRole("status").textContent).toBe("Writing what you said…"),
   );
   await dictation.land();
   await waitFor(() => expect(sheetOpen(view)).toBe(false));
@@ -270,4 +280,42 @@ test("while Stop holds the send arrow's place, the mic opens the sheet instead",
   fireEvent.click(view.getByRole("button", { name: "Dictate a message" }));
   await view.findByRole("dialog", { name: "Say everything you need to do" });
   expect(dictation.start).toHaveBeenCalledTimes(1);
+});
+
+function Declaring({
+  botId,
+  children,
+}: {
+  botId: string;
+  children: ReactNode;
+}) {
+  useActiveBot(botId);
+  return <>{children}</>;
+}
+
+/** Counts, not elements, for the reason `hasButton` gives. */
+function orbs(botId: string) {
+  stubDictation();
+  const view = render(
+    <ActiveBotProvider>
+      <Declaring botId={botId}>
+        <Composer compact glass onSubmit={() => {}} />
+      </Declaring>
+    </ActiveBotProvider>,
+  );
+  return view;
+}
+
+test("a team member's voice sheet shows the member's mascot, not the mic orb", async () => {
+  const view = orbs("freeduet");
+  const sheet = await openSheet(view);
+  expect(sheet.querySelectorAll("[data-face='freeduet']").length).toBe(1);
+  expect(sheet.querySelectorAll("canvas").length).toBe(0);
+});
+
+test("another Bot's voice sheet keeps the mic orb", async () => {
+  const view = orbs("travel");
+  const sheet = await openSheet(view);
+  expect(sheet.querySelectorAll("[data-face]").length).toBe(0);
+  expect(sheet.querySelectorAll("canvas").length).toBe(1);
 });

@@ -1,11 +1,14 @@
 import { MAX_DICTATION_SECONDS } from "@openbot/shared/dictation";
-import type { Recording } from "./recording";
+import { englishT, type T } from "@/freeduet/i18n/provider";
+import { NoSpeechError, type Recording } from "./recording";
 
 export type DictationState = {
   phase: "idle" | "requesting" | "recording" | "transcribing" | "error";
   seconds: number;
   error?: string;
   canRetry: boolean;
+  /** Set on an idle state when the recording stopped by itself with nothing said: a hint, never an error. */
+  notice?: string;
   stream?: MediaStream;
 };
 
@@ -23,14 +26,22 @@ export class DictationSession {
   private abort?: AbortController;
   private timer?: ReturnType<typeof setInterval>;
   private intent: DictationIntent = "draft";
+  /** The person asked only to move on to typing: a recording with no words is then not an error. */
+  private quiet = false;
 
   constructor(
     private readonly deps: {
       record: (onError: (error: Error) => void) => Promise<Recording>;
       transcribe: (audio: Blob, signal: AbortSignal) => Promise<string>;
       onTranscript: (text: string, intent: DictationIntent) => void;
+      /** The app's translator for the words the composer shows (D181). English when none is given. */
+      t?: T;
     },
   ) {}
+
+  private get t(): T {
+    return this.deps.t ?? englishT;
+  }
 
   getSnapshot = () => this.state;
   subscribe = (listener: () => void) => {
@@ -55,6 +66,7 @@ export class DictationSession {
     this.abort?.abort();
     this.audio = undefined;
     this.intent = "draft";
+    this.quiet = false;
     this.update(idle);
   };
 
@@ -88,20 +100,31 @@ export class DictationSession {
         phase: "error",
         error:
           error instanceof Error && error.name === "NotAllowedError"
-            ? "Microphone access was denied. Allow it in your browser and try again."
+            ? this.t("dictation.session.denied")
             : // Its message names the page's problem and the way out, which "check your microphone" would hide.
               error instanceof Error &&
                 error.name === "RecordingUnsupportedError"
               ? error.message
-              : "Could not start recording. Check your microphone and try again.",
+              : this.t("dictation.session.startFailed"),
       });
     }
   };
 
-  finish = async (intent: DictationIntent = "draft") => {
+  /** Stop listening because nothing was said: no transcription and no error, only `notice` for the person to read. */
+  stopWithNotice = (notice: string) => {
+    if (this.state.phase !== "recording") return;
+    this.cancel();
+    this.update({ ...idle, notice });
+  };
+
+  finish = async (
+    intent: DictationIntent = "draft",
+    options: { quiet?: boolean } = {},
+  ) => {
     if (this.state.phase !== "recording" || !this.recording) return;
     this.clearTimer();
     this.intent = intent;
+    this.quiet = options.quiet === true;
     const generation = this.generation;
     this.update({ ...this.state, phase: "transcribing", stream: undefined });
     try {
@@ -117,7 +140,7 @@ export class DictationSession {
       this.update({
         ...idle,
         phase: "error",
-        error: "Could not finish recording. Please record again.",
+        error: this.t("dictation.session.finishFailed"),
       });
     }
   };
@@ -148,6 +171,14 @@ export class DictationSession {
       this.deps.onTranscript(transcript, intent);
     } catch (error) {
       if (generation !== this.generation) return;
+      if (error instanceof NoSpeechError && this.quiet) {
+        // Nothing was said and the person is going on to type: close without an error, with no words.
+        this.audio = undefined;
+        this.quiet = false;
+        this.update(idle);
+        this.deps.onTranscript("", this.intent);
+        return;
+      }
       this.update({
         ...this.state,
         phase: "error",
@@ -155,7 +186,7 @@ export class DictationSession {
         error:
           error instanceof Error
             ? error.message
-            : "Transcription failed. Please retry.",
+            : this.t("dictation.session.transcribeFailed"),
       });
     }
   }

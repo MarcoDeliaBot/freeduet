@@ -1,0 +1,2913 @@
+import type { Catalog } from "../translate";
+import type { EN } from "./en";
+
+/*
+ * Korean (D181, stage 2): polite and formal ("-습니다", "-세요"), the way the site's Korean page
+ * addresses the reader. The terms are the site's: "비서" for Bot, "멤버" for member, "승인" for approval,
+ * "엔진" for engine, "루틴" for routine, "설정" for settings. "넘김" (the noun of the site's "넘기다")
+ * is used for hand-off. "Full access" and the member names stay as they are. Korean has one plural
+ * form, so `one` repeats `other`, and each counter takes the number in digits ("{count}개", "{count}건",
+ * "{count}명"). The approval cards (shared/approval-text-ko.ts) still say "Bot". Not yet checked by a
+ * person who reads Korean.
+ */
+export const ko: Catalog<typeof EN> = {
+  "sign.title": "{product}에 로그인",
+  "sign.continueWith": "{provider} 계정으로 계속하기",
+  "sign.opening": "{provider} 여는 중…",
+  "sign.openError": "{provider} 로그인을 열 수 없습니다. 다시 시도하세요.",
+  "sign.ssoRequired": "조직에서 회사 계정으로 로그인하도록 요구합니다.",
+  "sign.pairLead":
+    "이 브라우저는 아직 {product}에 페어링되지 않았습니다. 앱이 실행 중인 컴퓨터에서",
+  "sign.pairTail":
+    "을 실행하세요. 여기서 {product} 앱이 열려 바로 사용할 수 있습니다.",
+  "sign.notSetUp":
+    "로그인이 아직 설정되지 않았습니다. 관리자가 먼저 설정해야 합니다.",
+  "sign.or": "또는",
+  "sign.emailPlaceholder": "you@company.com",
+  "sign.openingCompany": "여는 중…",
+  "sign.continueCompany": "회사 계정으로 계속하기",
+  "sign.adminSignIn": "관리자 로그인",
+  "sign.noCompany": "이 주소에는 회사 로그인이 설정되어 있지 않습니다.",
+  "shell.menu": "메뉴",
+  "shell.everything": "전체",
+  "shell.everythingLine": "모든 채널의 채팅 맥락 전체",
+  "shell.channelsError": "채널을 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "shell.channels": "채널",
+  "shell.newChannel": "새 채널",
+  "shell.archived": "보관됨",
+  "shell.archivedChannels": "보관된 채널",
+  "shell.unarchive": "보관 해제",
+  "shell.unarchiveNamed": "{name} 보관 해제",
+  "shell.earlier": "이전 대화",
+  "shell.manage": "관리",
+  "shell.signOut": "로그아웃",
+  "nav.bots": "비서",
+  "nav.connections": "연결",
+  "nav.capabilities": "기능",
+  "nav.routines": "루틴",
+  "nav.approvalRules": "승인 규칙",
+  "nav.admin": "관리",
+  "nav.dashboard": "대시보드",
+  "nav.settings": "설정",
+  "tab.main": "메인",
+  "tab.chat": "채팅",
+  "tab.tasks": "작업",
+  "tab.make": "만들기",
+  "tab.waiting": "{tab}, 대기 {badge}",
+  "header.chat": "{product} 채팅",
+  "header.settings": "내 설정",
+  "header.back": "뒤로",
+  "header.more": "더보기",
+  "composer.ask": "무엇이든 물어보세요",
+  "composer.message": "메시지",
+  "composer.queue": "메시지 대기열에 넣기",
+  "composer.send": "메시지 보내기",
+  "composer.stop": "비서 멈추기",
+  "composer.showCall": "음성 통화 보기",
+  "composer.startCall": "음성 통화 시작",
+  "composer.callBot": "이 비서와 통화하기",
+  "composer.callUnsupported":
+    "음성 통화에는 마이크와 보안 연결(HTTPS)이 필요합니다",
+  "composer.speak": "음성으로 메시지 입력",
+  "composer.dictateTitle": "필요한 일을 모두 말씀하세요",
+  "composer.attach": "파일 첨부",
+  "composer.moreUnavailable": "메시지 추가 옵션을 쓸 수 없습니다",
+  "composer.messageNamed": "{name}에게 메시지",
+  "chat.botsError": "비서 목록을 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "chat.noBots": "아직 비서가 없습니다.",
+  "chat.conversationError":
+    "대화를 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "chat.stillStarting":
+    "대화를 아직 시작하는 중입니다. 잠시 후 다시 시도하세요.",
+  "chat.startError": "대화를 시작하지 못했습니다. 다시 시도하세요.",
+  "attention.questions": {
+    one: "질문 {count}개",
+    other: "질문 {count}개",
+  },
+  "attention.approvals": {
+    one: "승인 {count}건",
+    other: "승인 {count}건",
+  },
+  "attention.handoffs": {
+    one: "멈춘 작업 넘김 {count}건",
+    other: "멈춘 작업 넘김 {count}건",
+  },
+  "attention.unread": {
+    one: "읽지 않은 대화 {count}개",
+    other: "읽지 않은 대화 {count}개",
+  },
+  "attention.needYou": {
+    one: "나에게 확인이 필요한 항목 {count}개",
+    other: "나에게 확인이 필요한 항목 {count}개",
+  },
+  "attention.open": "{summary}. 처리하려면 비서 페이지를 여세요.",
+  "attention.unreadMessages": "읽지 않은 메시지",
+  "bots.new": "새 비서",
+  "bots.purpose":
+    "내 비서와 나와 공유된 비서입니다. 비서마다 무엇을 하고 있고 나에게 무엇이 필요한지 보세요.",
+  "bots.loadError": "비서 목록을 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "bots.needsYou": "확인이 필요함",
+  "bots.pinned": "고정됨",
+  "bots.yours": "내 비서",
+  "bots.shared": "나와 공유됨",
+  "bots.allPinned": "내 비서가 모두 위에 고정되어 있습니다.",
+  "bots.allNeedYou": "내 비서가 모두 '확인이 필요함' 아래에 있습니다.",
+  "bots.none": "아직 비서가 없습니다. '새 비서'를 눌러 만들어 보세요.",
+  "bots.nobodyShared": "아직 아무도 나에게 비서를 공유하지 않았습니다.",
+  "bots.hide": "숨기기",
+  "bots.show": "보이기",
+  "bots.hidden": "숨김",
+  "bots.hiddenDescription": {
+    one: "내가 숨긴 비서 {count}명. 내 목록만 바뀝니다.",
+    other: "내가 숨긴 비서 {count}명. 내 목록만 바뀝니다.",
+  },
+  "bots.paused": "일시 정지",
+  "bots.message": "메시지",
+  "bots.wroteIn": {
+    one: "읽지 않은 대화 {count}개에 {name}의 새 글이 있습니다.",
+    other: "읽지 않은 대화 {count}개에 {name}의 새 글이 있습니다.",
+  },
+  "bots.readNewest": "최신 대화 읽기",
+  "bots.resuming": "다시 시작하는 중…",
+  "bots.pausedResume": "일시 정지됨. 다시 시작",
+  "botPage.purpose": "이 비서가 나를 위해 하고 있는 일과 설정 상태입니다.",
+  "botPage.fallbackTitle": "비서",
+  "botPage.openError":
+    "이 비서를 열지 못했습니다. 나와 공유되지 않았을 수 있습니다.",
+  "profile.forYou": "나를 위한",
+  "profile.settingsError":
+    "이 비서의 설정을 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "profile.active": "사용 중",
+  "profile.pausedDescription":
+    "일시 정지됨. 다시 켜기 전까지는 나를 위해 아무것도 실행되지 않습니다.",
+  "profile.activeDescription":
+    "이 비서가 나를 위해 루틴, 맡은 일, 넘김, 후속 확인을 실행합니다.",
+  "profile.notifications": "알림",
+  "profile.notifyDescription": "{level}. 사이드바 배지는 항상 표시됩니다.",
+  "profile.notify.all": "모두",
+  "profile.notify.needsInput": "확인이 필요할 때만",
+  "profile.notify.none": "없음 (배지만)",
+  "profile.browserNotifications": "브라우저 알림",
+  "profile.browserOff":
+    "이 브라우저에서는 꺼져 있습니다. 켜 두면 비서가 확인을 요청할 때 알려 드립니다.",
+  "profile.turnOn": "켜기",
+  "profile.startConversation": "대화를 시작하세요.",
+  "stalled.what": "{name}의 작업이 끝나지 않았습니다: {task}",
+  "stalled.why": "이유: {reason}.",
+  "stalled.retryError": "다시 시도하지 못했습니다. 이미 실행 중일 수 있습니다.",
+  "stalled.dismissError": "닫지 못했습니다. 이미 실행 중일 수 있습니다.",
+  "stalled.dismissing": "닫는 중…",
+  "stalled.dismissed": "닫힘",
+  "stalled.dismiss": "닫기",
+  "stalled.retrying": "다시 시도하는 중…",
+  "stalled.queued": "다시 대기열에 추가됨",
+  "stalled.retry": "다시 시도",
+  "stalled.open": "대화 열기",
+  "dash.title": "대시보드",
+  "dash.notAvailable": "아직 사용할 수 없음",
+  "dash.tokensNotCounted": "오늘은 아직 집계된 요청이 없습니다.",
+  "dash.countsUnavailable": "지금은 토큰 수를 확인할 수 없습니다.",
+  "dash.enginesLink": "엔진 관리",
+  "dash.teamLink": "모든 멤버",
+  "dash.waitingForYou": "나를 기다리는 항목",
+  "dash.available": "사용 가능",
+  "dash.loading": "팀을 불러오는 중…",
+  "dash.nothingWaits": "나를 기다리는 항목이 없습니다.",
+  "dash.thingsWait": {
+    one: "나를 기다리는 항목 {count}개.",
+    other: "나를 기다리는 항목 {count}개.",
+  },
+  "dash.partialCount":
+    "시도 {turns}회 중 {reported}회에서 사용량이 보고되었습니다.",
+  "dash.inputPlusOutput":
+    "입력과 출력을 합친 값이며, 각 엔진이 보고한 그대로입니다.",
+  "dash.nothingSaved": "오늘은 아직 무료 엔진을 거친 요청이 없습니다",
+  "dash.firstFor": {
+    one: "첫 번째 엔진으로 쓰는 멤버 {count}명",
+    other: "첫 번째 엔진으로 쓰는 멤버 {count}명",
+  },
+  "dash.members": {
+    one: "멤버 {count}명",
+    other: "멤버 {count}명",
+  },
+  "dash.indicators": "지표",
+  "dash.tokensToday": "오늘의 토큰",
+  "dash.savedToday": "오늘 무료 엔진으로 절약됨",
+  "dash.waitingSub": "질문, 승인, 멈춘 작업 넘김",
+  "dash.nextRoutine": "다음 루틴",
+  "dash.noRoutine": "예정된 루틴이 없습니다.",
+  "dash.team": "팀",
+  "dash.engines": "엔진",
+  "dash.noEngine": "아직 설정된 엔진이 없습니다.",
+  "dash.perMemberAria": "멤버별 토큰",
+  "dash.perMember": "멤버별 토큰, 오늘",
+  "dash.foot":
+    "수치는 각 엔진이 보고한 값이며 UTC 날짜 기준입니다. 최근 활동 기록과 요금제 한도 표시는 아직 없습니다.",
+  "voice.heardNothing":
+    "아무 말씀도 듣지 못했습니다. 마이크를 눌러 다시 시도하거나 직접 입력하세요.",
+  "voice.tapWhenDone": "끝나면 마이크를 누르세요",
+  "voice.discard": "버리기",
+  "voice.start": "받아쓰기 시작",
+  "voice.stopAndSend": "받아쓰기를 멈추고 보내기",
+  "voice.typeInstead": "대신 입력하기",
+  "voice.retry": "다시 시도",
+  "voice.recordAgain": "다시 녹음하기",
+  "voice.writing": "말씀하신 내용을 적는 중…",
+  "voice.listeningStop": "듣는 중… 잠시 멈추면 듣기를 끝냅니다",
+  "voice.listening": "듣고 있습니다. 말씀하세요",
+  "voice.permission": "마이크 권한을 기다리는 중…",
+  "voice.widget.unavailable": "",
+  "voice.widget.connecting": "",
+  "voice.widget.speaking": "",
+  "voice.widget.working": "",
+  "voice.widget.muted": "",
+  "voice.widget.listening": "",
+  "voice.widget.ready": "",
+  "voice.widget.label": "",
+  "voice.widget.duration": "",
+  "voice.widget.expand": "",
+  "voice.widget.expandTitle": "",
+  "voice.widget.end": "",
+  "voice.widget.endTitle": "",
+  "voice.widget.returnChat": "",
+  "voice.widget.returnChatTitle": "",
+  "voice.widget.settings": "",
+  "voice.widget.captions": "",
+  "voice.widget.captionsEmpty": "",
+  "voice.widget.you": "",
+  "voice.widget.youMuted": "",
+  "voice.widget.youNamed": "",
+  "voice.widget.mute": "",
+  "voice.widget.unmute": "",
+  "voice.widget.muteTitle": "",
+  "voice.session.slow": "",
+  "voice.session.timeLimit": "",
+  "voice.session.muteFailed": "",
+  "voice.session.lost": "",
+  "voice.session.startFailed": "",
+  "voice.session.transcriptLimit": "",
+  "voice.session.responseFailed": "",
+  "voice.session.serviceError": "",
+  "voice.webrtc.unsupported": "",
+  "voice.webrtc.playback": "",
+  "voice.webrtc.lost": "",
+  "voice.webrtc.micGone": "",
+  "voice.webrtc.channelFailed": "",
+  "voice.webrtc.ended": "",
+  "voice.webrtc.unreadable": "",
+  "voice.webrtc.connectFailed": "",
+  "voice.webrtc.invalid": "",
+  "voice.webrtc.notConnected": "",
+  "voice.websocket.audio": "",
+  "voice.websocket.config": "",
+  "voice.websocket.address": "",
+  "voice.websocket.startFailed": "",
+  "voice.websocket.connect": "",
+  "voice.websocket.closed": "",
+  "voice.websocket.notConnected": "",
+  "voice.websocket.invalid": "",
+  "voice.websocket.slow": "",
+  "voice.websocket.micGone": "",
+  "voice.connection.unsupported": "",
+  "voice.connection.unavailable": "",
+  "voice.connection.transport": "",
+  "dictation.controls.dictate": "",
+  "dictation.controls.cancel": "",
+  "dictation.controls.transcribing": "",
+  "dictation.controls.listening": "",
+  "dictation.controls.duration": "",
+  "dictation.controls.stop": "",
+  "dictation.controls.stopTitle": "",
+  "dictation.controls.send": "",
+  "dictation.recording.secure": "",
+  "dictation.recording.noRecorder": "",
+  "dictation.recording.noFormat": "",
+  "dictation.recording.tooLarge": "",
+  "dictation.recording.stopped": "",
+  "dictation.recording.interrupted": "",
+  "dictation.recording.empty": "",
+  "dictation.recording.noSpeech": "",
+  "dictation.recording.failed": "",
+  "dictation.session.denied": "",
+  "dictation.session.startFailed": "",
+  "dictation.session.finishFailed": "",
+  "dictation.session.transcribeFailed": "",
+  "home.bots": "팀을 만나고 비서마다 관리하세요.",
+  "home.capabilities": "스킬과 기억.",
+  "home.connectionsLabel": "계정, 앱, 메일 규칙",
+  "home.connections": "계정, 앱 또는 메일을 연결하세요.",
+  "home.setupLabel": "준비 체크리스트",
+  "home.setup": "무엇이 준비되었고 무엇이 남았는지 보세요.",
+  "home.approvalsLabel": "승인 규칙과 Full access",
+  "home.approvals": "비서가 나에게 묻지 않고 해도 되는 일.",
+  "home.passwordsLabel": "비밀번호",
+  "home.passwords": "팀이 쓸 수 있는 비밀번호.",
+  "home.routines": "스스로 반복되는 작업과 주간 보기.",
+  "home.notifications": "업데이트를 받는 곳.",
+  "home.admin": "컴퓨터, 인증 정보, 제한, 사람, 감사 기록.",
+  "home.engines":
+    "비서마다 누가 답하는지, 어떤 순서인지, 오늘 얼마나 썼는지 보여 줍니다. 순서를 직접 바꾸기 전까지는 내 구독이 가장 먼저 쓰입니다.",
+  "home.safety": "안전",
+  "home.jobs": "작업",
+  "home.system": "시스템",
+  "settings.description": "팀, 연결된 계정, 개인 설정을 관리하세요.",
+  "settings.sections": "설정 항목",
+  "settings.workspace": "작업 공간",
+  "settings.preferences": "환경 설정",
+  "settings.devices": "기기와 정보",
+  "settings.appearance": "화면 모양",
+  "settings.matchPhone": "휴대폰과 같게",
+  "settings.light": "밝게",
+  "settings.dark": "어둡게",
+  "settings.voice": "음성",
+  "settings.shortcuts": "키보드 단축키",
+  "language.section": "언어",
+  "language.title": "앱 언어",
+  "language.description":
+    "메뉴와 버튼의 언어입니다. 팀은 채팅에서 정한 언어로 메시지를 보냅니다.",
+  "language.auto": "자동 (브라우저 설정)",
+  "settings.descriptionPlain":
+    "나에게 보이는 {product} 화면과 작동 방식입니다.",
+  "wide.yourTeam": "내 팀",
+  "wide.team": "팀",
+  "wide.stateWaiting": "나를 기다리는 중",
+  "wide.stateWorking": "작업 중",
+  "wide.memberLabel": "{name}, {line}",
+  "chat.loadingConversation": "이 대화를 불러오는 중",
+  "chat.readAloud": "소리 내어 읽기",
+  "chat.stopReading": "읽기 멈추기",
+  "chat.thinking": "생각하는 중",
+  "chat.queued": "대기열에 있음",
+  "chat.removeQueued": "대기 중인 메시지 삭제: {what}",
+  "chat.remove": "삭제",
+  "chat.routineRan": "루틴을 실행했습니다.",
+  "chat.firstDayYes": "맞습니다",
+  "chat.firstDayNo": "뭔가 이상합니다",
+  "chat.tryingAgain": "다시 시도하는 중입니다.",
+  "chat.responsibilityRan": "맡은 일을 실행했습니다.",
+  "chat.trigger": "시작 조건:",
+  "chat.details": "세부 정보",
+  "chat.via": "{source} 경유",
+  "chat.untitledFile": "제목 없는 파일",
+  "chat.attachment": "첨부 파일",
+  "chat.attachmentLower": "첨부 파일",
+  "chat.attachmentNamed": "첨부 파일: {name}",
+  "chat.unavailableNamed": "{name}: 사용할 수 없음.",
+  "chat.unavailable": "이 첨부 파일은 사용할 수 없습니다.",
+  "chat.openNamed": "{name} 열기",
+  "chat.close": "닫기",
+  "chat.generatedInterface": "이 비서가 만든 화면",
+  "chat.usedBrowser": "브라우저 사용",
+  "chat.hostAndMore": "{host} 외 {amount}개",
+  "chat.searchedWeb": "웹 검색",
+  "chat.readPages": {
+    one: "페이지 {amount}개 읽기",
+    other: "페이지 {amount}개 읽기",
+  },
+  "chat.browsedPages": {
+    one: "페이지 {amount}개 둘러보기",
+    other: "페이지 {amount}개 둘러보기",
+  },
+  "chat.usedBrowserPhrase": "브라우저 사용",
+  "chat.usedNamed": "{name} 사용",
+  "chat.usedConnectors": {
+    one: "커넥터 {amount}개 사용",
+    other: "커넥터 {amount}개 사용",
+  },
+  "chat.usedTools": {
+    one: "도구 {amount}개 사용",
+    other: "도구 {amount}개 사용",
+  },
+  "chat.andJoin": "{head} 및 {last}",
+  "chat.inProgress": "진행 중",
+  "chat.waitingForYou": "나를 기다리는 중",
+  "chat.notCompleted": "완료되지 않음",
+  "chat.blocked": "막힘",
+  "chat.didntWork": "실패",
+  "chat.couldntFinishStep": "이 단계를 끝내지 못했습니다.",
+  "chat.issues": {
+    one: "문제 {amount}건",
+    other: "문제 {amount}건",
+  },
+  "settings.addRepository": "저장소 추가",
+  "settings.approvals": "승인",
+  "settings.appsSharedBots": "공유된 비서가 쓸 수 있는 앱",
+  "settings.backToApp": "앱으로 돌아가기",
+  "settings.cancel": "취소",
+  "settings.cannotMakeCode":
+    "코드는 컴퓨터와 페어링된 브라우저에서 만듭니다. 이 브라우저에서는 만들 수 없습니다.",
+  "settings.cantLink":
+    "아직 {provider} 계정을 연결할 수 없습니다. 관리자가 먼저 설정해야 합니다.",
+  "settings.changesDescription":
+    "비서가 채팅에서 바꾼 설정입니다. '실행 취소'를 누르면 7일 동안 이전 값으로 돌아갑니다. 다만 그 설정이 이 변경으로 정해진 값 그대로일 때만 가능합니다.",
+  "settings.changesEmpty": "채팅에서 바뀐 내용이 아직 없습니다.",
+  "settings.changesLoading": "변경 내용을 불러오는 중…",
+  "settings.changesTitle": "채팅에서 바뀐 내용",
+  "settings.charactersOf": "{used}/{limit}자",
+  "settings.checkLinkError":
+    "이 계정을 연결할 수 있는지 확인하지 못했습니다: {error}",
+  "settings.code": "코드",
+  "settings.codeExpires":
+    "이 코드는 한 번만 쓸 수 있으며 10분 뒤에 만료됩니다.",
+  "settings.codeRanOut": "이 코드는 만료되었습니다. 새 코드를 만드세요.",
+  "settings.componentsGallery": "구성 요소 갤러리",
+  "settings.computer": "컴퓨터",
+  "settings.connect": "연결",
+  "settings.connectEvents": "이벤트 연결",
+  "settings.connectNamed": "{name} 연결",
+  "settings.copied": "복사됨",
+  "settings.copy": "복사",
+  "settings.copyFailed": "복사하지 못했습니다. 코드를 선택해 직접 복사하세요.",
+  "settings.deliveriesEmpty": "아직 전송 내역이 없습니다.",
+  "settings.deliveriesTitle": "최근 전송 내역",
+  "settings.deploymentOwn": "설치 기본값",
+  "settings.devicesDescription":
+    "휴대폰에서 {product} 앱에 로그인하고 알림을 켜면 여기에 추가됩니다.",
+  "settings.devicesEmpty": "아직 기기가 없습니다.",
+  "settings.devicesTitle": "내 기기",
+  "settings.disconnect": "연결 해제",
+  "settings.disconnectError": "{name} 연결을 해제하지 못했습니다: {error}",
+  "settings.disconnectNamed": "{name} 연결 해제",
+  "settings.done": "완료",
+  "settings.emphasisBot": "비서 이름",
+  "settings.emphasisConversation": "대화 제목",
+  "settings.emphasisDescription": "사이드바에서 강조할 줄을 고르세요.",
+  "settings.emphasisPreview": "메시지 목록 미리 보기",
+  "settings.emphasisTitle": "메시지 목록 강조",
+  "settings.general": "일반",
+  "settings.githubConnectError": "GitHub에 연결하지 못했습니다: {error}",
+  "settings.githubLinkFailed":
+    "GitHub 계정을 연결하지 못했습니다. 다시 시도하세요.",
+  "settings.githubLinked": "GitHub 계정이 연결되었습니다.",
+  "settings.githubTaken":
+    "그 GitHub 계정은 {product}에서 다른 사람과 연결되어 있습니다. 다른 계정으로 GitHub에 로그인해 다시 시도하거나 관리자에게 문의하세요.",
+  "settings.kindDecision": "결정",
+  "settings.kindDecisionDescription": "비서가 행동하기 전에 필요한 승인입니다.",
+  "settings.kindProgress": "진행 상황",
+  "settings.kindProgressDescription": "지켜보지 않은 작업의 답변과 결과입니다.",
+  "settings.kindQuestion": "질문",
+  "settings.kindQuestionDescription":
+    "비서가 나에게 묻고 답을 기다리는 항목입니다.",
+  "settings.languageChanged": "팀이 나에게 쓰는 언어 {from} → {to}",
+  "settings.lastSeen": "마지막 접속 {when}",
+  "settings.levelAll": "모두",
+  "settings.levelNeedsInput": "확인이 필요할 때만",
+  "settings.linkBroughtCode":
+    "링크로 코드가 들어왔습니다. 이 브라우저의 이름을 정하고 '페어링'을 누르세요.",
+  "settings.linkSlack": "Slack 계정 연결하기",
+  "settings.linked": "연결됨",
+  "settings.loadAccountError": "계정을 불러오지 못했습니다: {error}",
+  "settings.loading": "불러오는 중…",
+  "settings.localAddress":
+    "이 주소는 이 컴퓨터에서만 작동합니다. 휴대폰에는 외부에서 FreeDuet에 접속하는 주소가 필요합니다. 그 주소를 휴대폰에서 열고 설정에서 코드를 입력하세요.",
+  "settings.madeWhen": "{when} 만듦",
+  "settings.makeCode": "코드 만들기",
+  "settings.memberAdded": "{member}: 팀에 추가됨",
+  "settings.name": "이름",
+  "settings.nameChanged": "{bot}: 내가 붙인 이름 {from} → {to}",
+  "settings.nameOwn": "비서 고유의 이름",
+  "settings.needsReconnect": "다시 연결해야 함",
+  "settings.needsReconnectHandle": "다시 연결해야 함 · @{handle}",
+  "settings.noItalianVoice":
+    "이 컴퓨터에 이탈리아어 음성이 없어서 여기서는 답변을 소리 내어 읽을 수 없습니다.",
+  "settings.notLinked": "연결 안 됨",
+  "settings.notSetUp": "설정 안 됨",
+  "settings.notifyChanged": "{bot}: 알림 {from} → {to}",
+  "settings.pairThisDescription":
+    "FreeDuet이 실행되는 컴퓨터에서 설정을 열고 '휴대폰 또는 다른 브라우저 페어링' 아래의 '코드 만들기'를 누른 뒤, 표시되는 링크를 열거나 여기에 코드를 입력하세요.",
+  "settings.pairThisTitle": "이 브라우저 페어링",
+  "settings.pairedDescription":
+    "페어링된 휴대폰이나 다른 브라우저는 이 브라우저와 같은 방식으로 작동합니다. 하나를 해지하면 다음 요청부터 접근이 차단되고 로그아웃됩니다.",
+  "settings.pairedDone": "이 브라우저는 컴퓨터와 페어링되었습니다.",
+  "settings.pairedTitle": "휴대폰 또는 다른 브라우저 페어링",
+  "settings.phone": "휴대폰",
+  "settings.phoneOrBrowser": "휴대폰 또는 다른 브라우저",
+  "settings.qrLabel": "페어링 링크가 담긴 QR 코드",
+  "settings.readAloudDescription":
+    "비서의 답변마다 '소리 내어 읽기' 버튼을 추가합니다. 이 컴퓨터의 음성만 사용하며, 아무것도 다른 곳으로 보내지 않습니다.",
+  "settings.readAloudTitle": "답변을 소리 내어 읽기",
+  "settings.rename": "이름 바꾸기",
+  "settings.repositories": "저장소",
+  "settings.repositoriesDescription":
+    "여기에 저장소를 추가한 다음, 아래 주소와 같은 웹훅 시크릿으로 GitHub에 웹훅을 추가하세요. 그러면 issues.opened 같은 이벤트로 맡은 일을 시작할 수 있습니다.",
+  "settings.repositoriesEmpty":
+    "아직 저장소가 없습니다. '저장소 추가'로 하나 추가하세요.",
+  "settings.repository": "저장소",
+  "settings.reset": "초기화",
+  "settings.resetDescription":
+    "모든 답변을 지워서 공유된 비서마다 다시 묻게 합니다.",
+  "settings.resetDone": "초기화했습니다. 공유된 비서마다 다시 묻습니다.",
+  "settings.revoke": "해지",
+  "settings.routingDescription":
+    "자리를 비웠을 때 각 종류의 업데이트가 어디로 가는지 정합니다. 웹의 {product}에는 항상 모든 내용이 표시됩니다.",
+  "settings.routingError":
+    "업데이트를 받는 곳을 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "settings.routingTitle": "업데이트를 받는 곳",
+  "settings.runsOut":
+    "내 계정으로 로그인한 휴대폰에서 이 QR 코드를 스캔하거나 링크를 여세요. 또는 설정을 열고 코드를 입력하세요. 한 번만 쓸 수 있으며 {time} 뒤에 만료됩니다.",
+  "settings.sameSecret":
+    "GitHub에서 웹훅을 추가할 때 같은 시크릿을 입력하세요.",
+  "settings.sampleBot": "일반 비서",
+  "settings.sampleTitle": "다음 주 계획 세우기",
+  "settings.save": "저장",
+  "settings.saved": "저장됨",
+  "settings.saving": "저장하는 중…",
+  "settings.setup": "준비",
+  "settings.sharedBots": "공유된 비서",
+  "settings.sharedBotsDescription":
+    "나와 공유된 비서는 소유자의 앱을 사용합니다. 내 앱은 대화에서 허용한 곳에서만 사용합니다.",
+  "settings.slackCodeError": "Slack 코드를 만들지 못했습니다: {error}",
+  "settings.standingDescription":
+    "모든 대화에서 모든 비서에게 적용됩니다. 비서의 역할은 무엇을 하는지 정하고, 이 지침은 어떻게 하기를 원하는지 정합니다. 예를 들어 글쓰기 스타일이 그렇습니다.",
+  "settings.standingTitle": "항상 적용되는 지침",
+  "settings.switchLabel": "{kind} ({transport})",
+  "settings.thisBrowserTag": "(이 브라우저)",
+  "settings.toneChanged": "{bot}: 말투 {from} → {to}",
+  "settings.undo": "실행 취소",
+  "settings.undoFailed": "변경을 실행 취소하지 못했습니다. 다시 시도하세요.",
+  "settings.undoGone": "더는 실행 취소할 수 없습니다",
+  "settings.undoing": "실행 취소하는 중…",
+  "settings.undone": "실행 취소됨",
+  "settings.webhookSecret": "웹훅 시크릿",
+  "settings.yourAccount": "내 계정",
+  "bot.activity.kindRoutine": "루틴",
+  "bot.activity.kindResponsibility": "맡은 일",
+  "bot.activity.kindHandoff": "넘긴 작업",
+  "bot.activity.kindApproval": "승인",
+  "bot.activity.kindQuestion": "질문",
+  "bot.activity.kindFollowUp": "후속 확인",
+  "bot.activity.needsYou": "확인이 필요함",
+  "bot.activity.stop": "멈추기",
+  "bot.activity.stopping": "멈추는 중…",
+  "bot.activity.cancelling": "취소하는 중…",
+  "bot.activity.open": "열기",
+  "bot.activity.title": "활동",
+  "bot.activity.scheduled": "예정됨",
+  "bot.activity.completed": "완료됨",
+  "bot.activity.emptyInProgress":
+    "지금 실행 중이거나 나를 기다리는 항목이 없습니다.",
+  "bot.activity.emptyScheduled": "예정된 항목이 없습니다.",
+  "bot.activity.emptyCompleted": "아직 끝난 항목이 없습니다.",
+  "bot.activity.loadError":
+    "이 비서의 활동을 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "bot.settings.heading": "이 비서의 설정",
+  "bot.area.responsibilities": "맡은 일",
+  "bot.area.reaching": "나에게 연락하는 방법",
+  "bot.area.memory": "기억",
+  "bot.area.access": "스킬과 접근 권한",
+  "bot.area.sharing": "공유",
+  "bot.settings.activeCount": {
+    one: "{count}개 사용 중",
+    other: "{count}개 사용 중",
+  },
+  "bot.settings.noneActive": "사용 중인 항목 없음",
+  "bot.settings.ruleCount": {
+    one: "규칙 {count}개",
+    other: "규칙 {count}개",
+  },
+  "bot.settings.noRules": "규칙 없음",
+  "bot.settings.routineCount": {
+    one: "루틴 {count}개",
+    other: "루틴 {count}개",
+  },
+  "bot.settings.noRoutines": "루틴 없음",
+  "bot.access.skillsDescription":
+    "이 비서와 함께 쓰려면 스킬을 켜세요. 대화에서 /를 입력하면 실행할 수 있습니다.",
+  "bot.access.yourSkills": "내 스킬",
+  "bot.access.skillsError":
+    "내 스킬을 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "bot.access.noSkills": "아직 스킬이 없습니다.",
+  "bot.access.writeOne": "하나 작성하기",
+  "bot.access.title": "사용할 수 있는 것",
+  "bot.access.grantedDescription":
+    "이 비서가 사용할 수 있는 앱과 스킬, 그리고 각 앱이 나에게 준비되었는지 보여 줍니다. 그 밖의 것은 사용할 수 없습니다.",
+  "bot.access.grantedError":
+    "이 비서가 사용할 수 있는 항목을 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "bot.access.readyError":
+    "각 앱이 나에게 준비되었는지 확인하지 못했습니다. 페이지를 새로고침하세요.",
+  "bot.access.noApps":
+    "아직 앱이 없습니다. 관리자가 추가해야 합니다. 그때까지 이 비서는 나와만 대화할 수 있습니다.",
+  "bot.access.toolsAndMore": "{list} 외 {count}개",
+  "bot.access.toolCount": {
+    one: "도구 {count}개",
+    other: "도구 {count}개",
+  },
+  "bot.access.skillLabel": "스킬",
+  "bot.access.manageNamed": "이 비서의 {title} 관리",
+  "bot.reset.conversations": {
+    one: "대화 {count}개",
+    other: "대화 {count}개",
+  },
+  "bot.reset.memorySources": {
+    one: "기억 출처 {count}개",
+    other: "기억 출처 {count}개",
+  },
+  "bot.reset.memories": {
+    one: "가져온 기억 {count}개",
+    other: "가져온 기억 {count}개",
+  },
+  "bot.reset.routines": {
+    one: "루틴 {count}개",
+    other: "루틴 {count}개",
+  },
+  "bot.reset.responsibilities": {
+    one: "맡은 일 {count}개",
+    other: "맡은 일 {count}개",
+  },
+  "bot.reset.followUps": {
+    one: "예약된 후속 확인 {count}개",
+    other: "예약된 후속 확인 {count}개",
+  },
+  "bot.reset.formedMemories": {
+    one: "비서가 만든 기억 {count}개",
+    other: "비서가 만든 기억 {count}개",
+  },
+  "bot.reset.research": {
+    one: "백그라운드 조사 {count}건",
+    other: "백그라운드 조사 {count}건",
+  },
+  "bot.reset.standing": {
+    one: "상시 권한 {count}개",
+    other: "상시 권한 {count}개",
+  },
+  "bot.reset.title": "{name} 초기화하시겠습니까?",
+  "bot.reset.description":
+    "나와 {name} 사이의 내용이 모두 삭제됩니다. 다른 사람의 대화와 데이터는 남습니다. 이 작업은 되돌릴 수 없습니다.",
+  "bot.reset.planError":
+    "초기화하면 무엇이 삭제되는지 확인하지 못했습니다. 다시 시도하세요.",
+  "bot.reset.done": "완료. 나와 {name}의 대화는 처음부터 다시 시작합니다.",
+  "bot.reset.nothing": "삭제할 내 데이터가 없습니다.",
+  "bot.reset.willDelete": "다음이 삭제됩니다:",
+  "bot.reset.sharedKept": {
+    one: "다른 사람이나 비서와 공유된 대화 {count}개는 남겨집니다.",
+    other: "다른 사람이나 비서와 공유된 대화 {count}개는 남겨집니다.",
+  },
+  "bot.reset.memoriesKept": "내가 비서에게 직접 말한 기억은 남겨집니다.",
+  "bot.reset.resetting": "초기화하는 중…",
+  "bot.reset.submit": "삭제하고 초기화",
+  "bot.manage.pinnedAssigned":
+    "관리자가 나에게 지정했습니다. 내 비서 목록의 맨 위에 계속 고정됩니다.",
+  "bot.manage.pinnedOn": "내 비서 목록의 맨 위에 있습니다. 내 목록만 바뀝니다.",
+  "bot.manage.pinnedOff": "내 비서 목록의 맨 위에 둡니다. 내 목록만 바뀝니다.",
+  "bot.manage.hiddenAssigned":
+    "관리자가 나에게 지정했습니다. 숨길 수 없습니다.",
+  "bot.manage.hiddenOn":
+    "내 비서 목록의 '숨김' 아래에 있습니다. 내 목록만 바뀝니다.",
+  "bot.manage.hiddenOff": "내 비서 목록에서 뺍니다. 내 목록만 바뀝니다.",
+  "bot.manage.duplicate": "복제",
+  "bot.manage.duplicateDescription":
+    "나만의 사본을 만듭니다. 대화와 인증 정보는 복사되지 않습니다.",
+  "bot.manage.resetDescription":
+    "이 비서와의 대화, 나를 위해 기억하는 내용, 예약된 작업을 삭제합니다. 삭제 전에 목록을 먼저 보게 됩니다.",
+  "bot.manage.delete": "삭제",
+  "bot.manage.deleteDescription":
+    "모든 사람에게서 삭제합니다. 이 작업은 되돌릴 수 없습니다.",
+  "bot.manage.deleteTitle": "{name} 삭제하시겠습니까?",
+  "bot.manage.deleteConfirm":
+    "모든 사람에게서 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+  "bot.manage.deleting": "삭제하는 중…",
+  "bot.setup.title": "제목",
+  "bot.setup.whatItDoes": "하는 일",
+  "bot.setup.identity": "기본 정보",
+  "bot.setup.systemOwned": "시스템 소유",
+  "bot.setup.systemOwnedDescription":
+    "{product}에 기본으로 포함됩니다. 특정 개인의 것이 아닙니다.",
+  "bot.setup.visibility": "공개 범위",
+  "bot.setup.visiblePrivate":
+    "나만 볼 수 있고, 나만 이 비서와 대화를 시작할 수 있습니다.",
+  "bot.setup.visiblePublic":
+    "{product}의 모든 사람이 찾아서 사용할 수 있습니다.",
+  "bot.setup.private": "비공개",
+  "bot.setup.public": "공개",
+  "bot.setup.saveError": "저장하지 못했습니다. 다시 시도하세요.",
+  "bot.setup.checkField": "이 항목을 확인하고 다시 시도하세요.",
+  "bot.setup.connection": "연결",
+  "bot.setup.builtIn": "내장",
+  "bot.setup.agentUrl": "에이전트 URL",
+  "bot.setup.builtInDescription":
+    "{product} 안에서 실행됩니다. 연결할 것은 없습니다.",
+  "bot.sharing.published": "게시됨",
+  "bot.sharing.toWholeTeam": "팀 전체에",
+  "bot.sharing.toPeople": "{who}에게",
+  "bot.sharing.groupNamed": "{name} 그룹",
+  "bot.sharing.teamPrivate": "사람마다 이 비서와 나누는 대화는 비공개입니다.",
+  "bot.sharing.notVisibleYet":
+    "실제 이름과 설명이 생기기 전까지 팀원들은 볼 수 없습니다.",
+  "bot.sharing.unpublish": "게시 취소",
+  "bot.sharing.link": "링크",
+  "bot.sharing.linkDescription": "이 비서와 비공개 대화를 엽니다.",
+  "bot.sharing.copyLink": "링크 복사",
+  "bot.sharing.publicNotPublished":
+    "팀에는 게시되지 않았습니다. 공개 비서이므로 {product}의 모든 사람이 이미 사용할 수 있습니다.",
+  "bot.sharing.onlyYouCanUse": "게시되지 않았습니다. 나만 사용할 수 있습니다.",
+  "bot.sharing.notPublished": "게시되지 않았습니다.",
+  "bot.sharing.whoPublishedTo": "게시 대상",
+  "bot.sharing.publish": "게시",
+  "bot.sharing.publishNote":
+    "게시해도 공개 범위는 바뀌지 않습니다. 언제든지 게시를 취소할 수 있습니다.",
+  "bot.sharing.audience": "대상",
+  "bot.sharing.notPublishedSummary": "게시되지 않음",
+  "bot.sharing.theWholeTeam": "팀 전체",
+  "bot.sharing.specificPeople": "특정 사람 또는 그룹",
+  "bot.sharing.peopleCount": {
+    one: "{count}명",
+    other: "{count}명",
+  },
+  "bot.sharing.groupCount": {
+    one: "그룹 {count}개",
+    other: "그룹 {count}개",
+  },
+  "bot.sharing.assignToGroups": "그룹에 지정",
+  "bot.sharing.assignDescription":
+    "이 비서를 그룹 멤버 모두의 비서 목록 맨 위에 고정합니다. 팀 전체에는 *을 입력하세요.",
+  "bot.sharing.publishedTo": "게시 대상",
+  "bot.sharing.peopleByEmail": "사람 (이메일)",
+  "bot.sharing.commaSeparated": "쉼표로 구분",
+  "bot.sharing.groups": "그룹",
+  "bot.sharing.update": "업데이트",
+  "bot.sharing.publishToTeam": "팀에 게시",
+  "bot.sharing.assignNamed": "{name}: 그룹에 지정",
+  "bot.sharing.assignNote": "모든 멤버의 비서 목록 맨 위에 고정됩니다.",
+  "bot.sharing.groupOrStar": "그룹 또는 *",
+  "bot.sharing.wholeTeamPlaceholder": "팀 전체는 *",
+  "bot.sharing.assign": "지정",
+  "bot.sharing.removeNamed": "{name} 제거",
+  "bot.sharing.wholeTeam": "팀 전체",
+  "bot.sharing.notAssigned": "어떤 그룹에도 지정되지 않았습니다.",
+  "bot.sharing.assignRow": "그룹에 지정",
+  "bot.page.accessPurpose":
+    "이 비서가 사용할 수 있는 스킬, 앱, 다른 비서입니다.",
+  "bot.page.approvalsPurpose":
+    "이 비서가 나에게 먼저 묻지 않고 할 수 있는 일입니다.",
+  "bot.page.memoryPurpose":
+    "이 비서가 배우는 앱과, 백그라운드에서 나를 위해 하는 조사입니다.",
+  "bot.page.memoryPointer":
+    "내 비서들이 나에 대해 기억하는 내용은 다음에서 볼 수 있습니다:",
+  "bot.page.reachPurpose":
+    "Slack, Microsoft Teams 또는 문자 메시지로 이 비서와의 대화를 이어 가세요.",
+  "bot.page.responsibilitiesPurpose":
+    "이 비서가 나를 위해 계속 진행하는 목표입니다. 각 실행을 시작한 것과 찾아낸 내용을 확인하세요.",
+  "bot.page.routinesPurpose":
+    "이 비서가 일정에 따라 나를 위해 하는 일입니다. 하나를 끄거나, 지금 실행하거나, 삭제할 수 있습니다.",
+  "bot.page.setupPurpose":
+    "이 비서가 누구인지, 누가 찾을 수 있는지, 어디에서 실행되는지 보여 줍니다.",
+  "bot.page.sharingPurpose":
+    "이 비서를 또 누가 사용할 수 있는지 보여 줍니다. 사람마다 이 비서와 나누는 대화는 비공개입니다.",
+  // The Bot sub-pages' contents (D181 stage 2e): memory sources, suggestions, reaching you, responsibilities
+  // and routines, the summaries of lib/agents/bot-summaries.ts and the time phrases of lib/relative-time.ts.
+  // Shared words reuse their existing keys (`botPage.fallbackTitle` is "Bot"); `bot.choose` is "Choose a Bot".
+  "bot.choose": "비서 선택",
+  "memory.addSource": "출처 추가",
+  "memory.title": "앱 출처",
+  "memory.description":
+    "연결한 앱 중 이 비서가 읽을 수 있는 앱이 여기에 표시되며, 더 추가할 수 있습니다. 소스는 15분마다 새로고침됩니다. 그 내용은 이 비서만 볼 수 있습니다.",
+  "memory.empty": "아직 출처가 없습니다. '출처 추가'를 눌러 하나 추가하세요.",
+  "memory.upToDate": "최신 상태",
+  "memory.off": "꺼짐",
+  "memory.lastRead": "마지막 읽기 {when}",
+  "memory.syncNow": "지금 동기화",
+  "memory.readNamed": "{name} 읽기",
+  "memory.addTitle": "출처 추가",
+  "memory.addDescription":
+    "{product}이(가) 지금 읽고, 켜져 있는 동안 15분마다 다시 읽습니다.",
+  "memory.enterNumber": "{name}의 숫자를 입력하세요.",
+  "memory.cantShow":
+    "이 출처에는 {product}에서 보여 줄 수 없는 설정이 있습니다. 다른 출처를 고르세요.",
+  "memory.checkSettings": "출처 설정을 확인하세요.",
+  "memory.whatToRead": "읽을 내용",
+  "memory.chooseWhat": "읽을 내용 선택",
+  "memory.sourceName": "출처 이름",
+  "memory.chooseValue": "값 선택",
+  "memory.reading": "출처 읽는 중…",
+  "memory.addAndSync": "출처 추가 후 동기화",
+  "suggestions.everyHour": "매시간",
+  "suggestions.every4Hours": "4시간마다",
+  "suggestions.twiceDay": "하루 두 번",
+  "suggestions.onceDay": "하루 한 번",
+  "suggestions.everyMinutes": {
+    one: "{count}분마다",
+    other: "{count}분마다",
+  },
+  "suggestions.yourBot": "내 비서",
+  "suggestions.title": "제안된 다음 단계",
+  "suggestions.from": "출처: {app}",
+  "suggestions.connectedApp": "연결된 앱",
+  "suggestions.openRecord": "기록 열기",
+  "suggestions.startTask": "작업으로 시작",
+  "suggestions.empty":
+    "지금은 제안이 없습니다. 백그라운드 리서치가 켜진 비서가 여기에서 다음 단계를 제안합니다.",
+  "suggestions.turnOnResearch": "조사 켜기",
+  "suggestions.researchDescription":
+    "이 비서에 직접 켜기 전까지는 꺼져 있습니다. 단, 관리자가 모두에게 켠 경우는 예외입니다. 켜져 있으면 4시간마다 이미 읽을 수 있는 앱을 살펴보고, 검토할 수 있는 기억을 만들고, 다음 단계를 제안합니다. 읽기만 할 수 있습니다. 메시지를 보내거나, 앱의 내용을 바꾸거나, 브라우저나 컴퓨터를 사용할 수 없습니다. 끄거나 제거하면 그대로 유지됩니다.",
+  "suggestions.researchTitle": "백그라운드 조사",
+  "suggestions.researchOff": "백그라운드 리서치가 꺼져 있습니다.",
+  "suggestions.turnOnDialog": "백그라운드 조사 켜기",
+  "suggestions.turnOnDescription":
+    "일정에 따라 읽고, 제안을 자신이 속한 채널로 전달합니다.",
+  "suggestions.deliverTo": "제안 전달 위치",
+  "suggestions.chooseChannel": "채널 선택",
+  "suggestions.howOften": "얼마나 자주",
+  "suggestions.focus": "무엇을 찾을지 (선택 사항)",
+  "suggestions.off": "꺼짐",
+  "suggestions.researchingNow": "지금 조사 중",
+  "suggestions.lastRan": "마지막 실행 {when}",
+  "suggestions.turnOff": "끄기",
+  "reaching.linkSlack": "Slack 연결",
+  "reaching.linkTeams": "Microsoft Teams 연결",
+  "reaching.connectPhone": "휴대폰 연결",
+  "reaching.sumSlack": "Slack에서 대화를 이어갑니다.",
+  "reaching.sumTeams": "Microsoft Teams에서 대화를 이어갑니다.",
+  "reaching.sumSms": "문자 메시지로 대화를 이어갑니다.",
+  "reaching.codeOnWay":
+    "인증 코드가 가는 중입니다. 코드를 입력해 마무리하세요.",
+  "reaching.linkReady":
+    "연결 코드를 보낼 준비가 되었습니다. 다시 보려면 이것을 여세요.",
+  "reaching.smsNotSet":
+    "문자 메시지는 아직 설정되지 않았습니다. 관리자가 먼저 켜야 합니다.",
+  "reaching.notSet":
+    "아직 설정되지 않았습니다. 관리자가 먼저 Slack과 Teams를 켜야 합니다.",
+  "reaching.pointerBefore":
+    "내 기기, 최근 전달 내역, 업데이트 종류별 전달 위치는 다음에 있습니다:",
+  "reaching.connected": "연결된 전달 대상",
+  "reaching.noDestinations": "연결된 전달 대상이 없습니다.",
+  "reaching.optedOut":
+    "문자로 STOP을 보냈습니다. 다시 시작하려면 START를 보내세요.",
+  "reaching.disconnect": "연결 해제",
+  "reaching.channelNote":
+    "다른 사람도 읽을 수 있는 Slack 또는 Teams 채널에서는 비서가 다이렉트 메시지로 답합니다.",
+  "reaching.connectTitle": "대화 연결",
+  "reaching.oneAtATime":
+    "계정이나 전화번호 하나는 한 번에 하나의 대화에서만 쓸 수 있습니다. 여기에 연결하면 지금 연결된 대화에서 옮겨 옵니다.",
+  "reaching.conversation": "대화",
+  "reaching.chooseConversation": "대화 선택",
+  "reaching.loadMore": "대화 더 불러오기",
+  "reaching.phoneNumber": "전화번호",
+  "reaching.sendCode": "인증 코드 보내기",
+  "reaching.verificationCode": "인증 코드",
+  "reaching.confirmPhone": "전화번호 확인",
+  "reaching.linkExpires": {
+    one: "{count}분 안에 이 메시지를 {platform}의 {product} 앱으로 보내세요. 그 계정을 이 대화와 이 비서에 연결합니다.",
+    other:
+      "{count}분 안에 이 메시지를 {platform}의 {product} 앱으로 보내세요. 그 계정을 이 대화와 이 비서에 연결합니다.",
+  },
+  "responsibilities.new": "새 맡은 일",
+  "responsibilities.title": "목표",
+  "responsibilities.empty":
+    "아직 맡은 일이 없습니다. '새 맡은 일'을 눌러 추가하세요.",
+  "responsibilities.emptyBot":
+    "이 비서에 아직 맡은 일이 없습니다. '새 맡은 일'을 눌러 추가하세요.",
+  "routines.neverRun": "아직 실행되지 않음",
+  "routines.running": "실행 중…",
+  "routines.missed": "{when} 놓침",
+  "routines.failed": "{when} 실패",
+  "routines.skipped": "{when} 건너뜀",
+  "routines.ran": "{when} 실행됨",
+  "routines.finished": "{when} 끝남",
+  "routines.noRuns": "아직 실행 기록이 없습니다.",
+  "routines.runNow": "지금 실행",
+  "routines.triggered": "트리거로 시작됨",
+  "routines.scheduled": "예정됨",
+  "routines.sweepChecked":
+    "{product}이(가) 마지막으로 확인한 시각은 {when}입니다. 다시 시작될 때까지 어느 것도 실행되지 않습니다. 계속되면 관리자에게 문의하세요.",
+  "routines.sweepNever":
+    "{product}이(가) 아직 루틴 실행을 시작하지 않아서 이 루틴들은 실행되지 않습니다. 관리자에게 설정을 요청하세요.",
+  "routines.notRunning": "루틴이 실행되고 있지 않습니다.",
+  "routines.loadError": "루틴을 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "routines.emptyBot":
+    "이 비서에 아직 루틴이 없습니다. 비서에게 '평일 9시마다 나에게 …을 보내 줘'처럼 요청하면 여기에 나타납니다.",
+  "routines.empty":
+    "아직 루틴이 없습니다. 비서에게 '평일 9시마다 나에게 …을 보내 줘'처럼 요청하면 여기에 나타납니다.",
+  "routines.enableAria": "{schedule} 예정 루틴 켜기",
+  "routines.channelGone": "삭제된 대화",
+  "routines.untitledChannel": "제목 없는 대화",
+  "routines.due": "지연됨",
+  "routines.next": "다음: {when}",
+  "routines.runNowTitle":
+    "지금 실제로 실행합니다. 비서가 작업을 하고 대화에 게시합니다.",
+  "routines.pausedTurnOn": "이 루틴은 일시 정지되어 있습니다. 먼저 켜세요.",
+  "routines.runNowAria": "{schedule} 예정 루틴 지금 실행",
+  "routines.historyAria": "{schedule} 예정 루틴의 실행 기록",
+  "routines.history": "기록",
+  "routines.deleteAria": "{schedule} 예정 루틴 삭제",
+  "routines.deleteTitle": "'{schedule}'을(를) 삭제하시겠습니까?",
+  "routines.deleteDescription":
+    "이 루틴은 완전히 멈춥니다. 이 작업은 되돌릴 수 없습니다.",
+  "routines.week": "주",
+  "routines.nextRuns": "다음 실행",
+  "routines.viewAria": "보기",
+  "summary.nothingGranted": "허용한 것 없음",
+  "summary.skills": {
+    one: "스킬 {count}개",
+    other: "스킬 {count}개",
+  },
+  "summary.apps": {
+    one: "앱 {count}개",
+    other: "앱 {count}개",
+  },
+  "summary.everyonePublic": "모두(공개)",
+  "summary.notShared": "공유 안 함",
+  "summary.specificPeople": "특정 사람과 그룹",
+  "summary.onlyIn": "{product}에서만",
+  "summary.nothingConnected": "연결된 것 없음",
+  "summary.sources": {
+    one: "기억 출처 {count}개",
+    other: "기억 출처 {count}개",
+  },
+  "summary.researchOn": "백그라운드 리서치 켜짐",
+  "summary.researchOnAfter": "백그라운드 리서치 켜짐",
+  "time.justNow": "방금",
+  "time.minutesAgo": {
+    one: "{count}분 전",
+    other: "{count}분 전",
+  },
+  "time.hoursAgo": {
+    one: "{count}시간 전",
+    other: "{count}시간 전",
+  },
+  "time.yesterday": "어제",
+  "time.daysAgo": {
+    one: "{count}일 전",
+    other: "{count}일 전",
+  },
+  "time.weeksAgo": {
+    one: "{count}주 전",
+    other: "{count}주 전",
+  },
+  "time.recently": "최근",
+  // Stage 2f (D181): the approval rules, the responsibility dialog, the routine history, Passwords.
+  "approvals.behaviour.allow": "묻지 않고 실행",
+  "approvals.behaviour.preApproved": "미리 승인된 경우 실행",
+  "approvals.behaviour.ask": "실행 전에 묻기",
+  "approvals.behaviour.handOff": "나에게 넘기기",
+  "approvals.host.ask": "매번 묻기",
+  "approvals.host.allow": "항상 허용",
+  "approvals.host.never": "허용 안 함",
+  "approvals.teamRule": "{label}(팀 규칙)",
+  "approvals.matchOn": "{scope}에서",
+  "approvals.matchFor": "{bot}에 대해",
+  "approvals.locked": "잠김",
+  "approvals.behaviourFor": "{tool}의 동작",
+  "approvals.formLead":
+    "도구나 앱, 그리고 비서가 그것을 쓰기 전에 하는 일입니다.",
+  "approvals.formHelp":
+    "*는 무엇이든 일치합니다. mcp/gmail/*는 모든 Gmail 도구를 뜻합니다. 대상 *.example.com은 그 사이트의 모든 페이지를 뜻합니다.",
+  "approvals.field.tool": "도구 또는 앱",
+  "approvals.field.effect": "작업 종류",
+  "approvals.field.scope": "대상",
+  "approvals.field.scopeHint": "*, 사이트, 폴더, 비서 이름",
+  "approvals.field.bot": "비서",
+  "approvals.field.botHint": "*는 모든 비서",
+  "approvals.field.behaviour": "동작",
+  "approvals.saveRule": "규칙 저장",
+  "approvals.addRule": "규칙 추가",
+  "approvals.rulesOff":
+    "관리자가 개인 규칙을 껐습니다. 내 규칙은 보관되지만 적용되지 않습니다.",
+  "approvals.bot.lead":
+    "일치하는 규칙 중 가장 엄격한 규칙이 적용됩니다. '묻기' 규칙이 '허용' 규칙보다 우선합니다. 모든 비서에 적용되는 규칙은 다음에 있습니다:",
+  "approvals.bot.settingsLink": "설정 → 승인",
+  "approvals.bot.title": "규칙",
+  "approvals.bot.empty": "이 비서에 적용되는 규칙이 없습니다.",
+  "approvals.adminLead": "팀 설정과 공유 계정 요청은 다음에 있습니다:",
+  "approvals.adminLink": "관리 → 승인",
+  "approvals.before.title": "비서가 행동하기 전에",
+  "approvals.before.askTitle": "변경하기 전에 묻기",
+  "approvals.before.askLine":
+    "비서가 웹사이트, 연결된 앱, 파일을 바꾸는 내용을 내가 검토합니다.",
+  "approvals.before.autoTitle": "자동 검토",
+  "approvals.before.autoEnforced": "관리자가 필수로 정했습니다.",
+  "approvals.before.autoLine":
+    "비서가 내 계정에 영향을 주거나 정보를 공유할 수 있는 일을 하기 전에, {product}이(가) 내 요청과 규칙에 맞는지 확인합니다. 판단할 수 없으면 나에게 묻습니다.",
+  "approvals.before.hostTitle": "내 컴퓨터의 명령",
+  "approvals.before.hostLimited":
+    "관리자가 이것을 '{limit}'(으)로 제한했습니다.",
+  "approvals.before.hostLine":
+    "{product} 데스크톱 앱은 그래도 실행 전에 모든 명령을 보여 줍니다.",
+  "approvals.every.lead":
+    "일치하는 규칙 중 가장 엄격한 규칙이 적용됩니다. '묻기' 규칙이 '허용' 규칙보다 우선합니다. 팀 규칙은 잠겨 있습니다. 비밀번호와 보안 설정은 항상 나에게 넘어오며, 아래에서 비서에 Full access를 켜지 않는 한 결제도 마찬가지입니다. 비서 한 명의 규칙은 다음에 있습니다:",
+  "approvals.every.botPage": "그 비서의 페이지",
+  "approvals.every.title": "모든 비서의 규칙",
+  "approvals.every.empty": "아직 규칙이 없습니다.",
+  "approvals.other.lead":
+    "이 규칙들은 내가 열 수 있는 어떤 비서와도 일치하지 않습니다. 일치하는 비서에게는 여전히 적용됩니다. 원하지 않는 규칙은 삭제하세요.",
+  "approvals.other.title": "다른 비서의 규칙",
+  "approvals.page.description":
+    "비서가 무언가를 바꾸기 전에 언제 물을지 선택하세요. 여기의 규칙은 모든 비서에 적용됩니다.",
+  "approvals.admin.description":
+    "멤버의 비서가 행동하기 전에 물어야 하는 것, 모두에게 적용되는 규칙, 공유 계정 사용 요청입니다.",
+  "approvals.team.title": "팀 설정",
+  "approvals.team.enforce": "모두에게 자동 검토 필수",
+  "approvals.team.custom": "멤버가 개인 규칙을 설정하도록 허용",
+  "approvals.team.hostTitle": "멤버 컴퓨터의 명령, 최대",
+  "approvals.team.hostLine":
+    "멤버 자신이 정한 더 엄격한 설정은 그대로 적용됩니다.",
+  "approvals.team.rulesLead":
+    "이 규칙은 모든 멤버의 비서에 적용됩니다. 멤버는 바꿀 수 없습니다.",
+  "approvals.team.rulesTitle": "팀 규칙",
+  "approvals.team.empty": "팀 규칙이 없습니다.",
+  "approvals.team.addRule": "팀 규칙 추가",
+  "approvals.shared.title": "공유 계정 요청",
+  "approvals.shared.wants": "{bot}이(가) 공유 {account} 계정을 원합니다",
+  "approvals.shared.why.refusedCall":
+    "작업이 차단되었습니다. 이 비서는 승인된 것보다 더 많은 사람에게 닿습니다.",
+  "approvals.shared.why.publish":
+    "소유자가 이 비서에게 연락할 수 있는 사람의 범위를 넓혔습니다.",
+  "approvals.shared.why.trigger":
+    "소유자가 외부 메시지가 이 비서를 조종할 수 있게 하는 시작 조건을 추가했습니다.",
+  "approvals.shared.why.grant": "앱의 작업 권한이 부여되었습니다.",
+  "approvals.shared.now": "현재:",
+  "approvals.shared.notApproved": "승인되지 않음",
+  "approvals.shared.asked": "요청한 것:",
+  "approvals.shared.approve": "승인",
+  "approvals.shared.decline": "거절",
+  "tasks.updated": "{ago} 업데이트됨",
+  "routines.status.running": "실행 중",
+  "routines.status.succeeded": "성공",
+  "routines.status.failed": "실패",
+  "routines.status.skipped": "건너뜀",
+  "routines.status.waiting": "나를 기다리는 중",
+  "routines.status.missed": "놓침",
+  "routines.history.empty":
+    "아직 실행 기록이 없습니다. 루틴이 실행되거나 '지금 실행'을 누르면 여기에 나타납니다.",
+  "routines.history.aBot": "비서",
+  "routines.history.latest": {
+    one: "최근 실행 {count}건을 보여 줍니다.",
+    other: "최근 실행 {count}건을 보여 줍니다.",
+  },
+  "routines.history.deleted": "이후 삭제된 루틴",
+  "routines.history.waitingNote":
+    "내 승인을 기다리는 중입니다. 대화를 열어 답하세요.",
+  "responsibilities.status.completed": "완료됨",
+  "responsibilities.summary.paused":
+    "다시 시작할 때까지 아무것도 시작하지 않습니다",
+  "responsibilities.summary.trigger": "{kind} 트리거",
+  "responsibilities.summary.starts": "{starts}에 시작",
+  "responsibilities.summary.asked": "요청하면 실행",
+  "responsibilities.source.manual": "직접",
+  "responsibilities.source.schedule": "일정",
+  "responsibilities.source.connector": "연결된 앱",
+  "responsibilities.progress": "진행 상황",
+  "responsibilities.lastResult": "마지막 결과",
+  "responsibilities.activeOn": "이벤트와 시작 조건이 시작합니다.",
+  "responsibilities.activeOff": "일시 정지됨. 시작 조건이 시작하지 않습니다.",
+  "responsibilities.runNowLine":
+    "지금 실제로 실행합니다. 비서가 작업을 하고, 게시하거나 작업을 수행할 수 있습니다.",
+  "responsibilities.complete": "완료 처리",
+  "responsibilities.completeLine":
+    "완료로 표시합니다. 이후에는 아무것도 시작하지 않습니다.",
+  "responsibilities.field.title": "제목",
+  "responsibilities.field.instruction": "지시 사항",
+  "responsibilities.field.criteria": "성공 기준",
+  "responsibilities.events": "이벤트",
+  "responsibilities.saving": "저장 중…",
+  "responsibilities.run.queued": "대기 중",
+  "responsibilities.run.waiting":
+    "{kind}을(를) 기다리는 중입니다. 이 비서 페이지 상단이나 대화에서 답하세요.",
+  "responsibilities.runs": "실행",
+  "responsibilities.viewRuns": "실행 보기",
+  "responsibilities.hideRuns": "실행 숨기기",
+  "passwords.description":
+    "웹사이트에 비서를 로그인시킬 때 저장한 로그인 정보입니다. 비서는 이를 절대 보지 못하고, 사용할 때마다 내가 확인합니다.",
+  "passwords.saved": "저장된 로그인 정보",
+  "passwords.loadError":
+    "비밀번호를 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "passwords.off":
+    "관리자가 저장된 비밀번호를 껐습니다. 로그인 정보는 보관되지만 제안되지 않습니다.",
+  "passwords.empty":
+    "저장된 로그인 정보가 없습니다. 웹사이트에 비서를 로그인시킬 때 '비밀번호에 저장'을 선택하세요.",
+  "passwords.lastUsed": "마지막 사용 {date}",
+  "passwords.neverUsed": "사용한 적 없음",
+  "passwords.deleteAria": "{origin}의 로그인 정보 삭제",
+  "settings.notificationsPage":
+    "자리를 비웠을 때 비서의 업데이트가 어디로 도착하는지입니다. 각 비서가 얼마나 보낼지는 해당 비서의 페이지에서 설정합니다.",
+  "fullaccess.label.noPayments": "결제 제외 Full access",
+  "fullaccess.label.full": "Full access",
+  "fullaccess.off": "꺼짐",
+  "fullaccess.description":
+    "기본값은 안전합니다. 비서는 보내기, 결제, 서명, 예약, 삭제 전에 먼저 묻습니다. 비서마다 이런 일을 묻지 않고 하도록 선택할 수 있습니다.",
+  "fullaccess.offTerm": "꺼짐:",
+  "fullaccess.offText":
+    "비서가 보내기, 결제, 서명, 예약, 삭제 전에 먼저 묻습니다.",
+  "fullaccess.noPaymentsTerm": "결제 제외 Full access:",
+  "fullaccess.noPaymentsText":
+    "묻지 않고 보내기, 서명, 예약, 삭제를 합니다. 결제와 구매는 여전히 나에게 묻습니다.",
+  "fullaccess.fullTerm": "Full access:",
+  "fullaccess.fullText":
+    "결제와 구매도 묻지 않고 합니다. 지출 한도가 생기기 전까지는 금액에 제한이 없습니다(v0.4에 예정).",
+  "fullaccess.askTitle": "{name}에게 {label}을(를) 줄까요?",
+  "fullaccess.give": "{label} 주기",
+  "fullaccess.full.p1":
+    "{name}은(는) 먼저 나에게 묻지 않고 보내기, 결제, 서명, 예약, 삭제를 합니다. 이메일이나 웹 페이지처럼 읽은 내용에 따라 행동할 수 있으므로, 그 일을 맡길 만큼 신뢰할 때만 켜세요.",
+  "fullaccess.full.p2":
+    "결제할 수 있는 금액에는 제한이 없습니다. 지출 한도는 아직 없습니다(v0.4에 예정). 결제와 구매가 계속 나에게 묻게 하려면 대신 결제 제외 Full access를 선택하세요.",
+  "fullaccess.full.p3":
+    "비밀번호와 보안 설정은 여전히 내 승인이 필요합니다. 자동 검토자가 설정되어 있으면, 검토자를 꺼 두었더라도 멤버가 자기 컴퓨터에서 실행하는 모든 명령과 스크립트를 검토자가 한 번씩 읽습니다. 설정된 검토자가 없으면 명령은 읽지 않습니다. 이는 내가 내 채팅에서 요청한 일에 적용되며, 루틴이나 체크인에는 적용되지 않습니다. 언제든 끌 수 있고, 바로 멈춥니다.",
+  "fullaccess.noPayments.p1":
+    "{name}은(는) 먼저 나에게 묻지 않고 보내기, 서명, 예약, 삭제를 합니다. 결제와 구매는 여전히 나에게 묻습니다. 이메일이나 웹 페이지처럼 읽은 내용에 따라 행동할 수 있으므로, 그 일을 맡길 만큼 신뢰할 때만 켜세요.",
+  "fullaccess.noPayments.p2":
+    "앱은 내장된 검사로 결제를 알아봅니다. 그래서 결제를 언급만 하는 메시지도 물을 수 있고, 평소와 다르게 쓴 결제는 감지되지 않을 수 있습니다. 비밀번호와 보안 설정은 여전히 내 승인이 필요합니다. 자동 검토자가 설정되어 있으면, 검토자를 꺼 두었더라도 비밀번호, 보안 설정 또는 이런 방식으로 이루어지는 결제를 위해 멤버가 자기 컴퓨터에서 실행하는 모든 명령과 스크립트를 검토자가 한 번씩 읽습니다. 설정된 검토자가 없으면 명령은 읽지 않습니다. 이는 내가 내 채팅에서 요청한 일에 적용되며, 루틴이나 체크인에는 적용되지 않습니다. 언제든 끌 수 있고, 바로 멈춥니다.",
+  "fullaccess.noBots": "아직 비서가 없습니다.",
+  "fullaccess.legend": "{name}의 접근 권한",
+  "fullaccess.radioAria": "{name}의 {label}",
+  "fullaccess.summary.off":
+    "보내기, 결제, 서명, 예약, 삭제 전에 먼저 묻습니다.",
+  "fullaccess.summary.noPayments":
+    "묻지 않고 행동하지만, 결제와 구매는 여전히 나에게 묻습니다. {since}부터.",
+  "fullaccess.summary.full":
+    "결제를 포함해 묻지 않고 행동하며, 금액 제한이 없습니다. {since}부터.",
+  "fullaccess.doneTitle": "묻지 않고 한 일",
+  "fullaccess.doneDescription":
+    "Full access가 있는 비서가 나에게 묻지 않고 한 일입니다. 최신순입니다.",
+  "fullaccess.nothingYet": "아직 없습니다.",
+  "approvals.audience.owner": "소유자만",
+  "approvals.audience.team": "모든 사람",
+  "approvals.audience.outside": ", 그리고 외부 입력",
+  "approvals.audience.nobody": "지정된 사람 없음",
+  "approvals.audience.groups": { one: "그룹 {names}", other: "그룹 {names}" },
+  "approvals.audience.people": { one: "{count}명", other: "{count}명" },
+  "approvals.audience.join": "{a} 및 {b}",
+  "access.req.title": "요청",
+  "access.req.loadError":
+    "접근 요청을 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "access.req.descApp":
+    "이 앱을 요청한 사람들입니다. 승인하면 요청한 일을 바로 실행합니다.",
+  "access.req.descAll":
+    "앱을 켜거나, 비서에게 주거나, 연결해 달라고 요청한 사람들입니다. 승인하면 요청한 일을 바로 실행합니다.",
+  "access.req.aBot": "비서",
+  "access.req.theBot": "비서",
+  "access.req.somebody": "누군가",
+  "access.req.enable": "{bot}에 {app} 켜기",
+  "access.req.grantMore": "{bot}에 {app}의 권한 더 주기: {list}",
+  "access.req.grant": "{bot}에 {app} 주기",
+  "access.req.connectShared": "공유된 {app} 계정 연결",
+  "access.req.asked": "{who}님이 {when} 요청했습니다{forBot}.",
+  "access.req.forBot": " ({bot} 대상)",
+  "access.req.approving": "승인하는 중…",
+  "access.req.botPage": "{app} 아래의 비서 페이지",
+  "access.req.toolRead": "{name} (읽기 전용)",
+  "access.req.toolWrite": "{name} (무언가를 변경함)",
+  "access.req.gives":
+    "승인하면 {bot}에 다음 도구만 주어지고 그 외에는 주어지지 않습니다: {list}.",
+  "access.req.readOnly":
+    "승인하면 {bot}에 {app}의 읽기 전용 작업만 주어집니다. 다른 작업은 {page}에서 선택하세요.",
+  "access.req.canSend": {
+    one: "{names}은(는) 본인을 대신해 보낼 수 있습니다.",
+    other: "{names}은(는) 각각 본인을 대신해 보낼 수 있습니다.",
+  },
+  "access.req.unreviewed": {
+    one: "{names}이(가) {app}에서 무엇을 하는지 알려 주는 검토된 목록이 없으므로, 본인을 대신해 보낼 수 있습니다.",
+    other:
+      "{names}이(가) {app}에서 무엇을 하는지 알려 주는 검토된 목록이 없으므로, 각각 본인을 대신해 보낼 수 있습니다.",
+  },
+  "access.req.neverGives": {
+    one: "승인으로는 이런 도구가 주어지지 않습니다. 설정에서 허용하세요({page}).",
+    other:
+      "승인으로는 이런 도구가 주어지지 않습니다. 설정에서 허용하세요({page}).",
+  },
+  "access.req.and": "{a} 및 {b}",
+  "passwords.saveTo": "비밀번호에 저장",
+  "responsibilities.run.waitKind.approval": "내 승인",
+  "responsibilities.run.waitKind.question": "내 답변",
+  "responsibilities.run.waitKind.handoff": "내가 넘겨받기",
+  "responsibilities.run.waitKind.signIn": "내 로그인",
+  "responsibilities.run.waitKind.other": "나",
+  "responsibilities.new.description":
+    "계속 이어지는 목표입니다. 비서는 내가 고른 대화에서 이 일을 합니다.",
+  "responsibilities.new.chooseConversation": "대화 선택",
+  "responsibilities.new.loadMore": "대화 더 불러오기",
+  "responsibilities.new.titleExample": "고객 보고서를 최신으로 유지",
+  "responsibilities.new.criteriaExample":
+    "보고서에 이번 분기 그래프와 출처 링크가 들어 있다.",
+  "responsibilities.new.eventSource": "이벤트 소스",
+  "responsibilities.new.source.none": "요청할 때 실행",
+  "responsibilities.new.githubHelp":
+    "이벤트는 {link}에서 연결한 저장소에서 옵니다.",
+  "responsibilities.new.eventType": "이벤트 유형",
+  "responsibilities.new.creating": "만드는 중…",
+  "responsibilities.new.create": "맡은 일 만들기",
+  "triggers.kind.email": "이메일",
+  "triggers.help.webhook":
+    "Authorization 헤더 또는 Standard Webhooks 서명 헤더와 함께 이 URL로 JSON을 POST하세요. 200은 수신되었다는 뜻이며, 실행이 끝났다는 뜻은 아닙니다.",
+  "triggers.help.github":
+    "저장소의 Settings → Webhooks에서 payload URL을 이 URL로, content type을 application/json으로, secret을 이 키로 설정하세요.",
+  "triggers.help.linear":
+    "Linear의 Settings → API → Webhooks에서 URL을 설정한 다음, Linear가 보여 주는 signing secret을 여기에 붙여 넣으세요.",
+  "triggers.help.sentry":
+    "Sentry 내부 통합에서 webhook URL을 설정한 다음, 통합의 client secret을 여기에 붙여 넣으세요.",
+  "triggers.help.pagerduty":
+    "PagerDuty의 Integrations → Generic Webhooks (v3)에서 URL을 설정한 다음, 생성할 때 보여 주는 secret을 여기에 붙여 넣으세요.",
+  "triggers.help.email":
+    "이 주소로 메일을 보내거나 전달하면 실행이 시작됩니다.",
+  "triggers.help.slack":
+    "이 비서가 받는 Slack 이벤트에서 시작됩니다. 트리거를 추가하기 전에 보낸 메시지는 무시됩니다.",
+  "triggers.slack.mention": "비서가 멘션됨",
+  "triggers.slack.phrase": "메시지에 특정 문구가 포함됨",
+  "triggers.slack.reaction": "반응이 추가됨",
+  "triggers.slack.message": "모든 메시지",
+  "triggers.f.inChannels": "{channels}에서",
+  "triggers.f.everyChannel": "비서가 있는 모든 채널에서",
+  "triggers.f.mention": "비서가 멘션될 때",
+  "triggers.f.anyMessage": "모든 메시지에서",
+  "triggers.f.phrases": "{phrases}이(가) 포함된 메시지에서",
+  "triggers.f.or": " 또는 ",
+  "triggers.f.reactions": "반응에서",
+  "triggers.f.slack": "{what} {where} (워크스페이스 {team})",
+  "triggers.f.events": "이벤트 {types}",
+  "triggers.f.everyEvent": "모든 이벤트",
+  "triggers.f.where": "{path} = {equals}일 때",
+  "triggers.f.from": "{from}에서 온 것",
+  "triggers.f.fromSenders": "{senders}에서 온 것 (인증됨)",
+  "triggers.title": "트리거",
+  "triggers.add": "트리거 추가",
+  "triggers.notActive.paused":
+    "이 맡은 일은 일시 정지되었습니다. 트리거로는 시작되지 않습니다.",
+  "triggers.notActive.completed":
+    "이 맡은 일은 완료되었습니다. 트리거로는 시작되지 않습니다.",
+  "triggers.none":
+    "트리거가 없습니다. 지금 실행을 누르거나 위의 이벤트가 있을 때 실행됩니다.",
+  "triggers.removeForGood": "완전히 제거",
+  "triggers.keep": "유지",
+  "triggers.runOnAria": "이 {kind} 트리거에서 실행",
+  "triggers.postTo": "POST 대상",
+  "triggers.copyUrl": "URL 복사",
+  "triggers.copyAddress": "주소 복사",
+  "triggers.emailOff":
+    "{product}에는 아직 이메일이 설정되어 있지 않아 이 주소로는 메일을 받을 수 없습니다. 관리자가 켜야 합니다.",
+  "triggers.key": "키",
+  "triggers.copyKey": "키 복사",
+  "triggers.copyHeader": "헤더 복사",
+  "triggers.showKey": "키 표시",
+  "triggers.replaceKey": "키 교체",
+  "triggers.secretSaved": "Signing secret 저장됨",
+  "triggers.secretWaiting": "Signing secret 대기 중",
+  "triggers.secret": "Signing secret",
+  "triggers.pasteNew": "교체하려면 새 secret을 붙여 넣으세요",
+  "triggers.paste": "Signing secret 붙여 넣기",
+  "triggers.saveSecret": "Secret 저장",
+  "triggers.addDescription":
+    "{product} 밖에서 이 맡은 일을 시작시키는 무언가입니다.",
+  "triggers.slackTeam": "Slack 팀 ID",
+  "triggers.fireOn": "실행 조건",
+  "triggers.phrases": "문구 (쉼표로 구분)",
+  "triggers.reactions": "반응 (비워 두면: 모두)",
+  "triggers.channelIds": "채널 ID (비워 두면: 비서가 있는 모든 채널)",
+  "triggers.eventTypes": "이벤트 유형",
+  "triggers.onlyWhen": "다음 필드가",
+  "triggers.equals": "다음과 같을 때만",
+  "triggers.repository": "저장소 (선택 사항)",
+  "triggers.senders": "허용된 발신자 (비워 두면: 아무도 없음)",
+  "triggers.secretLater": "Signing secret (나중에 추가할 수 있음)",
+  "triggers.adding": "추가하는 중…",
+  "triggers.addKind": "{kind} 트리거 추가",
+  "triggers.example.webhook": "deploy.finished (비워 두면: 모두)",
+  "routines.cal.intro":
+    "켜져 있는 루틴의 앞으로 {days}일간 일정입니다. 시간은 내 시간대 기준입니다.",
+  "routines.cal.none": "아직 루틴이 없어서 예정된 것이 없습니다.",
+  "routines.cal.noneOn":
+    "이 루틴들 중 켜져 있는 것이 없어서 실행되는 것이 없습니다.",
+  "routines.cal.nothing": "앞으로 {days}일간 예정된 것이 없습니다.",
+  "routines.cal.truncated": "이 {days}일 중 처음 {max}번의 실행만 표시됩니다.",
+  "routines.cal.paused": {
+    one: "루틴 {count}개가 일시 정지되어 여기에 표시되지 않습니다. 하나를 켜면 실행 시간을 볼 수 있습니다.",
+    other:
+      "루틴 {count}개가 일시 정지되어 여기에 표시되지 않습니다. 하나를 켜면 실행 시간을 볼 수 있습니다.",
+  },
+  "routines.week.nothing": "이번 주 남은 기간에는 예정된 것이 없습니다.",
+  "routines.week.label": "이번 주",
+  "routines.week.today": "오늘",
+  "routines.week.now": "지금, {time}",
+  "routines.week.next": "다음:",
+  "routines.week.nothingElse": "이번 주에 예정된 다른 것은 없습니다.",
+  "routines.week.truncated":
+    "앞으로 며칠 동안의 처음 실행만 표시되므로, 매우 자주 실행되는 루틴은 모든 날에 나타나지 않을 수 있습니다.",
+  "routines.week.historyError":
+    "이미 있었던 실행을 불러오지 못해 표시하지 않습니다.",
+  "routines.week.note":
+    "시간은 내 시간대 기준입니다. 한 시간에 한 번보다 자주 실행되는 루틴은 그날의 블록 하나로 표시됩니다.",
+  "routines.week.summary": "{count}번 실행, 약 {minutes}분마다",
+  "routines.week.gone": "{label}, 대화 삭제됨",
+  "routines.card.label": "루틴",
+  "routines.card.cancelled": "루틴이 취소되었습니다",
+  "routines.card.readError": "이 루틴을 읽지 못했습니다.",
+  "routines.card.reading": "이 루틴을 읽는 중…",
+  "routines.card.gone": "이 루틴은 더 이상 없습니다",
+  "routines.card.cannotSend":
+    "이 대화는 지금 메시지를 받을 수 없습니다. 변경할 내용을 아래 메시지 상자에 쓰세요.",
+  "routines.card.confirm": "이 루틴을 취소할까요?",
+  "routines.card.yes": "예, 취소합니다",
+  "routines.card.no": "아니요, 유지합니다",
+  "routines.card.pause": "일시 정지",
+  "routines.card.resume": "다시 시작",
+  "routines.card.edit": "편집",
+  "routines.card.whatChange": "무엇을 바꿀까요?",
+  "routines.card.send": "변경 보내기",
+  "routines.card.writeBelow": "변경할 내용을 아래 메시지 상자에 쓰세요.",
+  "routines.card.close": "닫기",
+  "admin.boundaries.title": "제한",
+  "admin.boundaries.descLead":
+    "비서가 자기 컴퓨터로 할 수 있는 일과 할 수 없는 일입니다. 모든 동작은 실행되기 전에 확인됩니다. 거부된 동작은 거부한 규칙과 함께",
+  "admin.boundaries.descAudit": "감사",
+  "admin.boundaries.descTail": "에 표시됩니다.",
+  "admin.boundaries.whenTitle": "규칙이 일치할 때",
+  "admin.boundaries.whenDesc":
+    "동작을 멈추거나, 기록만 하고 통과시킵니다. 기록해 두면 규칙이 무언가를 거부하기 전에 실제 활동으로 먼저 시험해 볼 수 있습니다.",
+  "admin.boundaries.modeEnforce": "동작 멈추기",
+  "admin.boundaries.modeRecord": "기록하고 허용하기",
+  "admin.boundaries.modeEnforceNote":
+    "비서는 멈추고, 어떤 규칙이 거부했는지 전달받습니다.",
+  "admin.boundaries.modeRecordNote":
+    "아무것도 멈추지 않습니다. 일치하는 각 항목은 거부된 것처럼 기록됩니다.",
+  "admin.boundaries.neverTitle": "비서가 절대 해서는 안 되는 일",
+  "admin.boundaries.neverLead":
+    "가장 먼저 확인됩니다. 일치하면 동작이 멈추고, 비서는 어떤 규칙이 거부했는지 전달받습니다. 규칙은 CEL로 작성합니다. 다음을 확인할 수 있습니다:",
+  "admin.boundaries.neverMid1": ", 요소, 눌린",
+  "admin.boundaries.neverMid2": ", 파일, 실행된",
+  "admin.boundaries.neverMid3": ", 그리고 외부 도구용",
+  "admin.boundaries.neverMid4": "입니다.",
+  "admin.boundaries.neverMid5": "값은 무엇이 실행을 시작했는지 알려 줍니다:",
+  "admin.boundaries.neverTail": "예약된 실행은 소유자로서 동작하므로",
+  "admin.boundaries.neverTail2":
+    "값만으로는 그것을 알 수 없습니다. 평가할 수 없는 규칙은 일치로 간주됩니다. 오타 때문에 동작이 통과되는 일은 없습니다.",
+  "admin.boundaries.or": "또는",
+  "admin.boundaries.noRules":
+    "규칙이 없습니다. 모든 동작이 허용되고 기록됩니다.",
+  "admin.boundaries.remove": "삭제",
+  "admin.boundaries.ruleLabel": "CEL로 작성한 규칙",
+  "admin.boundaries.testing": "시험하는 중…",
+  "admin.boundaries.testFirst": "먼저 시험하기",
+  "admin.boundaries.addRule": "규칙 추가",
+  "admin.boundaries.preset.form": "양식을 절대 제출하지 않기",
+  "admin.boundaries.preset.formCost":
+    "다른 곳에서 Enter를 누르는 것도 막습니다. 양식은 어느 입력란에서든 Enter로 제출될 수 있습니다. 메뉴나 날짜 입력란에서 고르는 것은 포함되지 않으며, 그 변경만으로도 양식이 제출될 수 있습니다.",
+  "admin.boundaries.preset.password": "비밀번호 입력란에 절대 입력하지 않기",
+  "admin.boundaries.preset.passwordCost":
+    "이름표가 다른 비밀번호 입력란은 포함되지 않습니다. 규칙은 이름표로 일치 여부를 판단합니다.",
+  "admin.boundaries.preset.social": "소셜 미디어에 가지 않기",
+  "admin.boundaries.preset.socialCost":
+    "이 두 호스트만 해당합니다. 다른 곳에서 그리로 넘어가는 링크는 허용됩니다.",
+  "admin.boundaries.otherwiseTitle": "그 외에는 할 수 있는 일",
+  "admin.boundaries.otherwiseDesc":
+    "위 목록에서 걸러지지 않은 모든 것에 적용됩니다. 여기가 빈 목록이면 아무것도 허용되지 않고 모든 동작이 거부됩니다.",
+  "admin.boundaries.allowAll": "true, 위에서 거부되지 않은 모든 것",
+  "admin.boundaries.saved":
+    "저장했습니다. 어느 비서든 다음 동작부터 적용됩니다.",
+  "admin.boundaries.footer":
+    "변경 사항은 어느 비서든 다음 동작부터 적용됩니다. 다시 시작한 뒤에도 유지됩니다.",
+  "admin.boundaries.dry.none":
+    "시험해 볼 수 있는 기록된 컴퓨터 동작이 아직 없습니다. 규칙은 유효합니다. 비서가 동작한 뒤에 무엇과 일치하는지 볼 수 있습니다.",
+  "admin.boundaries.dry.zero":
+    "기록된 최근 {scanned}건의 동작으로 시험했습니다. 이 규칙은 하나도 거부하지 않았을 것입니다. 이후의 동작과는 일치할 수 있습니다.",
+  "admin.boundaries.dry.some":
+    "기록된 최근 {scanned}건의 동작으로 시험했습니다. 이 규칙은 {refused}건을 거부했을 것입니다.",
+  "admin.boundaries.dry.wouldRefuse": "거부했을 것",
+  "admin.boundaries.dry.wouldAllow": "이제는 허용할 것",
+  "admin.boundaries.dry.on": "“{name}”에서",
+  "admin.boundaries.dry.running": "실행 중",
+  "admin.boundaries.dry.touching": "{file}에 접근",
+  "admin.boundaries.dry.first":
+    "처음 {shown}건을 보여 줍니다. 위의 건수는 확인한 모든 것을 포함합니다.",
+  "admin.people.title": "사람",
+  "admin.people.desc":
+    "로그인한 적이 있는 모든 사람입니다. 관리자는 이 화면들을 열 수 있습니다. 나머지 사람들은 비서와 대화합니다.",
+  "admin.people.whoTitle": "누가 있는지",
+  "admin.people.whoDesc":
+    "INITIAL_ADMIN_EMAILS에 있는 주소는 항상 관리자입니다. 여기서는 바꿀 수 없습니다.",
+  "admin.people.stopped": {
+    one: "컴퓨터 {count}대를 멈췄습니다",
+    other: "컴퓨터 {count}대를 멈췄습니다",
+  },
+  "admin.people.stoppedFailed": ". {failed}대는 멈추지 못했습니다",
+  "admin.people.disksKept": ". 디스크는 그대로 보존됩니다.",
+  "admin.people.searchLabel": "사람 검색",
+  "admin.people.searchPlaceholder": "이름이나 주소로 검색",
+  "admin.people.loadError":
+    "사람 목록을 불러오지 못했습니다. 페이지를 새로 고치세요.",
+  "admin.people.noMatch": "“{query}”와 일치하는 사람이 없습니다.",
+  "admin.people.nobody":
+    "아직 로그인한 사람이 없습니다. 로그인하면 여기에 표시됩니다.",
+  "admin.people.lastSignedIn": "마지막 로그인 {date}",
+  "admin.people.neverSignedIn": "로그인한 적 없음",
+  "admin.people.noProvider": "제공자 없음",
+  "admin.people.accessRemoved": "접근 권한 삭제됨",
+  "admin.people.adminByConfig": "설정에 따른 관리자",
+  "admin.people.stopComputers": "컴퓨터 멈추기",
+  "admin.people.restore": "복원",
+  "admin.people.remove": "삭제",
+  "admin.people.adminSwitch": "관리자: {email}",
+  "admin.people.loading": "불러오는 중…",
+  "admin.people.showMore": "더 보기",
+  "admin.boundaries.and": "및",
+  "admin.credentials.title": "인증 정보",
+  "admin.credentials.add": "인증 정보 추가",
+  "admin.credentials.desc":
+    "이 배포의 키와 토큰입니다. {product}은(는) 저장된 비밀 값을 다시 보여 주지 않습니다.",
+  "admin.credentials.dialogDesc":
+    "이 배포용으로 저장됩니다. 비밀 값은 다시 볼 수 없습니다.",
+  "admin.credentials.type": "종류",
+  "admin.credentials.model": "모델",
+  "admin.credentials.connector": "커넥터",
+  "admin.credentials.provider": "제공자",
+  "admin.credentials.keyId": "키 ID",
+  "admin.credentials.secret": "비밀 값",
+  "admin.credentials.replaces":
+    "이 키에는 이미 사용 중인 인증 정보가 있습니다. 저장하면 이전 것을 대체하고 폐기합니다.",
+  "admin.credentials.saveError":
+    "인증 정보를 저장하지 못했습니다. 다시 시도하세요.",
+  "admin.credentials.cancel": "취소",
+  "admin.credentials.saving": "저장하는 중…",
+  "admin.credentials.save": "인증 정보 저장",
+  "admin.credentials.savedTitle": "저장된 인증 정보",
+  "admin.credentials.loadError":
+    "인증 정보를 불러오지 못했습니다. 페이지를 새로 고치세요.",
+  "admin.credentials.empty":
+    "아직 인증 정보가 없습니다. ‘인증 정보 추가’로 추가하세요.",
+  "admin.credentials.revoked": "폐기됨",
+  "admin.credentials.active": "사용 중",
+  "admin.credentials.revoke": "폐기",
+  "admin.idp.title": "ID 제공자",
+  "admin.idp.add": "제공자 추가",
+  "admin.idp.desc":
+    "회사 자체의 SAML 또는 OpenID Connect 제공자입니다. 사람들은 이메일로 로그인하며, 이메일의 도메인이 제공자를 정합니다.",
+  "admin.idp.registeredTitle": "등록됨",
+  "admin.idp.registeredDesc":
+    "Google, Microsoft, Okta는 환경에서 설정합니다. 여기에는 표시되지 않습니다.",
+  "admin.idp.loadError":
+    "ID 제공자를 불러오지 못했습니다. 페이지를 새로 고치세요.",
+  "admin.idp.empty":
+    "아직 ID 제공자가 없습니다. ID 팀에서 받은 메타데이터로 추가하세요.",
+  "admin.idp.remove": "삭제",
+  "admin.idp.dialogTitle": "ID 제공자 추가",
+  "admin.idp.name": "이름",
+  "admin.idp.domain": "이메일 도메인",
+  "admin.idp.domainNote":
+    "이 도메인의 주소를 가진 사람은 누구나 여기서 로그인합니다. 여러 개는 쉼표로 구분하세요.",
+  "admin.idp.issuer": "발급자",
+  "admin.idp.signOnUrl": "로그인 URL",
+  "admin.idp.metadata": "메타데이터 XML",
+  "admin.idp.metadataNote":
+    "ID 팀에서 받은 파일입니다. 서명 인증서가 들어 있습니다.",
+  "admin.idp.clientId": "클라이언트 ID",
+  "admin.idp.clientSecret": "클라이언트 비밀 값",
+  "admin.idp.cancel": "취소",
+  "admin.idp.adding": "추가하는 중…",
+  "admin.idp.addShort": "추가",
+  "admin.audit.decision.bot.declined": "비서가 거절했습니다",
+  "admin.audit.decision.agent.stream_stalled": "비서가 응답을 멈췄습니다",
+  "admin.audit.decision.computer.policy_loaded": "시작 시의 제한",
+  "admin.audit.decision.computer.isolation_loaded": "시작 시의 격리",
+  "admin.audit.decision.computer.control_taken": "사람이 제어를 넘겨받았습니다",
+  "admin.audit.decision.computer.control_released":
+    "제어가 비서에게 돌아갔습니다",
+  "admin.audit.decision.computer.help_requested": "비서가 도움을 요청했습니다",
+  "admin.audit.decision.computer.secret_requested":
+    "비서가 비밀 값을 요청했습니다",
+  "admin.audit.decision.computer.secret_supplied":
+    "사람이 비밀 값을 제공했습니다",
+  "admin.audit.decision.computer.reset": "컴퓨터를 초기화했습니다",
+  "admin.audit.decision.computer.updated": "컴퓨터를 업데이트했습니다",
+  "admin.audit.decision.computer.stopped": "사람이 중지를 눌렀습니다",
+  "admin.audit.decision.component.granted": "이 비서에게 부여함",
+  "admin.audit.decision.component.revoked": "이 비서에게서 회수함",
+  "admin.audit.decision.component.published":
+    "게시했습니다. 모든 비서가 사용할 수 있습니다",
+  "admin.audit.decision.component.unpublished":
+    "게시를 취소했습니다. 어떤 비서도 사용할 수 없습니다",
+  "admin.audit.decision.component.draft_saved":
+    "초안을 저장했습니다. 아직 게시되지 않았습니다",
+  "admin.audit.decision.component.refused": "거부됨",
+  "admin.audit.decision.component.function_granted": "이것을 읽을 수 있음",
+  "admin.audit.decision.component.function_revoked":
+    "더 이상 이것을 읽을 수 없음",
+  "admin.audit.decision.component.function_called": "실제 데이터를 읽었습니다",
+  "admin.audit.decision.component.function_refused": "거부됨",
+  "admin.audit.decision.component.function_failed": "읽지 못했습니다",
+  "admin.audit.decision.mcp.tools_discovered": "한 번의 실행에 제공된 도구",
+  "admin.audit.decision.mcp.call_succeeded": "이 비서를 대신해 호출했습니다",
+  "admin.audit.decision.mcp.call_rejected": "차단됨",
+  "admin.audit.decision.mcp.call_failed": "서버가 응답하지 않았습니다",
+  "admin.audit.decision.mcp.callback_refused":
+    "어느 비서인지 확인하지 못했습니다",
+  "admin.audit.decision.configuration.changed": "설정이 바뀌었습니다",
+  "admin.audit.decision.credential.created": "인증 정보를 저장했습니다",
+  "admin.audit.discovery.under-floor": "도구가 적어서 전부 제공했습니다",
+  "admin.audit.discovery.nothing-declared":
+    "이 도구 중 어느 것도 선언한 스킬이 없습니다",
+  "admin.audit.discovery.unavailable": "고르지 못해서 전부 제공했습니다",
+  "admin.audit.discovery.nothing-chosen":
+    "적용된 스킬이 없어서 전부 제공했습니다",
+  "admin.audit.discovery.selected": "스킬이 고름",
+  "admin.audit.title": "감사",
+  "admin.audit.desc":
+    "비서가 한 모든 동작과, 이 배포의 정책이 거부한 모든 동작입니다.",
+  "admin.audit.export": "CSV 내보내기",
+  "admin.audit.exporting": "내보내는 중…",
+  "admin.audit.refresh": "새로 고침",
+  "admin.audit.exportFailed":
+    "감사 이벤트를 내보내지 못했습니다. 다시 시도하세요.",
+  "admin.audit.filter.all": "전체",
+  "admin.audit.filter.computer": "컴퓨터 동작",
+  "admin.audit.filter.blocked": "차단됨",
+  "admin.audit.filter.didNot": "일어나지 않음",
+  "admin.audit.filter.nobody": "지켜보는 사람 없음",
+  "admin.audit.capped":
+    "파일에는 전체가 아니라 가장 최근 이벤트 {count}건이 들어 있습니다. 나머지를 내보내려면 필터나 날짜를 좁히세요.",
+  "admin.audit.loadError":
+    "감사 기록을 불러오지 못했습니다. 페이지를 새로 고치세요.",
+  "admin.audit.empty": "이 필터와 일치하는 이벤트가 아직 없습니다.",
+  "admin.audit.col.when": "시각",
+  "admin.audit.col.what": "내용",
+  "admin.audit.col.on": "대상",
+  "admin.audit.col.bot": "비서",
+  "admin.audit.col.startedBy": "시작한 주체",
+  "admin.audit.col.decision": "결정",
+  "admin.audit.by.routine": "루틴",
+  "admin.audit.by.handedOnBy": "{name}이(가) 넘김",
+  "admin.audit.by.handedOn": "넘김",
+  "admin.audit.by.memory": "기억 출처",
+  "admin.audit.by.responsibility": "맡은 일",
+  "admin.audit.by.deployment": "이 배포",
+  "admin.audit.by.remote": "컴퓨터와 페어링되지 않은 브라우저",
+  "admin.audit.by.person": "사람",
+  "admin.audit.routed.mention": "사람이 이 비서를 골랐습니다",
+  "admin.audit.routed.default": "기본 비서에게 보냈습니다",
+  "admin.audit.routed.meant": "원래 의도한 비서에게 보냈습니다",
+  "admin.audit.toolsOf": "도구 {granted}개 중 {offered}개",
+  "admin.audit.blocked": "차단됨",
+  "admin.audit.didNot": "일어나지 않음",
+  "admin.audit.allowed": "허용됨",
+  "admin.audit.reportedByBot": ", 비서 스스로 보고함",
+  "admin.audit.dryRun": "시험 실행: 기록만 하고 적용하지 않음",
+  "admin.nav.back": "앱으로 돌아가기",
+  "admin.nav.overview": "개요",
+  "admin.nav.reach": "비서가 닿을 수 있는 곳",
+  "admin.nav.do": "비서가 할 수 있는 일",
+  "admin.nav.in": "들어올 수 있는 사람",
+  "admin.nav.happened": "일어난 일",
+  "admin.nav.credentials": "인증 정보",
+  "admin.nav.boundaries": "제한",
+  "admin.nav.approvals": "승인",
+  "admin.nav.computers": "컴퓨터",
+  "admin.nav.plugins": "플러그인",
+  "admin.nav.skills": "스킬",
+  "admin.nav.learning": "자동 학습",
+  "admin.nav.components": "UI 구성 요소",
+  "admin.nav.playground": "Playground",
+  "admin.nav.people": "사람",
+  "admin.nav.idp": "ID 제공자",
+  "admin.nav.audit": "감사",
+  "admin.enterprise.mode.allow_all": "모든 네트워크 접근 허용",
+  "admin.enterprise.mode.defaults_plus_allowlist": "기본값에 팀 허용 목록 추가",
+  "admin.enterprise.mode.allowlist_only": "팀 허용 목록만",
+  "admin.enterprise.noPolicy":
+    "정책이 없습니다. 비서의 컴퓨터는 클러스터가 허용하는 모든 곳에 접근할 수 있습니다",
+  "admin.enterprise.locked": " · 잠김",
+  "admin.enterprise.loadError":
+    "엔터프라이즈 제어를 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "admin.enterprise.title": "엔터프라이즈 제어",
+  "admin.enterprise.description":
+    "멤버가 사용할 수 있는 것, 비서의 컴퓨터가 네트워크에 접근하는 방식, 기록되는 내용입니다. 모든 변경은 감사에 표시됩니다.",
+  "admin.enterprise.signin.description":
+    "{env}에 있는 주소는 비상용 진입로로 언제나 소셜 로그인을 사용할 수 있습니다. 이런 로그인은 모두 감사에 표시됩니다.",
+  "admin.enterprise.signin.title": "로그인",
+  "admin.enterprise.sso.title": "SSO 필수",
+  "admin.enterprise.sso.on":
+    "등록된 SAML 또는 OpenID Connect 제공자를 통해서만 로그인할 수 있습니다.",
+  "admin.enterprise.sso.off":
+    "Google, Microsoft, Okta로도 로그인할 수 있습니다.",
+  "admin.enterprise.scim.title": "SCIM 프로비저닝",
+  "admin.enterprise.scim.on":
+    "디렉터리 기본 URL {url}, 베어러 토큰 {env}. 프로비저닝을 해제하면 세션이 종료되고, 해당 주소가 차단되며, 커넥터 인증 정보가 회수되고, 그 사람의 컴퓨터가 중지됩니다.",
+  "admin.enterprise.scim.unsetUrl": "(BETTER_AUTH_URL을 설정하세요)",
+  "admin.enterprise.scim.off":
+    "꺼져 있습니다. Okta, Entra 또는 다른 디렉터리의 프로비저닝을 받으려면 {env}를 설정하세요.",
+  "admin.enterprise.on": "켜짐",
+  "admin.enterprise.off": "꺼짐",
+  "admin.enterprise.cap.description":
+    "각 스위치는 조직 전체에 적용됩니다. 역할이 이를 덮어쓸 수 있고, 조직이 꺼 둔 기능을 디렉터리 그룹에 부여할 수도 있습니다.",
+  "admin.enterprise.cap.title": "기능",
+  "admin.enterprise.cap.offFor":
+    "역할이나 그룹이 켜지 않는 한 모두에게 꺼져 있습니다.",
+  "admin.enterprise.over.title": "역할 및 그룹별 재정의",
+  "admin.enterprise.over.none": "없음. 모두에게 위의 스위치가 적용됩니다",
+  "admin.enterprise.over.set": "{count}건 설정됨",
+  "admin.enterprise.net.description":
+    "비서의 컴퓨터가 연결할 수 있는 곳입니다. 변경 사항은 재시작 없이 실행 중인 컴퓨터에 몇 초 안에 반영됩니다. 그룹 정책은 조직 정책이 잠겨 있지 않은 한 조직 정책을 대체합니다.",
+  "admin.enterprise.net.title": "네트워크",
+  "admin.enterprise.net.org": "조직",
+  "admin.enterprise.net.group": "그룹: {name}",
+  "admin.enterprise.net.addGroup": "그룹 정책 추가",
+  "admin.enterprise.mcp.description":
+    "허용 목록을 켜면 비서는 여기서 승인한 MCP 서버의 도구만 호출할 수 있습니다. 그 외 서버에 대한 호출은 거부됩니다.",
+  "admin.enterprise.mcp.title": "MCP 서버",
+  "admin.enterprise.mcp.only": "승인된 서버만",
+  "admin.enterprise.mcp.approved": "{count}개 승인됨",
+  "admin.enterprise.mcp.offDesc":
+    "꺼져 있습니다. 비서는 접근 권한이 있는 등록된 서버를 모두 사용할 수 있습니다.",
+  "admin.enterprise.mcp.onlyAria": "승인된 MCP 서버만",
+  "admin.enterprise.mcp.approveAria": "{name} 승인",
+  "admin.enterprise.models.description":
+    "내장 비서는 {model}에서 실행됩니다. 원격 비서는 자체적으로 선택하며, 보고한 모델이 기록됩니다.",
+  "admin.enterprise.models.configured": "이 배포에 설정된 모델",
+  "admin.enterprise.models.title": "모델",
+  "admin.enterprise.models.allowlist": "모델 허용 목록",
+  "admin.enterprise.models.allowlistOn":
+    "목록에 없는 모델을 쓰는 내장 비서는 실행되기 전에 거부됩니다.",
+  "admin.enterprise.models.allowlistOff":
+    "꺼져 있습니다. 어떤 모델이든 사용할 수 있습니다.",
+  "admin.enterprise.models.allowed": "허용된 모델",
+  "admin.enterprise.models.none": "등록된 항목 없음",
+  "admin.enterprise.models.listDesc":
+    "한 줄에 모델 하나씩, 제공자/모델 형식으로 입력합니다. 예: {example}.",
+  "admin.enterprise.rec.description":
+    "{env}를 설정하면 감사 이벤트와 비서의 동작을 OpenTelemetry 수집기나 SIEM으로 스트리밍합니다. 이들에는 {tag} 태그가 붙습니다.",
+  "admin.enterprise.rec.title": "기록 및 내보내기",
+  "admin.enterprise.rec.action": "Action Recording",
+  "admin.enterprise.rec.actionOn":
+    "비서가 실행한 셸 명령은 비밀 값을 제거한 채 기록되며 {days}일간 보관됩니다.",
+  "admin.enterprise.rec.actionOff":
+    "꺼져 있습니다. 명령은 감사에만 표시됩니다.",
+  "admin.enterprise.rec.otel": "OpenTelemetry 내보내기",
+  "admin.enterprise.rec.otelOn": "OTLP/HTTP로 내보내는 중입니다.",
+  "admin.enterprise.rec.otelOff":
+    "설정되지 않았습니다. 서버에서 {env}를 설정하세요.",
+  "admin.enterprise.comp.description":
+    "컴퓨터를 중지하면 그 위에서 실행 중인 비서가 종료되고 디스크는 그대로 유지됩니다. 비서는 다음 세션에 새 컴퓨터를 받습니다. 한 사람의 컴퓨터만 중지하려면 사람 메뉴로 가세요.",
+  "admin.enterprise.comp.title": "컴퓨터",
+  "admin.enterprise.comp.stopInactive": "비활성 컴퓨터 중지",
+  "admin.enterprise.comp.afterDays": "{days}일 동안 사용하지 않으면",
+  "admin.enterprise.usage.error":
+    "모델 사용량을 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "admin.enterprise.usage.empty": "최근 30일 동안 비서 실행이 없습니다.",
+  "admin.enterprise.usage.runs": "30일 동안 {people}{who}이 {runs}회 실행",
+  "admin.enterprise.usage.person": "명",
+  "admin.enterprise.usage.people": "명",
+  "admin.enterprise.usage.refused": " · 허용 목록 밖 {count}건",
+  "admin.enterprise.recorded.error":
+    "기록된 동작을 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "admin.enterprise.recorded.empty": "아직 기록된 명령이 없습니다.",
+  "admin.enterprise.recorded.local": "멤버의 컴퓨터",
+  "admin.enterprise.recorded.bot": "비서 {id}",
+  "admin.enterprise.sweep.stopping": "중지하는 중…",
+  "admin.enterprise.sweep.now": "비활성 컴퓨터 지금 중지",
+  "admin.enterprise.sweep.stopped": "{count}대를 중지했습니다.",
+  "admin.enterprise.ov.admins": "관리자",
+  "admin.enterprise.ov.members": "멤버",
+  "admin.enterprise.ov.group": "그룹: {name}",
+  "admin.enterprise.ov.scope": "범위",
+  "admin.enterprise.ov.groupNote":
+    "그룹은 추가만 할 수 있습니다. 부여하면 조직이 꺼 둔 기능이라도 그 그룹의 멤버가 사용할 수 있습니다.",
+  "admin.enterprise.ov.roleNote":
+    "역할의 설정은 그 역할을 가진 모든 사람에 대해 조직 스위치를 대체합니다.",
+  "admin.enterprise.ov.forScope": "{scope}의 {title}",
+  "admin.enterprise.ov.inherit": "상속",
+  "admin.enterprise.ov.grant": "부여",
+  "admin.enterprise.netd.org": "조직 네트워크 정책",
+  "admin.enterprise.netd.group": "그룹 네트워크 정책",
+  "admin.enterprise.netd.groupLabel": "그룹",
+  "admin.enterprise.netd.mode": "모드",
+  "admin.enterprise.netd.allowlist": "허용 목록",
+  "admin.enterprise.netd.help":
+    "한 줄에 하나씩 입력합니다. 도메인은 하위 도메인을 포함합니다. *.name은 하위 도메인만 포함합니다. IP 범위에는 포트를 지정할 수 있습니다. 기본값은 {first}와 그 밖의 패키지 및 소스 호스트 {more}개입니다.",
+  "admin.enterprise.netd.lock": "그룹이 이 정책을 대체하지 못하도록 잠금",
+  "admin.enterprise.netd.remove": "정책 삭제",
+  "admin.enterprise.days.label": "미사용 일수",
+  "admin.enterprise.days.help": "0이면 꺼집니다. 1시간마다 확인합니다.",
+  "admin.plugins.title": "플러그인",
+  "admin.plugins.description":
+    "이 배포가 접근할 수 있는 대상과, 이를 사용할 수 있는 비서입니다. 추가한 플러그인은 모두를 위한 것입니다. 어떤 비서가 도구를 받을지는 플러그인 페이지에서 고릅니다.",
+  "admin.plugins.loadError":
+    "플러그인을 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "admin.plugins.connected.description":
+    "모두를 위해 추가되었습니다. 열어서 설정하고, 어떤 비서가 도구를 받을지 고르세요.",
+  "admin.plugins.connected.title": "연결됨",
+  "admin.plugins.connected.empty":
+    "아직 연결된 것이 없습니다. 아래 목록에서 하나를 고르세요.",
+  "admin.plugins.explore.description":
+    "검토를 마친 공식 서버입니다. 열어서 추가하세요.",
+  "admin.plugins.explore.title": "플러그인 둘러보기",
+  "admin.plugins.explore.empty":
+    "카탈로그의 플러그인이 모두 연결되어 있습니다.",
+  "admin.plugins.notAdded": "추가되지 않음",
+  "admin.plugins.more.title": "더 많은 앱",
+  "admin.plugins.sum.notConnected": "연결되지 않음",
+  "admin.plugins.sum.noTools": "아직 도구 없음",
+  "admin.plugins.sum.tools": { one: "도구 {count}개", other: "도구 {count}개" },
+  "admin.plugins.sum.toolsNoBots": "{tools} · 비서 없음",
+  "admin.plugins.sum.bots": { one: "비서 {count}명", other: "비서 {count}명" },
+  "admin.plugins.requests": { one: "요청 {count}건", other: "요청 {count}건" },
+  "admin.plugins.key.grant.none": "비서 없음",
+  "admin.plugins.key.grant.one": "비서 1명",
+  "admin.plugins.key.grant.all": "모든 비서",
+  "admin.plugins.key.grant.some": "비서 {total}명 중 {held}명",
+  "admin.plugins.key.held.none": "도구 없음",
+  "admin.plugins.key.held.one": "도구 1개",
+  "admin.plugins.key.held.all": "모든 도구",
+  "admin.plugins.key.held.some": "도구 {total}개 중 {held}개",
+  "admin.plugins.key.notApproved": "승인되지 않음",
+  "admin.plugins.key.unreadableTitle": "내 계정",
+  "admin.plugins.key.unreadable":
+    "여기에 계정을 연결했는지 불러오지 못했습니다. 페이지를 새로고침하세요. 계속되면 이 배포의 로그를 확인하세요.",
+  "admin.plugins.key.noConsent":
+    "{product}이(가) 동의 링크를 돌려받지 못해 아무것도 연결되지 않았습니다. 다시 시도하세요. 계속되면 이 커넥터의 설정을 확인하세요.",
+  "admin.plugins.key.reassurance":
+    "이 연결이 없어도 설정은 완료되며, 내 문서에만 접근합니다.",
+  "admin.plugins.key.notPlugin.description":
+    "이 이름의 플러그인은 여기에도 카탈로그에도 없습니다.",
+  "admin.plugins.key.notPlugin.title": "플러그인이 아닙니다",
+  "admin.plugins.key.notPlugin.empty": "설정할 것이 없습니다.",
+  "admin.plugins.key.enable.title": "이 배포에서 사용",
+  "admin.plugins.key.enable.on":
+    "비서에게 이 플러그인의 도구를 줄 수 있습니다. 끄면 플러그인이 삭제되고, 모든 비서의 도구 접근 권한도 사라집니다.",
+  "admin.plugins.key.enable.off":
+    "어떤 비서도 이 공급업체에 접근할 수 없습니다. 켜면 설정하고 비서에게 도구를 줄 수 있습니다.",
+  "admin.plugins.key.enable.aria": "이 배포에서 {title} 사용",
+  "admin.plugins.key.whose.title": "누구의 계정인가",
+  "admin.plugins.key.whose.shared": "모두가 계정 하나를 함께 씁니다.",
+  "admin.plugins.key.whose.personal": "각자 자기 계정을 연결합니다.",
+  "admin.plugins.key.whose.makePersonal": "개인 계정으로 전환",
+  "admin.plugins.key.whose.makeShared": "공유 계정으로 전환",
+  "admin.plugins.key.conn.oauth":
+    "이 공급업체는 요청한 사람으로서 응답합니다. 배포가 OAuth 클라이언트를 등록하고, 각자 자기 계정을 연결합니다. 비서는 그 사람이 볼 수 있는 것만 봅니다.",
+  "admin.plugins.key.conn.secret":
+    "이 공급업체는 요청한 사람으로서 응답합니다. 각자 자기 앱 비밀번호를 자신의 연결 페이지에 붙여 넣습니다. 여기서 등록할 것은 없으며, 배포는 자체 비밀번호를 보관하지 않습니다.",
+  "admin.plugins.key.conn.builtin":
+    "이 배포에 내장되어 있습니다. 접근할 공급업체도, 보관할 인증 정보도 없습니다. 호출은 요청한 사람으로서 실행됩니다.",
+  "admin.plugins.key.conn.bearer":
+    "이 배포가 공급업체에 보내는 값입니다. 모두가 인증 정보 하나를 함께 씁니다.",
+  "admin.plugins.key.conn.title": "연결",
+  "admin.plugins.key.builtin.desc":
+    "설정할 것이 없습니다. 이 도구들은 이 배포 안에서 배포 자체의 데이터로 실행됩니다.",
+  "admin.plugins.key.builtin.badge": "내장",
+  "admin.plugins.key.secret.title": "앱 비밀번호",
+  "admin.plugins.key.secret.desc":
+    "각자 Google에서 자기 것을 만들어 자신의 연결 페이지에 붙여 넣습니다. 메일함 전체에 접근할 수 있으므로, 비서가 할 수 있는 일은 아래에서 부여하는 도구로 정해집니다.",
+  "admin.plugins.key.secret.badge": "사람별",
+  "admin.plugins.key.reach.title": "접근 방식",
+  "admin.plugins.key.token.title": "액세스 토큰",
+  "admin.plugins.key.token.desc":
+    "이 공급업체에 대한 모든 호출에 함께 전송됩니다.",
+  "admin.plugins.key.saved": "저장됨",
+  "admin.plugins.key.notSet": "설정되지 않음",
+  "admin.plugins.key.client.title": "OAuth 클라이언트",
+  "admin.plugins.key.client.selfDesc":
+    "이 배포는 처음 연결할 때 공급업체에 스스로 등록합니다. 붙여 넣을 것은 없습니다.",
+  "admin.plugins.key.client.selfBadge": "자체 등록",
+  "admin.plugins.key.client.desc":
+    "공급업체에 이 배포를 식별시킵니다. 이것만으로는 누구의 문서에도 접근할 수 없습니다.",
+  "admin.plugins.key.client.registered": "등록됨",
+  "admin.plugins.key.client.notRegistered": "등록되지 않음",
+  "admin.plugins.key.team.connected":
+    "연결됨{who}. 이 도구를 가진 모든 비서가 이 계정으로 동작합니다.",
+  "admin.plugins.key.team.as": " ({name}(으)로)",
+  "admin.plugins.key.team.by": " ({name}이(가) 연결)",
+  "admin.plugins.key.team.disconnected":
+    "연결된 팀 계정이 없습니다. 이 도구를 가진 비서는 거부됩니다.",
+  "admin.plugins.key.team.heading": "팀 계정",
+  "admin.plugins.key.team.notice": "내 계정이 아니라 팀 계정으로 로그인하세요.",
+  "admin.plugins.key.mine.connected":
+    "연결됨. 이 도구를 가진 비서는 내 {title}을(를) 나로서 사용합니다. {note}",
+  "admin.plugins.key.mine.tryConnect":
+    "이 커넥터를 써 보려면 내 계정을 연결하세요. {note}",
+  "admin.plugins.key.oauthAcct.connected":
+    "연결됨. 이 도구를 가진 비서는 내 {title}을(를) 나로서 사용합니다. 다른 사람은 각자 자기 계정을 연결합니다.",
+  "admin.plugins.key.oauthAcct.connect":
+    "이 커넥터를 써 보려면 내 계정을 연결하세요. 이 연결이 없어도 설정은 완료되며, 내 문서에만 접근합니다.",
+  "admin.plugins.key.connected": "연결됨",
+  "admin.plugins.key.connect": "연결",
+  "admin.plugins.key.instance.title": "인스턴스 호스트",
+  "admin.plugins.key.instance.desc":
+    "이 공급업체는 고객마다 고유한 호스트 이름을 줍니다. 저장하기 전에 공급업체의 패턴과 대조해 확인합니다.",
+  "admin.plugins.key.docs.builtin": "문서",
+  "admin.plugins.key.docs.vendor": "공급업체 문서",
+  "admin.plugins.key.docs.builtinDesc":
+    "이 도구들이 무엇을 제공하는지, 관리하는 사람들이 설명한 내용입니다.",
+  "admin.plugins.key.docs.vendorDesc":
+    "이 서버가 무엇을 제공하는지, 관리하는 사람들이 설명한 내용입니다.",
+  "admin.plugins.key.redirect.dynamic":
+    "배포가 리디렉션 URI를 스스로 등록합니다. 공급업체 쪽에서 추가할 것은 없습니다.",
+  "admin.plugins.key.redirect.manual":
+    "이것을 공급업체의 클라이언트에 승인된 리디렉션 URI에 적힌 그대로 추가하세요. 한 글자라도 틀리면 그쪽에서 실패하며, 그 오류에는 {product}이(가) 언급되지 않습니다.",
+  "admin.plugins.key.redirect.noUrl":
+    "이 배포에는 공개 URL이 없어서 아무도 연결을 마칠 수 없습니다. {env}를 설정하세요.",
+  "admin.plugins.key.tools.refresh": "도구 새로고침",
+  "admin.plugins.key.tools.grant": "도구 부여…",
+  "admin.plugins.key.tools.description":
+    "비서는 자신에게 부여된 도구만 볼 수 있습니다. 호출은 일어날 때마다 확인되므로, 접근 권한을 없애면 다음 호출부터 적용됩니다.",
+  "admin.plugins.key.tools.title": "도구",
+  "admin.plugins.key.tools.empty":
+    "표시된 도구가 없습니다. 도구를 새로고침해서 다시 확인하세요.",
+  "admin.plugins.key.tools.writes": "변경 작업",
+  "admin.plugins.key.tools.reads": "읽기",
+  "admin.plugins.key.byBot": "비서별",
+  "admin.plugins.key.byBot.hidden":
+    "내 목록에서 숨겨져 있습니다. 이 앱의 동작을 하나씩 켜고 끌 수 있습니다.",
+  "admin.plugins.key.byBot.shown": "이 앱의 동작을 하나씩 켜고 끌 수 있습니다.",
+  "admin.plugins.key.gone.description":
+    "이 공급업체는 더 이상 이 도구들을 나열하지 않습니다. 어떤 비서에게도 보이지 않고 호출할 수도 없습니다. 접근 권한은 그대로 저장되어 있으며, 공급업체가 도구를 다시 나열하면 되살아납니다. 삭제하려면 해당 비서의 페이지를 이용하세요.",
+  "admin.plugins.key.gone.title": "부여되었지만 더 이상 나열되지 않음",
+  "admin.plugins.key.gone.row": "{title}에서 나열되지 않습니다{asOf}.",
+  "admin.plugins.key.gone.asOf": " (마지막 새로고침 기준)",
+  "admin.plugins.key.dlg.client": "{title}의 OAuth 클라이언트",
+  "admin.plugins.key.dlg.instance": "{title}의 인스턴스 호스트",
+  "admin.plugins.key.dlg.token": "{title}의 액세스 토큰",
+  "admin.plugins.key.dlg.clientDesc":
+    "공급업체 콘솔에서 가져옵니다. 비밀 값은 이 배포의 보관소에 저장되며 다시는 표시되지 않습니다.",
+  "admin.plugins.key.dlg.instanceDesc":
+    "이 공급업체에서 쓰는 내 호스트 이름입니다. 저장하기 전에 공급업체의 패턴과 대조해 확인합니다.",
+  "admin.plugins.key.dlg.tokenDesc":
+    "이 배포의 보관소에 저장되며 다시는 표시되지 않습니다.",
+  "admin.plugins.key.dlg.clientId": "클라이언트 ID",
+  "admin.plugins.key.dlg.clientSecret": "클라이언트 비밀 값",
+  "admin.plugins.key.gr.title": "도구 부여",
+  "admin.plugins.key.gr.description":
+    "부여할 때마다 감사에 별도의 줄로 기록됩니다. 변경 작업을 하는 도구는 호출할 때마다 계속 제한과 대조해 확인됩니다.",
+  "admin.plugins.key.gr.to": "대상",
+  "admin.plugins.key.gr.reads": "읽기",
+  "admin.plugins.key.gr.writes": "변경 작업",
+  "admin.plugins.key.gr.selectAll": "모두 선택",
+  "admin.plugins.key.gr.button": "부여",
+  "admin.plugins.key.gr.progress": "{total}개 중 {current}개 부여하는 중…",
+  "admin.plugins.key.gr.summary": {
+    one: "도구 {count}개를 {names}에게 부여합니다.",
+    other: "도구 {count}개를 {names}에게 부여합니다.",
+  },
+  "admin.plugins.key.gr.changing": {
+    one: "그중 {count}개는 변경 작업을 합니다.",
+    other: "그중 {count}개는 변경 작업을 합니다.",
+  },
+  "admin.home.reach.desc":
+    "비서가 {product} 밖에서 건드릴 수 있는 것과 그에 대한 제한입니다.",
+  "admin.home.credentials.desc": "이 배포의 키와 토큰입니다.",
+  "admin.home.boundaries.desc": "어떤 비서도 절대 해서는 안 되는 일입니다.",
+  "admin.home.approvals.desc":
+    "멤버의 비서가 행동하기 전에 물어봐야 하는 것입니다.",
+  "admin.home.computers.desc": "비서가 도구를 실행하는 컴퓨터입니다.",
+  "admin.home.do.desc":
+    "모든 비서가 사용할 수 있는 앱, 스킬, 인터페이스 요소입니다.",
+  "admin.home.plugins.desc":
+    "{product}이(가) 접근할 수 있는 서비스와 이를 사용할 수 있는 비서입니다.",
+  "admin.home.skills.desc": "누구나 /로 실행할 수 있는 이름 붙은 지침입니다.",
+  "admin.home.learning.desc": "끝난 대화에서 배우고, 제안된 스킬을 검토합니다.",
+  "admin.home.components.desc":
+    "비서가 대화에서 그릴 수 있는 사용자 정의 요소입니다.",
+  "admin.home.playground.desc":
+    "컴포넌트를 작성하고 입력하는 동안 렌더링되는 모습을 확인하세요.",
+  "admin.home.engines.desc":
+    "멤버가 사용하는 AI 엔진과 각 엔진이 지금 응답할 수 있는지 여부입니다.",
+  "admin.home.people.desc":
+    "로그인한 적이 있는 모든 사람, 관리자가 누구인지, 접근 권한이 삭제된 사람입니다.",
+  "admin.home.enterprise.desc":
+    "역할과 그룹, 필수 SSO, SCIM, 네트워크 정책, MCP 및 모델 허용 목록, Action Recording.",
+  "admin.home.idp.desc":
+    "회사의 SAML 또는 OpenID Connect 제공자로, 이메일 도메인으로 연결됩니다.",
+  "admin.home.audit.desc":
+    "{product}에서 이루어진 모든 동작과 그것을 한 사람입니다.",
+  "admin.home.description":
+    "이 배포의 모든 사람에게 적용되는 설정입니다. 여기서 바꾸면 모든 사람과 모든 비서에게 영향을 줍니다.",
+  "admin.plugins.directoryError":
+    "플러그인 설정을 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "admin.components.description":
+    "각 비서가 답변에 쓸 수 있는 것입니다. 게시된 모든 컴포넌트는 모든 비서에게 켜져 있습니다. 하나를 끄면 그 비서에게는 절대 보이지 않습니다. 변경과 거부는 감사에 표시됩니다.",
+  "admin.components.loadError":
+    "컴포넌트를 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "admin.components.emptyTitle": "아직 컴포넌트가 없습니다",
+  "admin.components.emptyDesc":
+    "비서가 사용할 수 있는 컴포넌트가 여기에 표시됩니다.",
+  "admin.audit.silence.quiet": "{seconds}초 동안 조용함",
+  "admin.audit.silence.nothing": "{quiet}, 아무 말도 하지 않은 채",
+  "admin.audit.silence.after": {
+    one: "{quiet}, 청크 {count}개 이후",
+    other: "{quiet}, 청크 {count}개 이후",
+  },
+  "admin.compDetail.title": "구성 요소",
+  "admin.compDetail.noSuch.title": "그런 구성 요소가 없습니다",
+  "admin.compDetail.noSuch.description": "그 이름의 구성 요소가 없습니다.",
+  "admin.compDetail.noSuch.hint":
+    "이름이 바뀌었거나, 이 배포에 더 이상 포함되지 않을 수 있습니다.",
+  "admin.compDetail.back": "구성 요소로 돌아가기",
+  "admin.compDetail.grant.noBots": "아직 비서가 없습니다",
+  "admin.compDetail.grant.all": {
+    one: "비서 {count}명 전원",
+    other: "비서 {count}명 전원",
+  },
+  "admin.compDetail.grant.none": "비서 없음",
+  "admin.compDetail.grant.some": "비서 {total}명 중 {granted}명",
+  "admin.compDetail.fn.none": "이 배포에는 데이터 함수가 없습니다",
+  "admin.compDetail.fn.nothing": "없음. 비서가 전달한 것만 보여 줍니다.",
+  "admin.compDetail.notPublished":
+    "게시되지 않았습니다. 어떤 비서도 볼 수 없습니다.",
+  "admin.compDetail.config.title": "구성",
+  "admin.compDetail.config.description":
+    "이 구성 요소의 용도와, 어떤 비서가 이것으로 답할 수 있는지입니다.",
+  "admin.compDetail.notInBuild.title": "이 빌드에 없음",
+  "admin.compDetail.notInBuild.description":
+    "{product}이(가) 이것을 그릴 수 없습니다. 아래 설정은 효과가 없습니다.",
+  "admin.compDetail.published": "게시됨",
+  "admin.compDetail.published.on": "비서가 이것으로 답할 수 있습니다.",
+  "admin.compDetail.published.off": "어떤 비서도 이것을 사용할 수 없습니다.",
+  "admin.compDetail.published.changes":
+    "설명에 게시되지 않은 변경 사항이 있습니다.",
+  "admin.compDetail.description": "설명",
+  "admin.compDetail.nothingYet": "아직 없음",
+  "admin.compDetail.availableTo": "사용 가능 대상",
+  "admin.compDetail.canRead": "읽을 수 있음",
+  "admin.compDetail.details": "세부 정보",
+  "admin.compDetail.kind": "종류",
+  "admin.compDetail.calledAs": "호출 이름",
+  "admin.compDetail.lastChanged": "마지막 변경",
+  "admin.compDetail.by": "{name}님",
+  "admin.compDetail.descDlg.description":
+    "모델이 이것을 사용할지 정할 때 읽는 내용입니다. 구성 요소를 게시하기 전에는 효과가 없습니다.",
+  "admin.compDetail.grantsDlg.description":
+    "비서를 끄면 그 비서는 이 구성 요소가 있다는 것조차 알지 못합니다. 변경 사항은 바로 적용됩니다.",
+  "admin.compDetail.grantsDlg.empty": "아직 비서가 없습니다.",
+  "admin.compDetail.fnDlg.description":
+    "이 구성 요소가 자신을 그리기 위해 가져올 수 있는 데이터입니다. “사용 가능 대상”과는 별개입니다. 모두 꺼 두면 비서가 전달한 것만 보여 줍니다. 모든 읽기는 감사에 표시됩니다. 변경 사항은 바로 적용됩니다.",
+  "admin.compDetail.fnDlg.empty": "이 배포에는 데이터 함수가 없습니다.",
+  "admin.computers.description":
+    "각 비서의 브라우저와 그것이 유지하는 프로필입니다. 프로필은 비서의 로그인 상태를 유지합니다. 초기화하면 비서가 모든 곳에서 로그아웃됩니다.",
+  "admin.computers.loadError":
+    "컴퓨터를 불러오지 못했습니다. 페이지를 새로 고치세요.",
+  "admin.computers.shared.lead": "모든 비서가 컴퓨터 한 대를 함께 씁니다.",
+  "admin.computers.shared.before":
+    "로그인, 파일, 세션을 공유합니다. 한 비서가 다른 비서가 로그인한 것에 접근할 수 있습니다. 각 비서에게 자기 컴퓨터를 주려면",
+  "admin.computers.shared.after": "을(를) 설정하세요.",
+  "admin.computers.perBot":
+    "각 비서에게는 자기만의 컨테이너, 파일, 브라우저 프로필이 있는 자기 컴퓨터가 있습니다.",
+  "admin.computers.list.title": "이 배포의 컴퓨터",
+  "admin.computers.list.error": "목록을 불러오지 못했습니다.",
+  "admin.computers.list.empty":
+    "아직 컴퓨터가 없습니다. 비서가 처음 페이지를 열면 하나가 나타납니다.",
+  "admin.computers.running": "브라우저가 {time}부터 실행 중입니다",
+  "admin.computers.notRunning":
+    "실행 중인 브라우저가 없습니다. 비서가 다음에 필요로 할 때 시작됩니다.",
+  "admin.computers.egress.unknown": "외부 연결이 보고되지 않았습니다",
+  "admin.computers.egress.direct": "직접 나갑니다",
+  "admin.computers.egress.via": "{egress}을(를) 통해 나갑니다",
+  "admin.computers.updateAvailable": "업데이트 가능",
+  "admin.computers.update": "컴퓨터 업데이트",
+  "admin.computers.working": "작업 중…",
+  "admin.computers.stop": "브라우저 중지",
+  "admin.computers.reset": "초기화",
+  "admin.computers.resetTitle": "{name}의 컴퓨터를 초기화할까요?",
+  "admin.computers.resetDesc":
+    "프로필이 삭제됩니다. 비서는 모든 서비스에서 로그아웃되고 처음부터 시작합니다. 이 작업은 되돌릴 수 없습니다.",
+  "admin.computers.resetting": "초기화하는 중…",
+  "admin.computers.resetIt": "초기화",
+  "admin.computers.updateTitle": "{name}의 컴퓨터를 업데이트할까요?",
+  "admin.computers.updateDesc":
+    "이 배포가 지금 실행하는 컴퓨터 이미지로 옮겨 갑니다. 파일과 로그인은 유지됩니다. 실행 중이면 다시 시작되며 하던 작업이 중단됩니다.",
+  "admin.computers.updating": "업데이트하는 중…",
+  "admin.computers.updateIt": "업데이트",
+  "admin.computers.foot.stopLead": "중지",
+  "admin.computers.foot.stopRest":
+    "은(는) 브라우저를 닫고 로그인은 유지합니다. 비서가 다음에 필요로 할 때 다시 시작됩니다.",
+  "admin.computers.foot.resetLead": "초기화",
+  "admin.computers.foot.resetRest":
+    "은(는) 프로필을 삭제하고 비서를 모든 곳에서 로그아웃시킵니다.",
+  "admin.computers.foot.updateLead": "컴퓨터 업데이트",
+  "admin.computers.foot.updateRest":
+    "은(는) 컴퓨터가 더 오래된 이미지로 실행 중일 때 나타납니다. 컴퓨터를 새 이미지로 옮기고 파일과 로그인은 유지합니다.",
+  "admin.computers.foot.audit": "세 가지 모두 다음에 표시됩니다:",
+  "admin.computers.host.description":
+    "비서가 이 컴퓨터에서 읽을 수 있는 폴더를 고르세요. 데스크톱 앱은 편집이나 명령을 실행할 때마다 먼저 묻습니다. {product}을(를) 중지하면 접근이 끝납니다.",
+  "admin.computers.host.title": "이 컴퓨터의 폴더",
+  "admin.computers.host.offline":
+    "데스크톱 앱이 오프라인입니다. 폴더를 승인하거나 명령을 실행하려면 앱을 여세요.",
+  "admin.computers.host.noBots":
+    "아직 비서가 없습니다. 비서를 만든 다음 폴더를 고르세요.",
+  "admin.computers.host.choose": "폴더 선택",
+  "admin.computers.host.waiting": "대기 중…",
+  "admin.computers.host.readOnlyNote":
+    "폴더는 읽기 전용입니다. 비서가 써야 할 때는 데스크톱 앱이 먼저 묻습니다.",
+  "admin.computers.host.stopAccess": "폴더 접근 중지",
+  "admin.computers.host.stopping": "중지하는 중…",
+  "admin.computers.host.viewAudit": "감사 보기",
+  "admin.computers.host.readOnly": "읽기 전용",
+  "admin.computers.host.revoke": "해지",
+  "admin.computers.host.revoking": "해지하는 중…",
+  "admin.computers.host.pendingFrom": "{owner}님의 {label}.",
+  "admin.computers.host.pendingFromFor":
+    "{owner}님이 {name}에게 요청한 {label}.",
+  "admin.computers.host.folders": {
+    one: "읽기 전용 폴더 {count}개",
+    other: "읽기 전용 폴더 {count}개",
+  },
+  "admin.computers.host.requests": {
+    one: "대기 중인 요청 {count}건",
+    other: "대기 중인 요청 {count}건",
+  },
+  "admin.computers.host.none": "승인된 폴더가 없습니다.",
+  "admin.computers.host.owner": "데스크톱 소유자",
+  "admin.computers.host.p.write": "파일 변경이 승인 또는 완료를 기다리는 중",
+  "admin.computers.host.p.run": "명령이 승인 또는 완료를 기다리는 중",
+  "admin.computers.host.p.list": "파일 목록 보는 중",
+  "admin.computers.host.p.read": "파일 읽는 중",
+  "admin.computers.host.p.stop": "폴더 작업 중지하는 중",
+  "admin.computers.host.p.default": "폴더 접근이 승인을 기다리는 중",
+  "admin.learning.description":
+    "끝난 대화에서 배우고, Intelligence가 제안하는 스킬을 검토하고, 게시된 스킬을 비서에게 줍니다.",
+  "admin.learning.auto.assigned":
+    "{product}이(가) 이 Intelligence 프로젝트에 “{container}” 컨테이너를 자동으로 지정했습니다. 여기서 바꿀 수 있습니다.",
+  "admin.learning.auto.absent":
+    "이 Intelligence 프로젝트에는 아직 “{container}” Learning 컨테이너가 없습니다. 아무것도 수집되지 않습니다.",
+  "admin.learning.auto.notEntitled":
+    "이 Intelligence 프로젝트의 요금제에는 Learning이 포함되어 있지 않습니다. 컨테이너가 지정되지 않았습니다.",
+  "admin.learning.auto.unavailable":
+    "이 프로젝트의 Learning 컨테이너를 찾으려고 Intelligence에 연결하지 못했습니다. {product}이(가) 다시 시도합니다.",
+  "admin.learning.target.container": "{label} 컨테이너 ID",
+  "admin.learning.target.revision": "정확한 리비전 (선택)",
+  "admin.learning.target.revisionAria": "{label} 리비전",
+  "admin.learning.target.latest": "게시된 최신 버전",
+  "admin.learning.create.busy": "만드는 중…",
+  "admin.learning.create.button": "{container} 컨테이너 만들기",
+  "admin.learning.create.note":
+    "런타임 키가 아니라 이 배포의 자격 증명을 사용합니다.",
+  "admin.learning.create.how": "만드는 방법: ",
+  "admin.learning.part.title": "참여",
+  "admin.learning.part.description":
+    "컨테이너 변경은 새 대화에 적용됩니다. 기존 대화는 처음 컨테이너를 유지합니다. 컨테이너는 같은 Intelligence 프로젝트에 이미 있어야 합니다. 여기서 저장하기 전까지 {product}은(는) 그 프로젝트의 openbot 컨테이너를 사용합니다.",
+  "admin.learning.part.loading": "Learning 설정을 불러오는 중…",
+  "admin.learning.part.turnOn": "자동 학습과 스킬 전달 켜기",
+  "admin.learning.part.default": "기본값",
+  "admin.learning.part.hint":
+    "기본값이 없으면 자기 컨테이너가 없는 비서는 제외됩니다. ID는 소문자, 숫자, 하이픈 하나씩으로 이루어진 1~64자입니다. 게시된 최신 스킬을 쓰려면 리비전을 비워 두세요.",
+  "admin.learning.part.perBot": "비서별 참여",
+  "admin.learning.part.botListError":
+    "비서 목록을 불러오지 못했습니다. 각 비서에 저장된 설정은 아래에 있습니다.",
+  "admin.learning.part.botAria": "{name}의 참여",
+  "admin.learning.part.inherit": "배포 기본값 사용",
+  "admin.learning.part.exclude": "Learning에서 제외",
+  "admin.learning.part.container": "특정 컨테이너 사용",
+  "admin.learning.part.saving": "저장하는 중…",
+  "admin.learning.part.save": "Learning 설정 저장",
+  "admin.learning.part.saved": "설정을 저장했습니다.",
+  "admin.learning.rev.title": "검토하고 게시",
+  "admin.learning.rev.description":
+    "Intelligence는 끝난 대화를 살펴보고 스킬을 제안합니다. Intelligence에서 검토하고 게시하세요. 비서는 게시된 스킬만 사용합니다.",
+  "admin.learning.rev.showFor": "컨테이너를 표시할 대상",
+  "admin.learning.rev.default": "배포 기본값",
+  "admin.learning.rev.checking": "Intelligence 확인 중…",
+  "admin.learning.rev.invalid":
+    "선택한 컨테이너 또는 그 계측을 사용할 수 없습니다.",
+  "admin.learning.rev.selection": "비서를 고르거나 기본 컨테이너를 설정하세요.",
+  "admin.learning.rev.none": "지정된 Learning 컨테이너가 없습니다.",
+  "admin.learning.rev.threads": "준비된 스레드",
+  "admin.learning.rev.candidates": "검토할 후보",
+  "admin.learning.rev.published": "게시된 스킬",
+  "admin.learning.rev.insights": "인사이트",
+  "admin.learning.rev.running": "분석이 실행 중입니다.",
+  "admin.learning.rev.latest": "최근 분석: {status}.",
+  "admin.learning.rev.noRun": "아직 실행된 분석이 없습니다.",
+  "admin.learning.rev.manage": "Intelligence에서 Learning 관리",
+  "admin.learning.rev.reviewCandidates": "스킬 후보 검토",
+  "admin.learning.rev.viewRuns": "분석 실행 기록 보기",
+  "admin.learning.del.title": "스킬 전달",
+  "admin.learning.del.checking": "전달 확인 중…",
+  "admin.learning.del.off": "이 비서는 전달이 꺼져 있습니다.",
+  "admin.learning.del.waiting": "검증된 첫 스킬 스냅샷을 기다리는 중입니다.",
+  "admin.learning.del.stale":
+    "검증된 마지막 스냅샷을 사용 중입니다. 새로 고침이 대기 중입니다.",
+  "admin.learning.del.ok": "검증된 스냅샷을 사용할 수 있습니다.",
+  "admin.learning.del.revision": "불러온 리비전: {revision}",
+  "admin.learning.del.lastChecked": "마지막 확인:",
+  "admin.learning.rev.refresh": "상태 새로 고침",
+  "admin.learning.rev.footer":
+    "Learning을 관리하려면 Intelligence 계정과 프로젝트 접근 권한이 필요합니다. {product}은(는) 프로젝트 자격 증명을 서버에 보관합니다. 여기서 Learning을 꺼도 설정과 대화 지정은 유지됩니다. 일정과 게시는 Intelligence에 남습니다.",
+  "admin.playground.validJson":
+    "{label}은(는) 올바른 JSON이어야 합니다: {reason}",
+  "admin.playground.invalidJson": "잘못된 JSON",
+  "admin.playground.notObject":
+    "{label}은(는) {kind}이(가) 아니라 JSON 객체여야 합니다.",
+  "admin.playground.schemaLabel": "인수 (JSON Schema)",
+  "admin.playground.sampleLabel": "샘플 인수",
+  "admin.playground.fixBeforeSave": "저장하기 전에 JSON 필드를 고치세요.",
+  "admin.playground.draftSaved": "초안을 저장했습니다.",
+  "admin.playground.published": "게시했습니다.",
+  "admin.playground.description":
+    "구성 요소를 작성하고 다시 배포하지 않고 게시하세요. 편집 내용은 초안입니다. 대화에는 게시된 것만 표시됩니다.",
+  "admin.playground.saveDraft": "초안 저장",
+  "admin.playground.publish": "게시",
+  "admin.playground.title": "제목",
+  "admin.playground.titlePlaceholder": "환불 카드",
+  "admin.playground.told": "모델에게 알려 주는 내용",
+  "admin.playground.toldPlaceholder":
+    "환불을 금액, 사유, 상태와 함께 보여 주세요.",
+  "admin.playground.preview": "미리보기",
+  "admin.playground.noSample": "샘플 인수를 사용할 수 없습니다.",
+  "admin.playground.fixBeforePreview": "미리 보기 전에 JSON 필드를 고치세요.",
+  "admin.playground.saved.title": "여기에 저장됨",
+  "admin.playground.saved.empty":
+    "아직 저장된 것이 없습니다. 초안을 저장하면 여기에 표시됩니다.",
+  "admin.playground.saved.published": "게시됨, 리비전 {revision}",
+  "admin.playground.saved.draftOnly": "초안만 있음, 어떤 비서도 그릴 수 없음",
+  "admin.playground.saved.edited": "게시 후 편집됨",
+  "admin.playground.open": "열기",
+  "admin.playground.delete": "삭제",
+  "admin.playground.saved.note":
+    "게시하면 모든 비서가 사용할 수 있게 됩니다. 비서 한 명에게만 끄려면 UI 구성 요소 페이지에서 끄세요.",
+  "admin.playground.del.title": "{name}을(를) 삭제할까요?",
+  "admin.playground.del.description":
+    "이 배포에서 제거되며 어떤 비서도 그릴 수 없게 됩니다. 이 작업은 되돌릴 수 없습니다.",
+  "admin.playground.del.confirm": "삭제",
+  "admin.plugins.tool.title": "도구",
+  "admin.plugins.tool.noTool": "이 커넥터에는 그 이름의 도구가 없습니다.",
+  "admin.plugins.tool.removed":
+    "도구 목록을 마지막으로 새로 고친 뒤 제거되었을 수 있습니다.",
+  "admin.plugins.tool.notOn": "이 커넥터는 켜져 있지 않습니다.",
+  "admin.plugins.tool.noDesc": "이 도구에는 설명이 없습니다.",
+  "admin.plugins.tool.writeDesc":
+    "이 도구는 공급업체 쪽의 무언가를 바꿉니다. 쓰기에 관한 제한이 적용됩니다.",
+  "admin.plugins.tool.readDesc":
+    "이 도구는 읽기만 합니다. 쓰기에 관한 제한은 적용되지 않습니다.",
+  "admin.plugins.tool.what": "하는 일",
+  "admin.plugins.tool.effect": "영향",
+  "admin.plugins.tool.effectDesc":
+    "도구 이름이 아니라 커넥터가 정합니다. 알 수 없는 것은 모두 쓰기로 간주됩니다.",
+  "admin.plugins.tool.bots.title": "비서",
+  "admin.plugins.tool.bots.description":
+    "비서는 스위치가 켜져 있는 동안에만 이 도구를 호출할 수 있습니다. 끄면 다음 호출부터 적용됩니다.",
+  "admin.plugins.tool.bots.empty":
+    "아직 비서가 없습니다. 이 도구를 주려면 비서를 만드세요.",
+  "admin.plugins.tool.hidden": "목록에서 숨겨져 있습니다.",
+  "admin.plugins.tool.canCall":
+    "이 도구를 호출할 수 있습니다. 모든 호출은 여전히 제한에 따라 확인되고 감사에 기록됩니다.",
+  "admin.plugins.tool.noToken":
+    "허용되었지만, 이 비서에게는 콜백 토큰이 없습니다. 모든 호출이 거부됩니다. 비서의 페이지에서 발급하거나 AGENT_TOOL_TOKEN을 설정하세요.",
+  "admin.plugins.tool.cantCall":
+    "이 도구를 호출할 수 없습니다. 비서에게는 보이지 않습니다.",
+  "admin.plugins.tool.aria": "{bot}이(가) {tool}을(를) 호출하도록 허용",
+  "admin.plugins.bot.title": "비서",
+  "admin.plugins.bot.notOn": "그 이름으로 켜져 있는 앱이 없습니다.",
+  "admin.plugins.bot.nothing": "여기에는 비서에게 줄 것이 없습니다.",
+  "admin.plugins.bot.notBot.title": "비서가 아닙니다",
+  "admin.plugins.bot.notBot.description": "그 이름의 비서가 없습니다.",
+  "admin.plugins.bot.notBot.hint":
+    "이 페이지를 연 뒤에 삭제되었을 수 있습니다.",
+  "admin.plugins.bot.noDesc": "이 동작에는 설명이 없습니다.",
+  "admin.plugins.bot.destroys": "무언가를 파괴합니다",
+  "admin.plugins.bot.description":
+    "{bot}이(가) 호출할 수 있는 {app}의 동작입니다. 하나를 끄면 다음 호출부터 적용됩니다.",
+  "admin.plugins.bot.pageTitle": "{bot}과(와) {app}",
+  "admin.plugins.bot.noActions":
+    "{app}에는 나열된 동작이 없습니다. 다시 확인하려면 도구를 새로 고치세요.",
+  "admin.plugins.bot.searchAria": "{app} 동작 검색",
+  "admin.plugins.bot.searchPlaceholder": "동작 이름으로 검색",
+  "admin.plugins.bot.wouldHold": {
+    one: "그러면 이 비서는 이 앱의 도구를 {count}개 갖게 됩니다.",
+    other: "그러면 이 비서는 이 앱의 도구를 {count}개 갖게 됩니다.",
+  },
+  "admin.plugins.bot.turnOnReads": "읽기 전용 동작 모두 켜기",
+  "admin.plugins.bot.reads.title": "읽기",
+  "admin.plugins.bot.reads.description":
+    "이것들은 읽기만 합니다. 쓰기에 관한 제한은 적용되지 않습니다.",
+  "admin.plugins.bot.reads.noMatch":
+    "읽기만 하는 것 중 “{query}”와(과) 일치하는 것이 없습니다.",
+  "admin.plugins.bot.reads.none": "{app}에는 읽기 전용 동작이 없습니다.",
+  "admin.plugins.bot.writes.title": "무언가를 바꿈",
+  "admin.plugins.bot.writes.description":
+    "이것들은 공급업체 쪽의 무언가를 바꿉니다. 쓰기에 관한 제한이 적용됩니다.",
+  "admin.plugins.bot.writes.noMatch":
+    "무언가를 바꾸는 것 중 “{query}”와(과) 일치하는 것이 없습니다.",
+  "admin.plugins.bot.writes.none": "{app}에는 무언가를 바꾸는 동작이 없습니다.",
+  "admin.plugins.bot.shared.title":
+    "{bot}이(가) 공유 {app} 계정을 사용하도록 허용할까요?",
+  "admin.plugins.bot.allowing": "허용하는 중…",
+  "admin.plugins.bot.allow": "허용",
+  "admin.shared.sentence.write":
+    "이 비서를 사용할 수 있는 사람은 누구나 공유 계정으로 이것을 할 수 있습니다.",
+  "admin.shared.sentence.read":
+    "이 비서를 사용할 수 있는 사람은 누구나 이 계정이 읽을 수 있는 것을 읽을 수 있습니다.",
+  "admin.shared.owner": "소유자만",
+  "admin.shared.named": "지정: {who}",
+  "admin.shared.team": "모든 사람",
+  "admin.shared.legend": "이 비서를 통해 공유 계정을 사용할 수 있는 사람",
+  "admin.shared.outside": "외부 메시지(이메일, Slack, 웹훅)도 사용할 수 있음",
+  "admin.shared.skipped": {
+    one: "이 앱이 나열한 동작 {count}개가 제외되었습니다. 도구 이름에는 문자, 숫자, 밑줄, 하이픈만 쓸 수 있기 때문입니다: ",
+    other:
+      "이 앱이 나열한 동작 {count}개가 제외되었습니다. 도구 이름에는 문자, 숫자, 밑줄, 하이픈만 쓸 수 있기 때문입니다: ",
+  },
+  "admin.vocab.browse": "{name} 둘러보기",
+  "admin.vocab.dirDesc.composio":
+    "수백 개의 앱입니다. 각자 자기 계정을 연결합니다.",
+  "admin.vocab.dirDesc.arcade":
+    "여기서 아무도 검토하지 않은 앱입니다. 각자 자기 계정을 연결합니다.",
+  "admin.vocab.readFailure":
+    "{name}의 앱 디렉터리를 불러오지 못했습니다. 페이지를 새로 고치세요.",
+  "admin.vocab.moreApps":
+    "{name}의 앱입니다. 여기서 아무도 검토하지 않았습니다.",
+  "admin.vocab.notSetUp":
+    "설정되지 않았습니다. 이 앱을 둘러보려면 이 배포에서 {envVar}을(를) 설정하세요.",
+  "admin.vocab.connection":
+    "각자의 계정을 보관하는 {name}을(를) 통해 연결됩니다.",
+  "admin.vocab.reach.description":
+    "{name}이(가) 계정을 보관합니다. 이 배포는 키 하나와 요청한 사람을 보냅니다. 각자 자기 계정을 연결하며, 비서는 그 사람이 볼 수 있는 것만 봅니다. 붙여 넣을 토큰은 없습니다.",
+  "admin.vocab.reach.badge": "{name}을(를) 통해",
+  "admin.vocab.disconnect": "연결을 해제하면 {name}의 계정도 함께 끝납니다.",
+  "admin.vocab.trip.stem":
+    "{name}은(는) 동작을 하나씩 승인하므로 앱 전체에 대해 연결할 것이 없습니다.",
+  "admin.vocab.trip.below": "원하는 동작을 아래에서 승인하세요.",
+  "admin.vocab.trip.settings": "연결에서 승인하세요.",
+  "admin.vocab.keyMissing":
+    "이 배포에서 {envVar}을(를) 설정하세요. 그때까지는 이 계정을 여기서 연결하거나 해제할 수 없습니다. 앱은 켜진 채로 있고 도구 권한도 그대로 유지됩니다.",
+  "admin.vocab.siblings": {
+    one: "연결을 해제하면 이 연결을 함께 쓰는 {names}에 대한 접근도 끝납니다.",
+    other:
+      "연결을 해제하면 이 연결을 함께 쓰는 {names}에 대한 접근도 끝납니다.",
+  },
+  "admin.vocab.unansweredMore": {
+    one: "다른 앱 {count}개를 확인하지 못했으며 영향을 받을 수 있습니다.",
+    other: "다른 앱 {count}개를 확인하지 못했으며 영향을 받을 수 있습니다.",
+  },
+  "admin.vocab.unansweredOnly": {
+    one: "이 연결의 앱 {count}개를 확인하지 못했으므로 연결을 해제하면 그 앱도 끝날 수 있습니다.",
+    other:
+      "이 연결의 앱 {count}개를 확인하지 못했으므로 연결을 해제하면 그 앱도 끝날 수 있습니다.",
+  },
+  "admin.vocab.join2": "{a} 및 {b}",
+  "admin.vocab.joinMany": "{list} 및 {last}",
+  "admin.skills.write": "스킬 작성",
+  "admin.skills.description":
+    "누구나 /로 실행할 수 있는 이름 붙은 지침입니다. 스킬은 접근 권한을 더하지 않습니다. 비서에게 이미 가진 것을 쓰라고 요청할 수만 있습니다.",
+  "admin.skills.installed.title": "설치됨",
+  "admin.skills.installed.description":
+    "이 배포의 모든 사람을 위한 것입니다. 각자 자기 스킬 페이지에서 자기 스킬을 작성합니다.",
+  "admin.skills.loadError":
+    "스킬을 불러오지 못했습니다. 페이지를 새로 고치세요.",
+  "admin.skills.empty": "아직 스킬이 없습니다. 스킬 작성으로 하나 만드세요.",
+  "admin.skills.dlg.title": "모두를 위한 스킬 작성",
+  "admin.skills.dlg.description":
+    "사람들이 / 뒤에 슬러그를 입력합니다. 그러면 비서가 지침을 따릅니다. 누구나 쓸 수 있고, 어떤 비서에게 줄지는 직접 고릅니다.",
+  "admin.skills.slug": "슬러그",
+  "admin.skills.title": "제목",
+  "admin.skills.summary": "요약",
+  "admin.skills.summaryPlaceholder": "한 줄",
+  "admin.skills.instructions": "지침",
+  "admin.skills.instructionsPlaceholder":
+    "이 스킬이 쓰일 때 비서가 해야 할 일.",
+  "admin.skills.install": "스킬 설치",
+  "engines.intro":
+    "엔진은 각 멤버를 대신해 생각하는 부분입니다. 다른 순서를 고르지 않는 한 먼저 내 로그인이 응답하며, 유료인 것은 내가 켤 때까지 꺼져 있습니다.",
+  "engines.loadFailed": "엔진을 불러오지 못했습니다. 페이지를 새로고침하세요.",
+  "engines.fallback": "엔진 목록을 만들 수 없었습니다.",
+  "engines.noEngines": "아직 보고된 엔진이 없습니다.",
+  "engines.statesTitle": "엔진과 상태",
+  "engines.sectionsLabel": "엔진 구역",
+  "engines.tab.overview": "개요",
+  "engines.tab.providers": "제공업체",
+  "engines.tab.members": "비서 배정",
+  "engines.tab.usage": "사용량",
+  "engines.asideLabel": "키와 지출",
+  "engines.keys.title": "키",
+  "engines.keys.text":
+    "여기에는 게이트웨이의 키만 보관됩니다. Claude와 ChatGPT 로그인은 FreeDuet이 절대 저장하지 않습니다.",
+  "engines.keys.notBuilt":
+    "키는 해당 엔진의 카드에서 추가합니다. 이 설치에 보관되며 다시 표시되지 않습니다.",
+  "engines.spending.title": "지출",
+  "engines.spending.text":
+    "지출은 아직 이 페이지에 표시되지 않습니다. 유료 엔진은 이 설치가 허용할 때만 실행됩니다.",
+  "engines.today": "오늘",
+  "engines.reason.off":
+    "이 설치에서는 엔진이 꺼져 있어(FREEDUET_ROUTER=off) 표시할 것이 없습니다.",
+  "engines.reason.not_set_up":
+    "이 설치에는 FreeDuet 에이전트가 설정되어 있지 않아 표시할 엔진이 없습니다.",
+  "engines.reason.unreachable":
+    "FreeDuet 에이전트가 응답하지 않아 지금은 엔진을 읽을 수 없습니다. 이 페이지는 30초마다 다시 요청합니다.",
+  "engines.state.ready": "준비됨",
+  "engines.state.degraded": "준비됨, 하지만 최근에 오류가 있었습니다",
+  "engines.state.limitedAt": "한도에 도달했습니다({at}까지)",
+  "engines.state.limited": "지금은 한도에 도달했습니다",
+  "engines.state.outOfCreditAt":
+    "크레딧이 소진되었습니다. {at}에 다시 시도합니다",
+  "engines.state.outOfCredit": "크레딧이 소진되었습니다",
+  "engines.state.notAnsweringAt": "응답이 없습니다. {at}에 다시 시도합니다",
+  "engines.state.notAnswering": "지금은 응답이 없습니다",
+  "engines.state.checking": "다시 응답하는지 확인하는 중",
+  "engines.state.gatewayKey":
+    "이 엔진의 게이트웨이가 키를 받아들이지 않았습니다. 입력한 키를 확인하세요.",
+  "engines.state.signedOut":
+    "로그아웃됨: 이 엔진 자체의 로그인으로 다시 로그인하세요",
+  "engines.state.refusedWhy": "실행되지 않음: {reason}",
+  "engines.state.refused": "실행되지 않음: 이유를 알 수 없습니다.",
+  "engines.state.unknown": "상태를 알 수 없습니다",
+  "engines.state.toolsAsText":
+    "마지막 응답에서 도구 호출을 사용하지 않고 텍스트로 적었습니다. 도구를 지원하는 모델을 고르세요",
+  "engines.pill.working": "작동 중",
+  "engines.pill.checking": "확인 중",
+  "engines.pill.limited": "한도 도달",
+  "engines.pill.outOfCredit": "크레딧 소진",
+  "engines.pill.notAnswering": "응답 없음",
+  "engines.pill.signedOut": "로그아웃됨",
+  "engines.pill.locked": "잠김",
+  "engines.pill.unknown": "알 수 없음",
+  "engines.members.title": "누가 무엇을 쓰는지",
+  "engines.members.description":
+    "각 멤버가 시도하는 엔진과 시도하는 순서, 그리고 엔진 하나가 소진되었을 때 일어나는 일입니다. 변경은 멤버의 다음 메시지부터 적용되며, 되돌릴 수 있습니다.",
+  "engines.members.col.member": "멤버",
+  "engines.members.col.order": "엔진 순서",
+  "engines.members.col.switching": "엔진이 소진되었을 때",
+  "engines.order.note":
+    "화살표로 엔진을 한 칸씩 옮깁니다. 다르게 고르지 않는 한 내 로그인이 먼저 옵니다. 옮기는 바람에 무료 또는 유료 엔진이 로그인보다 앞에 오게 되면, 먼저 확인을 요청합니다.",
+  "engines.order.warnTitle.free_before_login":
+    "무료 엔진이 내 로그인보다 먼저 응답하게 됩니다",
+  "engines.order.warnTitle.paid_before_free_or_login":
+    "유료 엔진이 무료 엔진이나 로그인보다 앞에 오게 됩니다",
+  "engines.order.warnText.free_before_login":
+    "클라우드 서비스라면 이 멤버의 메시지가 먼저 그 제공업체로 전송되며, 제공업체가 이를 보관할 수 있습니다. 응답 품질도 내 로그인보다 낮을 수 있습니다.",
+  "engines.order.warnText.paid_before_free_or_login":
+    "유료 엔진은 뒤에 있는 엔진보다 먼저 응답하므로, 그 응답에는 비용이 들 수 있습니다. 목록의 맨 앞에 있으면 첫 메시지부터 모든 메시지에 비용이 들 수 있습니다. 유료 엔진을 켜고 한도를 정한 뒤에만 실행됩니다.",
+  "engines.order.newLabel": "새 순서:",
+  "engines.order.tick": "이해했습니다, 이 순서를 사용합니다",
+  "engines.order.confirm": "확인",
+  "engines.order.tickLabel": "이해했습니다, {name}에 이 순서를 사용합니다",
+  "engines.order.confirmLabel": "{name}의 새 순서 확인",
+  "engines.order.cancelLabel": "{name}의 새 순서 취소",
+  "engines.order.own": "내가 정한 순서: 로그인이 맨 앞이 아닙니다",
+  "engines.order.recommended": "권장 순서 사용",
+  "engines.order.recommendedLabel": "{name}에 권장 순서 사용",
+  "engines.order.moveUp": "{name}의 {engine}을(를) 위로 이동",
+  "engines.order.moveDown": "{name}의 {engine}을(를) 아래로 이동",
+  "engines.order.saveFailed": "순서를 저장하지 못했습니다.",
+  "engines.claude.default": "구독 기본값",
+  "engines.claude.effort.low": "낮음",
+  "engines.claude.effort.medium": "보통",
+  "engines.claude.effort.high": "높음",
+  "engines.claude.effort.xhigh": "매우 높음",
+  "engines.claude.effort.max": "최대",
+  "engines.claude.effortLabel": "노력 수준",
+  "engines.claude.note":
+    "Claude Code 전용입니다. 구독에서 사용할 수 없는 모델을 고르면 그 턴은 Claude Code 자체의 오류로 끝납니다. 꺼지는 것은 없으며, '구독 기본값'을 고르면 선택이 취소됩니다.",
+  "engines.claude.modelAria": "{name}의 Claude 모델",
+  "engines.claude.effortAria": "{name}의 Claude 노력 수준",
+  "engines.claude.saved":
+    "Claude 선택을 저장했습니다. 다음 메시지부터 적용됩니다.",
+  "engines.members.saveFailed": "선택을 저장하지 못했습니다.",
+  "engines.members.undoFailed": "그 변경을 되돌리지 못했습니다.",
+  "engines.mode.groupLabel": "{name}의 엔진이 소진되었을 때",
+  "engines.mode.controlLabel": "{name}의 {label}",
+  "engines.mode.undoLabel": "{name}의 변경 되돌리기",
+  "engines.mode.automatic.label": "자동으로 전환",
+  "engines.mode.automatic.effect":
+    "엔진이 소진되면 다음 엔진이 응답하고, 어느 엔진인지 알려 드립니다.",
+  "engines.mode.askFirst.label": "먼저 나에게 묻기",
+  "engines.mode.askFirst.effect":
+    "엔진이 소진되면 전환할지, 기다릴지, 다른 엔진을 지정할지 나에게 묻습니다.",
+  "engines.leftOut.line": "사용하지 않음: {engine}, {why} 때문입니다.",
+  "engines.leftOut.locked": "설치의 파일이 허용하지 않기",
+  "engines.leftOut.disabled": "꺼져 있기",
+  "engines.leftOut.paid_gateway":
+    "유료 게이트웨이이며, FreeDuet이 아직 실행하지 않기",
+  "engines.leftOut.metered_off": "유료 엔진이 꺼져 있기",
+  "engines.leftOut.cap_zero": "지출 한도가 0이기",
+  "engines.leftOut.not_set_up": "이 설치에 설정되어 있지 않기",
+  "engines.leftOut.other": "실행되지 않기",
+  "engines.chain.none": "지금은 이 멤버에게 응답할 수 있는 엔진이 없습니다.",
+  "engines.chain.one": "{engine}만 시도합니다.",
+  "engines.chain.many": "{list}을(를) 시도합니다.",
+  "engines.chain.then": ", 그다음 ",
+  "engines.pin":
+    "설치의 파일에 의해 {engine}에 고정되어 있습니다. 다른 엔진으로 절대 전환되지 않습니다.",
+  "engines.alone":
+    "이 멤버에는 {engine}만 설정되어 있어 아직 전환할 대상이 없습니다. 내 선택은 전환할 대상이 생길 때를 위해 보관됩니다.",
+  "engines.source.yours":
+    "내가 고른 것입니다. 설치의 파일에는 {mode}(이)라고 되어 있습니다.",
+  "engines.source.file": "설치의 파일에서 가져왔습니다.",
+  "engines.block.not_at_the_computer":
+    "이 항목은 FreeDuet이 실행되는 컴퓨터에서 변경하세요.",
+  "engines.block.not_paired_with_the_computer":
+    "먼저 이 브라우저를 FreeDuet이 실행되는 컴퓨터와 페어링하세요. 그 컴퓨터에서 `bash scripts/open.sh`를 실행하고 여기서 링크를 여세요.",
+  "engines.block.agent_too_old": "이를 변경하려면 FreeDuet을 업데이트하세요.",
+  "engines.block.choices_unreadable":
+    "내 선택을 읽을 수 없어 설치의 설정이 사용되고 있습니다. 선택한 내용은 사라지지 않았습니다.",
+  "engines.saved": "저장했습니다. 멤버의 다음 메시지부터 적용됩니다.",
+  "engines.undone":
+    "되돌렸습니다. 이전 설정이 멤버의 다음 메시지부터 적용됩니다.",
+  "engines.providers.title": "엔진 추가",
+  "engines.providers.description":
+    "엔진을 켜고 키를 붙여 넣은 뒤 '저장'을 누르고, 이어서 '테스트'를 누르세요. 변경은 다음 메시지부터 적용됩니다.",
+  "engines.providers.pickerLabel": "제공업체",
+  "engines.providers.blurb.ollama": "내 컴퓨터에서 실행되는 모델입니다.",
+  "engines.providers.blurb.llamacpp":
+    "내 컴퓨터나 네트워크에 있는 llama.cpp 서버입니다.",
+  "engines.providers.blurb.lmstudio":
+    "내 컴퓨터에 있는 LM Studio의 로컬 서버입니다.",
+  "engines.providers.blurb.freellmapi":
+    "직접 실행하는 라우터로, 여러 제공업체의 무료 이용 구간을 하나의 주소 뒤에 모아 줍니다.",
+  "engines.providers.blurb.groq":
+    "빠른 오픈 모델이며, 무료이고 하루 한도가 있습니다.",
+  "engines.providers.blurb.google":
+    "Gemini 모델이며, 무료이고 한도가 있습니다.",
+  "engines.providers.blurb.mistral":
+    "무료 요금제의 Mistral 모델이며 한도가 있습니다.",
+  "engines.providers.blurb.openrouter":
+    "비용이 들지 않는 모델만 해당합니다. :free로 끝나는 id 또는 openrouter/free입니다.",
+  "engines.providers.blurb.cloudflare":
+    "Cloudflare의 오픈 모델이며, 무료이고 하루 허용량이 있습니다. 주소에 내 계정을 넣으세요.",
+  "engines.providers.blurb.cerebras": "매우 빠른 오픈 모델입니다.",
+  "engines.providers.blurb.anthropic-api":
+    "사용한 만큼 내는 크레딧으로 쓰는 Claude입니다.",
+  "engines.providers.tag.local": "로컬",
+  "engines.providers.tag.router": "고급: 내 라우터",
+  "engines.providers.tag.free": "무료, 한도 있음",
+  "engines.providers.tag.trial": "체험판, 카드 필요",
+  "engines.providers.tag.paid": "유료",
+  "engines.providers.cloudWarning":
+    "이 서비스로 보낸 데이터는 내 컴퓨터 밖으로 나갑니다.",
+  "engines.providers.routerWarning":
+    "내 메시지는 라우터로 전송되고, 라우터는 그 안에서 켜 둔 무료 제공업체에 이를 전달합니다. 메시지는 내 컴퓨터 밖으로 나가며, 그 제공업체들이 이를 보관할 수 있습니다.",
+  "engines.providers.routerAdvanced":
+    "고급 옵션이며 권장 기본값이 아닙니다. 이 프로젝트는 스스로 개인 실험용이라고 설명합니다. FreeDuet은 이를 설치하거나 실행하지 않습니다. 제공업체 키는 라우터 안에 남고, FreeDuet이 보관하는 것은 라우터가 발급하는 액세스 토큰 하나뿐입니다.",
+  "engines.providers.routerAddress":
+    "기본 포트인 3001은 FreeDuet이 사용합니다. 다른 포트에서 실행하고 주소 끝에 /v1을 붙여 쓰세요. 이 컴퓨터에서는 http로 충분합니다. 이 컴퓨터 밖에서는 내 네트워크(LAN 주소 또는 .local 이름)만 https로 받아들입니다. 공개 호스트는 거부됩니다.",
+  "engines.providers.address": "서버 주소",
+  "engines.providers.loadList": "목록 불러오기",
+  "engines.providers.saveSettings": "설정 저장",
+  "engines.providers.test": "테스트",
+  "engines.providers.freeModelsNote":
+    "무료 모델은 자주 바뀌며, 보낸 내용을 보관할 수 있습니다.",
+  "engines.providers.freeModelsLoading":
+    "도구를 사용할 수 있는 무료 모델을 불러오는 중입니다.",
+  "engines.providers.freeModelsStale":
+    "방금 OpenRouter에 연결하지 못했습니다. 마지막으로 불러온 목록입니다.",
+  "engines.providers.freeModelsFallback":
+    "방금 OpenRouter에 연결하지 못했습니다. 무료 라우터만 제공됩니다.",
+  "engines.providers.freeRouterLabel":
+    "openrouter/free (OpenRouter가 무료 모델을 고릅니다)",
+  "engines.providers.keySaved": "키를 저장했습니다. 다시 표시되지 않습니다.",
+  "engines.providers.keyPlaceholder": "여기에 키를 붙여 넣으세요",
+  "engines.providers.notOnKey":
+    "아직 켜지지 않았습니다. 키를 붙여 넣고 '저장'을 누르세요.",
+  "engines.providers.notOnSettings":
+    "아직 켜지지 않았습니다. 모델을 고르고 '설정 저장'을 누르세요.",
+  "engines.providers.settingsSaved":
+    "저장했습니다. 다음 메시지부터 적용됩니다.",
+  "engines.providers.keyRemoved": "키를 삭제했습니다. 엔진이 꺼졌습니다.",
+  "engines.providers.lockedOwnFile":
+    "직접 작성한 엔진 파일이 있어 이 카드들은 내용을 보여 주기만 합니다. 변경은 그 파일에서 하세요.",
+  "engines.providers.users.paid":
+    "지출 한도가 생기기 전까지 꺼져 있습니다. 그때까지 FreeDuet은 유료 엔진을 실행하지 않습니다.",
+  "engines.providers.users.trial":
+    "무료 이용 구간이 카드가 필요한 체험판이므로 FreeDuet은 이를 무료로 제공하지 않습니다. 꺼진 상태로 유지됩니다.",
+  "engines.providers.users.members":
+    "멤버: 예, Claude 로그인 다음에 사용합니다. 경량 비서: 예.",
+  "engines.providers.users.notYet": "멤버: 아직 아닙니다. 경량 비서: 예.",
+  "engines.providers.check.ok": "응답했습니다. 작동합니다.",
+  "engines.providers.check.key_rejected":
+    "키가 받아들여지지 않았습니다. 확인하고 다시 저장하세요.",
+  "engines.providers.check.model_missing":
+    "서버가 그 모델을 알지 못합니다. 모델 이름을 확인하세요.",
+  "engines.providers.check.rate_limited":
+    "지금은 한도 또는 크레딧을 다 썼습니다. 나중에 다시 시도하세요.",
+  "engines.providers.check.other": "응답이 없거나 응답을 이해하지 못했습니다.",
+  "engines.providers.freeNote":
+    "'무료'는 제공업체의 약관을 바탕으로 한 FreeDuet의 표시입니다. 일부 제공업체(예: Google)는 프로젝트에 결제가 켜져 있으면 요금을 청구합니다.",
+  "engines.providers.useFor": "사용 대상",
+  "engines.providers.useForNone":
+    "아직 이를 사용하는 멤버가 없습니다. 경량 비서는 사용합니다. 작업을 이 서비스로 보내도 되는 멤버를 선택하세요.",
+  "engines.providers.warn.inbox": "내 메일을 이 서비스로 보냅니다.",
+  "engines.providers.warn.concierge": "내 예약을 이 서비스로 보냅니다.",
+  "engines.providers.modelsEmpty":
+    "목록이 비어 있습니다. 모델 이름을 입력하세요.",
+  "engines.providers.modelsLoaded": {
+    one: "모델 {count}개를 불러왔습니다. 상자에서 하나를 고르세요.",
+    other: "모델 {count}개를 불러왔습니다. 상자에서 하나를 고르세요.",
+  },
+  "engines.providers.switchOn": "{name} 켜기",
+  "engines.providers.changeFailed": "변경하지 못했습니다.",
+  "engines.providers.keySaveFailed": "키를 저장하지 못했습니다.",
+  "engines.providers.listFailed": "목록을 불러오지 못했습니다.",
+  "engines.providers.keyRemoveFailed": "키를 삭제하지 못했습니다.",
+  "engines.providers.saveFailed": "저장하지 못했습니다.",
+  "engines.providers.testFailed": "테스트를 실행하지 못했습니다.",
+  "engines.tokens.title": "토큰",
+  "engines.tokens.description":
+    "각 멤버가 각 엔진에서 사용한 양으로, 엔진이 직접 보고한 그대로입니다. 날짜는 UTC로 계산합니다.",
+  "engines.tokens.fallback": "토큰 수를 불러오지 못했습니다.",
+  "engines.tokens.empty": "집계된 턴이 아직 없습니다.",
+  "engines.tokens.unavailable": "지금은 토큰 수를 사용할 수 없습니다.",
+  "engines.tokens.problem":
+    "집계를 보관하는 파일을 읽지 못해 일부 숫자가 빠져 있을 수 있습니다.",
+  "engines.tokens.notReported": "보고되지 않음",
+  "engines.tokens.col.engine": "엔진",
+  "engines.tokens.col.week": "최근 7일",
+  "engines.tokens.allMembers": "모든 멤버",
+  "engines.tokens.note":
+    "입력은 모델에 전달된 모든 토큰을 캐시된 것까지 포함해 셉니다. 각 행은 엔진 시도 횟수를 세며, 같은 엔진에서 다시 시도하면 다시 셉니다. 엔진이 아무것도 보고하지 않은 시도는 시간만 더하고 토큰은 더하지 않습니다. 시간은 각 시도의 시작부터 끝까지를 여기서 측정합니다.",
+  "engines.tokens.savedWeek": "최근 7일간 절약",
+  "engines.tokens.savedNote":
+    "절약은 클라우드나 내 컴퓨터의 무료 엔진을 거친 토큰을 뜻합니다. Claude Code 구독은 정액이고 유료 엔진은 비용이 들기 때문에, 둘 다 포함되지 않습니다.",
+  "engines.tokens.currencyHelp": "금액을 클릭하면 유로와 달러가 전환됩니다.",
+  "engines.tokens.reference":
+    "{model} 정가 기준(100만 토큰당 입력 {input}, 출력 {output}, {date}); {euro} = {rate} ({rateDate}).",
+  "engines.tokens.under": "{amount} 미만",
+  "engines.tokens.nothingYet": "아직 없음",
+  "engines.tokens.plus": "그리고 {time}",
+  "engines.tokens.toDollars": "{amount}. 금액을 달러로 표시",
+  "engines.tokens.toEuros": "{amount}. 금액을 유로로 표시",
+  "engines.tokens.amount": "토큰 {amount}개",
+  "engines.tokens.timeLocal": "내 GPU에서 {time}",
+  "engines.tokens.timeCloud": "무료 클라우드 엔진에서 {time}",
+  "engines.tokens.and": " 및 ",
+  "engines.tokens.timeTail": "{parts}, 토큰은 보고되지 않음",
+  "engines.tokens.cell": "입력 {input} · 출력 {output}",
+  "engines.tokens.partial": "시도 {total}건 중 {reported}건이 보고됨",
+  "engines.dur.under": "1분 미만",
+  "engines.dur.min": "{minutes}분",
+  "engines.dur.hourMin": "{hours}시간 {minutes}분",
+  "engines.usage.bySource": "출처별",
+  "engines.usage.byMember": "멤버별",
+  "engines.usage.time": "시간",
+  "engines.usage.source.person": "나",
+  "engines.usage.source.routine": "루틴",
+  "engines.usage.source.handoff": "멤버 간",
+  "engines.usage.source.other": "기타",
+  "engines.usage.source.unknown": "이전 (기록되지 않음)",
+  "engines.usage.title": "최근 7일의 내역",
+  "engines.usage.note":
+    "비율은 엔진이 보고한 토큰(입력과 출력의 합)을 기준으로 하며, '시간'을 고른 경우에는 시간을 기준으로 합니다. 토큰을 보고하지 않은 시도는 시간만 더합니다. '나'는 내가 보낸 메시지, '루틴'은 루틴과 점검, '멤버 간'은 넘김, '기타'는 배포 자체의 실행 같은 그 밖의 모든 것입니다.",
+  "engines.usage.nothing": "최근 7일 동안 집계된 것이 없습니다.",
+  "engines.usage.chartsFailed":
+    "사용량 차트를 그리지 못했습니다. 아래 표에는 영향이 없습니다.",
+  "engines.usage.restMembers": "다른 멤버",
+  "engines.usage.limitTitle": "요금제 한도",
+  "engines.usage.limitNone": "지금 한도 때문에 멈춰 있는 엔진은 없습니다.",
+  "engines.usage.limitNote":
+    "요금제의 주간 한도 대비 비율은 표시되지 않습니다. 구독이 이를 FreeDuet에 알려 주지 않기 때문입니다. 엔진은 한도에 도달했을 때만 그 사실과 복귀 예정 시각을 알려 줍니다.",
+  "engines.usage.range": "{from}부터 {to}까지, UTC 날짜 기준",
+  "engines.usage.splitBy": "나누는 기준",
+  "engines.usage.measure": "측정 항목",
+  "engines.usage.perDay": "{title}: 하루당 {metric}",
+  "engines.usage.perDayUtc": "{title}: 하루당 {metric}, UTC",
+  "engines.usage.day": "날짜",
+  // connections-begin
+  "connections.connect": "연결",
+  "connections.reconnect": "다시 연결",
+  "connections.connected": "연결됨",
+  "connections.teamAccount": "팀 계정",
+  "connections.disconnect": "연결 해제",
+  "connections.disconnecting": "연결을 해제하는 중…",
+  "connections.startFailed":
+    "연결을 시작하지 못해 아무것도 연결되지 않았습니다. 다시 시도하세요. 계속되면 관리자에게 문의하세요.",
+  "connections.list.auth.no-broker":
+    "앱 연결이 아직 설정되지 않아 아무것도 기록되지 않았습니다. 관리자에게 설정을 요청하세요.",
+  "connections.list.auth.not-supported":
+    "여기의 앱은 앱 페이지의 '연결'로 한 번만 연결합니다. 동작 하나하나에 대해 승인하는 방식이 아닙니다.",
+  "connections.list.auth.missing-handle":
+    "그 링크에는 어떤 승인을 완료하는 것인지 나와 있지 않아 아무것도 처리되지 않았습니다. 앱 페이지에서 다시 시작하세요.",
+  "connections.list.auth.no-attempt":
+    "완료할 수 있는 진행 중인 승인이 없습니다. 만료되었거나 다른 세션에서 시작되었을 수 있습니다. 앱 페이지에서 다시 시작하세요.",
+  "connections.list.auth.vendor-unavailable":
+    "{product}이(가) 그 승인을 완료하려 할 때 앱이 응답하지 않아 아무것도 기록되지 않았습니다. 잠시 후 링크를 다시 시도하세요.",
+  "connections.list.auth.not-your-authorization":
+    "그 링크는 진행 중인 내 승인과 일치하지 않아 아무것도 기록되지 않았습니다. 시작한 탭에서 완료하거나 앱 페이지에서 다시 시작하세요.",
+  "connections.list.auth.not-finished":
+    "그 승인은 아직 끝나지 않아 아무것도 기록되지 않았습니다. 앱에서 완료한 다음 링크를 다시 여세요.",
+  "connections.list.auth.authorization-failed":
+    "앱이 그 승인을 완료하지 않아 아무것도 기록되지 않았습니다. 앱 페이지에서 다시 시작하세요.",
+  "connections.list.auth.context-changed":
+    "승인이 열려 있는 동안 그 앱의 계정이 바뀌어 아무것도 기록되지 않았습니다. 이전 계정에 부여된 액세스는 삭제되었습니다. 앱 페이지에서 다시 시작하세요.",
+  "connections.list.auth.not-permitted":
+    "더 이상 그 앱의 계정을 연결할 수 없어 아무것도 기록되지 않았습니다. 승인이 열려 있는 동안 내 액세스 권한이나 앱의 설정이 바뀌었습니다. 완료할 수 있을 것으로 예상했다면 관리자에게 문의하세요.",
+  "connections.list.auth.cancelled":
+    "그 승인은 완료되는 도중에 취소되어 아무것도 기록되지 않았습니다. 그 승인이 부여한 액세스는 삭제되었습니다.",
+  "connections.list.auth.cancelled-left-live":
+    "그 승인은 완료되는 도중에 취소되어 아무것도 기록되지 않았습니다. 그 승인이 부여한 액세스를 삭제하지 못했으므로 앱이 취소한 동작을 여전히 허용할 수 있습니다. 삭제하려면 앱 페이지에서 앱 연결을 해제한 다음 다시 연결하고, 원하는 것만 승인하세요.",
+  "connections.list.auth.not-recorded":
+    "그 승인을 기록하지 못해 아무것도 저장되지 않았습니다. 앱 페이지에서 다시 시작하세요. 계속되면 관리자에게 문의하세요.",
+  "connections.list.description":
+    "내 비서가 나로서 사용하는 앱과 계정입니다. 하나를 열어 연결하거나 변경하세요.",
+  "connections.list.connectFailed":
+    "그 계정을 연결하지 못했습니다. 아무것도 저장되지 않았습니다. 다시 시도하세요.",
+  "connections.list.title": "내 연결",
+  "connections.list.loading": "연결을 불러오는 중…",
+  "connections.list.loadError":
+    "내 연결을 불러오지 못했습니다. 페이지를 새로고침하세요. 계속되면 관리자에게 문의하세요.",
+  "connections.list.empty":
+    "아직 연결할 것이 없습니다. 관리자가 앱을 켜면 여기에 표시됩니다.",
+  "connections.list.count": "사용 중 {inUse} · 전체 {total}",
+  "connections.list.search": "연결 검색",
+  "connections.list.noMatch": "'{query}'와(과) 일치하는 항목이 없습니다.",
+  "connections.list.linksError":
+    "GitHub와 Slack을 불러오지 못해 목록에 없습니다. 페이지를 새로고침하세요.",
+  "connections.list.connectNamed": "{title} 연결",
+  "connections.list.reconnectNamed": "{title} 다시 연결",
+  "connections.app.landed": "방금 {action} 동작을 승인했습니다.",
+  "connections.app.pendingTitle": "계정",
+  "connections.app.loadError":
+    "이 연결을 불러오지 못했습니다. 페이지를 새로고침하세요. 계속되면 관리자에게 문의하세요.",
+  "connections.app.appLoadError":
+    "이 앱을 불러오지 못했습니다. 페이지를 새로고침하세요. 계속되면 관리자에게 문의하세요.",
+  "connections.app.notSetUp":
+    "{title}은(는) 아직 설정되지 않았습니다. 누군가 연결하려면 먼저 관리자가 켜야 합니다.",
+  "connections.app.sharedDesc":
+    "조직에서 공유합니다. 비서는 팀 계정으로 동작합니다.",
+  "connections.app.brokeredDesc":
+    "비서는 이를 나로서 사용하며, 내가 볼 수 있는 것만 봅니다.",
+  "connections.app.reassurance": "어떤 비서도 이를 나로서 사용할 수 없습니다.",
+  "connections.app.tripPerAction": "아래에서 원하는 동작을 승인하세요.",
+  "connections.app.tripConnect":
+    "연결하면 액세스를 승인하기 위해 {title}(으)로 이동합니다.",
+  "connections.app.connectedDesc":
+    "내가 허용한 비서는 내 {title}을(를) 나로서 사용합니다. 연결을 해제하면 비서들의 액세스가 모든 곳에서 삭제됩니다.",
+  "connections.app.notYours": "이 앱은 직접 연결하는 것이 아닙니다.",
+  "connections.app.oneShared":
+    "비서는 이 앱에 대해 모두에게 같은 하나의 공유 계정을 사용합니다.",
+  "connections.app.noApp": "{product}에는 그 이름의 앱이 없습니다.",
+  "connections.app.yourAccount": "내 계정",
+  "connections.app.notAvailable":
+    "아직 사용할 수 없습니다. 먼저 관리자가 켜야 합니다.",
+  "connections.app.connectedAsYou":
+    "내가 허용한 비서는 이를 나로서 사용하며, 내가 볼 수 있는 것만 봅니다.",
+  "connections.app.notConnected":
+    "어떤 비서도 이를 나로서 사용할 수 없습니다. 연결하면 액세스를 승인하기 위해 {vendor}(으)로 이동합니다.",
+  "connections.app.disconnectedDone":
+    "연결을 해제했습니다. {product}은(는) 더 이상 내 {vendor} 계정을 사용할 수 없습니다.",
+  "connections.app.disconnectedUnconfirmed":
+    "여기서는 연결을 해제했습니다. {vendor}이(가) 확인해 주지 않았으니, {vendor} 계정의 타사 액세스 설정에서도 {product}을(를) 삭제하세요.",
+  "connections.app.accessDesc":
+    "내가 허용한 내용으로, {vendor}이(가) 기록한 그대로입니다. {product}이(가) 요청한 것보다 적을 수 있습니다.",
+  "connections.app.access": "액세스",
+  "connections.app.allowed": "허용됨",
+  "connections.app.vendorDidntSay": "{vendor}이(가) 알려 주지 않았습니다.",
+  "connections.identity.toolsDesc":
+    "내 비서가 나로서 내 저장소를 읽고 변경할 수 있게 합니다. 위의 내 계정과는 따로 연결합니다.",
+  "connections.identity.tools": "도구",
+  "connections.identity.githubTools": "GitHub 도구",
+  "connections.identity.notConnected": "연결되지 않음",
+  "connections.mail.neverRun": "아직 실행되지 않았습니다.",
+  "connections.mail.lastRun": {
+    one: "마지막 실행 {when}: 메시지 {count}건. 전체 {total}건.",
+    other: "마지막 실행 {when}: 메시지 {count}건. 전체 {total}건.",
+  },
+  "connections.mail.on": "켜짐. {activity}",
+  "connections.mail.off": "꺼짐",
+  "connections.mail.switchOff": "끄기",
+  "connections.mail.switchOn": "켜기",
+  "connections.mail.delete": "삭제",
+  "connections.mail.lastProblem": "마지막 문제: {error}",
+  "connections.mail.description":
+    "채팅에서 요청한 상시 규칙입니다. 내 비서가 이를 보관했다가 몇 분마다 새 메일에 적용하며, Gmail 필터가 아닙니다. 규칙을 삭제해도 이미 한 일은 되돌려지지 않습니다.",
+  "connections.mail.title": "메일 규칙",
+  "connections.mail.search": "메일 규칙 검색",
+  "connections.mail.statusLabel": "규칙 상태",
+  "connections.mail.allStatuses": "모든 상태",
+  "connections.mail.optActive": "활성",
+  "connections.mail.optPaused": "일시중지",
+  "connections.mail.active": "활성",
+  "connections.mail.paused": "일시중지",
+  "connections.mail.noMatch": "이 필터와 일치하는 규칙이 없습니다.",
+  "connections.mail.paging": {
+    one: "규칙 {count}개 중 {from}–{to}",
+    other: "규칙 {count}개 중 {from}–{to}",
+  },
+  "connections.mail.previous": "이전",
+  "connections.mail.next": "다음",
+  "connections.secret.aMember": "멤버",
+  "connections.secret.doneMemberCal":
+    "연결했습니다. 이제 {name}이(가) 나로서 내 메일과 캘린더를 읽을 수 있습니다.",
+  "connections.secret.doneMember":
+    "연결했습니다. 이제 {name}이(가) 나로서 내 메일을 읽을 수 있습니다.",
+  "connections.secret.doneBotsCal":
+    "연결했습니다. 이제 내가 허용한 비서가 나로서 내 메일과 캘린더를 읽을 수 있습니다.",
+  "connections.secret.doneBots":
+    "연결했습니다. 이제 내가 허용한 비서가 나로서 내 메일을 읽을 수 있습니다.",
+  "connections.secret.notAvailable":
+    "아직 사용할 수 없습니다. 먼저 관리자가 켜야 합니다.",
+  "connections.secret.statusError":
+    "연결했는지 여부를 불러오지 못했습니다. 페이지를 새로고침하세요. 계속되면 관리자에게 문의하세요.",
+  "connections.secret.yourAccount": "내 계정",
+  "connections.secret.connectedCal":
+    "{address}(으)로 연결되었습니다. 캘린더도 연결되어 있습니다. 내가 허용한 비서는 이를 나로서 사용합니다.",
+  "connections.secret.connectedNoCal":
+    "{address}(으)로 연결되었습니다. 연결된 캘린더는 없습니다. 내가 허용한 비서는 이를 나로서 사용합니다.",
+  "connections.secret.notConnected":
+    "어떤 비서도 이를 나로서 사용할 수 없습니다. Gmail을 연결하려면 아래에 앱 비밀번호를 붙여 넣으세요.",
+  "connections.secret.useDifferent": "다른 앱 비밀번호 사용",
+  "connections.secret.disconnected":
+    "연결을 해제했습니다. {product}은(는) 더 이상 내 메일이나 캘린더를 읽을 수 없습니다. 앱 비밀번호가 확실히 작동하지 않게 하려면 {url}에서도 삭제하세요.",
+  "connections.secret.formDesc":
+    "Google에서 두 단계를 진행한 다음, 받은 값을 붙여 넣으세요. Gmail이 받아들이지 않으면 아무것도 저장되지 않습니다.",
+  "connections.secret.connectTitle": "연결",
+  "connections.secret.memberWillUse": "{name}이(가) 이 메일함을 사용합니다.",
+  "connections.secret.step1Lead":
+    "Google 계정에서 2단계 인증을 켠 다음, 다음 위치에서 앱 비밀번호를 만드세요:",
+  "connections.secret.step1Tail":
+    ". 이름을 {product}(으)로 하고 16자리 문자를 복사하세요.",
+  "connections.secret.step2Lead":
+    "내 비서가 캘린더도 볼 수 있게 하려면: Google 캘린더에서 설정을 열고 내 캘린더를 선택한 다음, 다음 항목을 복사하세요:",
+  "connections.secret.step2Link": "iCal 형식의 비공개 주소",
+  "connections.secret.step2Tail": ". 이 단계는 선택 사항입니다.",
+  "connections.secret.address": "내 Gmail 주소",
+  "connections.secret.password": "앱 비밀번호",
+  "connections.secret.passwordHint":
+    "Google에서 받은 16자리 문자이며, 공백은 있어도 없어도 됩니다. 평소 쓰는 비밀번호가 아닙니다.",
+  "connections.secret.calendar": "캘린더 비공개 주소(선택 사항)",
+  "connections.secret.calendarHint":
+    "이 주소를 가진 사람은 누구나 내 캘린더를 읽을 수 있으므로, 비밀번호와 똑같이 조심해서 보관합니다.",
+  "connections.secret.checking": "Gmail로 확인하는 중…",
+  "connections.secret.canDoTitle": "이것으로 내 비서가 할 수 있는 일",
+  "connections.secret.canDoDesc":
+    "앱 비밀번호는 메일함 전체를 열어 주므로, 무엇이 가능해지는지 알아 둘 만합니다.",
+  "connections.secret.canDo":
+    "내 비서는 내 메일을 검색하고 읽을 수 있으며 캘린더를 볼 수 있습니다. 아무것도 삭제하거나 이동하거나 라벨을 붙일 수 없습니다. 답장은 내가 승인한 뒤에만, 그리고 이미 그 메시지에 있는 사람에게만 전송됩니다. 연결은 언제든 해제할 수 있고, 앱 비밀번호도 Google에서 언제든 삭제할 수 있습니다.",
+  "connections.mode.goesShared": "공유 계정의 연결이 해제됩니다.",
+  "connections.mode.goesNoShared": "연결된 공유 계정이 없습니다.",
+  "connections.mode.goesPersonal": {
+    one: "개인 계정 {count}개의 연결이 해제됩니다.",
+    other: "개인 계정 {count}개의 연결이 해제됩니다.",
+  },
+  "connections.mode.makeShared": "{title}을(를) 공유로 전환",
+  "connections.mode.makePersonal": "{title}을(를) 개인용으로 전환",
+  "connections.mode.titleShared": "{title} 계정 하나를 공유하시겠습니까?",
+  "connections.mode.titlePersonal":
+    "모두에게 각자의 {title} 계정을 주시겠습니까?",
+  "connections.mode.checking": "무엇이 바뀌는지 확인하는 중…",
+  "connections.mode.everyone":
+    "이 앱이 연결된 비서를 사용하는 모든 사람이 이 하나의 계정으로 동작하게 됩니다.",
+  "connections.cancel": "취소",
+  "connections.dir.description":
+    "{name}의 앱 디렉터리입니다. 앱을 추가하면 그 도구를 비서가 사용할 수 있게 됩니다. 무언가를 읽기 전에 각 사람이 여전히 자신의 계정을 연결해야 합니다.",
+  "connections.dir.appsTitle": "앱",
+  "connections.dir.appsDesc":
+    "이름으로 검색하세요. 여기서는 아무도 이 앱들을 검토하지 않았습니다.",
+  "connections.dir.searchAria": "{name} 앱 검색",
+  "connections.dir.searchPlaceholder": "앱 이름으로 검색",
+  "connections.dir.noMatch": "'{query}'와(과) 일치하는 {name} 앱이 없습니다.",
+  "connections.dir.none": "{name}이(가) 앱을 반환하지 않았습니다.",
+  "connections.dir.actions": { one: "동작 {count}개", other: "동작 {count}개" },
+  "connections.dir.added": "추가됨",
+  "connections.dir.adding": "추가하는 중…",
+  "connections.dir.add": "추가",
+  "connections.grants.consentFailed":
+    "{product}이(가) 동의 링크 없이 응답해 아무것도 승인되지 않았습니다. 다시 시도하세요. 계속되면 관리자에게 문의하세요.",
+  "connections.grants.title": "동작",
+  "connections.grants.readError":
+    "이 계정이 지금 무엇을 허용하는지 읽지 못했습니다.",
+  "connections.grants.retry": "다시 시도",
+  "connections.grants.description":
+    "각 동작이 요청하는 권한별로 묶었습니다. 동의 화면에 표시되는 내용과 같습니다.",
+  "connections.grants.search": "동작 검색",
+  "connections.grants.wholeApp": "이 앱의 모든 것, 함께 승인",
+  "connections.grants.noPermission": "자체적으로 요청하는 권한 없음",
+  "connections.grants.needs": "{scopes} 필요",
+  "connections.grants.authorize": "승인",
+  "connections.grants.hidden": {
+    one: "아직 승인되지 않은 동작이 {count}개 더 있습니다. 검색해서 찾으세요.",
+    other:
+      "아직 승인되지 않은 동작이 {count}개 더 있습니다. 검색해서 찾으세요.",
+  },
+  "connections.grants.noMatch": "그 검색과 일치하는 동작이 없습니다.",
+  "connections.grants.before": "{action}을(를) 승인하기 전에",
+  "connections.grants.continue": "동의로 계속",
+  "connections.grants.notRequired": "승인이 필요하지 않습니다.",
+  "connections.grants.authorized": "승인됨.",
+  "connections.grants.notYet": "아직 승인되지 않았습니다.",
+  "connections.grants.notYetAdmin":
+    "아직 승인되지 않았습니다. 관리자가 승인할 수 있습니다.",
+  "connections.grants.missing":
+    "{missing}이(가) 없습니다. 관리자가 설정해야 합니다. 승인해도 해결되지 않습니다.",
+  "connections.grants.missingSetting":
+    "설정이 하나 없습니다. 관리자가 설정해야 합니다. 승인해도 해결되지 않습니다.",
+  "connections.grants.unknown": "지금은 이 항목을 읽지 못했습니다. {reason}",
+  "connections.row.connectKey":
+    "이 앱은 로그인 페이지가 아니라 키로 연결되므로 아무것도 연결되지 않았습니다. 페이지를 새로고침하고 '연결'을 다시 누르세요.",
+  "connections.row.noAuth":
+    "{title}에는 계정이 필요하지 않습니다. 이를 가진 비서는 그대로 사용할 수 있습니다.",
+  "connections.row.verified": "내 키로 연결했습니다. 마지막 확인: {date}.",
+  "connections.row.failedCheck":
+    "내 키가 {title}의 확인을 통과하지 못했습니다. 키 때문일 수도 있고 {title} 자체 때문일 수도 있습니다. 계정은 여전히 연결되어 있습니다. '다시 확인'을 눌러 다시 시도하거나, 연결을 해제하고 새 키로 연결하세요.",
+  "connections.row.noSafeCheck":
+    "내 키로 연결했습니다. {title}에서 확인되지 않았습니다. 당시 {title}에는 키를 안전하게 확인할 방법이 없었습니다. 이는 앱의 사정이며 내 키와는 관계가 없습니다.",
+  "connections.row.unchecked":
+    "내 키로 연결했습니다. {title}에서 확인되지 않았습니다.",
+  "connections.row.keyStillWorks":
+    "연결을 해제했습니다. 내 키는 {title}에서 여전히 작동합니다. 모든 액세스를 막으려면 그곳에서 키를 변경하세요.",
+  "connections.row.asksForKey":
+    "{title}은(는) 이미 가지고 있는 키로 연결합니다. '연결'을 누르면 키를 요청합니다.",
+  "connections.row.signedIn": "{title}(으)로 로그인했습니다. {description}",
+  "connections.row.yourAccount": "내 계정",
+  "connections.row.keyMissing": "키 없음",
+  "connections.row.recheck": "다시 확인",
+  "connections.row.rechecking": "확인하는 중…",
+  "connections.row.perAction": "동작별로 승인",
+  "connections.row.connectYour": "내 계정 연결",
+  "connections.row.checkingNeeds": "앱에 필요한 것을 확인하는 중…",
+  "connections.row.noNeeds":
+    "이 앱에 필요한 것을 알아내지 못했습니다. 이 창을 닫고 다시 시도하세요.",
+  // connections-end
+  // computer-begin
+  "computer.tool.readPage": "",
+  "computer.tool.readPageCount": { one: "", other: "" },
+  "computer.tool.filledIn": "",
+  "computer.tool.choseIn": "",
+  "computer.tool.clicked": "",
+  "computer.tool.pressed": "",
+  "computer.tool.listedFiles": "",
+  "computer.tool.itemsInWorkspace": { one: "", other: "" },
+  "computer.tool.nothingSaved": "",
+  "computer.tool.readFile": "",
+  "computer.tool.ranCommand": "",
+  "computer.tool.addedToFile": "",
+  "computer.tool.savedFile": "",
+  "computer.tool.scrolled": "",
+  "computer.signIn.waiting": "",
+  "computer.signIn.signedIn": "",
+  "computer.signIn.failed": "",
+  "computer.signIn.open": "",
+  "computer.signIn.dialogTitle": "",
+  "computer.signIn.dialogBody": "",
+  "computer.output.truncated": "",
+  "computer.output.nothing": "",
+  "computer.output.timedOut": "",
+  "computer.output.exitCode": "",
+  "computer.activity.ran": "",
+  "computer.activity.read": "",
+  "computer.activity.saved": "",
+  "computer.activity.listed": "",
+  "computer.activity.workspace": "",
+  "computer.activity.refused": "",
+  "computer.activity.empty": "",
+  "computer.control.handBack": "",
+  "computer.control.take": "",
+  "computer.control.finishing": "",
+  "computer.control.close": "",
+  "computer.control.open": "",
+  "computer.panel.sidebar": "",
+  "computer.live.cantShow": "",
+  "computer.live.drivingLabel": "",
+  "computer.live.label": "",
+  "computer.view.aPage": "",
+  "computer.view.openedDuring": "",
+  "computer.view.noPage": "",
+  "computer.view.cantShow": "",
+  "computer.view.cantShowHelp": "",
+  "computer.view.blank": "",
+  "computer.view.waiting": "",
+  "computer.view.unavailable": "",
+  "computer.view.alt": "",
+  "computer.view.open": "",
+  "computer.view.youHaveControl": "",
+  "computer.view.botNeedsYou": "",
+  "computer.view.cancelRequest": "",
+  "computer.view.finishingBot": "",
+  "computer.view.recovery": "",
+  "computer.view.interrupted": "",
+  "computer.view.secretNeedsHost": "",
+  "computer.view.secretNeedsPage": "",
+  "computer.view.secretType": "",
+  "computer.view.secretPlaceholder": "",
+  "computer.view.secretGoesHost": "",
+  "computer.view.secretGoesPage": "",
+  "computer.view.sending": "",
+  "computer.view.send": "",
+  "computer.view.checking": "",
+  "computer.view.drivingOpen": "",
+  "computer.view.botHas": "",
+  "computer.view.dialog": "",
+  "computer.view.close": "",
+  "computer.view.turnAlt": "",
+  "computer.view.finishingYou": "",
+  "computer.view.drivingClick": "",
+  "computer.handoff.noCall": "",
+  "computer.handoff.answered": "",
+  "computer.handoff.running": "",
+  "computer.handoff.unreachable": "",
+  "computer.handoff.couldntResume": "",
+  "computer.handoff.waiting": "",
+  "computer.handoff.paused": "",
+  "computer.handoff.stopWaiting": "",
+  "computer.handoff.resume": "",
+  "computer.demo.everyWeekday": "",
+  "computer.demo.everyDay": "",
+  "computer.demo.everyMonday": "",
+  "computer.demo.everyHour": "",
+  "computer.demo.scheduled": "",
+  "computer.demo.seeRoutines": "",
+  "computer.demo.when": "",
+  "computer.demo.custom": "",
+  "computer.demo.cron": "",
+  "computer.demo.reportIn": "",
+  "computer.demo.onlyConversation": "",
+  "computer.demo.inputs": "",
+  "computer.demo.title": "",
+  "computer.demo.intro": "",
+  "computer.demo.recording": { one: "", other: "" },
+  "computer.demo.left": "",
+  "computer.demo.limitReached": "",
+  "computer.demo.stop": "",
+  "computer.demo.name": "",
+  "computer.demo.namePlaceholder": "",
+  "computer.demo.record": "",
+  "computer.demo.takeControl": "",
+  "computer.demo.entry": { one: "", other: "" },
+  "computer.demo.stoppedAtLimit": "",
+  "computer.demo.edit": "",
+  "computer.demo.runSchedule": "",
+  "computer.demo.reviewDraft": "",
+  "computer.demo.reviewTitle": "",
+  "computer.demo.reviewHelp": "",
+  "computer.demo.saveUse": "",
+  "computer.demo.couldntSave": "",
+  "computer.demo.ready": "",
+  // computer-end
+};

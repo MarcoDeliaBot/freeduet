@@ -201,6 +201,8 @@ export interface ComputerTransport {
     url: string,
     limit: number,
     caller?: AbortSignal,
+    /** Absent means the member's own Chromium tab (D156). */
+    engine?: "chromium" | "firefox" | "webkit",
   ): Promise<ReadPageResult>;
   download(
     baseUrl: string,
@@ -437,6 +439,7 @@ export function createComputerTransport(
     url: string,
     limit: number,
     caller?: AbortSignal,
+    engine?: "chromium" | "firefox" | "webkit",
   ): Promise<ReadPageResult> {
     // The same floor as a navigation, so a page of a batch is refused as it would be on its own.
     const verdict = checkNavigationTarget(url, {
@@ -449,7 +452,11 @@ export function createComputerTransport(
       baseUrl,
       botId,
       "/read-page",
-      { url: verdict.url, limit },
+      {
+        url: verdict.url,
+        limit,
+        ...(engine && engine !== "chromium" ? { engine } : {}),
+      },
       caller,
     );
   }

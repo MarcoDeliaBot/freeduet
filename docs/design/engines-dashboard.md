@@ -180,7 +180,7 @@ In the existing vault: the `credentials` table, each value sealed with AES-GCM u
 - **A new credential kind, `engine`.** A key has no business in the existing `model` kind, whose meaning is a model provider for Bots, and the admin credentials route accepts only `model`, `connector` and `mcp` on purpose ("do not widen", [code: `app.ts` `credentialInput`]). Adding a kind is an enum migration, and `tests/schema.test.ts` pins the enum, so it changes with it. The vault's live-row index, one live row for a kind, provider and key id, gives "one key per engine"; a replacement rotates the row in one transaction and a removal revokes it [code].
 - **What is saved beside the sealed value:** the engine id, the date, the host the key was saved for (6.5), and, if question 5 of section 10 says so, the last four characters. Never the key.
 
-**What D39 means for this** (`M1_PLAN.md` section 22) [code]:
+**What D39 means for this** ([`M1_PLAN.md`](../M1_PLAN.md) section 22, "No secret starts on a value this repository publishes: `start.sh` makes each installation's own (D39)") [code]:
 
 1. A vault is as private as its key. `start.sh` makes `KEY_ENCRYPTION_KEY` for each new installation, so a new installation's vault is private.
 2. **An installation that already had something sealed keeps the example key this repository publishes**, and a warning says so at every start. Nothing re-seals what is in the vault, so there is no supported way off the example key yet. On such an installation a copy of the database is a copy of every key in the vault.
@@ -240,7 +240,7 @@ The vault's own events stay, with the engine id as the key id and no value: `cre
 
 ### 6.8 Who may do it
 
-*Changed by D106 (20 November 2026, `docs/M1_PLAN.md` section 68): with sign-in and an installation secret, an administrator whose browser holds a live `computer` pairing may also change the choices through a tunnel. The text below is the rule before D106, which still holds for a deployment with no gate and for every other route.*
+*Changed by D106 (20 November 2026, [`docs/M1_PLAN.md`](../M1_PLAN.md) section 68, "The Engines page through a tunnel, from the administrator's paired browser (D106)"): with sign-in and an installation secret, an administrator whose browser holds a live `computer` pairing may also change the choices through a tunnel. The text below is the rule before D106, which still holds for a deployment with no gate and for every other route.*
 
 All of these, together:
 

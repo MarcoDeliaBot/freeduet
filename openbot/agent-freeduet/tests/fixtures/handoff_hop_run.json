@@ -20,16 +20,6 @@
       "content": "You can reach these systems directly, as the person asking, with their own access:\n- this deployment: make_page, ask_person\nUse them for anything about those systems. Do NOT browse to one of their websites instead: your\nbrowser is signed in as nobody, so it sees less than these tools do and will meet a sign-in wall\nthat connecting an account has already solved.\nIf one of these systems is involved and no tool above covers the part you need, that is a\nmissing grant and not something to work around. Say so plainly, name the capability you would\nneed, and say an administrator can grant it on that connector. Do not reach for the browser, do\nnot ask the person to sign in, and do not ask them to fetch it for you: they already have the\naccess, and the thing that is missing is yours, not theirs."
     },
     {
-      "id": "person-1",
-      "role": "user",
-      "content": "Northwind still hasn't paid March's invoice."
-    },
-    {
-      "id": "iris-1",
-      "role": "assistant",
-      "content": "I have asked Penny to check what Northwind owes."
-    },
-    {
       "id": "handoff-hop-run-1",
       "role": "user",
       "content": "freeduet has asked you to help with this, on behalf of the person in this conversation.\n\nTask: Check what Northwind owes for March and draft a polite reminder.\nConstraints: Do not send anything.\nWhat a good answer looks like: The amount, how late it is, and where the draft is.\n\nAnswer in this conversation as yourself. The person can see it, so write it for them rather than for the Bot that asked."

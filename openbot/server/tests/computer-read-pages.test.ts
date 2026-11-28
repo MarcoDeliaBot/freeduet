@@ -749,3 +749,145 @@ describe("POST /:botId/read-pages", () => {
     expect(calls).toEqual([]);
   });
 });
+
+describe("the engine a page is read in (D156)", () => {
+  test("none named means the member's own Chromium: the computer is sent no engine", async () => {
+    const { gateway, sent } = gatewayWith();
+    await gateway.readPages("bot-1", ACTOR, { urls: [`${GOOD}/a`] });
+    await gateway.readPages("bot-1", ACTOR, {
+      urls: [`${GOOD}/b`],
+      engine: "chromium",
+    });
+    expect(sent.map((call) => "engine" in call.body)).toEqual([false, false]);
+  });
+
+  test("Firefox and WebKit reach the computer's read-only route, for every page of the call", async () => {
+    for (const engine of ["firefox", "webkit"] as const) {
+      const { gateway, sent } = gatewayWith();
+      const result = await gateway.readPages("bot-1", ACTOR, {
+        urls: [`${GOOD}/a`, `${GOOD}/b`],
+        engine,
+      });
+      expect(sent.map((call) => call.path)).toEqual([
+        "/read-page",
+        "/read-page",
+      ]);
+      expect(
+        sent.map((call) => (call.body as { engine?: string }).engine),
+      ).toEqual([engine, engine]);
+      expect(result.pages.map((page) => page.error)).toEqual([
+        undefined,
+        undefined,
+      ]);
+    }
+  });
+
+  test("any other engine is refused before anything is read", async () => {
+    for (const engine of ["opera", "Firefox", "", 1, null]) {
+      const { gateway, sent, rows } = gatewayWith();
+      await expect(
+        gateway.readPages("bot-1", ACTOR, {
+          urls: [`${GOOD}/a`],
+          engine: engine as never,
+        }),
+      ).rejects.toThrow(/engine is one of/);
+      expect(sent).toEqual([]);
+      expect(rows).toEqual([]);
+    }
+  });
+
+  test("a page in another engine is decided on exactly as a navigation is: a private address never reaches the computer, a deny applies, an audit row is written", async () => {
+    const denied = gatewayWith({
+      policy: {
+        mode: "enforce",
+        deny: ['tool.name == "computer_navigate"'],
+        allow: ["true"],
+      },
+    });
+    const refused = await denied.gateway.readPages("bot-1", ACTOR, {
+      urls: [`${GOOD}/a`],
+      engine: "webkit",
+    });
+    expect(refused.pages[0]?.error).toBeTruthy();
+    expect(denied.sent).toEqual([]);
+
+    const { gateway, sent, rows } = gatewayWith();
+    const result = await gateway.readPages("bot-1", ACTOR, {
+      urls: [
+        "http://192.168.1.1/admin",
+        "http://localhost:3000/",
+        `${GOOD}/ok`,
+      ],
+      engine: "firefox",
+    });
+    expect(result.pages.map((page) => Boolean(page.error))).toEqual([
+      true,
+      true,
+      false,
+    ]);
+    expect(sent.map((call) => call.body.url)).toEqual([`${GOOD}/ok`]);
+    expect(
+      rows.every((row) => JSON.stringify(row).includes("computer_navigate")),
+    ).toBe(true);
+  });
+
+  test("the headless tool and the route pass the engine on, and the tool refuses an unknown one", async () => {
+    const calls: unknown[] = [];
+    const gateway = {
+      readPages: async (_b: string, _a: unknown, input: unknown) => {
+        calls.push(input);
+        return { pages: [], truncated: false, elapsedMs: 0 };
+      },
+    } as unknown as ComputerGateway;
+    const tool = createHeadlessComputerTools({
+      gateway,
+      botId: "bot-1",
+      actor: ACTOR,
+    }).find((t) => t.definition.name === "computer_read_pages");
+    const context = { toolCallId: "t1", signal: new AbortController().signal };
+    await tool?.execute({ urls: [`${GOOD}/a`], engine: "webkit" }, context);
+    expect(calls).toEqual([{ urls: [`${GOOD}/a`], engine: "webkit" }]);
+    await expect(
+      Promise.resolve().then(() =>
+        tool?.execute({ urls: [`${GOOD}/a`], engine: "opera" }, context),
+      ),
+    ).rejects.toThrow();
+    expect(calls).toHaveLength(1);
+    expect(READ_PAGES_TOOL_DESCRIPTION).toMatch(/firefox or webkit/);
+
+    const routeCalls: unknown[] = [];
+    const requireUser: MiddlewareHandler<{ Variables: AppVariables }> = async (
+      c,
+      next,
+    ) => {
+      c.set("actor", { id: "user-1", email: "u@openbot.test", role: "admin" });
+      await next();
+    };
+    const routes = createComputerRoutes(
+      {
+        readPages: async (_b: string, _a: unknown, input: unknown) => {
+          routeCalls.push(input);
+          return { pages: [], truncated: false, elapsedMs: 0 };
+        },
+      } as unknown as ComputerGateway,
+      {} as PolicyStore,
+      requireUser,
+      async () => true,
+    );
+    const res = await routes.request("http://openbot.test/bot-1/read-pages", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ urls: [`${GOOD}/a`], engine: "firefox" }),
+    });
+    expect(res.status).toBe(200);
+    expect(routeCalls).toEqual([{ urls: [`${GOOD}/a`], engine: "firefox" }]);
+  });
+
+  test("the server's engine list is the computer's", async () => {
+    const { BROWSER_ENGINES } = await import(
+      "../../agent-computer/src/browser-engine"
+    );
+    const { READ_PAGES_ENGINES } = await import("../src/computer/schema");
+    expect([...READ_PAGES_ENGINES]).toEqual([...BROWSER_ENGINES]);
+  });
+});

@@ -1,6 +1,8 @@
 # FreeDuet: live test, updates that can go back
 
-This checklist checks the update command `bash openbot/scripts/update.sh`. It copies your data first, updates, checks that the app answers, and puts the old version and data back if the update fails. The command came out in v0.2.1 (the CHANGELOG lists it as PR #245). Its checks ran on a test copy. The step that puts the version and data back has not been run live (ROADMAP row 13).
+This checklist checks the update command `bash openbot/scripts/update.sh`. It copies your data first, updates, checks that the app answers, and puts the old version and data back if the update fails. The command came out in v0.2.1 (the CHANGELOG lists it as PR #245). Its checks ran on a test copy. The step that puts the version and data back has not been run live (ROADMAP row 14, "Updates that can go back").
+
+Run live on one installation on 15 November 2026 (ROADMAP row 14): the update was run four times, each time with a database backup taken first. The step that puts the version and data back is not among those runs.
 
 ## Before you start
 

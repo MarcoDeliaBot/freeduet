@@ -347,7 +347,7 @@ async def _save_checkpoint(run: agui.RunInput, phase: str, state: dict) -> None:
 
 
 async def _append_team_log(run: agui.RunInput, assessment: report.Assessment, report_guard: str | None = None,
-                           cannot_guard: str | None = None) -> None:
+                           cannot_guard: str | None = None, handoff_claim_guard: str | None = None) -> None:
     try:
         entry = team_log.make_entry(
             member=run.bot_id,
@@ -359,6 +359,7 @@ async def _append_team_log(run: agui.RunInput, assessment: report.Assessment, re
             approvals=assessment.approvals,
             report_guard=report_guard,
             cannot_guard=cannot_guard,
+            handoff_claim_guard=handoff_claim_guard,
         )
         await asyncio.to_thread(team_log.append, entry)
     except Exception:  # noqa: BLE001 - a missing data folder, a full disk
@@ -373,7 +374,8 @@ async def _record_segment(run: agui.RunInput, summary: "_SegmentSummary", termin
         log.warning("segment not assessed: no checkpoint and no team-log line", exc_info=True)
         return
     await _save_checkpoint(run, assessment.phase, assessment.state)
-    await _append_team_log(run, assessment, summary.notes.report_guard, summary.notes.cannot_guard)
+    await _append_team_log(run, assessment, summary.notes.report_guard, summary.notes.cannot_guard,
+                           summary.notes.handoff_claim_guard)
 # ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 

@@ -1,0 +1,287 @@
+/* The Dashboard (D154, stage 1). Light cockpit: plain CSS of its own so the page reads the same wherever it sits. */
+.fd-dash {
+  --d-bg: var(--fdl-bg);
+  --d-card: var(--fdl-card);
+  --d-line: var(--fdl-line);
+  --d-line2: var(--fdl-line-2);
+  --d-ink: var(--fdl-ink);
+  --d-ink2: var(--fdl-ink-2);
+  --d-mute: var(--fdl-ink-3);
+  --d-accent: var(--fdl-accent);
+  --d-accent-soft: var(--fdl-accent-soft);
+  --d-ok: var(--fdl-ok);
+  --d-ok-soft: var(--fdl-ok-soft);
+  --d-wait: var(--fdl-wait);
+  --d-wait-line: var(--fdl-wait-line);
+  background: var(--d-bg);
+  color: var(--d-ink);
+  font-family:
+    "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+  border-radius: 16px;
+}
+.fd-dash * {
+  box-sizing: border-box;
+}
+.fd-dash a {
+  color: var(--d-accent);
+  text-decoration: none;
+}
+.fd-dash a:hover {
+  color: #4c1d95;
+}
+.fd-dash .d-mono {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+.fd-dash-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+}
+.fd-dash-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.fd-dash-eyebrow {
+  font-size: 12px;
+  color: var(--d-mute);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.fd-dash h1 {
+  margin: 6px 0 0;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.fd-dash h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.fd-dash-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--d-ok-soft);
+  color: var(--d-ok);
+  font-weight: 600;
+}
+.fd-dash-pill i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #16a34a;
+}
+.fd-dash-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.fd-dash-card {
+  padding: 18px;
+  border-radius: 12px;
+  background: var(--d-card);
+  border: 1px solid var(--d-line);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  min-width: 0;
+}
+.fd-dash-card[data-wait="true"] {
+  border-color: var(--d-wait-line);
+}
+.fd-dash-label {
+  color: var(--d-ink2);
+  font-size: 13px;
+}
+.fd-dash-big {
+  font-size: 28px;
+  font-weight: 600;
+  margin-top: 6px;
+  line-height: 1.2;
+}
+.fd-dash-big[data-tone="ok"] {
+  color: var(--d-ok);
+}
+.fd-dash-big[data-tone="wait"] {
+  color: var(--d-wait);
+}
+.fd-dash-sub {
+  color: var(--d-ink2);
+  font-size: 12px;
+  margin-top: 12px;
+  overflow-wrap: anywhere;
+}
+.fd-dash-na {
+  color: var(--d-mute);
+  font-size: 13px;
+  margin-top: 10px;
+}
+.fd-dash-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.fd-dash-main {
+  flex: 999 1 520px;
+  min-width: 0;
+}
+.fd-dash-side {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+.fd-dash-card.d-pad {
+  padding: 20px;
+}
+.fd-dash-cardhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+.fd-dash-team {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.fd-dash-member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid var(--d-line2);
+  min-width: 0;
+}
+.fd-dash-initial {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--d-accent-soft);
+  color: var(--d-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+.fd-dash-member b {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fd-dash-member small {
+  font-size: 12px;
+}
+[data-tone="ready"] {
+  color: var(--d-ok);
+}
+[data-tone="wait"] {
+  color: var(--d-wait);
+}
+[data-tone="idle"] {
+  color: var(--d-mute);
+}
+.fd-dash-engine {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--d-line2);
+}
+.fd-dash-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.fd-dash-engine > div {
+  flex: 1;
+  min-width: 0;
+}
+.fd-dash-engine b {
+  font-weight: 600;
+}
+.fd-dash-engine small {
+  display: block;
+  font-size: 12px;
+  color: var(--d-ink2);
+}
+.fd-dash-use {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+}
+.fd-dash-use span:first-child {
+  width: 72px;
+  flex: none;
+  font-size: 13px;
+  color: #334155;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fd-dash-bar {
+  flex: 1;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--d-line2);
+}
+.fd-dash-bar i {
+  display: block;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--d-accent);
+}
+.fd-dash-use .d-mono {
+  width: 56px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--d-ink2);
+}
+.fd-dash-foot {
+  margin: 0;
+  color: var(--d-mute);
+  font-size: 12px;
+}
+@media (max-width: 1100px) {
+  .fd-dash-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .fd-dash-team {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .fd-dash-inner {
+    padding: 14px;
+  }
+  .fd-dash h1 {
+    font-size: 22px;
+  }
+  .fd-dash-kpis {
+    gap: 10px;
+  }
+  .fd-dash-big {
+    font-size: 22px;
+  }
+  .fd-dash-team {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .fd-dash-card.d-pad {
+    padding: 16px;
+  }
+}

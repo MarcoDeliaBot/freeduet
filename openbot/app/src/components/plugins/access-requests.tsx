@@ -23,6 +23,12 @@ import {
   type AppWant,
   appAccessInboxQueryOptions,
 } from "@/lib/app-access/queries";
+import {
+  englishT,
+  type T,
+  useAppLanguage,
+  useT,
+} from "@/freeduet/i18n/provider";
 import { relativeTime } from "@/lib/relative-time";
 import { queryClient } from "@/query-client";
 
@@ -58,13 +64,14 @@ import { queryClient } from "@/query-client";
  * page would teach an administrator to scroll past the heading.
  */
 export function AccessRequestsSection({ app }: { app?: string }) {
+  const t = useT();
   const inbox = useQuery(appAccessInboxQueryOptions(true, app));
   if (inbox.isPending) return null;
   if (inbox.error)
     return (
-      <PageSection title="Requests">
+      <PageSection title={t("access.req.title")}>
         <p className="mt-4 text-destructive text-sm" role="alert">
-          Couldn't load access requests. Reload the page.
+          {t("access.req.loadError")}
         </p>
       </PageSection>
     );
@@ -72,12 +79,8 @@ export function AccessRequestsSection({ app }: { app?: string }) {
   if (requests.length === 0) return null;
   return (
     <PageSection
-      description={
-        app
-          ? "People asking for this app. Approve does what they asked, right away."
-          : "People asking for an app to be turned on, given to a Bot, or connected. Approve does what they asked, right away."
-      }
-      title="Requests"
+      description={app ? t("access.req.descApp") : t("access.req.descAll")}
+      title={t("access.req.title")}
     >
       <PageRows>
         {requests.map((request, index) => (
@@ -92,18 +95,25 @@ export function AccessRequestsSection({ app }: { app?: string }) {
 }
 
 /** What the request asks for, as the thing an administrator would do. */
-export function askedFor(request: AppAccessRequest): string {
-  const bot = request.botName ?? "a Bot";
+export function askedFor(request: AppAccessRequest, t: T = englishT): string {
+  const bot = request.botName ?? t("access.req.aBot");
+  const app = request.appTitle;
   switch (request.kind) {
     case "enable":
-      return `Turn on ${request.appTitle} for ${bot}`;
+      return t("access.req.enable", { app, bot });
     case "grant":
       // A Bot that holds some of the app already and whose skills need more of it: say which.
       return request.wants && request.wants.length > 0
-        ? `Give ${bot} more of ${request.appTitle}: ${[...new Set(request.wants.map((want) => want.label))].join(", ")}`
-        : `Give ${request.appTitle} to ${bot}`;
+        ? t("access.req.grantMore", {
+            app,
+            bot,
+            list: [...new Set(request.wants.map((want) => want.label))].join(
+              ", ",
+            ),
+          })
+        : t("access.req.grant", { app, bot });
     case "connect_shared":
-      return `Connect the shared ${request.appTitle} account`;
+      return t("access.req.connectShared", { app });
   }
 }
 
@@ -115,9 +125,12 @@ function AccessRequestRow({ request }: { request: AppAccessRequest }) {
   const dismiss = useMutation(
     dismissAppAccessRequestMutationOptions(queryClient),
   );
+  const { language } = useAppLanguage();
+  const t = useT();
   const busy = approve.isPending || dismiss.isPending;
   const error = approve.error ?? dismiss.error;
-  const who = request.requesterName ?? request.requesterEmail ?? "Somebody";
+  const who =
+    request.requesterName ?? request.requesterEmail ?? t("access.req.somebody");
   // What a press may name: the tools the row wants, less the ones only settings gives.
   const approvable = (request.wants ?? []).filter((want) => !want.settingsOnly);
   const wantsOnlySettings =
@@ -128,13 +141,17 @@ function AccessRequestRow({ request }: { request: AppAccessRequest }) {
         <IconInbox />
       </ItemMedia>
       <ItemContent>
-        <ItemTitle>{askedFor(request)}</ItemTitle>
+        <ItemTitle>{askedFor(request, t)}</ItemTitle>
         <ItemDescription className="line-clamp-none">
-          {who} asked {relativeTime(request.createdAt)}
-          {request.kind === "connect_shared" && request.botName
-            ? `, for ${request.botName}`
-            : ""}
-          . <GrantNote request={request} />
+          {t("access.req.asked", {
+            who,
+            when: relativeTime(request.createdAt, language),
+            forBot:
+              request.kind === "connect_shared" && request.botName
+                ? t("access.req.forBot", { bot: request.botName })
+                : "",
+          })}{" "}
+          <GrantNote request={request} />
         </ItemDescription>
       </ItemContent>
       <ItemActions>
@@ -147,7 +164,7 @@ function AccessRequestRow({ request }: { request: AppAccessRequest }) {
           size="sm"
           variant="ghost"
         >
-          {dismiss.isPending ? "Dismissing…" : "Dismiss"}
+          {dismiss.isPending ? t("stalled.dismissing") : t("stalled.dismiss")}
         </Button>
         {wantsOnlySettings ? null : (
           <Button
@@ -165,7 +182,9 @@ function AccessRequestRow({ request }: { request: AppAccessRequest }) {
             }}
             size="sm"
           >
-            {approve.isPending ? "Approving…" : "Approve"}
+            {approve.isPending
+              ? t("access.req.approving")
+              : t("approvals.shared.approve")}
           </Button>
         )}
       </ItemActions>
@@ -186,9 +205,10 @@ function AccessRequestRow({ request }: { request: AppAccessRequest }) {
  * and so has that page; an app still to be switched on has none until the press that switches it on.
  */
 function GrantNote({ request }: { request: AppAccessRequest }) {
+  const t = useT();
   if (request.kind === "connect_shared" || !request.agentId) return null;
-  const bot = request.botName ?? "the Bot";
-  const where = `the Bot's page under ${request.appTitle}`;
+  const bot = request.botName ?? t("access.req.theBot");
+  const where = t("access.req.botPage", { app: request.appTitle });
   const page =
     request.kind === "grant" ? (
       <Link
@@ -213,14 +233,19 @@ function GrantNote({ request }: { request: AppAccessRequest }) {
       <>
         {given.length > 0 ? (
           <>
-            Approving gives {bot} exactly these tools and nothing else:{" "}
-            {given
-              .map(
-                (want) =>
-                  `${want.name} (${want.read ? "read-only" : "changes something"})`,
-              )
-              .join(", ")}
-            .
+            {t("access.req.gives", {
+              bot,
+              list: given
+                .map((want) =>
+                  t(
+                    want.read ? "access.req.toolRead" : "access.req.toolWrite",
+                    {
+                      name: want.name,
+                    },
+                  ),
+                )
+                .join(", "),
+            })}
           </>
         ) : null}
         {given.length > 0 && heldBack.length > 0 ? " " : null}
@@ -236,8 +261,21 @@ function GrantNote({ request }: { request: AppAccessRequest }) {
   }
   return (
     <>
-      Approving gives {bot} only {request.appTitle}'s read-only actions. Choose
-      any others on {page}.
+      {withPage(t("access.req.readOnly", { bot, app: request.appTitle }), page)}
+    </>
+  );
+}
+
+/** A sentence whose `{page}` marker is drawn as the link (or plain words) the caller passes. */
+function withPage(text: string, page: ReactNode): ReactNode {
+  const [before, ...rest] = text.split("{page}");
+  return rest.length === 0 ? (
+    before
+  ) : (
+    <>
+      {before}
+      {page}
+      {rest.join("{page}")}
     </>
   );
 }
@@ -260,27 +298,28 @@ function SettingsOnlyNote({
 }) {
   const sends = tools.filter((want) => want.settingsOnly === "send");
   const unreviewed = tools.filter((want) => want.settingsOnly === "unreviewed");
-  const many = tools.length > 1;
+  const t = useT();
   return (
     <>
       {sends.length > 0
-        ? `${named(sends)} can ${sends.length > 1 ? "each " : ""}send on the person's behalf. `
+        ? `${t("access.req.canSend", { count: sends.length, names: named(sends, t) })} `
         : null}
       {unreviewed.length > 0
-        ? `No reviewed list says what ${named(unreviewed)} ${unreviewed.length > 1 ? "do" : "does"} in ${app}, so ${unreviewed.length > 1 ? "each" : "it"} may send on the person's behalf. `
+        ? `${t("access.req.unreviewed", { count: unreviewed.length, names: named(unreviewed, t), app })} `
         : null}
-      Approving never gives {many ? "tools" : "a tool"} like that: allow{" "}
-      {many ? "them" : "it"} in settings, on {page}.
+      {withPage(t("access.req.neverGives", { count: tools.length }), page)}
     </>
   );
 }
 
 /** Tool names as a person reads a list: "a", "a and b", "a, b and c". */
-function named(tools: AppWant[]): string {
+function named(tools: AppWant[], t: T): string {
   const names = tools.map((want) => want.name);
-  return names.length < 3
-    ? names.join(" and ")
-    : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+  if (names.length < 2) return names.join("");
+  return t("access.req.and", {
+    a: names.slice(0, -1).join(", "),
+    b: names[names.length - 1],
+  });
 }
 
 /**

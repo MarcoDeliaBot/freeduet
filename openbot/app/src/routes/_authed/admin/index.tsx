@@ -35,6 +35,8 @@ import { Separator } from "@/components/ui/separator";
 import { isFreeDuetApp } from "@/freeduet/manage-group";
 import { WorkspaceShell } from "@/freeduet/workspace";
 import { appConfig } from "@/lib/generated/application-config";
+import { useAppLanguage } from "@/freeduet/i18n/provider";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
 
 export const Route = createFileRoute("/_authed/admin/")({
   component: RouteComponent,
@@ -47,123 +49,118 @@ export const Route = createFileRoute("/_authed/admin/")({
  * Everything in it either grants a capability or fences one in.
  */
 const SECTIONS: {
-  title: string;
-  description: string;
+  title: MessageId;
+  description: MessageId | "";
   items: {
-    description: string;
+    description: MessageId;
     icon: React.ComponentType<{ className?: string }>;
     linkOptions: LinkOptions;
-    title: string;
+    title: MessageId;
   }[];
 }[] = [
   {
-    title: "What Bots can reach",
-    description: `What a Bot can touch outside ${appConfig.brand.productName}, and the limits on it.`,
+    title: "admin.nav.reach",
+    description: "admin.home.reach.desc",
     items: [
       {
-        title: "Credentials",
-        description: "Keys and tokens for this deployment.",
+        title: "admin.nav.credentials",
+        description: "admin.home.credentials.desc",
         icon: IconKey,
         linkOptions: { to: "/admin/credentials" },
       },
       {
-        title: "Boundaries",
-        description: "Things no Bot may ever do.",
+        title: "admin.nav.boundaries",
+        description: "admin.home.boundaries.desc",
         icon: IconShieldCheck,
         linkOptions: { to: "/admin/boundaries" },
       },
       {
-        title: "Approvals",
-        description: "What members' Bots must ask before they act.",
+        title: "admin.nav.approvals",
+        description: "admin.home.approvals.desc",
         icon: IconChecks,
         linkOptions: { to: "/admin/approvals" },
       },
       {
-        title: "Computers",
-        description: "The machines Bots run tools on.",
+        title: "admin.nav.computers",
+        description: "admin.home.computers.desc",
         icon: IconDeviceDesktop,
         linkOptions: { to: "/admin/computers" },
       },
     ],
   },
   {
-    title: "What Bots can do",
-    description: "Apps, skills and interface pieces every Bot can use.",
+    title: "admin.nav.do",
+    description: "admin.home.do.desc",
     items: [
       {
-        title: "Plugins",
-        description: `The services ${appConfig.brand.productName} can reach, and which Bots can use them.`,
+        title: "admin.nav.plugins",
+        description: "admin.home.plugins.desc",
         icon: IconPuzzle,
         linkOptions: { to: "/admin/plugins" },
       },
       {
-        title: "Skills",
-        description: "Named instructions anybody can run with /.",
+        title: "admin.nav.skills",
+        description: "admin.home.skills.desc",
         icon: IconFileText,
         linkOptions: { to: "/admin/skills" },
       },
       {
-        title: "Automatic learning",
-        description:
-          "Learn from finished conversations and review the skills it proposes.",
+        title: "admin.nav.learning",
+        description: "admin.home.learning.desc",
         icon: IconFileText,
         linkOptions: { to: "/admin/learning" },
       },
       {
-        title: "UI components",
-        description: "Custom pieces a Bot can draw in a conversation.",
+        title: "admin.nav.components",
+        description: "admin.home.components.desc",
         icon: IconLayoutGrid,
         linkOptions: { to: "/admin/components" },
       },
       {
-        title: "Playground",
-        description: "Write a component and watch it render as you type.",
+        title: "admin.nav.playground",
+        description: "admin.home.playground.desc",
         icon: IconCode,
         linkOptions: { to: "/admin/playground" },
       },
       {
-        title: "Engines",
-        description:
-          "The AI engines members run on, and whether each one can answer now.",
+        title: "dash.engines",
+        description: "admin.home.engines.desc",
         icon: IconCpu,
         linkOptions: { to: "/admin/engines" },
       },
     ],
   },
   {
-    title: "Who can get in",
+    title: "admin.nav.in",
     description: "",
     items: [
       {
-        title: "People",
-        description:
-          "Everybody who has signed in, who the admins are, and whose access was removed.",
+        title: "admin.nav.people",
+        description: "admin.home.people.desc",
         icon: IconUsers,
         linkOptions: { to: "/admin/people" },
       },
       {
-        title: "Enterprise controls",
-        description:
-          "Roles and groups, required SSO, SCIM, network policy, MCP and model allowlists, Action Recording.",
+        title: "admin.enterprise.title",
+        description: "admin.home.enterprise.desc",
         icon: IconShieldCheck,
         linkOptions: { to: "/admin/enterprise" },
       },
       {
-        title: "Identity providers",
-        description:
-          "Your company's SAML or OpenID Connect provider, matched by email domain.",
+        title: "admin.nav.idp",
+        description: "admin.home.idp.desc",
         icon: IconBuildingBank,
         linkOptions: { to: "/admin/identity-providers" },
       },
     ],
   },
   {
-    title: "What happened",
+    title: "admin.nav.happened",
     description: "",
     items: [
       {
-        title: "Audit",
-        description: `Every action taken in ${appConfig.brand.productName}, and who took it.`,
+        title: "admin.nav.audit",
+        description: "admin.home.audit.desc",
         icon: IconListDetails,
         linkOptions: { to: "/admin/audit" },
       },
@@ -172,16 +169,21 @@ const SECTIONS: {
 ];
 
 function RouteComponent() {
+  const { t } = useAppLanguage();
+  const product = appConfig.brand.productName;
   const workspace = isFreeDuetApp();
-  const description =
-    "Settings for everybody in this deployment. A change here affects every person and every Bot.";
+  const description = t("admin.home.description");
   const sections = (
     <>
       {SECTIONS.map((section) => (
         <PageSection
-          description={section.description || undefined}
+          description={
+            section.description
+              ? t(section.description, { product })
+              : undefined
+          }
           key={section.title}
-          title={section.title}
+          title={t(section.title)}
         >
           <PageRows>
             {section.items.map((item, index) => (
@@ -198,8 +200,10 @@ function RouteComponent() {
                     <item.icon className="size-4 text-muted-foreground" />
                   </ItemMedia>
                   <ItemContent>
-                    <ItemTitle>{item.title}</ItemTitle>
-                    <ItemDescription>{item.description}</ItemDescription>
+                    <ItemTitle>{t(item.title)}</ItemTitle>
+                    <ItemDescription>
+                      {t(item.description, { product })}
+                    </ItemDescription>
                   </ItemContent>
                   <IconChevronRight className="size-4 shrink-0 text-muted-foreground" />
                 </Item>
@@ -212,11 +216,15 @@ function RouteComponent() {
     </>
   );
   return workspace ? (
-    <WorkspaceShell title="Admin" icon="shieldLock" description={description}>
+    <WorkspaceShell
+      title={t("nav.admin")}
+      icon="shieldLock"
+      description={description}
+    >
       <div className="fd-admin-grid">{sections}</div>
     </WorkspaceShell>
   ) : (
-    <PageShell title="Admin" description={description}>
+    <PageShell title={t("nav.admin")} description={description}>
       {sections}
     </PageShell>
   );

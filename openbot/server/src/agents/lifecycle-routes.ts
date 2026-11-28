@@ -119,6 +119,8 @@ export function createBotLifecycleRoutes(
         approvals: row?.approvals ?? 0,
         handoffs: row?.handoffs ?? 0,
         unread: row?.unread ?? 0,
+        stalled: row?.stalled ?? [],
+        unreadChannelId: row?.unreadChannelId ?? null,
         paused: paused.includes(agentId),
         notify: notify[agentId] ?? "all",
       });
@@ -256,6 +258,64 @@ export function createBotLifecycleRoutes(
         to: stopped.toBotId,
       });
       return context.json({ stopped: true });
+    },
+  );
+
+  // D171: "Try again" on a stalled hand-off. The person's own hop only; a hop that is running, done or
+  // not stalled is a 404, so a second click cannot start a second run.
+  routes.post(
+    "/:agentId/activity/handoffs/retry",
+    requireUser,
+    async (context) => {
+      const agent = await reachable(context);
+      if (agent instanceof Response) return agent;
+      const { id } = await body(context);
+      if (typeof id !== "string" || !id)
+        return context.json({ error: "Which delegated task?" }, 400);
+      const retried = await activity.retryHandoff(
+        context.var.actor.id,
+        agent.id,
+        id,
+      );
+      if (!retried)
+        return context.json(
+          { error: "That delegated task is not stalled." },
+          404,
+        );
+      await record(context, "bot.handoff_retried", agent.id, {
+        hop: retried.key,
+        to: retried.toBotId,
+      });
+      return context.json({ retried: true });
+    },
+  );
+
+  // D172: "Dismiss" on a stalled or capped hand-off the person does not want any more. Same guard, scoping
+  // and 404 rule as the retry; audited.
+  routes.post(
+    "/:agentId/activity/handoffs/dismiss",
+    requireUser,
+    async (context) => {
+      const agent = await reachable(context);
+      if (agent instanceof Response) return agent;
+      const { id } = await body(context);
+      if (typeof id !== "string" || !id)
+        return context.json({ error: "Which delegated task?" }, 400);
+      const dismissed = await activity.dismissHandoff(
+        context.var.actor.id,
+        agent.id,
+        id,
+      );
+      if (!dismissed)
+        return context.json(
+          { error: "That delegated task is not stalled." },
+          404,
+        );
+      await record(context, "bot.handoff_dismissed", agent.id, {
+        hop: dismissed.key,
+        to: dismissed.toBotId,
+      });
+      return context.json({ dismissed: true });
     },
   );
 

@@ -1,0 +1,28 @@
+/*
+ * The one token file of FreeDuet's light design (D154, approved 27 November 2026; shared in D174):
+ * Plus Jakarta Sans, accent #6430AB, background #F6F7FB. The dashboard (`.fd-dash`), the settings home
+ * (`.fdh`) and the inner settings pages (`.fdl`) read these values; each keeps its own short alias
+ * names, which point here, so a colour changes in one place.
+ */
+.fd-dash,
+.fdh,
+.fdl {
+  --fdl-bg: #f6f7fb;
+  --fdl-card: #ffffff;
+  --fdl-line: #e2e8f0;
+  --fdl-line-2: #eef2f7;
+  --fdl-ink: #1e293b;
+  --fdl-ink-2: #475569;
+  --fdl-ink-3: #64748b;
+  --fdl-accent: #6430ab;
+  --fdl-accent-ink: #4c1d95;
+  --fdl-accent-soft: #f0ebfa;
+  --fdl-accent-line: #d9c9f0;
+  --fdl-ok: #147a3a;
+  --fdl-ok-soft: #e6f4ea;
+  --fdl-wait: #a34a06;
+  --fdl-wait-line: #f5d08a;
+  --fdl-font:
+    "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --fdl-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}

@@ -1,0 +1,3060 @@
+import type { Catalog } from "../translate";
+import type { EN } from "./en";
+
+/*
+ * Portuguese (D181, stage 2): Brazilian Portuguese, "você" and "seu/sua", as the site's Portuguese page
+ * writes to the reader. The terms are the site's: "assistente" for a Bot (the site never says "Bot"),
+ * "equipe" for the team, "motores" for engines, "rotina" for a routine, "passagem de trabalho" for a
+ * hand-off, "aprovação" for an approval. A plural's "many" is the form Intl.PluralRules gives for a
+ * million and up, with "de" before the noun. Intl gives "one" for 0 in Portuguese too.
+ * Not checked by a Portuguese reader yet: a "machine draft, to review" until a person who reads
+ * Portuguese has checked it.
+ */
+export const pt: Catalog<typeof EN> = {
+  "sign.title": "Entrar no {product}",
+  "sign.continueWith": "Continuar com {provider}",
+  "sign.opening": "Abrindo {provider}…",
+  "sign.openError":
+    "Não foi possível abrir o login com {provider}. Tente de novo.",
+  "sign.ssoRequired":
+    "Sua organização exige que você entre com a conta da empresa.",
+  "sign.pairLead":
+    "Este navegador ainda não está pareado com {product}. No computador em que o aplicativo roda, execute",
+  "sign.pairTail": ": {product} abre aqui, pronto para usar.",
+  "sign.notSetUp":
+    "O login ainda não está configurado. Um administrador precisa configurá-lo antes.",
+  "sign.or": "ou",
+  "sign.emailPlaceholder": "voce@empresa.com",
+  "sign.openingCompany": "Abrindo…",
+  "sign.continueCompany": "Continuar com a conta da empresa",
+  "sign.adminSignIn": "Login de administrador",
+  "sign.noCompany":
+    "Nenhum login de empresa está configurado para este endereço.",
+  "shell.menu": "Menu",
+  "shell.everything": "Tudo",
+  "shell.everythingLine": "Todo o contexto das conversas, em todos os canais",
+  "shell.channelsError":
+    "Não foi possível carregar seus canais. Recarregue a página.",
+  "shell.channels": "Canais",
+  "shell.newChannel": "Novo canal",
+  "shell.archived": "Arquivados",
+  "shell.archivedChannels": "Canais arquivados",
+  "shell.unarchive": "Desarquivar",
+  "shell.unarchiveNamed": "Desarquivar {name}",
+  "shell.earlier": "Conversas anteriores",
+  "shell.manage": "Gerenciar",
+  "shell.signOut": "Sair",
+  "nav.bots": "Assistentes",
+  "nav.connections": "Conexões",
+  "nav.capabilities": "Capacidades",
+  "nav.routines": "Rotinas",
+  "nav.approvalRules": "Regras de aprovação",
+  "nav.admin": "Administração",
+  "nav.dashboard": "Painel",
+  "nav.settings": "Configurações",
+  "tab.main": "Principal",
+  "tab.chat": "Chat",
+  "tab.tasks": "Tarefas",
+  "tab.make": "Criar",
+  "tab.waiting": "{tab}, {badge} aguardando",
+  "header.chat": "Chat do {product}",
+  "header.settings": "Suas configurações",
+  "header.back": "Voltar",
+  "header.more": "Mais",
+  "composer.ask": "Pergunte qualquer coisa",
+  "composer.message": "Mensagem",
+  "composer.queue": "Colocar mensagem na fila",
+  "composer.send": "Enviar mensagem",
+  "composer.stop": "Parar o assistente",
+  "composer.showCall": "Mostrar a chamada de voz",
+  "composer.startCall": "Iniciar chamada de voz",
+  "composer.callBot": "Ligar para este assistente",
+  "composer.callUnsupported":
+    "As chamadas de voz precisam de microfone e de uma conexão segura (HTTPS)",
+  "composer.speak": "Ditar uma mensagem",
+  "composer.dictateTitle": "Diga tudo o que você precisa fazer",
+  "composer.attach": "Anexar um arquivo",
+  "composer.moreUnavailable": "Outras opções de mensagem indisponíveis",
+  "composer.messageNamed": "Mensagem para {name}",
+  "chat.botsError":
+    "Não foi possível carregar seus assistentes. Recarregue a página.",
+  "chat.noBots": "Ainda não há assistentes.",
+  "chat.conversationError":
+    "Não foi possível carregar sua conversa. Recarregue a página.",
+  "chat.stillStarting":
+    "A conversa ainda está começando. Tente de novo daqui a pouco.",
+  "chat.startError": "Não foi possível iniciar a conversa. Tente de novo.",
+  "attention.questions": {
+    one: "{count} pergunta",
+    many: "{count} de perguntas",
+    other: "{count} perguntas",
+  },
+  "attention.approvals": {
+    one: "{count} aprovação",
+    many: "{count} de aprovações",
+    other: "{count} aprovações",
+  },
+  "attention.handoffs": {
+    one: "{count} passagem de trabalho parada",
+    many: "{count} de passagens de trabalho paradas",
+    other: "{count} passagens de trabalho paradas",
+  },
+  "attention.unread": {
+    one: "{count} conversa não lida",
+    many: "{count} de conversas não lidas",
+    other: "{count} conversas não lidas",
+  },
+  "attention.needYou": {
+    one: "{count} coisa precisa de você",
+    many: "{count} de coisas precisam de você",
+    other: "{count} coisas precisam de você",
+  },
+  "attention.open": "{summary}. Abra Assistentes para resolver.",
+  "attention.unreadMessages": "Mensagens não lidas",
+  "bots.new": "Novo assistente",
+  "bots.purpose":
+    "Seus assistentes e os que foram compartilhados com você. Veja o que cada um está fazendo e o que precisa de você.",
+  "bots.loadError":
+    "Não foi possível carregar seus assistentes. Recarregue a página.",
+  "bots.needsYou": "Precisa de você",
+  "bots.pinned": "Fixados",
+  "bots.yours": "Seus",
+  "bots.shared": "Compartilhados com você",
+  "bots.allPinned": "Todos os seus assistentes estão fixados acima.",
+  "bots.allNeedYou": "Todos os seus assistentes estão em «Precisa de você».",
+  "bots.none":
+    "Você ainda não tem nenhum assistente. Crie um com Novo assistente.",
+  "bots.nobodyShared": "Ninguém compartilhou um assistente com você ainda.",
+  "bots.hide": "Ocultar",
+  "bots.show": "Mostrar",
+  "bots.hidden": "Ocultos",
+  "bots.hiddenDescription": {
+    one: "{count} assistente que você ocultou. Só a sua lista muda.",
+    many: "{count} de assistentes que você ocultou. Só a sua lista muda.",
+    other: "{count} assistentes que você ocultou. Só a sua lista muda.",
+  },
+  "bots.paused": "Pausado",
+  "bots.message": "Escrever",
+  "bots.wroteIn": {
+    one: "{name} escreveu em {count} conversa que você não leu.",
+    many: "{name} escreveu em {count} de conversas que você não leu.",
+    other: "{name} escreveu em {count} conversas que você não leu.",
+  },
+  "bots.readNewest": "Ler a mais recente",
+  "bots.resuming": "Retomando…",
+  "bots.pausedResume": "Pausado. Retomar",
+  "botPage.purpose":
+    "O que este assistente está fazendo por você e como ele está configurado.",
+  "botPage.fallbackTitle": "Assistente",
+  "botPage.openError":
+    "Não foi possível abrir este assistente. Talvez ele não tenha sido compartilhado com você.",
+  "profile.forYou": "Para você",
+  "profile.settingsError":
+    "Não foi possível carregar as configurações deste assistente. Recarregue a página.",
+  "profile.active": "Ativo",
+  "profile.pausedDescription": "Pausado. Nada roda para você até reativá-lo.",
+  "profile.activeDescription":
+    "Roda para você as rotinas, responsabilidades, passagens de trabalho e acompanhamentos.",
+  "profile.notifications": "Notificações",
+  "profile.notifyDescription":
+    "{level}. Os contadores na barra lateral aparecem sempre.",
+  "profile.notify.all": "Tudo",
+  "profile.notify.needsInput": "Só quando precisar de mim",
+  "profile.notify.none": "Nada (só os contadores)",
+  "profile.browserNotifications": "Notificações do navegador",
+  "profile.browserOff":
+    "Desativadas neste navegador. Ative para ser avisado quando um assistente precisar de você.",
+  "profile.turnOn": "Ativar",
+  "profile.startConversation": "Comece uma conversa.",
+  "stalled.what": "{name} não terminou: {task}",
+  "stalled.why": "Motivo: {reason}.",
+  "stalled.retryError":
+    "Não foi possível tentar de novo. Talvez já esteja em andamento.",
+  "stalled.dismissError":
+    "Não foi possível descartar. Talvez já esteja em andamento.",
+  "stalled.dismissing": "Descartando…",
+  "stalled.dismissed": "Descartado",
+  "stalled.dismiss": "Descartar",
+  "stalled.retrying": "Tentando de novo…",
+  "stalled.queued": "Na fila de novo",
+  "stalled.retry": "Tentar de novo",
+  "stalled.open": "Abrir a conversa",
+  "dash.title": "Painel",
+  "dash.notAvailable": "Ainda não disponível",
+  "dash.tokensNotCounted": "Nenhuma tentativa foi contada hoje ainda.",
+  "dash.countsUnavailable":
+    "As contagens de tokens não estão disponíveis agora.",
+  "dash.enginesLink": "Gerenciar motores",
+  "dash.teamLink": "Todos os membros",
+  "dash.waitingForYou": "Aguardando você",
+  "dash.available": "Disponível",
+  "dash.loading": "Carregando sua equipe…",
+  "dash.nothingWaits": "Nada espera por você.",
+  "dash.thingsWait": {
+    one: "{count} coisa espera por você.",
+    many: "{count} de coisas esperam por você.",
+    other: "{count} coisas esperam por você.",
+  },
+  "dash.partialCount":
+    "{reported} de {turns} tentativas informaram uma contagem",
+  "dash.inputPlusOutput": "Entrada mais saída, como cada motor informou",
+  "dash.nothingSaved": "Nada passou por um motor gratuito hoje ainda",
+  "dash.firstFor": {
+    one: "primeiro para {count} membro",
+    many: "primeiro para {count} de membros",
+    other: "primeiro para {count} membros",
+  },
+  "dash.members": {
+    one: "{count} membro",
+    many: "{count} de membros",
+    other: "{count} membros",
+  },
+  "dash.indicators": "Indicadores",
+  "dash.tokensToday": "Tokens hoje",
+  "dash.savedToday": "Economizado hoje com motores gratuitos",
+  "dash.waitingSub": "Perguntas, aprovações e passagens de trabalho paradas",
+  "dash.nextRoutine": "Próxima rotina",
+  "dash.noRoutine": "Nenhuma rotina está agendada.",
+  "dash.team": "Equipe",
+  "dash.engines": "Motores",
+  "dash.noEngine": "Nenhum motor foi configurado ainda.",
+  "dash.perMemberAria": "Tokens por membro",
+  "dash.perMember": "Tokens por membro, hoje",
+  "dash.foot":
+    "As contagens são o que cada motor informou, em dias UTC. Um registro das atividades recentes e um indicador do limite do plano ainda não estão disponíveis.",
+  "voice.heardNothing":
+    "Não ouvi nada. Toque no microfone para tentar de novo, ou escreva.",
+  "voice.tapWhenDone": "Toque no microfone quando terminar",
+  "voice.discard": "Descartar",
+  "voice.start": "Iniciar ditado",
+  "voice.stopAndSend": "Parar o ditado e enviar",
+  "voice.typeInstead": "Escrever em vez disso",
+  "voice.retry": "Tentar de novo",
+  "voice.recordAgain": "Gravar de novo",
+  "voice.writing": "Escrevendo o que você disse…",
+  "voice.listeningStop": "Ouvindo… Paro quando você fizer uma pausa",
+  "voice.listening": "Estou ouvindo, pode começar a falar",
+  "voice.permission": "Aguardando permissão do microfone…",
+  "voice.widget.unavailable": "",
+  "voice.widget.connecting": "",
+  "voice.widget.speaking": "",
+  "voice.widget.working": "",
+  "voice.widget.muted": "",
+  "voice.widget.listening": "",
+  "voice.widget.ready": "",
+  "voice.widget.label": "",
+  "voice.widget.duration": "",
+  "voice.widget.expand": "",
+  "voice.widget.expandTitle": "",
+  "voice.widget.end": "",
+  "voice.widget.endTitle": "",
+  "voice.widget.returnChat": "",
+  "voice.widget.returnChatTitle": "",
+  "voice.widget.settings": "",
+  "voice.widget.captions": "",
+  "voice.widget.captionsEmpty": "",
+  "voice.widget.you": "",
+  "voice.widget.youMuted": "",
+  "voice.widget.youNamed": "",
+  "voice.widget.mute": "",
+  "voice.widget.unmute": "",
+  "voice.widget.muteTitle": "",
+  "voice.session.slow": "",
+  "voice.session.timeLimit": "",
+  "voice.session.muteFailed": "",
+  "voice.session.lost": "",
+  "voice.session.startFailed": "",
+  "voice.session.transcriptLimit": "",
+  "voice.session.responseFailed": "",
+  "voice.session.serviceError": "",
+  "voice.webrtc.unsupported": "",
+  "voice.webrtc.playback": "",
+  "voice.webrtc.lost": "",
+  "voice.webrtc.micGone": "",
+  "voice.webrtc.channelFailed": "",
+  "voice.webrtc.ended": "",
+  "voice.webrtc.unreadable": "",
+  "voice.webrtc.connectFailed": "",
+  "voice.webrtc.invalid": "",
+  "voice.webrtc.notConnected": "",
+  "voice.websocket.audio": "",
+  "voice.websocket.config": "",
+  "voice.websocket.address": "",
+  "voice.websocket.startFailed": "",
+  "voice.websocket.connect": "",
+  "voice.websocket.closed": "",
+  "voice.websocket.notConnected": "",
+  "voice.websocket.invalid": "",
+  "voice.websocket.slow": "",
+  "voice.websocket.micGone": "",
+  "voice.connection.unsupported": "",
+  "voice.connection.unavailable": "",
+  "voice.connection.transport": "",
+  "dictation.controls.dictate": "",
+  "dictation.controls.cancel": "",
+  "dictation.controls.transcribing": "",
+  "dictation.controls.listening": "",
+  "dictation.controls.duration": "",
+  "dictation.controls.stop": "",
+  "dictation.controls.stopTitle": "",
+  "dictation.controls.send": "",
+  "dictation.recording.secure": "",
+  "dictation.recording.noRecorder": "",
+  "dictation.recording.noFormat": "",
+  "dictation.recording.tooLarge": "",
+  "dictation.recording.stopped": "",
+  "dictation.recording.interrupted": "",
+  "dictation.recording.empty": "",
+  "dictation.recording.noSpeech": "",
+  "dictation.recording.failed": "",
+  "dictation.session.denied": "",
+  "dictation.session.startFailed": "",
+  "dictation.session.finishFailed": "",
+  "dictation.session.transcribeFailed": "",
+  "home.bots": "Conheça sua equipe e gerencie cada assistente.",
+  "home.capabilities": "Habilidades e memória.",
+  "home.connectionsLabel": "Contas, aplicativos e regras de e-mail",
+  "home.connections": "Conecte uma conta, um aplicativo ou seu e-mail.",
+  "home.setupLabel": "Lista de configuração",
+  "home.setup": "Veja o que já está configurado e o que falta.",
+  "home.approvalsLabel": "Regras de aprovação e Acesso total",
+  "home.approvals": "O que um assistente pode fazer sem perguntar a você.",
+  "home.passwordsLabel": "Senhas",
+  "home.passwords": "Senhas que sua equipe pode usar.",
+  "home.routines": "Trabalhos que se repetem sozinhos, e a visão da semana.",
+  "home.notifications": "Onde as atualizações chegam até você.",
+  "home.admin": "Computadores, credenciais, limites, pessoas e auditoria.",
+  "home.engines":
+    "Quem responde por cada assistente, em que ordem e quanto cada um usou hoje. Sua assinatura continua em primeiro lugar até você mudar a ordem.",
+  "home.safety": "Segurança",
+  "home.jobs": "Trabalhos",
+  "home.system": "Sistema",
+  "settings.description":
+    "Gerencie sua equipe, as contas conectadas e suas preferências pessoais.",
+  "settings.sections": "Seções das configurações",
+  "settings.workspace": "Espaço de trabalho",
+  "settings.preferences": "Preferências",
+  "settings.devices": "Dispositivos e informações",
+  "settings.appearance": "Aparência",
+  "settings.matchPhone": "Igual ao celular",
+  "settings.light": "Claro",
+  "settings.dark": "Escuro",
+  "settings.voice": "Voz",
+  "settings.shortcuts": "Atalhos de teclado",
+  "language.section": "Idioma",
+  "language.title": "Idioma do aplicativo",
+  "language.description":
+    "O idioma dos menus e botões. Sua equipe escreve para você no idioma definido no chat.",
+  "language.auto": "Automático (navegador)",
+  "settings.descriptionPlain": "Como o {product} aparece e funciona para você.",
+  "wide.yourTeam": "Sua equipe",
+  "wide.team": "Equipe",
+  "wide.stateWaiting": "Aguardando você",
+  "wide.stateWorking": "Trabalhando nisso",
+  "wide.memberLabel": "{name}, {line}",
+  "chat.loadingConversation": "Carregando esta conversa",
+  "chat.readAloud": "Ler em voz alta",
+  "chat.stopReading": "Parar a leitura",
+  "chat.thinking": "Pensando",
+  "chat.queued": "Na fila",
+  "chat.removeQueued": "Remover mensagem da fila: {what}",
+  "chat.remove": "Remover",
+  "chat.routineRan": "Rotina executada.",
+  "chat.firstDayYes": "Parece certo",
+  "chat.firstDayNo": "Algo não está certo",
+  "chat.tryingAgain": "Tentando de novo.",
+  "chat.responsibilityRan": "Responsabilidade executada.",
+  "chat.trigger": "Gatilho:",
+  "chat.details": "Detalhes",
+  "chat.via": "via {source}",
+  "chat.untitledFile": "Arquivo sem título",
+  "chat.attachment": "Anexo",
+  "chat.attachmentLower": "anexo",
+  "chat.attachmentNamed": "Anexo: {name}",
+  "chat.unavailableNamed": "{name} não está disponível.",
+  "chat.unavailable": "Este anexo não está disponível.",
+  "chat.openNamed": "Abrir {name}",
+  "chat.close": "Fechar",
+  "chat.generatedInterface": "A interface gerada por este assistente",
+  "chat.usedBrowser": "Usou o navegador",
+  "chat.hostAndMore": "{host} e mais {amount}",
+  "chat.searchedWeb": "pesquisou na web",
+  "chat.readPages": {
+    one: "leu {amount} página",
+    many: "leu {amount} de páginas",
+    other: "leu {amount} páginas",
+  },
+  "chat.browsedPages": {
+    one: "navegou em {amount} página",
+    many: "navegou em {amount} de páginas",
+    other: "navegou em {amount} páginas",
+  },
+  "chat.usedBrowserPhrase": "usou o navegador",
+  "chat.usedNamed": "usou {name}",
+  "chat.usedConnectors": {
+    one: "usou {amount} conector",
+    many: "usou {amount} de conectores",
+    other: "usou {amount} conectores",
+  },
+  "chat.usedTools": {
+    one: "usou {amount} ferramenta",
+    many: "usou {amount} de ferramentas",
+    other: "usou {amount} ferramentas",
+  },
+  "chat.andJoin": "{head} e {last}",
+  "chat.inProgress": "Em andamento",
+  "chat.waitingForYou": "Aguardando você",
+  "chat.notCompleted": "Não concluído",
+  "chat.blocked": "Bloqueado",
+  "chat.didntWork": "Não funcionou",
+  "chat.couldntFinishStep": "Não foi possível concluir esta etapa.",
+  "chat.issues": {
+    one: "{amount} problema",
+    many: "{amount} de problemas",
+    other: "{amount} problemas",
+  },
+  "settings.addRepository": "Adicionar um repositório",
+  "settings.approvals": "Aprovações",
+  "settings.appsSharedBots":
+    "Apps que você permite que os assistentes compartilhados usem",
+  "settings.backToApp": "Voltar ao aplicativo",
+  "settings.cancel": "Cancelar",
+  "settings.cannotMakeCode":
+    "O código é criado no navegador pareado com o computador. Este navegador não pode criar um.",
+  "settings.cantLink":
+    "Você ainda não pode vincular uma conta do {provider}. Um administrador precisa configurá-la antes.",
+  "settings.changesDescription":
+    "Configurações que um assistente mudou pelo chat. Desfazer restaura o valor anterior por sete dias, e só enquanto a configuração mantiver o valor definido pela mudança.",
+  "settings.changesEmpty": "Nenhuma mudança feita no chat ainda.",
+  "settings.changesLoading": "Carregando mudanças…",
+  "settings.changesTitle": "Mudanças feitas no chat",
+  "settings.charactersOf": "{used} de {limit} caracteres",
+  "settings.checkLinkError":
+    "Não foi possível verificar se você pode vincular esta conta: {error}",
+  "settings.code": "Código",
+  "settings.codeExpires": "O código funciona uma vez e expira em 10 minutos.",
+  "settings.codeRanOut": "Esse código expirou. Crie um novo.",
+  "settings.componentsGallery": "Galeria de componentes",
+  "settings.computer": "Computador",
+  "settings.connect": "Conectar",
+  "settings.connectEvents": "Conectar eventos",
+  "settings.connectNamed": "Conectar {name}",
+  "settings.copied": "Copiado",
+  "settings.copy": "Copiar",
+  "settings.copyFailed":
+    "Não foi possível copiar. Selecione o código e copie-o você mesmo.",
+  "settings.deliveriesEmpty": "Nenhuma entrega ainda.",
+  "settings.deliveriesTitle": "Entregas recentes",
+  "settings.deploymentOwn": "o da instalação",
+  "settings.devicesDescription":
+    "Entre no app {product} no seu celular e ative as notificações para adicioná-lo aqui.",
+  "settings.devicesEmpty": "Nenhum dispositivo ainda.",
+  "settings.devicesTitle": "Seus dispositivos",
+  "settings.disconnect": "Desconectar",
+  "settings.disconnectError": "Não foi possível desconectar {name}: {error}",
+  "settings.disconnectNamed": "Desconectar {name}",
+  "settings.done": "Pronto",
+  "settings.emphasisBot": "Nome do assistente",
+  "settings.emphasisConversation": "Título da conversa",
+  "settings.emphasisDescription":
+    "Escolha qual linha se destaca na barra lateral.",
+  "settings.emphasisPreview": "Prévia da lista de mensagens",
+  "settings.emphasisTitle": "Destaque na lista de mensagens",
+  "settings.general": "Geral",
+  "settings.githubConnectError": "Não foi possível conectar ao GitHub: {error}",
+  "settings.githubLinkFailed":
+    "Não foi possível vincular sua conta do GitHub. Tente de novo.",
+  "settings.githubLinked": "Sua conta do GitHub está vinculada.",
+  "settings.githubTaken":
+    "Essa conta do GitHub está vinculada a outra pessoa no {product}. Entre no GitHub com outra conta e tente de novo, ou peça a um administrador.",
+  "settings.kindDecision": "Decisões",
+  "settings.kindDecisionDescription":
+    "Aprovações de que um assistente precisa antes de agir.",
+  "settings.kindProgress": "Andamento",
+  "settings.kindProgressDescription":
+    "Respostas e resultados de trabalhos que você não estava acompanhando.",
+  "settings.kindQuestion": "Perguntas",
+  "settings.kindQuestionDescription":
+    "Coisas que um assistente perguntou a você e pelas quais ele está esperando.",
+  "settings.languageChanged":
+    "Seu idioma para a equipe mudou de {from} para {to}",
+  "settings.lastSeen": "visto pela última vez {when}",
+  "settings.levelAll": "tudo",
+  "settings.levelNeedsInput": "só quando precisar de você",
+  "settings.linkBroughtCode":
+    "O link trouxe um código. Dê um nome a este navegador e clique em Parear.",
+  "settings.linkSlack": "Vincule sua conta do Slack",
+  "settings.linked": "Vinculada",
+  "settings.loadAccountError": "Não foi possível carregar sua conta: {error}",
+  "settings.loading": "Carregando…",
+  "settings.localAddress":
+    "Este endereço só funciona neste computador. Um celular precisa do endereço pelo qual o FreeDuet é acessado de fora; abra esse endereço no celular e digite o código em Configurações.",
+  "settings.madeWhen": "criado {when}",
+  "settings.makeCode": "Criar um código",
+  "settings.memberAdded": "{member} foi adicionado à sua equipe",
+  "settings.name": "Nome",
+  "settings.nameChanged": "{bot}: seu nome para ele mudou de {from} para {to}",
+  "settings.nameOwn": "o próprio nome",
+  "settings.needsReconnect": "Precisa reconectar",
+  "settings.needsReconnectHandle": "Precisa reconectar · @{handle}",
+  "settings.noItalianVoice":
+    "Não há voz italiana local neste computador, então as respostas não podem ser lidas em voz alta aqui.",
+  "settings.notLinked": "Não vinculada",
+  "settings.notSetUp": "Não configurado",
+  "settings.notifyChanged":
+    "{bot}: as notificações mudaram de {from} para {to}",
+  "settings.pairThisDescription":
+    "No computador em que o FreeDuet roda, abra Configurações, clique em Criar um código em Parear um celular ou outro navegador, depois abra o link que ele mostra ou digite o código aqui.",
+  "settings.pairThisTitle": "Parear este navegador",
+  "settings.pairedDescription":
+    "Um celular ou outro navegador pareado funciona como este. Revogue um deles e ele será bloqueado na próxima solicitação e desconectado.",
+  "settings.pairedDone": "Este navegador está pareado com o computador.",
+  "settings.pairedTitle": "Parear um celular ou outro navegador",
+  "settings.phone": "Celular",
+  "settings.phoneOrBrowser": "Celular ou outro navegador",
+  "settings.qrLabel": "Código QR com o link de pareamento",
+  "settings.readAloudDescription":
+    "Adiciona um botão Ler em voz alta abaixo de cada resposta de um assistente. Usa uma voz apenas deste computador, e nada é enviado para outro lugar.",
+  "settings.readAloudTitle": "Ler as respostas em voz alta",
+  "settings.rename": "Renomear",
+  "settings.repositories": "Repositórios",
+  "settings.repositoriesDescription":
+    "Adicione um repositório aqui e depois um webhook no GitHub com o endereço abaixo e o mesmo segredo. Os eventos dele, como issues.opened, podem então iniciar uma responsabilidade.",
+  "settings.repositoriesEmpty":
+    "Nenhum repositório ainda. Adicione um com Adicionar um repositório.",
+  "settings.repository": "Repositório",
+  "settings.reset": "Redefinir",
+  "settings.resetDescription":
+    "Esquecer todas as respostas, para que cada assistente compartilhado pergunte de novo.",
+  "settings.resetDone":
+    "Redefinido. Cada assistente compartilhado vai perguntar de novo.",
+  "settings.revoke": "Revogar",
+  "settings.routingDescription":
+    "Para onde vai cada tipo de atualização quando você está fora. O {product} na web sempre mostra tudo.",
+  "settings.routingError":
+    "Não foi possível carregar para onde vão as suas atualizações. Recarregue a página.",
+  "settings.routingTitle": "Para onde vão as atualizações",
+  "settings.runsOut":
+    "No celular, com a sua conta, escaneie este código ou abra o link, ou abra Configurações e digite o código. Ele funciona uma vez e expira em {time}.",
+  "settings.sameSecret":
+    "Use o mesmo segredo ao adicionar o webhook no GitHub.",
+  "settings.sampleBot": "Assistente geral",
+  "settings.sampleTitle": "Planejar a próxima semana",
+  "settings.save": "Salvar",
+  "settings.saved": "Salvo",
+  "settings.saving": "Salvando…",
+  "settings.setup": "Configuração",
+  "settings.sharedBots": "Assistentes compartilhados",
+  "settings.sharedBotsDescription":
+    "Um assistente compartilhado com você usa os apps do dono dele. Usa os seus apenas onde você disse sim em uma conversa.",
+  "settings.slackCodeError":
+    "Não foi possível criar um código do Slack: {error}",
+  "settings.standingDescription":
+    "Vale para todo assistente em todas as conversas. O papel de um assistente diz o que ele faz. Isto diz como você quer que seja feito, como o seu estilo de escrita.",
+  "settings.standingTitle": "Instruções permanentes",
+  "settings.switchLabel": "{kind} por {transport}",
+  "settings.thisBrowserTag": "(este navegador)",
+  "settings.toneChanged": "{bot}: o tom mudou de {from} para {to}",
+  "settings.undo": "Desfazer",
+  "settings.undoFailed": "Não foi possível desfazer a mudança. Tente de novo.",
+  "settings.undoGone": "Não é mais possível desfazer",
+  "settings.undoing": "Desfazendo…",
+  "settings.undone": "Desfeito",
+  "settings.webhookSecret": "Segredo do webhook",
+  "settings.yourAccount": "Sua conta",
+  "bot.activity.kindRoutine": "Rotina",
+  "bot.activity.kindResponsibility": "Responsabilidade",
+  "bot.activity.kindHandoff": "Tarefa delegada",
+  "bot.activity.kindApproval": "Aprovação",
+  "bot.activity.kindQuestion": "Pergunta",
+  "bot.activity.kindFollowUp": "Acompanhamento",
+  "bot.activity.needsYou": "precisa de você",
+  "bot.activity.stop": "Parar",
+  "bot.activity.stopping": "Parando…",
+  "bot.activity.cancelling": "Cancelando…",
+  "bot.activity.open": "Abrir",
+  "bot.activity.title": "Atividade",
+  "bot.activity.scheduled": "Agendados",
+  "bot.activity.completed": "Concluídos",
+  "bot.activity.emptyInProgress":
+    "Nada está em execução nem esperando por você.",
+  "bot.activity.emptyScheduled": "Nada está agendado.",
+  "bot.activity.emptyCompleted": "Nada foi concluído ainda.",
+  "bot.activity.loadError":
+    "Não foi possível carregar a atividade deste assistente. Recarregue a página.",
+  "bot.settings.heading": "Configurações deste assistente",
+  "bot.area.responsibilities": "Responsabilidades",
+  "bot.area.reaching": "Como chega até você",
+  "bot.area.memory": "Memória",
+  "bot.area.access": "Habilidades e acesso",
+  "bot.area.sharing": "Compartilhamento",
+  "bot.settings.activeCount": {
+    one: "{count} ativa",
+    many: "{count} de ativas",
+    other: "{count} ativas",
+  },
+  "bot.settings.noneActive": "Nenhuma ativa",
+  "bot.settings.ruleCount": {
+    one: "{count} regra",
+    many: "{count} de regras",
+    other: "{count} regras",
+  },
+  "bot.settings.noRules": "Nenhuma regra",
+  "bot.settings.routineCount": {
+    one: "{count} rotina",
+    many: "{count} de rotinas",
+    other: "{count} rotinas",
+  },
+  "bot.settings.noRoutines": "Nenhuma rotina",
+  "bot.access.skillsDescription":
+    "Ative uma habilidade para usá-la com este assistente. Digite / em uma conversa para executá-la.",
+  "bot.access.yourSkills": "Suas habilidades",
+  "bot.access.skillsError":
+    "Não foi possível carregar suas habilidades. Recarregue a página.",
+  "bot.access.noSkills": "Nenhuma habilidade ainda.",
+  "bot.access.writeOne": "Crie uma",
+  "bot.access.title": "O que ele pode usar",
+  "bot.access.grantedDescription":
+    "Os apps e habilidades que este assistente pode usar, e se cada app está pronto para você. Ele não pode usar mais nada.",
+  "bot.access.grantedError":
+    "Não foi possível carregar o que este assistente pode usar. Recarregue a página.",
+  "bot.access.readyError":
+    "Não foi possível verificar se cada app está pronto para você. Recarregue a página.",
+  "bot.access.noApps":
+    "Nenhum app ainda. Um administrador precisa adicioná-los. Até lá, este assistente só pode conversar com você.",
+  "bot.access.toolsAndMore": "{list} e mais {count}",
+  "bot.access.toolCount": {
+    one: "{count} ferramenta",
+    many: "{count} de ferramentas",
+    other: "{count} ferramentas",
+  },
+  "bot.access.skillLabel": "Habilidade",
+  "bot.access.manageNamed": "Gerenciar {title} neste assistente",
+  "bot.reset.conversations": {
+    one: "{count} conversa",
+    many: "{count} de conversas",
+    other: "{count} conversas",
+  },
+  "bot.reset.memorySources": {
+    one: "{count} fonte de memória",
+    many: "{count} de fontes de memória",
+    other: "{count} fontes de memória",
+  },
+  "bot.reset.memories": {
+    one: "{count} memória importada",
+    many: "{count} de memórias importadas",
+    other: "{count} memórias importadas",
+  },
+  "bot.reset.routines": {
+    one: "{count} rotina",
+    many: "{count} de rotinas",
+    other: "{count} rotinas",
+  },
+  "bot.reset.responsibilities": {
+    one: "{count} responsabilidade",
+    many: "{count} de responsabilidades",
+    other: "{count} responsabilidades",
+  },
+  "bot.reset.followUps": {
+    one: "{count} acompanhamento agendado",
+    many: "{count} de acompanhamentos agendados",
+    other: "{count} acompanhamentos agendados",
+  },
+  "bot.reset.formedMemories": {
+    one: "{count} memória criada pelo assistente",
+    many: "{count} de memórias criadas pelo assistente",
+    other: "{count} memórias criadas pelo assistente",
+  },
+  "bot.reset.research": {
+    one: "{count} pesquisa em segundo plano",
+    many: "{count} de pesquisas em segundo plano",
+    other: "{count} pesquisas em segundo plano",
+  },
+  "bot.reset.standing": {
+    one: "{count} permissão permanente",
+    many: "{count} de permissões permanentes",
+    other: "{count} permissões permanentes",
+  },
+  "bot.reset.title": "Redefinir {name}?",
+  "bot.reset.description":
+    "Isto exclui o que {name} tem com você. As conversas e os dados de outras pessoas continuam. Você não pode desfazer isto.",
+  "bot.reset.planError":
+    "Não foi possível verificar o que a redefinição excluiria. Tente de novo.",
+  "bot.reset.done": "Pronto. {name} começa do zero com você.",
+  "bot.reset.nothing": "Não há nada seu para excluir.",
+  "bot.reset.willDelete": "Isto vai excluir:",
+  "bot.reset.sharedKept": {
+    one: "{count} conversa é compartilhada com outras pessoas ou assistentes e será mantida.",
+    many: "{count} de conversas são compartilhadas com outras pessoas ou assistentes e serão mantidas.",
+    other:
+      "{count} conversas são compartilhadas com outras pessoas ou assistentes e serão mantidas.",
+  },
+  "bot.reset.memoriesKept":
+    "As memórias que você mesmo contou a um assistente são mantidas.",
+  "bot.reset.resetting": "Redefinindo…",
+  "bot.reset.submit": "Excluir e redefinir",
+  "bot.manage.pinnedAssigned":
+    "Um administrador atribuiu a você. Ele fica no topo da sua lista de assistentes.",
+  "bot.manage.pinnedOn":
+    "No topo da sua lista de assistentes. Só a sua lista muda.",
+  "bot.manage.pinnedOff":
+    "Mantenha-o no topo da sua lista de assistentes. Só a sua lista muda.",
+  "bot.manage.hiddenAssigned":
+    "Um administrador atribuiu a você. Você não pode ocultá-lo.",
+  "bot.manage.hiddenOn":
+    "Em Ocultos na sua lista de assistentes. Só a sua lista muda.",
+  "bot.manage.hiddenOff":
+    "Tire-o da sua lista de assistentes. Só a sua lista muda.",
+  "bot.manage.duplicate": "Duplicar",
+  "bot.manage.duplicateDescription":
+    "Crie uma cópia sua. As conversas e as chaves dele não são copiadas.",
+  "bot.manage.resetDescription":
+    "Exclui suas conversas com ele, o que ele lembra de você e o trabalho agendado dele. Você verá a lista antes.",
+  "bot.manage.delete": "Excluir",
+  "bot.manage.deleteDescription":
+    "Exclui para todos. Você não pode desfazer isto.",
+  "bot.manage.deleteTitle": "Excluir {name}?",
+  "bot.manage.deleteConfirm":
+    "Ele é excluído para todos. Você não pode desfazer isto.",
+  "bot.manage.deleting": "Excluindo…",
+  "bot.setup.title": "Título",
+  "bot.setup.whatItDoes": "O que ele faz",
+  "bot.setup.identity": "Identidade",
+  "bot.setup.systemOwned": "Do sistema",
+  "bot.setup.systemOwnedDescription":
+    "Vem com o {product}. Não pertence a uma pessoa.",
+  "bot.setup.visibility": "Visibilidade",
+  "bot.setup.visiblePrivate": "Só você pode vê-lo e iniciar conversas com ele.",
+  "bot.setup.visiblePublic": "Todos no {product} podem encontrá-lo e usá-lo.",
+  "bot.setup.private": "Privado",
+  "bot.setup.public": "Público",
+  "bot.setup.saveError": "Não foi possível salvar. Tente de novo.",
+  "bot.setup.checkField": "Verifique este campo e tente de novo.",
+  "bot.setup.connection": "Conexão",
+  "bot.setup.builtIn": "Integrado",
+  "bot.setup.agentUrl": "URL do agente",
+  "bot.setup.builtInDescription":
+    "Roda dentro do {product}. Não há nada para conectar.",
+  "bot.sharing.published": "Publicado",
+  "bot.sharing.toWholeTeam": "Para toda a equipe",
+  "bot.sharing.toPeople": "Para {who}",
+  "bot.sharing.groupNamed": "grupo {name}",
+  "bot.sharing.teamPrivate":
+    "As conversas de cada pessoa com ele são privadas.",
+  "bot.sharing.notVisibleYet":
+    "Os colegas de equipe não podem vê-lo até que ele tenha um nome e uma descrição reais.",
+  "bot.sharing.unpublish": "Despublicar",
+  "bot.sharing.link": "Link",
+  "bot.sharing.linkDescription": "Abre uma conversa privada com ele.",
+  "bot.sharing.copyLink": "Copiar link",
+  "bot.sharing.publicNotPublished":
+    "Não publicado para a equipe. Ele é público, então todos no {product} já podem usá-lo.",
+  "bot.sharing.onlyYouCanUse": "Não publicado. Só você pode usá-lo.",
+  "bot.sharing.notPublished": "Não publicado.",
+  "bot.sharing.whoPublishedTo": "Para quem ele é publicado",
+  "bot.sharing.publish": "Publicar",
+  "bot.sharing.publishNote":
+    "Publicar não muda a visibilidade dele. Você pode despublicar a qualquer momento.",
+  "bot.sharing.audience": "Destinatários",
+  "bot.sharing.notPublishedSummary": "Não publicado",
+  "bot.sharing.theWholeTeam": "Toda a equipe",
+  "bot.sharing.specificPeople": "Pessoas ou grupos específicos",
+  "bot.sharing.peopleCount": {
+    one: "{count} pessoa",
+    many: "{count} de pessoas",
+    other: "{count} pessoas",
+  },
+  "bot.sharing.groupCount": {
+    one: "{count} grupo",
+    many: "{count} de grupos",
+    other: "{count} grupos",
+  },
+  "bot.sharing.assignToGroups": "Atribuir a grupos",
+  "bot.sharing.assignDescription":
+    "Fixa este assistente no topo da lista de assistentes de cada membro do grupo. Use * para toda a equipe.",
+  "bot.sharing.publishedTo": "Publicado para",
+  "bot.sharing.peopleByEmail": "Pessoas, por e-mail",
+  "bot.sharing.commaSeparated": "Separados por vírgula",
+  "bot.sharing.groups": "Grupos",
+  "bot.sharing.update": "Atualizar",
+  "bot.sharing.publishToTeam": "Publicar para a equipe",
+  "bot.sharing.assignNamed": "Atribuir {name} a um grupo",
+  "bot.sharing.assignNote":
+    "Ele fica fixado no topo da lista de assistentes de cada membro.",
+  "bot.sharing.groupOrStar": "Grupo, ou *",
+  "bot.sharing.wholeTeamPlaceholder": "* para toda a equipe",
+  "bot.sharing.assign": "Atribuir",
+  "bot.sharing.removeNamed": "Remover {name}",
+  "bot.sharing.wholeTeam": "Equipe inteira",
+  "bot.sharing.notAssigned": "Não atribuído a nenhum grupo.",
+  "bot.sharing.assignRow": "Atribuir a um grupo",
+  "bot.page.accessPurpose":
+    "As habilidades, os apps e os outros assistentes que este assistente pode usar.",
+  "bot.page.approvalsPurpose":
+    "O que este assistente pode fazer sem perguntar a você antes.",
+  "bot.page.memoryPurpose":
+    "Os apps com que este assistente aprende e a pesquisa que ele faz para você em segundo plano.",
+  "bot.page.memoryPointer": "O que seus assistentes lembram sobre você está em",
+  "bot.page.reachPurpose":
+    "Continue uma conversa com este assistente no Slack, no Microsoft Teams ou por mensagem de texto.",
+  "bot.page.responsibilitiesPurpose":
+    "Objetivos contínuos em que este assistente trabalha para você. Veja o que iniciou cada execução e o que ele encontrou.",
+  "bot.page.routinesPurpose":
+    "O que este assistente faz por você em uma programação. Desative uma, execute agora ou exclua.",
+  "bot.page.setupPurpose":
+    "Quem é este assistente, quem pode encontrá-lo e onde ele roda.",
+  "bot.page.sharingPurpose":
+    "Quem mais pode usar este assistente. As conversas de cada pessoa com ele são privadas.",
+  // The Bot sub-pages' contents (D181 stage 2e): memory sources, suggestions, reaching you, responsibilities
+  // and routines, the summaries of lib/agents/bot-summaries.ts and the time phrases of lib/relative-time.ts.
+  // Shared words reuse their existing keys (`botPage.fallbackTitle` is "Bot"); `bot.choose` is "Choose a Bot".
+  "bot.choose": "Escolha um assistente",
+  "memory.addSource": "Adicionar fonte",
+  "memory.title": "Fontes dos apps",
+  "memory.description":
+    "Os apps que você conectou e que este assistente pode ler aparecem aqui, e você pode adicionar mais. As fontes são atualizadas a cada 15 minutos. Só este assistente vê o que elas contêm.",
+  "memory.empty": "Ainda não há fontes. Adicione uma com «Adicionar fonte».",
+  "memory.upToDate": "Atualizada",
+  "memory.off": "Desativada",
+  "memory.lastRead": "Última leitura {when}",
+  "memory.syncNow": "Sincronizar agora",
+  "memory.readNamed": "Ler {name}",
+  "memory.addTitle": "Adicionar uma fonte",
+  "memory.addDescription":
+    "O {product} lê a fonte agora e depois a cada 15 minutos, enquanto ela estiver ativada.",
+  "memory.enterNumber": "Digite um número para {name}.",
+  "memory.cantShow":
+    "Esta fonte tem configurações que o {product} não consegue mostrar. Escolha outra.",
+  "memory.checkSettings": "Confira as configurações da fonte.",
+  "memory.whatToRead": "O que ler",
+  "memory.chooseWhat": "Escolha o que ler",
+  "memory.sourceName": "Nome da fonte",
+  "memory.chooseValue": "Escolha um valor",
+  "memory.reading": "Lendo a fonte…",
+  "memory.addAndSync": "Adicionar e sincronizar a fonte",
+  "suggestions.everyHour": "A cada hora",
+  "suggestions.every4Hours": "A cada 4 horas",
+  "suggestions.twiceDay": "Duas vezes por dia",
+  "suggestions.onceDay": "Uma vez por dia",
+  "suggestions.everyMinutes": {
+    one: "A cada {count} minuto",
+    many: "A cada {count} de minutos",
+    other: "A cada {count} minutos",
+  },
+  "suggestions.yourBot": "Seu assistente",
+  "suggestions.title": "Próximos passos sugeridos",
+  "suggestions.from": "De {app}",
+  "suggestions.connectedApp": "um app conectado",
+  "suggestions.openRecord": "Abrir registro",
+  "suggestions.startTask": "Iniciar como tarefa",
+  "suggestions.empty":
+    "Nenhuma sugestão por enquanto. Os assistentes com pesquisa em segundo plano ativada vão sugerir os próximos passos aqui.",
+  "suggestions.turnOnResearch": "Ativar a pesquisa",
+  "suggestions.researchDescription":
+    "Fica desativada até você ativá-la para este assistente, a menos que o seu administrador a tenha ativado para todos. Quando estiver ativada, a cada quatro horas ela examina os apps que já pode ler, prepara memórias para você revisar e sugere os próximos passos. Ela só pode ler: não consegue enviar mensagens, alterar nada em um app nem usar um navegador ou um computador. Se você a desativar ou remover, ela continua assim.",
+  "suggestions.researchTitle": "Pesquisa em segundo plano",
+  "suggestions.researchOff": "A pesquisa em segundo plano está desativada.",
+  "suggestions.turnOnDialog": "Ativar a pesquisa em segundo plano",
+  "suggestions.turnOnDescription":
+    "Ela lê em horários marcados e entrega o que sugere em um canal do qual faz parte.",
+  "suggestions.deliverTo": "Entregar as sugestões em",
+  "suggestions.chooseChannel": "Escolha um canal",
+  "suggestions.howOften": "Com que frequência",
+  "suggestions.focus": "O que procurar (opcional)",
+  "suggestions.off": "Desativada",
+  "suggestions.researchingNow": "Pesquisando agora",
+  "suggestions.lastRan": "Última execução {when}",
+  "suggestions.turnOff": "Desativar",
+  "reaching.linkSlack": "Vincular o Slack",
+  "reaching.linkTeams": "Vincular o Microsoft Teams",
+  "reaching.connectPhone": "Conectar um telefone",
+  "reaching.sumSlack": "Continue uma conversa pelo Slack.",
+  "reaching.sumTeams": "Continue uma conversa pelo Microsoft Teams.",
+  "reaching.sumSms": "Continue uma conversa por mensagem de texto.",
+  "reaching.codeOnWay":
+    "Um código de verificação está a caminho. Digite-o para concluir.",
+  "reaching.linkReady":
+    "Seu código de vinculação está pronto para ser enviado. Abra isto para vê-lo de novo.",
+  "reaching.smsNotSet":
+    "As mensagens de texto ainda não foram configuradas. Um administrador precisa ativá-las primeiro.",
+  "reaching.notSet":
+    "Ainda não configurado. Um administrador precisa ativar primeiro o Slack e o Teams.",
+  "reaching.pointerBefore":
+    "Seus dispositivos, as entregas recentes e para onde vai cada tipo de atualização estão em",
+  "reaching.connected": "Destinos conectados",
+  "reaching.noDestinations": "Nenhum destino conectado.",
+  "reaching.optedOut":
+    "Você enviou STOP por mensagem de texto. Envie START para retomar.",
+  "reaching.disconnect": "Desconectar",
+  "reaching.channelNote":
+    "Em um canal do Slack ou do Teams que outras pessoas podem ler, o assistente responde a você em uma mensagem direta.",
+  "reaching.connectTitle": "Conectar uma conversa",
+  "reaching.oneAtATime":
+    "Cada conta ou número de telefone funciona com uma conversa por vez. Vinculá-lo aqui o tira da conversa à qual está vinculado agora.",
+  "reaching.conversation": "Conversa",
+  "reaching.chooseConversation": "Escolha uma conversa",
+  "reaching.loadMore": "Carregar mais conversas",
+  "reaching.phoneNumber": "Número de telefone",
+  "reaching.sendCode": "Enviar código de verificação",
+  "reaching.verificationCode": "Código de verificação",
+  "reaching.confirmPhone": "Confirmar telefone",
+  "reaching.linkExpires": {
+    one: "Envie esta mensagem ao aplicativo {product} no {platform} em até {count} minuto. Ela vincula essa conta a esta conversa e a este assistente.",
+    many: "Envie esta mensagem ao aplicativo {product} no {platform} em até {count} de minutos. Ela vincula essa conta a esta conversa e a este assistente.",
+    other:
+      "Envie esta mensagem ao aplicativo {product} no {platform} em até {count} minutos. Ela vincula essa conta a esta conversa e a este assistente.",
+  },
+  "responsibilities.new": "Nova responsabilidade",
+  "responsibilities.title": "Objetivos",
+  "responsibilities.empty":
+    "Você ainda não tem responsabilidades. Adicione uma com «Nova responsabilidade».",
+  "responsibilities.emptyBot":
+    "Este assistente ainda não tem responsabilidades. Adicione uma com «Nova responsabilidade».",
+  "routines.neverRun": "Ainda não rodou",
+  "routines.running": "Rodando…",
+  "routines.missed": "Perdida {when}",
+  "routines.failed": "Falhou {when}",
+  "routines.skipped": "Ignorada {when}",
+  "routines.ran": "Rodou {when}",
+  "routines.finished": "Terminou {when}",
+  "routines.noRuns": "Nenhuma execução ainda.",
+  "routines.runNow": "Executar agora",
+  "routines.triggered": "Acionada",
+  "routines.scheduled": "Agendada",
+  "routines.sweepChecked":
+    "O {product} as verificou pela última vez {when}. Nenhuma vai rodar até ele voltar a iniciar. Peça a um administrador se isso continuar acontecendo.",
+  "routines.sweepNever":
+    "O {product} ainda não começou a rodar rotinas, então nenhuma destas vai rodar. Peça a um administrador para configurar isso.",
+  "routines.notRunning": "As rotinas não estão rodando.",
+  "routines.loadError":
+    "Não foi possível carregar suas rotinas. Recarregue a página.",
+  "routines.emptyBot":
+    "Este assistente ainda não tem rotinas. Peça a ele algo como «todo dia útil às 9, me mande…» e ela aparece aqui.",
+  "routines.empty":
+    "Você ainda não tem rotinas. Peça a um assistente algo como «todo dia útil às 9, me mande…» e ela aparece aqui.",
+  "routines.enableAria": "Ativar a rotina agendada para {schedule}",
+  "routines.channelGone": "Conversa excluída",
+  "routines.untitledChannel": "Conversa sem título",
+  "routines.due": "Atrasada",
+  "routines.next": "Próxima: {when}",
+  "routines.runNowTitle":
+    "Roda agora, de verdade. O assistente faz o trabalho e publica na conversa.",
+  "routines.pausedTurnOn": "Esta rotina está pausada. Ative-a primeiro.",
+  "routines.runNowAria": "Executar agora a rotina agendada para {schedule}",
+  "routines.historyAria":
+    "Histórico de execuções da rotina agendada para {schedule}",
+  "routines.history": "Histórico",
+  "routines.deleteAria": "Excluir a rotina agendada para {schedule}",
+  "routines.deleteTitle": "Excluir «{schedule}»?",
+  "routines.deleteDescription":
+    "Esta rotina para de vez. Não é possível desfazer isto.",
+  "routines.week": "Semana",
+  "routines.nextRuns": "Próximas execuções",
+  "routines.viewAria": "Ver",
+  "summary.nothingGranted": "Nada concedido",
+  "summary.skills": {
+    one: "{count} habilidade",
+    many: "{count} de habilidades",
+    other: "{count} habilidades",
+  },
+  "summary.apps": {
+    one: "{count} app",
+    many: "{count} de apps",
+    other: "{count} apps",
+  },
+  "summary.everyonePublic": "Todos (público)",
+  "summary.notShared": "Não compartilhado",
+  "summary.specificPeople": "Pessoas ou grupos específicos",
+  "summary.onlyIn": "Só no {product}",
+  "summary.nothingConnected": "Nada conectado",
+  "summary.sources": {
+    one: "{count} fonte",
+    many: "{count} de fontes",
+    other: "{count} fontes",
+  },
+  "summary.researchOn": "Pesquisa em segundo plano ativada",
+  "summary.researchOnAfter": "pesquisa em segundo plano ativada",
+  "time.justNow": "agora mesmo",
+  "time.minutesAgo": {
+    one: "há {count} min",
+    many: "há {count} de minutos",
+    other: "há {count} min",
+  },
+  "time.hoursAgo": {
+    one: "há {count} h",
+    many: "há {count} de horas",
+    other: "há {count} h",
+  },
+  "time.yesterday": "ontem",
+  "time.daysAgo": {
+    one: "há {count} dia",
+    many: "há {count} de dias",
+    other: "há {count} dias",
+  },
+  "time.weeksAgo": {
+    one: "há {count} sem.",
+    many: "há {count} de semanas",
+    other: "há {count} sem.",
+  },
+  "time.recently": "recentemente",
+  // Stage 2f (D181): the approval rules, the responsibility dialog, the routine history, Passwords.
+  "approvals.behaviour.allow": "Agir sem perguntar",
+  "approvals.behaviour.preApproved": "Agir se já estiver aprovado antes",
+  "approvals.behaviour.ask": "Perguntar antes de agir",
+  "approvals.behaviour.handOff": "Passar para você",
+  "approvals.host.ask": "Perguntar toda vez",
+  "approvals.host.allow": "Sempre permitir",
+  "approvals.host.never": "Nunca",
+  "approvals.teamRule": "{label} (regra da equipe)",
+  "approvals.matchOn": "em {scope}",
+  "approvals.matchFor": "para {bot}",
+  "approvals.locked": "Bloqueada",
+  "approvals.behaviourFor": "Comportamento para {tool}",
+  "approvals.formLead":
+    "Uma ferramenta ou um aplicativo, e o que um assistente faz antes de usá-lo.",
+  "approvals.formHelp":
+    "Use * para corresponder a qualquer coisa. mcp/gmail/* significa todas as ferramentas do Gmail. Um destino *.example.com significa todas as páginas desse site.",
+  "approvals.field.tool": "Ferramenta ou aplicativo",
+  "approvals.field.effect": "Tipo de ação",
+  "approvals.field.scope": "Destino",
+  "approvals.field.scopeHint": "*, um site, uma pasta, o nome de um assistente",
+  "approvals.field.bot": "Assistente",
+  "approvals.field.botHint": "* para todos os assistentes",
+  "approvals.field.behaviour": "Comportamento",
+  "approvals.saveRule": "Salvar regra",
+  "approvals.addRule": "Adicionar uma regra",
+  "approvals.rulesOff":
+    "Um administrador desativou as regras pessoais. As suas continuam guardadas, mas não se aplicam.",
+  "approvals.bot.lead":
+    "Vale a regra mais restritiva entre as que correspondem. Uma regra “perguntar” vence uma regra “permitir”. As regras de todos os assistentes estão em",
+  "approvals.bot.settingsLink": "Configurações → Aprovações",
+  "approvals.bot.title": "Regras",
+  "approvals.bot.empty": "Nenhuma regra para este assistente.",
+  "approvals.adminLead":
+    "As configurações da equipe e os pedidos de contas compartilhadas estão em",
+  "approvals.adminLink": "Administração → Aprovações",
+  "approvals.before.title": "Antes de um assistente agir",
+  "approvals.before.askTitle": "Perguntar antes de fazer alterações",
+  "approvals.before.askLine":
+    "Você revisa as alterações de um assistente em sites, aplicativos conectados e arquivos.",
+  "approvals.before.autoTitle": "Revisão automática",
+  "approvals.before.autoEnforced": "Um administrador exige isto.",
+  "approvals.before.autoLine":
+    "Antes de um assistente fazer algo que possa afetar suas contas ou compartilhar informações, o {product} confere com o seu pedido e as suas regras. Se não conseguir decidir, ele pergunta a você.",
+  "approvals.before.hostTitle": "Comandos no seu computador",
+  "approvals.before.hostLimited": "Um administrador limita isto a “{limit}”.",
+  "approvals.before.hostLine":
+    "O aplicativo de desktop do {product} continua mostrando cada comando antes de ele ser executado.",
+  "approvals.every.lead":
+    "Vale a regra mais restritiva entre as que correspondem. Uma regra “perguntar” vence uma regra “permitir”. As regras da equipe são bloqueadas. Senhas e configurações de segurança sempre passam para você, e os pagamentos também, a menos que você ative o Acesso total para um assistente abaixo. As regras de um único assistente estão em",
+  "approvals.every.botPage": "a página desse assistente",
+  "approvals.every.title": "Regras para todos os assistentes",
+  "approvals.every.empty": "Ainda não há regras.",
+  "approvals.other.lead":
+    "Estas não correspondem a nenhum assistente que você possa abrir. Elas continuam valendo para qualquer assistente com o qual correspondam. Remova as que você não quiser.",
+  "approvals.other.title": "Regras para outros assistentes",
+  "approvals.page.description":
+    "Escolha quando seus assistentes perguntam antes de mudar as coisas. As regras daqui valem para todos eles.",
+  "approvals.admin.description":
+    "O que os assistentes dos membros precisam perguntar antes de agir, regras para todos e pedidos para usar contas compartilhadas.",
+  "approvals.team.title": "Configurações da equipe",
+  "approvals.team.enforce": "Exigir a revisão automática de todos",
+  "approvals.team.custom": "Permitir que os membros definam regras pessoais",
+  "approvals.team.hostTitle":
+    "Comandos nos computadores dos membros, no máximo",
+  "approvals.team.hostLine":
+    "A configuração mais restritiva do próprio membro continua valendo.",
+  "approvals.team.rulesLead":
+    "Estas valem para os assistentes de todos os membros. Os membros não podem alterá-las.",
+  "approvals.team.rulesTitle": "Regras da equipe",
+  "approvals.team.empty": "Nenhuma regra da equipe.",
+  "approvals.team.addRule": "Adicionar uma regra da equipe",
+  "approvals.shared.title": "Pedidos de contas compartilhadas",
+  "approvals.shared.wants": "{bot} quer a conta compartilhada {account}",
+  "approvals.shared.why.refusedCall":
+    "Uma ação foi bloqueada. Este assistente alcança mais pessoas do que o aprovado.",
+  "approvals.shared.why.publish": "O dono dele ampliou quem pode alcançá-lo.",
+  "approvals.shared.why.trigger":
+    "O dono dele adicionou um gatilho que permite que mensagens externas o conduzam.",
+  "approvals.shared.why.grant": "Ele recebeu as ações do aplicativo.",
+  "approvals.shared.now": "Agora:",
+  "approvals.shared.notApproved": "Não aprovado",
+  "approvals.shared.asked": "Pedido:",
+  "approvals.shared.approve": "Aprovar",
+  "approvals.shared.decline": "Recusar",
+  "tasks.updated": "Atualizada {ago}",
+  "routines.status.running": "Rodando",
+  "routines.status.succeeded": "Bem-sucedida",
+  "routines.status.failed": "Falhou",
+  "routines.status.skipped": "Ignorada",
+  "routines.status.waiting": "Precisa de você",
+  "routines.status.missed": "Perdida",
+  "routines.history.empty":
+    "Nenhuma execução ainda. Uma execução aparece aqui quando a rotina é acionada, ou depois que você clica em Executar agora.",
+  "routines.history.aBot": "Um assistente",
+  "routines.history.latest": {
+    one: "Mostrando a última execução.",
+    many: "Mostrando as últimas {count} de execuções.",
+    other: "Mostrando as últimas {count} execuções.",
+  },
+  "routines.history.deleted": "Uma rotina que foi excluída depois",
+  "routines.history.waitingNote":
+    "Precisa da sua aprovação. Abra a conversa para responder.",
+  "responsibilities.status.completed": "Concluída",
+  "responsibilities.summary.paused": "Nada a inicia até você retomá-la.",
+  "responsibilities.summary.trigger": "Gatilho de {kind}",
+  "responsibilities.summary.starts": "Começa em {starts}",
+  "responsibilities.summary.asked": "Roda quando você pedir",
+  "responsibilities.source.manual": "Manual",
+  "responsibilities.source.schedule": "Agendamento",
+  "responsibilities.source.connector": "App conectado",
+  "responsibilities.progress": "Andamento",
+  "responsibilities.lastResult": "Último resultado",
+  "responsibilities.activeOn": "Os eventos e os gatilhos dela a iniciam.",
+  "responsibilities.activeOff": "Pausada. Os gatilhos dela não a iniciam.",
+  "responsibilities.runNowLine":
+    "Roda agora, de verdade. O assistente faz o trabalho e pode publicar e realizar ações.",
+  "responsibilities.complete": "Concluir",
+  "responsibilities.completeLine":
+    "Marque como concluída. Depois disso, nada a inicia.",
+  "responsibilities.field.title": "Título",
+  "responsibilities.field.instruction": "Instrução",
+  "responsibilities.field.criteria": "Critérios de sucesso",
+  "responsibilities.events": "Eventos",
+  "responsibilities.saving": "Salvando…",
+  "responsibilities.run.queued": "Na fila",
+  "responsibilities.run.waiting":
+    "Aguardando {kind}. Responda no topo da página deste assistente ou na conversa.",
+  "responsibilities.runs": "Execuções",
+  "responsibilities.viewRuns": "Ver execuções",
+  "responsibilities.hideRuns": "Ocultar execuções",
+  "passwords.description":
+    "Logins que você salvou ao conectar um assistente a um site. Os assistentes nunca os veem, e você confirma cada uso.",
+  "passwords.saved": "Logins salvos",
+  "passwords.loadError":
+    "Não foi possível carregar suas senhas. Recarregue a página.",
+  "passwords.off":
+    "Um administrador desativou as senhas salvas. Seus logins continuam guardados, mas não serão oferecidos.",
+  "passwords.empty":
+    "Nenhum login salvo. Escolha Salvar em Senhas ao conectar um assistente a um site.",
+  "passwords.lastUsed": "último uso {date}",
+  "passwords.neverUsed": "nunca usado",
+  "passwords.deleteAria": "Excluir o login de {origin}",
+  "settings.notificationsPage":
+    "Onde as atualizações dos seus assistentes chegam até você quando você está fora. Defina quanto cada assistente envia na própria página.",
+  "fullaccess.label.noPayments": "Full access sem pagamentos",
+  "fullaccess.label.full": "Full access",
+  "fullaccess.off": "Desativado",
+  "fullaccess.description":
+    "Seguro por padrão: seus assistentes perguntam antes de enviar, pagar, assinar, reservar ou excluir. Para cada assistente, você pode escolher deixá-lo fazer isso sem perguntar.",
+  "fullaccess.offTerm": "Desativado:",
+  "fullaccess.offText":
+    "o assistente pergunta antes de enviar, pagar, assinar, reservar ou excluir.",
+  "fullaccess.noPaymentsTerm": "Full access sem pagamentos:",
+  "fullaccess.noPaymentsText":
+    "ele envia, assina, reserva e exclui sem perguntar. Pagamentos e compras continuam perguntando a você.",
+  "fullaccess.fullTerm": "Full access:",
+  "fullaccess.fullText":
+    "ele também paga e compra sem perguntar. Não há limite de valor até existirem limites de gastos (previstos para a v0.4).",
+  "fullaccess.askTitle": "Dar {label} a {name}?",
+  "fullaccess.give": "Dar {label}",
+  "fullaccess.full.p1":
+    "{name} vai enviar, pagar, assinar, reservar e excluir sem perguntar a você antes. Ele pode agir com base no que lê, como um e-mail ou uma página da web, então ative isto só se você confiar nele para isso.",
+  "fullaccess.full.p2":
+    "Não há limite para o valor que ele pode pagar: os limites de gastos ainda não existem (estão previstos para a v0.4). Para que pagamentos e compras continuem perguntando a você, escolha Full access sem pagamentos.",
+  "fullaccess.full.p3":
+    "Senhas e configurações de segurança continuam precisando de você. Quando um revisor automático está configurado, ele também lê uma vez cada comando e script que o membro executa no computador dele, mesmo que você tenha desativado o revisor; quando nenhum está configurado, os comandos não são lidos. Isso vale para o que você pede nos seus próprios chats, não para rotinas nem check-ins. Você pode desativar a qualquer momento, e ele para na hora.",
+  "fullaccess.noPayments.p1":
+    "{name} vai enviar, assinar, reservar e excluir sem perguntar a você antes. Pagamentos e compras continuam perguntando a você. Ele pode agir com base no que lê, como um e-mail ou uma página da web, então ative isto só se você confiar nele para isso.",
+  "fullaccess.noPayments.p2":
+    "O app reconhece um pagamento por suas verificações internas, então uma mensagem que apenas menciona um pagamento também pode perguntar, e um pagamento escrito de forma incomum pode não ser detectado. Senhas e configurações de segurança continuam precisando de você. Quando um revisor automático está configurado, ele também lê uma vez cada comando e script que o membro executa no computador dele para uma senha, uma configuração de segurança ou um pagamento feito assim, mesmo que você tenha desativado o revisor; quando nenhum está configurado, os comandos não são lidos. Isso vale para o que você pede nos seus próprios chats, não para rotinas nem check-ins. Você pode desativar a qualquer momento, e ele para na hora.",
+  "fullaccess.noBots": "Ainda não há assistentes.",
+  "fullaccess.legend": "Acesso para {name}",
+  "fullaccess.radioAria": "{label} para {name}",
+  "fullaccess.summary.off":
+    "Pergunta antes de enviar, pagar, assinar, reservar ou excluir.",
+  "fullaccess.summary.noPayments":
+    "Age sem perguntar, exceto que pagamentos e compras continuam perguntando a você. Desde {since}.",
+  "fullaccess.summary.full":
+    "Age sem perguntar, inclusive pagamentos, sem limite de valor. Desde {since}.",
+  "fullaccess.doneTitle": "Feito sem perguntar",
+  "fullaccess.doneDescription":
+    "O que um assistente com Full access fez sem perguntar a você, do mais recente para o mais antigo.",
+  "fullaccess.nothingYet": "Nada ainda.",
+  "approvals.audience.owner": "Só o dono",
+  "approvals.audience.team": "Todos",
+  "approvals.audience.outside": ", e entradas de fora",
+  "approvals.audience.nobody": "Ninguém indicado",
+  "approvals.audience.groups": {
+    one: "O grupo {names}",
+    other: "Os grupos {names}",
+    many: "Os grupos {names}",
+  },
+  "approvals.audience.people": {
+    one: "{count} pessoa",
+    other: "{count} pessoas",
+    many: "{count} de pessoas",
+  },
+  "approvals.audience.join": "{a} e {b}",
+  "access.req.title": "Solicitações",
+  "access.req.loadError":
+    "Não foi possível carregar as solicitações de acesso. Recarregue a página.",
+  "access.req.descApp":
+    "Pessoas pedindo este app. Aprovar faz o que pediram, na hora.",
+  "access.req.descAll":
+    "Pessoas pedindo que um app seja ativado, dado a um assistente ou conectado. Aprovar faz o que pediram, na hora.",
+  "access.req.aBot": "um assistente",
+  "access.req.theBot": "o assistente",
+  "access.req.somebody": "Alguém",
+  "access.req.enable": "Ativar {app} para {bot}",
+  "access.req.grantMore": "Dar a {bot} mais de {app}: {list}",
+  "access.req.grant": "Dar {app} a {bot}",
+  "access.req.connectShared": "Conectar a conta compartilhada de {app}",
+  "access.req.asked": "{who} pediu {when}{forBot}.",
+  "access.req.forBot": ", para {bot}",
+  "access.req.approving": "Aprovando…",
+  "access.req.botPage": "a página do assistente em {app}",
+  "access.req.toolRead": "{name} (somente leitura)",
+  "access.req.toolWrite": "{name} (altera algo)",
+  "access.req.gives":
+    "Aprovar dá a {bot} exatamente estas ferramentas e nada mais: {list}.",
+  "access.req.readOnly":
+    "Aprovar dá a {bot} apenas as ações de somente leitura de {app}. Escolha as outras em {page}.",
+  "access.req.canSend": {
+    one: "{names} pode enviar em nome da pessoa.",
+    other: "{names} podem enviar, cada um, em nome da pessoa.",
+    many: "{names} podem enviar, cada um, em nome da pessoa.",
+  },
+  "access.req.unreviewed": {
+    one: "Nenhuma lista revisada diz o que {names} faz em {app}, então ele pode enviar em nome da pessoa.",
+    other:
+      "Nenhuma lista revisada diz o que {names} fazem em {app}, então cada um pode enviar em nome da pessoa.",
+    many: "Nenhuma lista revisada diz o que {names} fazem em {app}, então cada um pode enviar em nome da pessoa.",
+  },
+  "access.req.neverGives": {
+    one: "Aprovar nunca dá uma ferramenta assim: permita-a nas configurações, em {page}.",
+    other:
+      "Aprovar nunca dá ferramentas assim: permita-as nas configurações, em {page}.",
+    many: "Aprovar nunca dá ferramentas assim: permita-as nas configurações, em {page}.",
+  },
+  "access.req.and": "{a} e {b}",
+  "passwords.saveTo": "Salvar em Senhas",
+  "responsibilities.run.waitKind.approval": "sua aprovação",
+  "responsibilities.run.waitKind.question": "sua resposta",
+  "responsibilities.run.waitKind.handoff": "você assumir",
+  "responsibilities.run.waitKind.signIn": "você entrar",
+  "responsibilities.run.waitKind.other": "você",
+  "responsibilities.new.description":
+    "Um objetivo contínuo. O assistente trabalha nele na conversa que você escolher.",
+  "responsibilities.new.chooseConversation": "Escolha uma conversa",
+  "responsibilities.new.loadMore": "Carregar mais conversas",
+  "responsibilities.new.titleExample":
+    "Manter o relatório de clientes atualizado",
+  "responsibilities.new.criteriaExample":
+    "O relatório contém o gráfico do trimestre atual e um link para a fonte.",
+  "responsibilities.new.eventSource": "Origem do evento",
+  "responsibilities.new.source.none": "Executar quando pedido",
+  "responsibilities.new.githubHelp":
+    "Os eventos vêm dos repositórios que você conectou em {link}.",
+  "responsibilities.new.eventType": "Tipo de evento",
+  "responsibilities.new.creating": "Criando…",
+  "responsibilities.new.create": "Criar responsabilidade",
+  "triggers.kind.email": "E-mail",
+  "triggers.help.webhook":
+    "Envie um POST de JSON para esta URL com o cabeçalho Authorization, ou com os cabeçalhos de assinatura do Standard Webhooks. Um 200 significa que foi recebido, não que a execução terminou.",
+  "triggers.help.github":
+    "Em Settings → Webhooks do repositório, defina a payload URL como esta URL, o content type como application/json e o secret como a chave.",
+  "triggers.help.linear":
+    "No Linear, Settings → API → Webhooks: defina a URL e cole aqui o signing secret que o Linear mostra.",
+  "triggers.help.sentry":
+    "Em uma integração interna do Sentry, defina a URL do webhook e cole aqui o client secret da integração.",
+  "triggers.help.pagerduty":
+    "No PagerDuty, Integrations → Generic Webhooks (v3): defina a URL e cole aqui o secret mostrado na criação.",
+  "triggers.help.email":
+    "Envie ou encaminhe um e-mail para este endereço para iniciar uma execução.",
+  "triggers.help.slack":
+    "Inicia com os eventos do Slack que este assistente recebe. As mensagens enviadas antes de você adicionar o gatilho são ignoradas.",
+  "triggers.slack.mention": "O assistente é mencionado",
+  "triggers.slack.phrase": "Uma mensagem contém uma frase",
+  "triggers.slack.reaction": "Uma reação é adicionada",
+  "triggers.slack.message": "Qualquer mensagem",
+  "triggers.f.inChannels": "em {channels}",
+  "triggers.f.everyChannel": "em todos os canais em que o assistente está",
+  "triggers.f.mention": "quando o assistente é mencionado",
+  "triggers.f.anyMessage": "em qualquer mensagem",
+  "triggers.f.phrases": "em mensagens que contêm {phrases}",
+  "triggers.f.or": " ou ",
+  "triggers.f.reactions": "em reações",
+  "triggers.f.slack": "{what} {where} (workspace {team})",
+  "triggers.f.events": "eventos {types}",
+  "triggers.f.everyEvent": "todos os eventos",
+  "triggers.f.where": "quando {path} = {equals}",
+  "triggers.f.from": "de {from}",
+  "triggers.f.fromSenders": "de {senders} (autenticado)",
+  "triggers.title": "Gatilhos",
+  "triggers.add": "Adicionar gatilho",
+  "triggers.notActive.paused":
+    "Esta responsabilidade está pausada. Os gatilhos dela não a iniciam.",
+  "triggers.notActive.completed":
+    "Esta responsabilidade está concluída. Os gatilhos dela não a iniciam.",
+  "triggers.none":
+    "Nenhum gatilho. Ela roda quando você toca em Executar agora, ou nos eventos acima.",
+  "triggers.removeForGood": "Remover de vez",
+  "triggers.keep": "Manter",
+  "triggers.runOnAria": "Executar neste gatilho de {kind}",
+  "triggers.postTo": "POST para",
+  "triggers.copyUrl": "Copiar URL",
+  "triggers.copyAddress": "Copiar endereço",
+  "triggers.emailOff":
+    "O e-mail ainda não está configurado no {product}, então este endereço não pode receber mensagens. Um administrador precisa ativá-lo.",
+  "triggers.key": "Chave",
+  "triggers.copyKey": "Copiar chave",
+  "triggers.copyHeader": "Copiar cabeçalho",
+  "triggers.showKey": "Mostrar chave",
+  "triggers.replaceKey": "Substituir chave",
+  "triggers.secretSaved": "Signing secret salvo",
+  "triggers.secretWaiting": "Aguardando o signing secret",
+  "triggers.secret": "Signing secret",
+  "triggers.pasteNew": "Cole um novo secret para substituí-lo",
+  "triggers.paste": "Cole o signing secret",
+  "triggers.saveSecret": "Salvar secret",
+  "triggers.addDescription":
+    "Algo de fora do {product} que inicia esta responsabilidade.",
+  "triggers.slackTeam": "ID da equipe do Slack",
+  "triggers.fireOn": "Disparar em",
+  "triggers.phrases": "Frases (separadas por vírgula)",
+  "triggers.reactions": "Reações (em branco: qualquer)",
+  "triggers.channelIds":
+    "IDs de canais (em branco: todos em que o assistente está)",
+  "triggers.eventTypes": "Tipos de evento",
+  "triggers.onlyWhen": "Somente quando o campo",
+  "triggers.equals": "for igual a",
+  "triggers.repository": "Repositório (opcional)",
+  "triggers.senders": "Remetentes permitidos (em branco: ninguém)",
+  "triggers.secretLater": "Signing secret (pode ser adicionado depois)",
+  "triggers.adding": "Adicionando…",
+  "triggers.addKind": "Adicionar gatilho de {kind}",
+  "triggers.example.webhook": "deploy.finished (em branco: qualquer)",
+  "routines.cal.intro":
+    "Os próximos {days} dias, para as rotinas que estão ativadas. Os horários estão no seu fuso horário.",
+  "routines.cal.none": "Ainda não há rotinas, então nada está agendado.",
+  "routines.cal.noneOn":
+    "Nenhuma destas rotinas está ativada, então nenhuma vai rodar.",
+  "routines.cal.nothing": "Nada está agendado nos próximos {days} dias.",
+  "routines.cal.truncated":
+    "Só as primeiras {max} execuções destes {days} dias estão listadas.",
+  "routines.cal.paused": {
+    one: "{count} rotina pausada, por isso não listada aqui. Ative uma para ver quando ela roda.",
+    other:
+      "{count} rotinas pausadas, por isso não listadas aqui. Ative uma para ver quando ela roda.",
+    many: "{count} de rotinas pausadas, por isso não listadas aqui. Ative uma para ver quando ela roda.",
+  },
+  "routines.week.nothing": "Nada está agendado para o resto desta semana.",
+  "routines.week.label": "Esta semana",
+  "routines.week.today": "hoje",
+  "routines.week.now": "Agora, {time}",
+  "routines.week.next": "Próxima:",
+  "routines.week.nothingElse": "Nada mais está agendado nesta semana.",
+  "routines.week.truncated":
+    "Só as primeiras execuções dos próximos dias estão listadas, então uma rotina muito movimentada pode não aparecer todos os dias.",
+  "routines.week.historyError":
+    "Não foi possível carregar as execuções que já aconteceram, por isso elas não aparecem.",
+  "routines.week.note":
+    "Os horários estão no seu fuso horário. Uma rotina que roda mais de uma vez por hora aparece como um único bloco no dia.",
+  "routines.week.summary": "{count} execuções, a cada ~{minutes} min",
+  "routines.week.gone": "{label}, conversa excluída",
+  "routines.card.label": "Rotina",
+  "routines.card.cancelled": "Rotina cancelada",
+  "routines.card.readError": "Não foi possível ler esta rotina.",
+  "routines.card.reading": "Lendo esta rotina…",
+  "routines.card.gone": "Esta rotina não existe mais",
+  "routines.card.cannotSend":
+    "Esta conversa não pode receber uma mensagem agora. Escreva a alteração na caixa de mensagem abaixo.",
+  "routines.card.confirm": "Cancelar esta rotina?",
+  "routines.card.yes": "Sim, cancelar",
+  "routines.card.no": "Não, manter",
+  "routines.card.pause": "Pausar",
+  "routines.card.resume": "Retomar",
+  "routines.card.edit": "Editar",
+  "routines.card.whatChange": "O que deve mudar?",
+  "routines.card.send": "Enviar alteração",
+  "routines.card.writeBelow":
+    "Escreva a alteração na caixa de mensagem abaixo.",
+  "routines.card.close": "Fechar",
+  "admin.boundaries.title": "Limites",
+  "admin.boundaries.descLead":
+    "O que um assistente pode e não pode fazer com o computador dele. Cada ação é verificada antes de acontecer. As recusas aparecem em",
+  "admin.boundaries.descAudit": "Auditoria",
+  "admin.boundaries.descTail": "com a regra que as recusou.",
+  "admin.boundaries.whenTitle": "Quando uma regra corresponde",
+  "admin.boundaries.whenDesc":
+    "Parar a ação, ou registrá-la e deixá-la passar. Registrar permite testar uma regra com atividade real antes que ela recuse qualquer coisa.",
+  "admin.boundaries.modeEnforce": "Parar a ação",
+  "admin.boundaries.modeRecord": "Registrar e permitir",
+  "admin.boundaries.modeEnforceNote":
+    "O assistente é parado e é informado de qual regra o recusou.",
+  "admin.boundaries.modeRecordNote":
+    "Nada é parado. Cada correspondência é registrada como se tivesse sido recusada.",
+  "admin.boundaries.neverTitle": "Os assistentes nunca podem",
+  "admin.boundaries.neverLead":
+    "Verificadas primeiro. Uma correspondência interrompe a ação, e o assistente é informado de qual regra a recusou. As regras são em CEL. Elas podem verificar",
+  "admin.boundaries.neverMid1": ", o elemento, a tecla",
+  "admin.boundaries.neverMid2": "pressionada, o arquivo, o",
+  "admin.boundaries.neverMid3": "executado e",
+  "admin.boundaries.neverMid4": "para ferramentas externas.",
+  "admin.boundaries.neverMid5": "diz o que iniciou a execução:",
+  "admin.boundaries.neverTail":
+    "Uma execução agendada age como o seu dono, então",
+  "admin.boundaries.neverTail2":
+    "sozinho não diz isso. Uma regra que não pode ser avaliada conta como correspondência. Um erro de digitação nunca deixa uma ação passar.",
+  "admin.boundaries.or": "ou",
+  "admin.boundaries.noRules": "Sem regras. Cada ação é permitida e registrada.",
+  "admin.boundaries.remove": "Remover",
+  "admin.boundaries.ruleLabel": "Uma regra, escrita em CEL",
+  "admin.boundaries.testing": "Testando…",
+  "admin.boundaries.testFirst": "Testar primeiro",
+  "admin.boundaries.addRule": "Adicionar regra",
+  "admin.boundaries.preset.form": "Nunca enviar um formulário",
+  "admin.boundaries.preset.formCost":
+    "Também impede o assistente de apertar Enter em qualquer outro lugar. Um formulário pode ser enviado com Enter em qualquer campo. Não cobre a escolha em um menu ou em um campo de data, cuja mudança pode enviar um formulário sozinha.",
+  "admin.boundaries.preset.password": "Nunca digitar em um campo de senha",
+  "admin.boundaries.preset.passwordCost":
+    "Um campo de senha com outro rótulo não é coberto. A regra reconhece o rótulo.",
+  "admin.boundaries.preset.social": "Ficar longe das redes sociais",
+  "admin.boundaries.preset.socialCost":
+    "Apenas estes dois hosts. Um link que redireciona para lá a partir de outro lugar é permitido.",
+  "admin.boundaries.otherwiseTitle": "Caso contrário, eles podem",
+  "admin.boundaries.otherwiseDesc":
+    "Vale para tudo que a lista acima não pegou. Uma lista vazia aqui não permite nada, e toda ação é recusada.",
+  "admin.boundaries.allowAll": "true, tudo que não é recusado acima",
+  "admin.boundaries.saved":
+    "Salvo. Vale para a próxima ação de qualquer assistente.",
+  "admin.boundaries.footer":
+    "As mudanças valem para a próxima ação de qualquer assistente. Elas permanecem após uma reinicialização.",
+  "admin.boundaries.dry.none":
+    "Ainda não há ações do computador registradas para testar. A regra é válida. Você verá o que ela pega quando os assistentes tiverem agido.",
+  "admin.boundaries.dry.zero":
+    "Testada nas últimas {scanned} ações registradas. Esta regra não teria recusado nenhuma. Ela ainda pode corresponder a ações futuras.",
+  "admin.boundaries.dry.some":
+    "Testada nas últimas {scanned} ações registradas. Esta regra teria recusado {refused}.",
+  "admin.boundaries.dry.wouldRefuse": "Recusaria",
+  "admin.boundaries.dry.wouldAllow": "Agora permitiria",
+  "admin.boundaries.dry.on": "em “{name}”",
+  "admin.boundaries.dry.running": "executando",
+  "admin.boundaries.dry.touching": "tocando {file}",
+  "admin.boundaries.dry.first":
+    "Mostrando as primeiras {shown}. A contagem acima cobre tudo que foi verificado.",
+  "admin.people.title": "Pessoas",
+  "admin.people.desc":
+    "Todas as pessoas que entraram. Os administradores podem abrir estas telas. Todas as outras falam com os assistentes.",
+  "admin.people.whoTitle": "Quem está aqui",
+  "admin.people.whoDesc":
+    "Os endereços em INITIAL_ADMIN_EMAILS são sempre administradores. Você não pode alterá-los aqui.",
+  "admin.people.stopped": {
+    one: "{count} computador parado",
+    many: "{count} de computadores parados",
+    other: "{count} computadores parados",
+  },
+  "admin.people.stoppedFailed": ". {failed} não puderam ser parados",
+  "admin.people.disksKept": ". Os discos deles são mantidos.",
+  "admin.people.searchLabel": "Buscar pessoas",
+  "admin.people.searchPlaceholder": "Buscar por nome ou endereço",
+  "admin.people.loadError":
+    "Não foi possível carregar as pessoas. Recarregue a página.",
+  "admin.people.noMatch": "Ninguém corresponde a “{query}”.",
+  "admin.people.nobody":
+    "Ninguém entrou ainda. As pessoas aparecem aqui quando entrarem.",
+  "admin.people.lastSignedIn": "último acesso {date}",
+  "admin.people.neverSignedIn": "nunca entrou",
+  "admin.people.noProvider": "sem provedor",
+  "admin.people.accessRemoved": "Acesso removido",
+  "admin.people.adminByConfig": "Administrador por configuração",
+  "admin.people.stopComputers": "Parar computadores",
+  "admin.people.restore": "Restaurar",
+  "admin.people.remove": "Remover",
+  "admin.people.adminSwitch": "Administrador: {email}",
+  "admin.people.loading": "Carregando…",
+  "admin.people.showMore": "Mostrar mais",
+  "admin.boundaries.and": "e",
+  "admin.credentials.title": "Credenciais",
+  "admin.credentials.add": "Adicionar credencial",
+  "admin.credentials.desc":
+    "Chaves e tokens desta instalação. O {product} nunca mostra um segredo depois que ele é salvo.",
+  "admin.credentials.dialogDesc":
+    "Salvo para esta instalação. Você não verá o segredo de novo.",
+  "admin.credentials.type": "Tipo",
+  "admin.credentials.model": "Modelo",
+  "admin.credentials.connector": "Conector",
+  "admin.credentials.provider": "Provedor",
+  "admin.credentials.keyId": "ID da chave",
+  "admin.credentials.secret": "Segredo",
+  "admin.credentials.replaces":
+    "Esta chave já tem uma credencial ativa. Salvar a substitui e revoga a antiga.",
+  "admin.credentials.saveError":
+    "Não foi possível salvar a credencial. Tente de novo.",
+  "admin.credentials.cancel": "Cancelar",
+  "admin.credentials.saving": "Salvando…",
+  "admin.credentials.save": "Salvar credencial",
+  "admin.credentials.savedTitle": "Credenciais salvas",
+  "admin.credentials.loadError":
+    "Não foi possível carregar as credenciais. Recarregue a página.",
+  "admin.credentials.empty":
+    "Ainda não há credenciais. Adicione uma com Adicionar credencial.",
+  "admin.credentials.revoked": "revogada",
+  "admin.credentials.active": "ativa",
+  "admin.credentials.revoke": "Revogar",
+  "admin.idp.title": "Provedores de identidade",
+  "admin.idp.add": "Adicionar um provedor",
+  "admin.idp.desc":
+    "O provedor SAML ou OpenID Connect da sua própria empresa. As pessoas entram com o e-mail, e o domínio dele escolhe o provedor.",
+  "admin.idp.registeredTitle": "Registrados",
+  "admin.idp.registeredDesc":
+    "Google, Microsoft e Okta são definidos no ambiente. Eles não aparecem aqui.",
+  "admin.idp.loadError":
+    "Não foi possível carregar os provedores de identidade. Recarregue a página.",
+  "admin.idp.empty":
+    "Ainda não há provedores de identidade. Adicione um com os metadados da sua equipe de identidade.",
+  "admin.idp.remove": "Remover",
+  "admin.idp.dialogTitle": "Adicionar um provedor de identidade",
+  "admin.idp.name": "Nome",
+  "admin.idp.domain": "Domínio do e-mail",
+  "admin.idp.domainNote":
+    "Qualquer pessoa com um endereço neste domínio entra aqui. Separe vários com vírgulas.",
+  "admin.idp.issuer": "Emissor",
+  "admin.idp.signOnUrl": "URL de login",
+  "admin.idp.metadata": "XML de metadados",
+  "admin.idp.metadataNote":
+    "O arquivo da sua equipe de identidade. Ele inclui o certificado de assinatura.",
+  "admin.idp.clientId": "ID do cliente",
+  "admin.idp.clientSecret": "Segredo do cliente",
+  "admin.idp.cancel": "Cancelar",
+  "admin.idp.adding": "Adicionando…",
+  "admin.idp.addShort": "Adicionar",
+  "admin.audit.decision.bot.declined": "O assistente recusou",
+  "admin.audit.decision.agent.stream_stalled":
+    "O assistente parou de responder",
+  "admin.audit.decision.computer.policy_loaded": "Limite na inicialização",
+  "admin.audit.decision.computer.isolation_loaded":
+    "Isolamento na inicialização",
+  "admin.audit.decision.computer.control_taken":
+    "Uma pessoa assumiu o controle",
+  "admin.audit.decision.computer.control_released":
+    "O controle voltou ao assistente",
+  "admin.audit.decision.computer.help_requested": "O assistente pediu ajuda",
+  "admin.audit.decision.computer.secret_requested":
+    "O assistente pediu um segredo",
+  "admin.audit.decision.computer.secret_supplied":
+    "Uma pessoa forneceu um segredo",
+  "admin.audit.decision.computer.reset": "O computador foi redefinido",
+  "admin.audit.decision.computer.updated": "O computador foi atualizado",
+  "admin.audit.decision.computer.stopped": "Uma pessoa apertou parar",
+  "admin.audit.decision.component.granted": "Concedido a este assistente",
+  "admin.audit.decision.component.revoked": "Retirado deste assistente",
+  "admin.audit.decision.component.published":
+    "Publicado. Todos os assistentes podem usar",
+  "admin.audit.decision.component.unpublished":
+    "Despublicado. Nenhum assistente pode usar",
+  "admin.audit.decision.component.draft_saved":
+    "Rascunho salvo, ainda não publicado",
+  "admin.audit.decision.component.refused": "Recusado",
+  "admin.audit.decision.component.function_granted": "Pode ler isto",
+  "admin.audit.decision.component.function_revoked": "Não pode mais ler isto",
+  "admin.audit.decision.component.function_called": "Leu dados reais",
+  "admin.audit.decision.component.function_refused": "Recusado",
+  "admin.audit.decision.component.function_failed": "Não conseguiu ler",
+  "admin.audit.decision.mcp.tools_discovered":
+    "Ferramentas oferecidas para uma execução",
+  "admin.audit.decision.mcp.call_succeeded": "Chamado em nome deste assistente",
+  "admin.audit.decision.mcp.call_rejected": "Bloqueado",
+  "admin.audit.decision.mcp.call_failed": "O servidor não respondeu",
+  "admin.audit.decision.mcp.callback_refused":
+    "Não conseguiu confirmar qual assistente era",
+  "admin.audit.decision.configuration.changed": "Configuração alterada",
+  "admin.audit.decision.credential.created": "Credencial salva",
+  "admin.audit.discovery.under-floor":
+    "Poucas ferramentas, então todas foram oferecidas",
+  "admin.audit.discovery.nothing-declared":
+    "Nenhuma habilidade declara qualquer uma destas ferramentas",
+  "admin.audit.discovery.unavailable":
+    "Não foi possível escolher, então todas foram oferecidas",
+  "admin.audit.discovery.nothing-chosen":
+    "Nenhuma habilidade se aplicou, então todas foram oferecidas",
+  "admin.audit.discovery.selected": "Escolhidas por habilidade",
+  "admin.audit.title": "Auditoria",
+  "admin.audit.desc":
+    "Toda ação que um assistente fez e toda ação que a política desta instalação recusou.",
+  "admin.audit.export": "Exportar CSV",
+  "admin.audit.exporting": "Exportando…",
+  "admin.audit.refresh": "Atualizar",
+  "admin.audit.exportFailed":
+    "Não foi possível exportar os eventos de auditoria. Tente de novo.",
+  "admin.audit.filter.all": "Tudo",
+  "admin.audit.filter.computer": "Ações do computador",
+  "admin.audit.filter.blocked": "Bloqueado",
+  "admin.audit.filter.didNot": "Não aconteceu",
+  "admin.audit.filter.nobody": "Ninguém acompanhando",
+  "admin.audit.capped":
+    "O arquivo tem os {count} eventos mais recentes, não todos. Restrinja o filtro ou as datas para exportar o resto.",
+  "admin.audit.loadError":
+    "Não foi possível carregar o registro de auditoria. Recarregue a página.",
+  "admin.audit.empty": "Nenhum evento corresponde a este filtro ainda.",
+  "admin.audit.col.when": "Quando",
+  "admin.audit.col.what": "O quê",
+  "admin.audit.col.on": "Em",
+  "admin.audit.col.bot": "Assistente",
+  "admin.audit.col.startedBy": "Iniciado por",
+  "admin.audit.col.decision": "Decisão",
+  "admin.audit.by.routine": "Uma rotina",
+  "admin.audit.by.handedOnBy": "Repassado por {name}",
+  "admin.audit.by.handedOn": "Repassado",
+  "admin.audit.by.memory": "Uma fonte de memória",
+  "admin.audit.by.responsibility": "Uma responsabilidade",
+  "admin.audit.by.deployment": "Esta instalação",
+  "admin.audit.by.remote": "Um navegador não pareado com o computador",
+  "admin.audit.by.person": "Uma pessoa",
+  "admin.audit.routed.mention": "A pessoa escolheu este assistente",
+  "admin.audit.routed.default": "Enviado ao assistente padrão",
+  "admin.audit.routed.meant": "Enviado ao assistente a quem se destinava",
+  "admin.audit.toolsOf": "{offered} de {granted} ferramentas",
+  "admin.audit.blocked": "Bloqueado",
+  "admin.audit.didNot": "Não aconteceu",
+  "admin.audit.allowed": "Permitido",
+  "admin.audit.reportedByBot": ", informado pelo próprio assistente",
+  "admin.audit.dryRun": "teste: registrado, não aplicado",
+  "admin.nav.back": "Voltar ao app",
+  "admin.nav.overview": "Visão geral",
+  "admin.nav.reach": "O que os assistentes alcançam",
+  "admin.nav.do": "O que os assistentes podem fazer",
+  "admin.nav.in": "Quem pode entrar",
+  "admin.nav.happened": "O que aconteceu",
+  "admin.nav.credentials": "Credenciais",
+  "admin.nav.boundaries": "Limites",
+  "admin.nav.approvals": "Aprovações",
+  "admin.nav.computers": "Computadores",
+  "admin.nav.plugins": "Plugins",
+  "admin.nav.skills": "Habilidades",
+  "admin.nav.learning": "Aprendizado automático",
+  "admin.nav.components": "Componentes de interface",
+  "admin.nav.playground": "Playground",
+  "admin.nav.people": "Pessoas",
+  "admin.nav.idp": "Provedores de identidade",
+  "admin.nav.audit": "Auditoria",
+  "admin.enterprise.mode.allow_all": "Permitir todo o acesso à rede",
+  "admin.enterprise.mode.defaults_plus_allowlist":
+    "Padrões mais lista de permitidos da equipe",
+  "admin.enterprise.mode.allowlist_only":
+    "Somente a lista de permitidos da equipe",
+  "admin.enterprise.noPolicy":
+    "Sem política. Os computadores dos assistentes podem acessar tudo o que o cluster permitir",
+  "admin.enterprise.locked": " · bloqueada",
+  "admin.enterprise.loadError":
+    "Não foi possível carregar os controles corporativos. Recarregue a página.",
+  "admin.enterprise.title": "Controles corporativos",
+  "admin.enterprise.description":
+    "O que os membros podem usar, como os computadores dos assistentes acessam a rede e o que é registrado. Toda mudança aparece em Auditoria.",
+  "admin.enterprise.signin.description":
+    "Os endereços em {env} sempre podem usar o login social como entrada de emergência. Cada um desses logins aparece em Auditoria.",
+  "admin.enterprise.signin.title": "Login",
+  "admin.enterprise.sso.title": "Exigir SSO",
+  "admin.enterprise.sso.on":
+    "As pessoas só podem entrar por um provedor SAML ou OpenID Connect registrado.",
+  "admin.enterprise.sso.off":
+    "As pessoas também podem entrar com Google, Microsoft ou Okta.",
+  "admin.enterprise.scim.title": "Provisionamento SCIM",
+  "admin.enterprise.scim.on":
+    "URL base do diretório {url} com o token de portador {env}. O desprovisionamento encerra as sessões, bloqueia o endereço, retira as credenciais dos conectores e para os computadores delas.",
+  "admin.enterprise.scim.unsetUrl": "(defina BETTER_AUTH_URL)",
+  "admin.enterprise.scim.off":
+    "Desativado. Defina {env} para aceitar o provisionamento do Okta, do Entra ou de outro diretório.",
+  "admin.enterprise.on": "Ativado",
+  "admin.enterprise.off": "Desativado",
+  "admin.enterprise.cap.description":
+    "Cada chave vale para a organização inteira. Uma função pode substituí-la, e um grupo do diretório pode receber uma capacidade que a organização deixou desativada.",
+  "admin.enterprise.cap.title": "Capacidades",
+  "admin.enterprise.cap.offFor":
+    "Desativada para todos, a menos que uma função ou um grupo a ative.",
+  "admin.enterprise.over.title": "Exceções por função e por grupo",
+  "admin.enterprise.over.none": "Nenhuma. Todos recebem as chaves acima",
+  "admin.enterprise.over.set": "{count} definidas",
+  "admin.enterprise.net.description":
+    "Aonde os computadores dos assistentes podem se conectar. As mudanças chegam aos computadores em execução em segundos, sem reiniciar. A política de um grupo substitui a da organização, a menos que esta esteja bloqueada.",
+  "admin.enterprise.net.title": "Rede",
+  "admin.enterprise.net.org": "Organização",
+  "admin.enterprise.net.group": "Grupo: {name}",
+  "admin.enterprise.net.addGroup": "Adicionar uma política de grupo",
+  "admin.enterprise.mcp.description":
+    "Com a lista de permitidos ativada, os assistentes só podem chamar ferramentas dos servidores MCP aprovados aqui. As chamadas a qualquer outro servidor são recusadas.",
+  "admin.enterprise.mcp.title": "Servidores MCP",
+  "admin.enterprise.mcp.only": "Somente servidores aprovados",
+  "admin.enterprise.mcp.approved": "{count} aprovados",
+  "admin.enterprise.mcp.offDesc":
+    "Desativado. Os assistentes podem usar qualquer servidor registrado a que tenham acesso.",
+  "admin.enterprise.mcp.onlyAria": "Somente servidores MCP aprovados",
+  "admin.enterprise.mcp.approveAria": "Aprovar {name}",
+  "admin.enterprise.models.description":
+    "O assistente integrado roda no {model}. Um assistente remoto escolhe o seu, e o modelo que ele informa é registrado.",
+  "admin.enterprise.models.configured": "modelo configurado nesta instalação",
+  "admin.enterprise.models.title": "Modelos",
+  "admin.enterprise.models.allowlist": "Lista de modelos permitidos",
+  "admin.enterprise.models.allowlistOn":
+    "Um assistente integrado com um modelo fora da lista é recusado antes de rodar.",
+  "admin.enterprise.models.allowlistOff":
+    "Desativada. Qualquer modelo pode ser usado.",
+  "admin.enterprise.models.allowed": "Modelos permitidos",
+  "admin.enterprise.models.none": "Nenhum na lista",
+  "admin.enterprise.models.listDesc":
+    "Um modelo por linha, como provedor/modelo, por exemplo {example}.",
+  "admin.enterprise.rec.description":
+    "Defina {env} para enviar os eventos de auditoria e as ações dos assistentes ao seu coletor OpenTelemetry ou ao seu SIEM. Eles levam a etiqueta {tag}.",
+  "admin.enterprise.rec.title": "Registro e exportação",
+  "admin.enterprise.rec.action": "Action Recording",
+  "admin.enterprise.rec.actionOn":
+    "Os comandos de shell que os assistentes executam são registrados sem os segredos e guardados por {days} dias.",
+  "admin.enterprise.rec.actionOff":
+    "Desativado. Os comandos aparecem apenas em Auditoria.",
+  "admin.enterprise.rec.otel": "Exportação para OpenTelemetry",
+  "admin.enterprise.rec.otelOn": "Exportando por OTLP/HTTP.",
+  "admin.enterprise.rec.otelOff": "Não configurada. Defina {env} no servidor.",
+  "admin.enterprise.comp.description":
+    "Parar um computador encerra os assistentes que rodam nele e mantém o disco. O assistente recebe um computador novo na próxima sessão. Para parar os computadores de uma só pessoa, vá em Pessoas.",
+  "admin.enterprise.comp.title": "Computadores",
+  "admin.enterprise.comp.stopInactive": "Parar computadores inativos",
+  "admin.enterprise.comp.afterDays": "Após {days} dias sem uso",
+  "admin.enterprise.usage.error":
+    "Não foi possível carregar o uso dos modelos. Recarregue a página.",
+  "admin.enterprise.usage.empty":
+    "Nenhuma execução de assistentes nos últimos 30 dias.",
+  "admin.enterprise.usage.runs":
+    "{runs} execuções por {people} {who} em 30 dias",
+  "admin.enterprise.usage.person": "pessoa",
+  "admin.enterprise.usage.people": "pessoas",
+  "admin.enterprise.usage.refused": " · {count} fora da lista de permitidos",
+  "admin.enterprise.recorded.error":
+    "Não foi possível carregar as ações registradas. Recarregue a página.",
+  "admin.enterprise.recorded.empty": "Nenhum comando registrado ainda.",
+  "admin.enterprise.recorded.local": "Máquina do membro",
+  "admin.enterprise.recorded.bot": "Assistente {id}",
+  "admin.enterprise.sweep.stopping": "Parando…",
+  "admin.enterprise.sweep.now": "Parar agora os computadores inativos",
+  "admin.enterprise.sweep.stopped": "{count} parados.",
+  "admin.enterprise.ov.admins": "Administradores",
+  "admin.enterprise.ov.members": "Membros",
+  "admin.enterprise.ov.group": "Grupo: {name}",
+  "admin.enterprise.ov.scope": "Escopo",
+  "admin.enterprise.ov.groupNote":
+    "Um grupo só pode acrescentar. Conceder dá a capacidade aos seus membros mesmo que a organização a tenha desativada.",
+  "admin.enterprise.ov.roleNote":
+    "A configuração de uma função substitui a chave da organização para todos que têm essa função.",
+  "admin.enterprise.ov.forScope": "{title} para {scope}",
+  "admin.enterprise.ov.inherit": "Herdar",
+  "admin.enterprise.ov.grant": "Conceder",
+  "admin.enterprise.netd.org": "Política de rede da organização",
+  "admin.enterprise.netd.group": "Política de rede do grupo",
+  "admin.enterprise.netd.groupLabel": "Grupo",
+  "admin.enterprise.netd.mode": "Modo",
+  "admin.enterprise.netd.allowlist": "Lista de permitidos",
+  "admin.enterprise.netd.help":
+    "Um por linha. Um domínio cobre seus subdomínios. *.nome cobre apenas subdomínios. Uma faixa de IP pode listar portas. Os padrões são {first} e mais {more} hosts de pacotes e de código-fonte.",
+  "admin.enterprise.netd.lock":
+    "Bloquear para que os grupos não possam substituir esta política",
+  "admin.enterprise.netd.remove": "Remover política",
+  "admin.enterprise.days.label": "Dias sem uso",
+  "admin.enterprise.days.help": "0 desativa. Verificado a cada hora.",
+  "admin.plugins.title": "Plugins",
+  "admin.plugins.description":
+    "O que esta instalação pode acessar e quais assistentes podem usar. Um plugin que você adiciona vale para todos. Na página dele, você escolhe quais assistentes recebem suas ferramentas.",
+  "admin.plugins.loadError":
+    "Não foi possível carregar os plugins. Recarregue a página.",
+  "admin.plugins.connected.description":
+    "Adicionados para todos. Abra um para configurá-lo e escolher quais assistentes recebem suas ferramentas.",
+  "admin.plugins.connected.title": "Conectados",
+  "admin.plugins.connected.empty":
+    "Nada conectado ainda. Escolha um na lista abaixo.",
+  "admin.plugins.explore.description":
+    "Servidores próprios, revisados. Abra um para adicioná-lo.",
+  "admin.plugins.explore.title": "Explorar plugins",
+  "admin.plugins.explore.empty":
+    "Todos os plugins do catálogo estão conectados.",
+  "admin.plugins.notAdded": "Não adicionado",
+  "admin.plugins.more.title": "Mais apps",
+  "admin.plugins.sum.notConnected": "Não conectado",
+  "admin.plugins.sum.noTools": "Ainda sem ferramentas",
+  "admin.plugins.sum.tools": {
+    one: "{count} ferramenta",
+    many: "{count} de ferramentas",
+    other: "{count} ferramentas",
+  },
+  "admin.plugins.sum.toolsNoBots": "{tools} · sem assistentes",
+  "admin.plugins.sum.bots": {
+    one: "{count} assistente",
+    many: "{count} de assistentes",
+    other: "{count} assistentes",
+  },
+  "admin.plugins.requests": {
+    one: "{count} solicitação",
+    many: "{count} de solicitações",
+    other: "{count} solicitações",
+  },
+  "admin.plugins.key.grant.none": "Nenhum assistente",
+  "admin.plugins.key.grant.one": "1 assistente",
+  "admin.plugins.key.grant.all": "Todos os assistentes",
+  "admin.plugins.key.grant.some": "{held} de {total} assistentes",
+  "admin.plugins.key.held.none": "Nenhuma ferramenta",
+  "admin.plugins.key.held.one": "1 ferramenta",
+  "admin.plugins.key.held.all": "Todas as ferramentas",
+  "admin.plugins.key.held.some": "{held} de {total} ferramentas",
+  "admin.plugins.key.notApproved": "Não aprovado",
+  "admin.plugins.key.unreadableTitle": "Sua conta",
+  "admin.plugins.key.unreadable":
+    "Não foi possível verificar se você conectou uma conta aqui. Recarregue a página ou confira os logs desta instalação se continuar acontecendo.",
+  "admin.plugins.key.noConsent":
+    "O {product} não recebeu nenhum link de consentimento, então nada foi conectado. Tente de novo ou confira a configuração deste conector se continuar acontecendo.",
+  "admin.plugins.key.reassurance":
+    "A configuração está completa sem ela, e ela acessa apenas os seus documentos.",
+  "admin.plugins.key.notPlugin.description":
+    "Não existe plugin com esse nome, nem aqui nem no catálogo.",
+  "admin.plugins.key.notPlugin.title": "Não é um plugin",
+  "admin.plugins.key.notPlugin.empty": "Nada a configurar.",
+  "admin.plugins.key.enable.title": "Ativar para esta instalação",
+  "admin.plugins.key.enable.on":
+    "Os assistentes podem receber as ferramentas dele. Desativar remove o plugin e o acesso de todos os assistentes às ferramentas dele.",
+  "admin.plugins.key.enable.off":
+    "Nenhum assistente consegue acessar este provedor. Ative para configurá-lo e dar as ferramentas dele aos assistentes.",
+  "admin.plugins.key.enable.aria": "Ativar {title} para esta instalação",
+  "admin.plugins.key.whose.title": "De quem é a conta",
+  "admin.plugins.key.whose.shared": "Uma conta compartilhada para todos.",
+  "admin.plugins.key.whose.personal": "Cada pessoa conecta a sua.",
+  "admin.plugins.key.whose.makePersonal": "Tornar pessoal",
+  "admin.plugins.key.whose.makeShared": "Tornar compartilhada",
+  "admin.plugins.key.conn.oauth":
+    "Este provedor responde como quem está pedindo. A instalação registra um cliente OAuth, e cada pessoa conecta a própria conta. Um assistente só vê o que essa pessoa pode ver.",
+  "admin.plugins.key.conn.secret":
+    "Este provedor responde como quem está pedindo. Cada pessoa cola a própria senha de app na sua página Conexões. Não há nada a registrar aqui, e a instalação não guarda nenhuma senha própria.",
+  "admin.plugins.key.conn.builtin":
+    "Embutido nesta instalação. Não há provedor a acessar nem credencial a guardar. Uma chamada roda como quem a pediu.",
+  "admin.plugins.key.conn.bearer":
+    "O que esta instalação envia ao provedor. Uma única credencial para todos.",
+  "admin.plugins.key.conn.title": "Conexão",
+  "admin.plugins.key.builtin.desc":
+    "Nada a configurar. Estas ferramentas rodam dentro desta instalação, com os próprios dados dela.",
+  "admin.plugins.key.builtin.badge": "Embutido",
+  "admin.plugins.key.secret.title": "Senha de app",
+  "admin.plugins.key.secret.desc":
+    "Cada pessoa cria a sua no Google e a cola na sua página Conexões. Ela acessa a caixa de e-mail inteira, então o que os assistentes podem fazer é decidido pelas ferramentas que você conceder abaixo.",
+  "admin.plugins.key.secret.badge": "Por pessoa",
+  "admin.plugins.key.reach.title": "Como se chega a isto",
+  "admin.plugins.key.token.title": "Token de acesso",
+  "admin.plugins.key.token.desc": "Enviado em toda chamada a este provedor.",
+  "admin.plugins.key.saved": "Salvo",
+  "admin.plugins.key.notSet": "Não definido",
+  "admin.plugins.key.client.title": "Cliente OAuth",
+  "admin.plugins.key.client.selfDesc":
+    "Esta instalação se registra sozinha no provedor na primeira conexão. Não há nada a colar.",
+  "admin.plugins.key.client.selfBadge": "Autorregistrado",
+  "admin.plugins.key.client.desc":
+    "Identifica esta instalação para o provedor. Sozinho, ele não consegue acessar os documentos de ninguém.",
+  "admin.plugins.key.client.registered": "Registrado",
+  "admin.plugins.key.client.notRegistered": "Não registrado",
+  "admin.plugins.key.team.connected":
+    "Conectado{who}. Todo assistente com estas ferramentas age como esta conta.",
+  "admin.plugins.key.team.as": " como {name}",
+  "admin.plugins.key.team.by": " por {name}",
+  "admin.plugins.key.team.disconnected":
+    "Nenhuma conta da equipe está conectada. Os assistentes com estas ferramentas são recusados.",
+  "admin.plugins.key.team.heading": "Conta da equipe",
+  "admin.plugins.key.team.notice":
+    "Entre com a conta da equipe, não com a sua.",
+  "admin.plugins.key.mine.connected":
+    "Conectado. Um assistente com estas ferramentas usa o seu {title} como se fosse você. {note}",
+  "admin.plugins.key.mine.tryConnect":
+    "Conecte a sua própria conta para testar este conector. {note}",
+  "admin.plugins.key.oauthAcct.connected":
+    "Conectado. Um assistente com estas ferramentas usa o seu {title} como se fosse você. Todos os outros conectam a própria conta.",
+  "admin.plugins.key.oauthAcct.connect":
+    "Conecte a sua própria conta para testar este conector. A configuração está completa sem ela, e ela acessa apenas os seus documentos.",
+  "admin.plugins.key.connected": "Conectado",
+  "admin.plugins.key.connect": "Conectar",
+  "admin.plugins.key.instance.title": "Host da instância",
+  "admin.plugins.key.instance.desc":
+    "Este provedor dá a cada cliente o próprio nome de host. Ele é conferido com o padrão do provedor antes de ser salvo.",
+  "admin.plugins.key.docs.builtin": "Documentação",
+  "admin.plugins.key.docs.vendor": "Documentação do provedor",
+  "admin.plugins.key.docs.builtinDesc":
+    "O que estas ferramentas oferecem, segundo quem as mantém.",
+  "admin.plugins.key.docs.vendorDesc":
+    "O que este servidor oferece, segundo quem o mantém.",
+  "admin.plugins.key.redirect.dynamic":
+    "A instalação registra sozinha o seu URI de redirecionamento. Não há nada a adicionar no provedor.",
+  "admin.plugins.key.redirect.manual":
+    "Adicione isto aos URIs de redirecionamento autorizados do cliente no provedor, exatamente como está escrito. Um caractere errado falha lá, com um erro que não menciona o {product}.",
+  "admin.plugins.key.redirect.noUrl":
+    "Esta instalação não tem URL pública, então ninguém consegue concluir a conexão. Defina {env}.",
+  "admin.plugins.key.tools.refresh": "Atualizar ferramentas",
+  "admin.plugins.key.tools.grant": "Conceder ferramentas…",
+  "admin.plugins.key.tools.description":
+    "Um assistente só vê as ferramentas que recebeu. Cada chamada é verificada no momento em que acontece, então remover um acesso vale a partir da próxima chamada.",
+  "admin.plugins.key.tools.title": "Ferramentas",
+  "admin.plugins.key.tools.empty":
+    "Nenhuma ferramenta na lista. Atualize as ferramentas para verificar de novo.",
+  "admin.plugins.key.tools.writes": "altera coisas",
+  "admin.plugins.key.tools.reads": "lê",
+  "admin.plugins.key.byBot": "Por assistente",
+  "admin.plugins.key.byBot.hidden":
+    "Oculto da sua lista. Ative ou desative as ações deste app uma a uma.",
+  "admin.plugins.key.byBot.shown":
+    "Ative ou desative as ações deste app uma a uma.",
+  "admin.plugins.key.gone.description":
+    "Este provedor não as lista mais. Nenhum assistente as vê, e nenhum pode chamá-las. O acesso continua salvo e volta se o provedor listar a ferramenta de novo. Para removê-lo, use a página do próprio assistente.",
+  "admin.plugins.key.gone.title": "Concedidas, mas não mais listadas",
+  "admin.plugins.key.gone.row": "Não listada por {title}{asOf}.",
+  "admin.plugins.key.gone.asOf": " desde a última atualização",
+  "admin.plugins.key.dlg.client": "Cliente OAuth de {title}",
+  "admin.plugins.key.dlg.instance": "Host da instância de {title}",
+  "admin.plugins.key.dlg.token": "Token de acesso de {title}",
+  "admin.plugins.key.dlg.clientDesc":
+    "Do console do provedor. O segredo é guardado no cofre desta instalação e nunca mais é mostrado.",
+  "admin.plugins.key.dlg.instanceDesc":
+    "O seu próprio nome de host neste provedor. Ele é conferido com o padrão do provedor antes de ser salvo.",
+  "admin.plugins.key.dlg.tokenDesc":
+    "Guardado no cofre desta instalação e nunca mais mostrado.",
+  "admin.plugins.key.dlg.clientId": "ID do cliente",
+  "admin.plugins.key.dlg.clientSecret": "Segredo do cliente",
+  "admin.plugins.key.gr.title": "Conceder ferramentas",
+  "admin.plugins.key.gr.description":
+    "Cada concessão é uma linha própria em Auditoria. As ferramentas que alteram coisas continuam sendo verificadas contra os limites a cada chamada.",
+  "admin.plugins.key.gr.to": "Para",
+  "admin.plugins.key.gr.reads": "Lê",
+  "admin.plugins.key.gr.writes": "Altera coisas",
+  "admin.plugins.key.gr.selectAll": "Selecionar tudo",
+  "admin.plugins.key.gr.button": "Conceder",
+  "admin.plugins.key.gr.progress": "Concedendo {current} de {total}…",
+  "admin.plugins.key.gr.summary": {
+    one: "Conceder {count} ferramenta a {names}.",
+    many: "Conceder {count} de ferramentas a {names}.",
+    other: "Conceder {count} ferramentas a {names}.",
+  },
+  "admin.plugins.key.gr.changing": {
+    one: "{count} altera coisas.",
+    many: "{count} de ferramentas alteram coisas.",
+    other: "{count} alteram coisas.",
+  },
+  "admin.home.reach.desc":
+    "O que um assistente pode tocar fora do {product} e os limites para isso.",
+  "admin.home.credentials.desc": "Chaves e tokens desta instalação.",
+  "admin.home.boundaries.desc":
+    "Coisas que nenhum assistente pode fazer jamais.",
+  "admin.home.approvals.desc":
+    "O que os assistentes dos membros devem perguntar antes de agir.",
+  "admin.home.computers.desc":
+    "As máquinas em que os assistentes executam ferramentas.",
+  "admin.home.do.desc":
+    "Apps, habilidades e peças de interface que qualquer assistente pode usar.",
+  "admin.home.plugins.desc":
+    "Os serviços que o {product} pode acessar e quais assistentes podem usá-los.",
+  "admin.home.skills.desc":
+    "Instruções com nome que qualquer pessoa pode executar com /.",
+  "admin.home.learning.desc":
+    "Aprenda com as conversas encerradas e revise as habilidades que ele propõe.",
+  "admin.home.components.desc":
+    "Peças personalizadas que um assistente pode desenhar em uma conversa.",
+  "admin.home.playground.desc":
+    "Escreva um componente e veja-o ser desenhado enquanto você digita.",
+  "admin.home.engines.desc":
+    "Os motores de IA em que os membros rodam e se cada um pode responder agora.",
+  "admin.home.people.desc":
+    "Todas as pessoas que já entraram, quem são os administradores e de quem o acesso foi removido.",
+  "admin.home.enterprise.desc":
+    "Funções e grupos, SSO obrigatório, SCIM, política de rede, listas de permitidos de MCP e de modelos, Action Recording.",
+  "admin.home.idp.desc":
+    "O provedor SAML ou OpenID Connect da sua empresa, associado pelo domínio do e-mail.",
+  "admin.home.audit.desc": "Cada ação feita no {product} e quem a fez.",
+  "admin.home.description":
+    "Configurações para todos nesta instalação. Uma mudança aqui afeta cada pessoa e cada assistente.",
+  "admin.plugins.directoryError":
+    "Não foi possível carregar as configurações dos plugins. Recarregue a página.",
+  "admin.components.description":
+    "Com o que cada assistente pode responder. Todo componente publicado está ativado para todos os assistentes. Desative um e esse assistente nunca o verá. As mudanças e as recusas aparecem em Auditoria.",
+  "admin.components.loadError":
+    "Não foi possível carregar os componentes. Recarregue a página.",
+  "admin.components.emptyTitle": "Ainda não há componentes",
+  "admin.components.emptyDesc":
+    "Os componentes que os seus assistentes podem usar aparecerão aqui.",
+  "admin.audit.silence.quiet": "Em silêncio por {seconds} s",
+  "admin.audit.silence.nothing": "{quiet}, sem ter dito nada",
+  "admin.audit.silence.after": {
+    one: "{quiet}, após {count} trecho",
+    many: "{quiet}, após {count} de trechos",
+    other: "{quiet}, após {count} trechos",
+  },
+  "admin.compDetail.title": "Componentes",
+  "admin.compDetail.noSuch.title": "Esse componente não existe",
+  "admin.compDetail.noSuch.description":
+    "Não há nenhum componente com esse nome.",
+  "admin.compDetail.noSuch.hint":
+    "Ele pode ter sido renomeado, ou esta instalação não o inclui mais.",
+  "admin.compDetail.back": "Voltar aos componentes",
+  "admin.compDetail.grant.noBots": "Ainda não há assistentes",
+  "admin.compDetail.grant.all": {
+    one: "Todos os {count} assistentes",
+    many: "Todos os {count} de assistentes",
+    other: "Todos os {count} assistentes",
+  },
+  "admin.compDetail.grant.none": "Nenhum assistente",
+  "admin.compDetail.grant.some": "{granted} de {total} assistentes",
+  "admin.compDetail.fn.none": "Esta instalação não tem funções de dados",
+  "admin.compDetail.fn.nothing":
+    "Nenhuma. Ele mostra só o que o assistente passa para ele.",
+  "admin.compDetail.notPublished":
+    "Não publicado. Nenhum assistente consegue vê-lo.",
+  "admin.compDetail.config.title": "Configuração",
+  "admin.compDetail.config.description":
+    "Para que serve este componente e quais assistentes podem responder com ele.",
+  "admin.compDetail.notInBuild.title": "Fora desta versão",
+  "admin.compDetail.notInBuild.description":
+    "{product} não consegue desenhá-lo. As configurações abaixo não têm efeito.",
+  "admin.compDetail.published": "Publicado",
+  "admin.compDetail.published.on": "Os assistentes podem responder com ele.",
+  "admin.compDetail.published.off": "Nenhum assistente pode usá-lo.",
+  "admin.compDetail.published.changes":
+    "A descrição tem alterações não publicadas.",
+  "admin.compDetail.description": "Descrição",
+  "admin.compDetail.nothingYet": "Nada ainda",
+  "admin.compDetail.availableTo": "Disponível para",
+  "admin.compDetail.canRead": "Pode ler",
+  "admin.compDetail.details": "Detalhes",
+  "admin.compDetail.kind": "Tipo",
+  "admin.compDetail.calledAs": "Chamado de",
+  "admin.compDetail.lastChanged": "Última alteração",
+  "admin.compDetail.by": "por {name}",
+  "admin.compDetail.descDlg.description":
+    "O que o modelo lê ao decidir usar este componente. Não tem efeito até o componente ser publicado.",
+  "admin.compDetail.grantsDlg.description":
+    "Desative um assistente e ele nunca saberá que este componente existe. As alterações valem na hora.",
+  "admin.compDetail.grantsDlg.empty": "Ainda não há assistentes.",
+  "admin.compDetail.fnDlg.description":
+    "Os dados que este componente pode buscar para se desenhar. Isso é separado de “Disponível para”. Com todos desativados, ele mostra só o que o assistente passa para ele. Cada leitura aparece em Auditoria. As alterações valem na hora.",
+  "admin.compDetail.fnDlg.empty": "Esta instalação não tem funções de dados.",
+  "admin.computers.description":
+    "O navegador de cada assistente e o perfil que ele guarda. O perfil mantém o assistente conectado. Redefini-lo desconecta o assistente de tudo.",
+  "admin.computers.loadError":
+    "Não foi possível carregar os computadores. Recarregue a página.",
+  "admin.computers.shared.lead":
+    "Todos os assistentes compartilham um único computador.",
+  "admin.computers.shared.before":
+    "Eles compartilham seus logins, arquivos e sessão. Um assistente pode alcançar o que outro conectou. Defina",
+  "admin.computers.shared.after": "para dar a cada assistente o seu próprio.",
+  "admin.computers.perBot":
+    "Cada assistente tem o próprio computador, com contêiner, arquivos e perfil de navegador próprios.",
+  "admin.computers.list.title": "Computadores desta instalação",
+  "admin.computers.list.error": "Não foi possível carregar a lista.",
+  "admin.computers.list.empty":
+    "Ainda não há computadores. Um aparece na primeira vez que um assistente abre uma página.",
+  "admin.computers.running": "Navegador em execução desde {time}",
+  "admin.computers.notRunning":
+    "Nenhum navegador em execução. Ele inicia quando o assistente precisar dele de novo.",
+  "admin.computers.egress.unknown": "Saída não informada",
+  "admin.computers.egress.direct": "Sai diretamente",
+  "admin.computers.egress.via": "Sai por {egress}",
+  "admin.computers.updateAvailable": "Atualização disponível",
+  "admin.computers.update": "Atualizar o computador",
+  "admin.computers.working": "Trabalhando…",
+  "admin.computers.stop": "Parar o navegador",
+  "admin.computers.reset": "Redefinir",
+  "admin.computers.resetTitle": "Redefinir o computador de {name}?",
+  "admin.computers.resetDesc":
+    "O perfil dele é apagado. O assistente é desconectado de todos os serviços e começa do zero. Não dá para desfazer.",
+  "admin.computers.resetting": "Redefinindo…",
+  "admin.computers.resetIt": "Redefinir",
+  "admin.computers.updateTitle": "Atualizar o computador de {name}?",
+  "admin.computers.updateDesc":
+    "Ele passa para a imagem de computador que esta instalação usa agora. Os arquivos e os logins dele são mantidos. Se estiver em execução, ele reinicia e interrompe o que está fazendo.",
+  "admin.computers.updating": "Atualizando…",
+  "admin.computers.updateIt": "Atualizar",
+  "admin.computers.foot.stopLead": "Parar",
+  "admin.computers.foot.stopRest":
+    "fecha o navegador e mantém os logins dele. Ele inicia de novo na próxima vez que o assistente precisar.",
+  "admin.computers.foot.resetLead": "Redefinir",
+  "admin.computers.foot.resetRest":
+    "apaga o perfil e desconecta o assistente de tudo.",
+  "admin.computers.foot.updateLead": "Atualizar o computador",
+  "admin.computers.foot.updateRest":
+    "aparece quando um computador usa uma imagem mais antiga. Ele passa o computador para a nova e mantém os arquivos e os logins.",
+  "admin.computers.foot.audit": "As três aparecem em",
+  "admin.computers.host.description":
+    "Escolha as pastas que um assistente pode ler neste computador. O app de desktop pergunta antes de cada alteração ou comando. O acesso termina quando você para o {product}.",
+  "admin.computers.host.title": "Pastas neste computador",
+  "admin.computers.host.offline":
+    "O app de desktop está offline. Abra-o para aprovar pastas ou executar comandos.",
+  "admin.computers.host.noBots":
+    "Ainda não há assistentes. Crie um e depois escolha as pastas dele.",
+  "admin.computers.host.choose": "Escolher pasta",
+  "admin.computers.host.waiting": "Aguardando…",
+  "admin.computers.host.readOnlyNote":
+    "As pastas são somente leitura. Quando um assistente precisa escrever, o app de desktop pergunta a você primeiro.",
+  "admin.computers.host.stopAccess": "Parar o acesso às pastas",
+  "admin.computers.host.stopping": "Parando…",
+  "admin.computers.host.viewAudit": "Ver auditoria",
+  "admin.computers.host.readOnly": "Somente leitura",
+  "admin.computers.host.revoke": "Revogar",
+  "admin.computers.host.revoking": "Revogando…",
+  "admin.computers.host.pendingFrom": "{label} de {owner}.",
+  "admin.computers.host.pendingFromFor": "{label} de {owner} para {name}.",
+  "admin.computers.host.folders": {
+    one: "{count} pasta somente leitura",
+    many: "{count} de pastas somente leitura",
+    other: "{count} pastas somente leitura",
+  },
+  "admin.computers.host.requests": {
+    one: "{count} solicitação pendente",
+    many: "{count} de solicitações pendentes",
+    other: "{count} solicitações pendentes",
+  },
+  "admin.computers.host.none": "Nenhuma pasta aprovada.",
+  "admin.computers.host.owner": "o dono do desktop",
+  "admin.computers.host.p.write":
+    "Alteração de arquivo aguardando aprovação ou conclusão",
+  "admin.computers.host.p.run": "Comando aguardando aprovação ou conclusão",
+  "admin.computers.host.p.list": "Listando arquivos",
+  "admin.computers.host.p.read": "Lendo um arquivo",
+  "admin.computers.host.p.stop": "Parando o trabalho com pastas",
+  "admin.computers.host.p.default": "Acesso a pastas aguardando aprovação",
+  "admin.learning.description":
+    "Aprenda com as conversas concluídas, revise as habilidades que o Intelligence propõe e dê as habilidades publicadas aos assistentes.",
+  "admin.learning.auto.assigned":
+    "O {product} atribuiu automaticamente o contêiner “{container}” a este projeto do Intelligence. Você pode alterá-lo aqui.",
+  "admin.learning.auto.absent":
+    "Este projeto do Intelligence ainda não tem um contêiner de Learning “{container}”. Nada é coletado.",
+  "admin.learning.auto.notEntitled":
+    "O plano deste projeto do Intelligence não inclui o Learning. Nenhum contêiner foi atribuído.",
+  "admin.learning.auto.unavailable":
+    "Não foi possível alcançar o Intelligence para achar o contêiner de Learning deste projeto. O {product} vai tentar de novo.",
+  "admin.learning.target.container": "ID do contêiner: {label}",
+  "admin.learning.target.revision": "Revisão exata (opcional)",
+  "admin.learning.target.revisionAria": "Revisão: {label}",
+  "admin.learning.target.latest": "Última publicada",
+  "admin.learning.create.busy": "Criando…",
+  "admin.learning.create.button": "Criar o contêiner {container}",
+  "admin.learning.create.note":
+    "Usa a credencial desta instalação, não a chave de execução.",
+  "admin.learning.create.how": "Para criá-lo: ",
+  "admin.learning.part.title": "Participação",
+  "admin.learning.part.description":
+    "As alterações de contêiner valem para as novas conversas. As existentes mantêm o primeiro contêiner. Os contêineres já precisam existir no mesmo projeto do Intelligence. Até você salvar aqui, o {product} usa o contêiner openbot desse projeto.",
+  "admin.learning.part.loading": "Carregando as configurações do Learning…",
+  "admin.learning.part.turnOn":
+    "Ativar o aprendizado automático e a entrega de habilidades",
+  "admin.learning.part.default": "Padrão",
+  "admin.learning.part.hint":
+    "Sem padrão, os assistentes sem contêiner próprio ficam de fora. Os IDs têm de 1 a 64 letras minúsculas, números e hifens isolados. Deixe a revisão vazia para usar as últimas habilidades publicadas.",
+  "admin.learning.part.perBot": "Participação por assistente",
+  "admin.learning.part.botListError":
+    "Não foi possível carregar a lista de assistentes. As configurações salvas de cada assistente estão abaixo.",
+  "admin.learning.part.botAria": "Participação de {name}",
+  "admin.learning.part.inherit": "Usar o padrão da instalação",
+  "admin.learning.part.exclude": "Deixar fora do Learning",
+  "admin.learning.part.container": "Usar um contêiner específico",
+  "admin.learning.part.saving": "Salvando…",
+  "admin.learning.part.save": "Salvar as configurações do Learning",
+  "admin.learning.part.saved": "Configurações salvas.",
+  "admin.learning.rev.title": "Revisar e publicar",
+  "admin.learning.rev.description":
+    "O Intelligence estuda as conversas concluídas e propõe habilidades. Revise e publique-as no Intelligence. Os assistentes só usam habilidades publicadas.",
+  "admin.learning.rev.showFor": "Mostrar o contêiner de",
+  "admin.learning.rev.default": "Padrão da instalação",
+  "admin.learning.rev.checking": "Verificando o Intelligence…",
+  "admin.learning.rev.invalid":
+    "O contêiner escolhido ou a instrumentação dele não está disponível.",
+  "admin.learning.rev.selection":
+    "Escolha um assistente ou defina um contêiner padrão.",
+  "admin.learning.rev.none": "Nenhum contêiner de Learning está atribuído.",
+  "admin.learning.rev.threads": "Threads prontas",
+  "admin.learning.rev.candidates": "Candidatas para revisar",
+  "admin.learning.rev.published": "Habilidades publicadas",
+  "admin.learning.rev.insights": "Insights",
+  "admin.learning.rev.running": "Uma análise está em andamento.",
+  "admin.learning.rev.latest": "Última análise: {status}.",
+  "admin.learning.rev.noRun": "Nenhuma análise foi executada ainda.",
+  "admin.learning.rev.manage": "Gerenciar o Learning no Intelligence",
+  "admin.learning.rev.reviewCandidates": "Revisar candidatas a habilidade",
+  "admin.learning.rev.viewRuns": "Ver execuções de análise",
+  "admin.learning.del.title": "Entrega de habilidades",
+  "admin.learning.del.checking": "Verificando a entrega…",
+  "admin.learning.del.off": "A entrega está desativada para este assistente.",
+  "admin.learning.del.waiting":
+    "Aguardando o primeiro snapshot de habilidades verificado.",
+  "admin.learning.del.stale":
+    "Usando o último snapshot verificado. Há uma atualização pendente.",
+  "admin.learning.del.ok": "Há um snapshot verificado disponível.",
+  "admin.learning.del.revision": "Revisão carregada: {revision}",
+  "admin.learning.del.lastChecked": "Última verificação:",
+  "admin.learning.rev.refresh": "Atualizar o status",
+  "admin.learning.rev.footer":
+    "Gerenciar o Learning exige sua conta do Intelligence e acesso ao projeto. O {product} guarda as credenciais do projeto no servidor. Desativar o Learning aqui mantém as configurações e as atribuições de conversas. Agendamentos e publicação continuam no Intelligence.",
+  "admin.playground.validJson": "{label} deve ser um JSON válido: {reason}",
+  "admin.playground.invalidJson": "JSON inválido",
+  "admin.playground.notObject": "{label} deve ser um objeto JSON, não {kind}.",
+  "admin.playground.schemaLabel": "Argumentos (JSON Schema)",
+  "admin.playground.sampleLabel": "Argumentos de exemplo",
+  "admin.playground.fixBeforeSave": "Corrija os campos JSON antes de salvar.",
+  "admin.playground.draftSaved": "Rascunho salvo.",
+  "admin.playground.published": "Publicado.",
+  "admin.playground.description":
+    "Escreva um componente e publique-o sem fazer novo deploy. Suas edições são um rascunho. As conversas só mostram o que está publicado.",
+  "admin.playground.saveDraft": "Salvar rascunho",
+  "admin.playground.publish": "Publicar",
+  "admin.playground.title": "Título",
+  "admin.playground.titlePlaceholder": "Cartão de reembolso",
+  "admin.playground.told": "O que se diz ao modelo sobre ele",
+  "admin.playground.toldPlaceholder":
+    "Mostre um reembolso com valor, motivo e status.",
+  "admin.playground.preview": "Pré-visualização",
+  "admin.playground.noSample":
+    "Os argumentos de exemplo não estão disponíveis.",
+  "admin.playground.fixBeforePreview":
+    "Corrija os campos JSON antes de pré-visualizar.",
+  "admin.playground.saved.title": "Salvo aqui",
+  "admin.playground.saved.empty":
+    "Nada salvo ainda. Salve um rascunho para vê-lo aqui.",
+  "admin.playground.saved.published": "publicado, revisão {revision}",
+  "admin.playground.saved.draftOnly":
+    "só rascunho, nenhum assistente consegue desenhá-lo",
+  "admin.playground.saved.edited": "editado desde a publicação",
+  "admin.playground.open": "Abrir",
+  "admin.playground.delete": "Excluir",
+  "admin.playground.saved.note":
+    "Publicar o torna disponível para todos os assistentes. Para tirá-lo de um assistente só, desative-o na página Componentes de interface.",
+  "admin.playground.del.title": "Excluir {name}?",
+  "admin.playground.del.description":
+    "Ele é removido desta instalação, e nenhum assistente consegue desenhá-lo. Não dá para desfazer.",
+  "admin.playground.del.confirm": "Excluir",
+  "admin.plugins.tool.title": "Ferramenta",
+  "admin.plugins.tool.noTool":
+    "Este conector não tem nenhuma ferramenta com esse nome.",
+  "admin.plugins.tool.removed":
+    "Ela pode ter sido removida desde a última atualização da lista de ferramentas.",
+  "admin.plugins.tool.notOn": "Este conector não está ativado.",
+  "admin.plugins.tool.noDesc": "Esta ferramenta não tem descrição.",
+  "admin.plugins.tool.writeDesc":
+    "Esta ferramenta altera algo no provedor. Os limites sobre gravações se aplicam a ela.",
+  "admin.plugins.tool.readDesc":
+    "Esta ferramenta só lê. Os limites sobre gravações não se aplicam a ela.",
+  "admin.plugins.tool.what": "O que faz",
+  "admin.plugins.tool.effect": "Efeito",
+  "admin.plugins.tool.effectDesc":
+    "Definido pelo conector, não pelo nome da ferramenta. Tudo o que é desconhecido conta como gravação.",
+  "admin.plugins.tool.bots.title": "Assistentes",
+  "admin.plugins.tool.bots.description":
+    "Um assistente só pode chamar esta ferramenta enquanto o interruptor dele estiver ligado. Desligá-lo vale a partir da próxima chamada.",
+  "admin.plugins.tool.bots.empty":
+    "Ainda não há assistentes. Crie um para dar esta ferramenta a ele.",
+  "admin.plugins.tool.hidden": "Oculto da sua lista.",
+  "admin.plugins.tool.canCall":
+    "Pode chamar esta ferramenta. Cada chamada ainda é verificada contra os limites e registrada na Auditoria.",
+  "admin.plugins.tool.noToken":
+    "Permitido, mas este assistente não tem token de retorno. Cada chamada é recusada. Emita um na página dele ou defina AGENT_TOOL_TOKEN.",
+  "admin.plugins.tool.cantCall":
+    "Não pode chamar esta ferramenta. O assistente nunca a vê.",
+  "admin.plugins.tool.aria": "Deixar {bot} chamar {tool}",
+  "admin.plugins.bot.title": "Assistente",
+  "admin.plugins.bot.notOn": "Nenhum app com esse nome está ativado.",
+  "admin.plugins.bot.nothing": "Aqui não há nada para dar a um assistente.",
+  "admin.plugins.bot.notBot.title": "Não é um assistente",
+  "admin.plugins.bot.notBot.description":
+    "Não há nenhum assistente com esse nome.",
+  "admin.plugins.bot.notBot.hint":
+    "Ele pode ter sido excluído depois que você abriu esta página.",
+  "admin.plugins.bot.noDesc": "Esta ação não tem descrição.",
+  "admin.plugins.bot.destroys": "destrói coisas",
+  "admin.plugins.bot.description":
+    "Quais ações do {app} {bot} pode chamar. Desativar uma vale a partir da próxima chamada.",
+  "admin.plugins.bot.pageTitle": "{bot} e {app}",
+  "admin.plugins.bot.noActions":
+    "O {app} não lista nenhuma ação. Atualize as ferramentas dele para verificar de novo.",
+  "admin.plugins.bot.searchAria": "Buscar ações do {app}",
+  "admin.plugins.bot.searchPlaceholder": "Buscar pelo nome da ação",
+  "admin.plugins.bot.wouldHold": {
+    one: "Este assistente teria então {count} ferramenta deste app.",
+    many: "Este assistente teria então {count} de ferramentas deste app.",
+    other: "Este assistente teria então {count} ferramentas deste app.",
+  },
+  "admin.plugins.bot.turnOnReads": "Ativar todas as ações somente de leitura",
+  "admin.plugins.bot.reads.title": "Leituras",
+  "admin.plugins.bot.reads.description":
+    "Estas só leem. Os limites sobre gravações não se aplicam a elas.",
+  "admin.plugins.bot.reads.noMatch":
+    "Nenhuma ação que só lê corresponde a “{query}”.",
+  "admin.plugins.bot.reads.none": "O {app} não tem ações somente de leitura.",
+  "admin.plugins.bot.writes.title": "Altera coisas",
+  "admin.plugins.bot.writes.description":
+    "Estas alteram algo no provedor. Os limites sobre gravações se aplicam a elas.",
+  "admin.plugins.bot.writes.noMatch":
+    "Nenhuma ação que altera coisas corresponde a “{query}”.",
+  "admin.plugins.bot.writes.none": "O {app} não tem ações que alteram coisas.",
+  "admin.plugins.bot.shared.title":
+    "Deixar {bot} usar a conta compartilhada do {app}?",
+  "admin.plugins.bot.allowing": "Permitindo…",
+  "admin.plugins.bot.allow": "Permitir",
+  "admin.shared.sentence.write":
+    "Qualquer pessoa que possa usar este assistente pode fazer isso como a conta compartilhada.",
+  "admin.shared.sentence.read":
+    "Qualquer pessoa que possa usar este assistente pode ler o que esta conta pode ler.",
+  "admin.shared.owner": "Só o dono dele",
+  "admin.shared.named": "Nomeados: {who}",
+  "admin.shared.team": "Todos",
+  "admin.shared.legend":
+    "Quem pode usar a conta compartilhada por meio deste assistente",
+  "admin.shared.outside":
+    "Mensagens de fora (e-mail, Slack, webhooks) podem usá-la",
+  "admin.shared.skipped": {
+    one: "Uma ação que este app lista foi deixada de fora, porque o nome de uma ferramenta só pode usar letras, dígitos, sublinhados e hifens: ",
+    many: "{count} de ações que este app lista foram deixadas de fora, porque o nome de uma ferramenta só pode usar letras, dígitos, sublinhados e hifens: ",
+    other:
+      "{count} ações que este app lista foram deixadas de fora, porque o nome de uma ferramenta só pode usar letras, dígitos, sublinhados e hifens: ",
+  },
+  "admin.vocab.browse": "Explorar {name}",
+  "admin.vocab.dirDesc.composio":
+    "Algumas centenas de apps. Cada pessoa conecta a própria conta.",
+  "admin.vocab.dirDesc.arcade":
+    "Apps que ninguém aqui revisou. Cada pessoa conecta a própria conta.",
+  "admin.vocab.readFailure":
+    "Não foi possível carregar o diretório de apps do {name}. Recarregue a página.",
+  "admin.vocab.moreApps": "Apps do {name}. Ninguém aqui os revisou.",
+  "admin.vocab.notSetUp":
+    "Não configurado. Defina {envVar} nesta instalação para explorar os apps dele.",
+  "admin.vocab.connection":
+    "Alcançado por meio do {name}, que guarda a conta própria de cada pessoa.",
+  "admin.vocab.reach.description":
+    "O {name} guarda a conta. Esta instalação envia uma chave e quem está pedindo. Cada pessoa conecta a própria, e um assistente só vê o que essa pessoa pode ver. Não há token para colar.",
+  "admin.vocab.reach.badge": "Por meio do {name}",
+  "admin.vocab.disconnect": "Desconectar também encerra a conta no {name}.",
+  "admin.vocab.trip.stem":
+    "O {name} aprova uma ação por vez, então não há nada a conectar para o app inteiro.",
+  "admin.vocab.trip.below": "Autorize abaixo as ações que você quiser.",
+  "admin.vocab.trip.settings": "Autorize-as em Conexões.",
+  "admin.vocab.keyMissing":
+    "Defina {envVar} nesta instalação. Até lá, esta conta não pode ser conectada nem desconectada aqui. O app continua ativado, e as permissões de ferramentas dele continuam valendo.",
+  "admin.vocab.siblings": {
+    one: "Desconectar também encerra seu acesso a {names}, que compartilha esta conexão.",
+    many: "Desconectar também encerra seu acesso a {names}, que compartilham esta conexão.",
+    other:
+      "Desconectar também encerra seu acesso a {names}, que compartilham esta conexão.",
+  },
+  "admin.vocab.unansweredMore": {
+    one: "{count} outro app não pôde ser verificado e também pode ser afetado.",
+    many: "{count} de outros apps não puderam ser verificados e também podem ser afetados.",
+    other:
+      "{count} outros apps não puderam ser verificados e também podem ser afetados.",
+  },
+  "admin.vocab.unansweredOnly": {
+    one: "{count} app desta conexão não pôde ser verificado, então desconectar pode encerrá-lo também.",
+    many: "{count} de apps desta conexão não puderam ser verificados, então desconectar pode encerrá-los também.",
+    other:
+      "{count} apps desta conexão não puderam ser verificados, então desconectar pode encerrá-los também.",
+  },
+  "admin.vocab.join2": "{a} e {b}",
+  "admin.vocab.joinMany": "{list} e {last}",
+  "admin.skills.write": "Escrever uma habilidade",
+  "admin.skills.description":
+    "Instruções com nome que qualquer pessoa pode executar com /. Uma habilidade não acrescenta acesso. Ela só pode pedir a um assistente que use o que ele já tem.",
+  "admin.skills.installed.title": "Instaladas",
+  "admin.skills.installed.description":
+    "Para todos nesta instalação. Cada pessoa escreve as próprias na página Habilidades.",
+  "admin.skills.loadError":
+    "Não foi possível carregar as habilidades. Recarregue a página.",
+  "admin.skills.empty":
+    "Ainda não há habilidades. Escreva uma com Escrever uma habilidade.",
+  "admin.skills.dlg.title": "Escrever uma habilidade para todos",
+  "admin.skills.dlg.description":
+    "As pessoas digitam o slug depois de /. O assistente então segue as instruções. Todos podem usá-la, e você escolhe quais assistentes a têm.",
+  "admin.skills.slug": "Slug",
+  "admin.skills.title": "Título",
+  "admin.skills.summary": "Resumo",
+  "admin.skills.summaryPlaceholder": "Uma linha",
+  "admin.skills.instructions": "Instruções",
+  "admin.skills.instructionsPlaceholder":
+    "O que o assistente deve fazer quando esta habilidade é usada.",
+  "admin.skills.install": "Instalar habilidade",
+  "engines.intro":
+    "O motor é o que pensa por cada membro. Seus próprios logins respondem primeiro, a menos que você escolha outra ordem; tudo que é pago continua desligado até você dizer.",
+  "engines.loadFailed":
+    "Não foi possível carregar os motores. Recarregue a página.",
+  "engines.fallback": "Não foi possível listar os motores.",
+  "engines.noEngines": "Nenhum motor foi informado ainda.",
+  "engines.statesTitle": "Os motores e o estado deles",
+  "engines.sectionsLabel": "Seções dos motores",
+  "engines.tab.overview": "Visão geral",
+  "engines.tab.providers": "Provedores",
+  "engines.tab.members": "Atribuições dos assistentes",
+  "engines.tab.usage": "Uso",
+  "engines.asideLabel": "Chaves e gastos",
+  "engines.keys.title": "Chaves",
+  "engines.keys.text":
+    "Aqui só serão guardadas chaves de gateways. Seus logins do Claude e do ChatGPT nunca são armazenados pelo FreeDuet.",
+  "engines.keys.notBuilt":
+    "Uma chave é adicionada no cartão do motor dela. Fica guardada nesta instalação e nunca mais é mostrada.",
+  "engines.spending.title": "Gastos",
+  "engines.spending.text":
+    "Os gastos ainda não aparecem nesta página. Um motor pago só roda se esta instalação permitir.",
+  "engines.today": "Hoje",
+  "engines.reason.off":
+    "Os motores estão desligados nesta instalação (FREEDUET_ROUTER=off), então não há nada para mostrar.",
+  "engines.reason.not_set_up":
+    "Nenhum agente do FreeDuet está configurado nesta instalação, então não há motores para mostrar.",
+  "engines.reason.unreachable":
+    "O agente do FreeDuet não respondeu, então os motores não podem ser lidos agora. Esta página pergunta de novo a cada 30 segundos.",
+  "engines.state.ready": "Pronto",
+  "engines.state.degraded": "Pronto, mas teve erros recentes",
+  "engines.state.limitedAt": "Atingiu o limite até {at}",
+  "engines.state.limited": "Atingiu o limite por enquanto",
+  "engines.state.outOfCreditAt": "Sem crédito, nova tentativa em {at}",
+  "engines.state.outOfCredit": "Sem crédito",
+  "engines.state.notAnsweringAt": "Não responde, nova tentativa em {at}",
+  "engines.state.notAnswering": "Não responde por enquanto",
+  "engines.state.checking": "Verificando se volta a responder",
+  "engines.state.gatewayKey":
+    "O gateway dele não aceitou a chave. Confira a chave que você informou.",
+  "engines.state.signedOut":
+    "Desconectado: entre de novo com o login do próprio motor",
+  "engines.state.refusedWhy": "Não executado: {reason}",
+  "engines.state.refused": "Não executado: o motivo não é conhecido.",
+  "engines.state.unknown": "Estado desconhecido",
+  "engines.state.toolsAsText":
+    "Sua última resposta escreveu as chamadas de ferramentas como texto em vez de usá-las: escolha um modelo que aceite ferramentas",
+  "engines.pill.working": "Funcionando",
+  "engines.pill.checking": "Verificando",
+  "engines.pill.limited": "Limitado",
+  "engines.pill.outOfCredit": "Sem crédito",
+  "engines.pill.notAnswering": "Não responde",
+  "engines.pill.signedOut": "Desconectado",
+  "engines.pill.locked": "Bloqueado",
+  "engines.pill.unknown": "Desconhecido",
+  "engines.members.title": "Quem usa o quê",
+  "engines.members.description":
+    "Os motores que cada membro tenta, na ordem em que os tenta, e o que acontece quando um se esgota. Uma mudança vale a partir da próxima mensagem do membro, e você pode desfazê-la.",
+  "engines.members.col.member": "Membro",
+  "engines.members.col.order": "Ordem dos motores",
+  "engines.members.col.switching": "Quando um motor se esgota",
+  "engines.order.note":
+    "Use as setas para mover um motor uma posição. Seus próprios logins vêm primeiro, a menos que você escolha diferente: se um movimento colocar um motor gratuito ou pago antes deles, será pedido que você confirme antes.",
+  "engines.order.warnTitle.free_before_login":
+    "Um motor gratuito responderia antes do seu próprio login",
+  "engines.order.warnTitle.paid_before_free_or_login":
+    "Um motor pago viria antes de um motor gratuito ou de um login",
+  "engines.order.warnText.free_before_login":
+    "Se for um serviço na nuvem, as mensagens deste membro vão primeiro para esse provedor, que pode guardá-las. As respostas dele também podem ter qualidade menor do que as do seu login.",
+  "engines.order.warnText.paid_before_free_or_login":
+    "Um motor pago responde antes dos motores que vêm depois dele, então o que ele responder pode custar dinheiro. Se ele for o primeiro da lista, cada mensagem pode custar dinheiro desde a primeira. Ele só roda depois que você ligar os motores pagos e definir seus limites.",
+  "engines.order.newLabel": "Nova ordem:",
+  "engines.order.tick": "Entendi, usar esta ordem",
+  "engines.order.confirm": "Confirmar",
+  "engines.order.tickLabel": "Entendi, usar esta ordem para {name}",
+  "engines.order.confirmLabel": "Confirmar a nova ordem para {name}",
+  "engines.order.cancelLabel": "Cancelar a nova ordem para {name}",
+  "engines.order.own": "Sua ordem: os logins não vêm primeiro",
+  "engines.order.recommended": "Usar a ordem recomendada",
+  "engines.order.recommendedLabel": "Usar a ordem recomendada para {name}",
+  "engines.order.moveUp": "Mover {engine} para cima para {name}",
+  "engines.order.moveDown": "Mover {engine} para baixo para {name}",
+  "engines.order.saveFailed": "Não foi possível salvar a ordem.",
+  "engines.claude.default": "Padrão da assinatura",
+  "engines.claude.effort.low": "Baixo",
+  "engines.claude.effort.medium": "Médio",
+  "engines.claude.effort.high": "Alto",
+  "engines.claude.effort.xhigh": "Muito alto",
+  "engines.claude.effort.max": "Máximo",
+  "engines.claude.effortLabel": "Esforço",
+  "engines.claude.note":
+    "Somente Claude Code. Um modelo que sua assinatura não pode usar encerra aquele turno com o erro do próprio Claude Code. Nada é desligado, e “Padrão da assinatura” desfaz a escolha.",
+  "engines.claude.modelAria": "Modelo do Claude para {name}",
+  "engines.claude.effortAria": "Esforço do Claude para {name}",
+  "engines.claude.saved":
+    "Escolha do Claude salva. Vale a partir da próxima mensagem.",
+  "engines.members.saveFailed": "Não foi possível salvar sua escolha.",
+  "engines.members.undoFailed": "Não foi possível desfazer essa mudança.",
+  "engines.mode.groupLabel": "Quando um motor se esgota, para {name}",
+  "engines.mode.controlLabel": "{label} para {name}",
+  "engines.mode.undoLabel": "Desfazer a mudança para {name}",
+  "engines.mode.automatic.label": "Trocar automaticamente",
+  "engines.mode.automatic.effect":
+    "Quando um motor se esgota, o próximo responde e você é avisado qual.",
+  "engines.mode.askFirst.label": "Perguntar antes",
+  "engines.mode.askFirst.effect":
+    "Quando um motor se esgota, você é perguntado: trocar, esperar ou indicar outro motor.",
+  "engines.leftOut.line": "Não usado: {engine}, porque {why}.",
+  "engines.leftOut.locked": "o arquivo da instalação não permite",
+  "engines.leftOut.disabled": "está desligado",
+  "engines.leftOut.paid_gateway":
+    "é um gateway pago, que o FreeDuet ainda não executa",
+  "engines.leftOut.metered_off": "os motores pagos estão desligados",
+  "engines.leftOut.cap_zero": "o teto de gastos dele é zero",
+  "engines.leftOut.not_set_up": "não está configurado nesta instalação",
+  "engines.leftOut.other": "ele não vai rodar",
+  "engines.chain.none": "Nenhum motor pode responder por este membro agora.",
+  "engines.chain.one": "Tenta só {engine}.",
+  "engines.chain.many": "Tenta {list}.",
+  "engines.chain.then": ", depois ",
+  "engines.pin":
+    "Fixado em {engine} pelo arquivo da instalação: nunca troca para outro motor.",
+  "engines.alone":
+    "Só {engine} está configurado para este membro, então ainda não há para onde trocar. Sua escolha fica guardada para quando houver.",
+  "engines.source.yours": "Sua escolha. O arquivo da instalação diz: {mode}.",
+  "engines.source.file": "Do arquivo da instalação.",
+  "engines.block.not_at_the_computer":
+    "Mude isto no computador em que o FreeDuet roda.",
+  "engines.block.not_paired_with_the_computer":
+    "Primeiro pareie este navegador com o computador em que o FreeDuet roda: execute lá `bash scripts/open.sh` e abra o link aqui.",
+  "engines.block.agent_too_old": "Atualize o FreeDuet para mudar isto.",
+  "engines.block.choices_unreadable":
+    "Suas escolhas não puderam ser lidas, então as configurações da instalação estão em uso. Nada do que você escolheu se perde.",
+  "engines.saved": "Salvo. Vale a partir da próxima mensagem do membro.",
+  "engines.undone":
+    "Desfeito. A configuração anterior vale a partir da próxima mensagem do membro.",
+  "engines.providers.title": "Adicionar um motor",
+  "engines.providers.description":
+    "Ligue um motor, cole a chave dele e aperte Salvar, depois aperte Testar. Uma mudança vale a partir da próxima mensagem.",
+  "engines.providers.pickerLabel": "Provedor",
+  "engines.providers.blurb.ollama":
+    "Modelos que rodam no seu próprio computador.",
+  "engines.providers.blurb.llamacpp":
+    "Um servidor llama.cpp no seu próprio computador ou na sua rede.",
+  "engines.providers.blurb.lmstudio":
+    "O servidor local do LM Studio no seu próprio computador.",
+  "engines.providers.blurb.freellmapi":
+    "Um roteador que você mesmo executa e que reúne os planos gratuitos de vários provedores atrás de um único endereço.",
+  "engines.providers.blurb.groq":
+    "Modelos abertos rápidos, gratuitos com limites diários.",
+  "engines.providers.blurb.google": "Modelos Gemini, gratuitos com limites.",
+  "engines.providers.blurb.mistral":
+    "Modelos Mistral no plano gratuito, com limites.",
+  "engines.providers.blurb.openrouter":
+    "Só modelos que não custam nada: um id terminado em :free, ou openrouter/free.",
+  "engines.providers.blurb.cloudflare":
+    "Modelos abertos na Cloudflare, gratuitos com uma cota diária. Coloque a sua própria conta no endereço.",
+  "engines.providers.blurb.cerebras": "Modelos abertos muito rápidos.",
+  "engines.providers.blurb.anthropic-api": "Claude com créditos pagos por uso.",
+  "engines.providers.tag.local": "Local",
+  "engines.providers.tag.router": "Avançado: seu próprio roteador",
+  "engines.providers.tag.free": "Gratuito com limites",
+  "engines.providers.tag.trial": "Teste, exige cartão",
+  "engines.providers.tag.paid": "Pago",
+  "engines.providers.cloudWarning":
+    "Os dados enviados a este serviço saem do seu computador.",
+  "engines.providers.routerWarning":
+    "Suas mensagens vão para o roteador, que as repassa aos provedores gratuitos que você ativou dentro dele. Elas saem do seu computador, e esses provedores podem guardá-las.",
+  "engines.providers.routerAdvanced":
+    "Opção avançada, não é um padrão recomendado: o próprio projeto se descreve como apenas para experimentação pessoal. O FreeDuet não o instala nem o executa. As chaves dos seus provedores ficam dentro dele; o FreeDuet guarda apenas o único token de acesso que ele fornece a você.",
+  "engines.providers.routerAddress":
+    "A porta padrão dele, 3001, é a do FreeDuet. Execute-o em outra porta e escreva o endereço com /v1 no final. Neste computador, http serve. Fora deste computador, só a sua própria rede é aceita (um endereço de LAN ou um nome .local), por https. Um host público é recusado.",
+  "engines.providers.address": "Endereço do servidor",
+  "engines.providers.loadList": "Carregar a lista",
+  "engines.providers.saveSettings": "Salvar as configurações",
+  "engines.providers.test": "Testar",
+  "engines.providers.freeModelsNote":
+    "Os modelos gratuitos mudam com frequência e podem guardar o que você enviar.",
+  "engines.providers.freeModelsLoading":
+    "Carregando os modelos gratuitos que podem usar ferramentas.",
+  "engines.providers.freeModelsStale":
+    "Não foi possível alcançar o OpenRouter agora há pouco. Esta é a última lista carregada.",
+  "engines.providers.freeModelsFallback":
+    "Não foi possível alcançar o OpenRouter agora há pouco. Só o roteador gratuito é oferecido.",
+  "engines.providers.freeRouterLabel":
+    "openrouter/free (o OpenRouter escolhe um modelo gratuito)",
+  "engines.providers.keySaved": "Chave salva. Ela nunca mais é mostrada.",
+  "engines.providers.keyPlaceholder": "Cole a chave aqui",
+  "engines.providers.notOnKey":
+    "Ainda não está ligado. Cole a chave e aperte Salvar.",
+  "engines.providers.notOnSettings":
+    "Ainda não está ligado. Escolha um modelo e aperte Salvar as configurações.",
+  "engines.providers.settingsSaved":
+    "Salvo. Vale a partir da próxima mensagem.",
+  "engines.providers.keyRemoved": "Chave removida. O motor está desligado.",
+  "engines.providers.lockedOwnFile":
+    "Você escreveu um arquivo de motores próprio, então estes cartões só o mostram. Mude-o lá.",
+  "engines.providers.users.paid":
+    "Desligado até existirem tetos de gastos. O FreeDuet não deixará um motor pago rodar antes disso.",
+  "engines.providers.users.trial":
+    "O plano gratuito dele é um teste que exige cartão, então o FreeDuet não o oferece como gratuito. Continua desligado.",
+  "engines.providers.users.members":
+    "Para os membros: sim, depois do login deles no Claude. Para os assistentes leves: sim.",
+  "engines.providers.users.notYet":
+    "Para os membros: ainda não. Para os assistentes leves: sim.",
+  "engines.providers.check.ok": "Respondeu. Funciona.",
+  "engines.providers.check.key_rejected":
+    "A chave não foi aceita. Confira-a e salve-a de novo.",
+  "engines.providers.check.model_missing":
+    "O servidor não conhece esse modelo. Confira o nome do modelo.",
+  "engines.providers.check.rate_limited":
+    "O limite ou o crédito está esgotado por enquanto. Tente de novo mais tarde.",
+  "engines.providers.check.other":
+    "Nada respondeu, ou a resposta não foi entendida.",
+  "engines.providers.freeNote":
+    "“Gratuito” é o rótulo do FreeDuet, tirado dos termos do provedor. Alguns provedores (o Google, por exemplo) cobram de você se o faturamento estiver ligado no seu projeto.",
+  "engines.providers.useFor": "Usar para",
+  "engines.providers.useForNone":
+    "Nenhum membro o usa ainda. Os assistentes leves usam. Marque os membros que podem enviar o trabalho deles a este serviço.",
+  "engines.providers.warn.inbox": "Envia seus e-mails a este serviço.",
+  "engines.providers.warn.concierge": "Envia suas reservas a este serviço.",
+  "engines.providers.modelsEmpty":
+    "A lista está vazia. Digite o nome do modelo.",
+  "engines.providers.modelsLoaded": {
+    one: "{count} modelo carregado. Escolha um na caixa.",
+    many: "{count} de modelos carregados. Escolha um na caixa.",
+    other: "{count} modelos carregados. Escolha um na caixa.",
+  },
+  "engines.providers.switchOn": "Ligar {name}",
+  "engines.providers.changeFailed": "Não foi possível mudar isso.",
+  "engines.providers.keySaveFailed": "Não foi possível salvar a chave.",
+  "engines.providers.listFailed": "Não foi possível carregar a lista.",
+  "engines.providers.keyRemoveFailed": "Não foi possível remover a chave.",
+  "engines.providers.saveFailed": "Não foi possível salvar isso.",
+  "engines.providers.testFailed": "Não foi possível executar o teste.",
+  "engines.tokens.title": "Tokens",
+  "engines.tokens.description":
+    "O que cada membro usou em cada motor, como o próprio motor informou. Os dias são contados em UTC.",
+  "engines.tokens.fallback":
+    "Não foi possível carregar as contagens de tokens.",
+  "engines.tokens.empty": "Nenhum turno foi contado ainda.",
+  "engines.tokens.unavailable":
+    "As contagens de tokens não estão disponíveis agora.",
+  "engines.tokens.problem":
+    "Não foi possível ler o arquivo que guarda as contagens, então alguns números podem estar faltando.",
+  "engines.tokens.notReported": "não informado",
+  "engines.tokens.col.engine": "Motor",
+  "engines.tokens.col.week": "Últimos 7 dias",
+  "engines.tokens.allMembers": "Todos os membros",
+  "engines.tokens.note":
+    "A entrada conta todos os tokens dados ao modelo, inclusive os do cache. Cada linha conta tentativas do motor: uma nova tentativa no mesmo motor conta de novo. Uma tentativa cujo motor não informou nada soma o tempo dela e nenhum token. O tempo é medido aqui, do início ao fim de cada tentativa.",
+  "engines.tokens.savedWeek": "Economizado nos últimos 7 dias",
+  "engines.tokens.savedNote":
+    "Economizado significa os tokens que passaram por motores gratuitos, na nuvem ou no seu próprio computador. Sua assinatura do Claude Code é de valor fixo e os motores pagos custam dinheiro, então nenhum dos dois conta.",
+  "engines.tokens.currencyHelp":
+    "Clique em um valor para alternar entre euros e dólares.",
+  "engines.tokens.reference":
+    "Aos preços de tabela de {model} ({input} de entrada, {output} de saída por milhão de tokens, {date}); {euro} = {rate} ({rateDate}).",
+  "engines.tokens.under": "menos de {amount}",
+  "engines.tokens.nothingYet": "nada ainda",
+  "engines.tokens.plus": "mais {time}",
+  "engines.tokens.toDollars": "{amount}. Mostrar os valores em dólares",
+  "engines.tokens.toEuros": "{amount}. Mostrar os valores em euros",
+  "engines.tokens.amount": "{amount} tokens",
+  "engines.tokens.timeLocal": "{time} na sua própria GPU",
+  "engines.tokens.timeCloud": "{time} em um motor gratuito na nuvem",
+  "engines.tokens.and": " e ",
+  "engines.tokens.timeTail": "{parts}, tokens não informados",
+  "engines.tokens.cell": "{input} de entrada · {output} de saída",
+  "engines.tokens.partial": "{reported} de {total} tentativas informadas",
+  "engines.dur.under": "menos de 1 min",
+  "engines.dur.min": "{minutes} min",
+  "engines.dur.hourMin": "{hours} h {minutes} min",
+  "engines.usage.bySource": "Por origem",
+  "engines.usage.byMember": "Por membro",
+  "engines.usage.time": "Tempo",
+  "engines.usage.source.person": "Você",
+  "engines.usage.source.routine": "Rotinas",
+  "engines.usage.source.handoff": "Entre membros",
+  "engines.usage.source.other": "Outros",
+  "engines.usage.source.unknown": "Antes (não registrado)",
+  "engines.usage.title": "Para onde foram os últimos 7 dias",
+  "engines.usage.note":
+    "As parcelas são dos tokens que os motores informaram (entrada mais saída), ou do tempo quando “Tempo” está escolhido; as tentativas que não informaram tokens somam apenas tempo. “Você” são as suas próprias mensagens, “Rotinas” são as rotinas e os acompanhamentos, “Entre membros” são as passagens de trabalho, e “Outros” é todo o resto, como as execuções próprias de uma implantação.",
+  "engines.usage.nothing": "Nada foi contado nos últimos 7 dias.",
+  "engines.usage.chartsFailed":
+    "Não foi possível desenhar os gráficos de uso. A tabela abaixo não é afetada.",
+  "engines.usage.restMembers": "Outros membros",
+  "engines.usage.limitTitle": "Limites do plano",
+  "engines.usage.limitNone": "Nenhum motor está retido por um limite agora.",
+  "engines.usage.limitNote":
+    "Uma porcentagem do limite semanal do seu plano não é mostrada: a assinatura não a informa ao FreeDuet. Um motor só avisa quando atingiu um limite, com a hora em que é esperado de volta.",
+  "engines.usage.range": "{from} a {to}, dias em UTC",
+  "engines.usage.splitBy": "Dividir por",
+  "engines.usage.measure": "Medida",
+  "engines.usage.perDay": "{title}: {metric} por dia",
+  "engines.usage.perDayUtc": "{title}: {metric} por dia, UTC",
+  "engines.usage.day": "Dia",
+  // connections-begin
+  "connections.connect": "Conectar",
+  "connections.reconnect": "Reconectar",
+  "connections.connected": "Conectado",
+  "connections.teamAccount": "Conta da equipe",
+  "connections.disconnect": "Desconectar",
+  "connections.disconnecting": "Desconectando…",
+  "connections.startFailed":
+    "Não foi possível iniciar a conexão, então nada foi conectado. Tente de novo, ou pergunte a um administrador se continuar acontecendo.",
+  "connections.list.auth.no-broker":
+    "A conexão de aplicativos ainda não está configurada, então nada foi registrado. Peça a um administrador que a configure.",
+  "connections.list.auth.not-supported":
+    "Aqui os aplicativos se conectam uma única vez, com Conectar na página do aplicativo. Eles não são autorizados uma ação por vez.",
+  "connections.list.auth.missing-handle":
+    "Esse link não diz qual autorização ele conclui, então nada foi feito. Comece de novo pela página do aplicativo.",
+  "connections.list.auth.no-attempt":
+    "Não há nenhuma autorização em andamento para você concluir. Ela pode ter expirado ou ter sido iniciada em outra sessão. Comece de novo pela página do aplicativo.",
+  "connections.list.auth.vendor-unavailable":
+    "O aplicativo não respondeu quando o {product} tentou concluir essa autorização, então nada foi registrado. Tente o link de novo daqui a pouco.",
+  "connections.list.auth.not-your-authorization":
+    "Esse link não corresponde à autorização que você tem em andamento, então nada foi registrado. Conclua-a na aba em que você a iniciou, ou comece de novo pela página do aplicativo.",
+  "connections.list.auth.not-finished":
+    "Essa autorização ainda não terminou, então nada foi registrado. Conclua-a no aplicativo e depois abra o link de novo.",
+  "connections.list.auth.authorization-failed":
+    "O aplicativo não concluiu essa autorização, então nada foi registrado. Comece de novo pela página do aplicativo.",
+  "connections.list.auth.context-changed":
+    "A conta desse aplicativo mudou enquanto a autorização estava aberta, então nada foi registrado. O acesso dado à conta antiga foi removido. Comece de novo pela página do aplicativo.",
+  "connections.list.auth.not-permitted":
+    "Você não pode mais conectar a conta desse aplicativo, então nada foi registrado. Seu acesso ou a configuração do aplicativo mudou enquanto a autorização estava aberta. Pergunte a um administrador se você esperava concluí-la.",
+  "connections.list.auth.cancelled":
+    "Essa autorização foi cancelada enquanto estava sendo concluída, então nada foi registrado. O acesso que ela deu foi removido.",
+  "connections.list.auth.cancelled-left-live":
+    "Essa autorização foi cancelada enquanto estava sendo concluída, então nada foi registrado. O acesso que ela deu não pôde ser removido, então o aplicativo ainda pode permitir a ação que você cancelou. Para removê-lo, desconecte o aplicativo pela página dele, depois conecte de novo e autorize só o que você quiser.",
+  "connections.list.auth.not-recorded":
+    "Não foi possível registrar essa autorização, então nada foi salvo. Comece de novo pela página do aplicativo, ou pergunte a um administrador se continuar acontecendo.",
+  "connections.list.description":
+    "Os aplicativos e contas que seus assistentes usam como você. Abra um para conectá-lo ou mudá-lo.",
+  "connections.list.connectFailed":
+    "Não foi possível conectar essa conta. Nada foi salvo. Tente de novo.",
+  "connections.list.title": "Suas conexões",
+  "connections.list.loading": "Carregando conexões…",
+  "connections.list.loadError":
+    "Não foi possível carregar suas conexões. Recarregue a página, ou pergunte a um administrador se continuar acontecendo.",
+  "connections.list.empty":
+    "Ainda não há nada para conectar. Os aplicativos aparecem aqui quando um administrador os liga.",
+  "connections.list.count": "{inUse} em uso · {total} no total",
+  "connections.list.search": "Buscar conexões",
+  "connections.list.noMatch": "Nada corresponde a “{query}”.",
+  "connections.list.linksError":
+    "Não foi possível carregar o GitHub e o Slack, então eles não estão na lista. Recarregue a página.",
+  "connections.list.connectNamed": "Conectar {title}",
+  "connections.list.reconnectNamed": "Reconectar {title}",
+  "connections.app.landed": "Você acabou de autorizar {action}.",
+  "connections.app.pendingTitle": "Conta",
+  "connections.app.loadError":
+    "Não foi possível carregar esta conexão. Recarregue a página, ou pergunte a um administrador se continuar acontecendo.",
+  "connections.app.appLoadError":
+    "Não foi possível carregar este aplicativo. Recarregue a página, ou pergunte a um administrador se continuar acontecendo.",
+  "connections.app.notSetUp":
+    "{title} ainda não está configurado. Um administrador precisa ligá-lo antes que alguém possa conectá-lo.",
+  "connections.app.sharedDesc":
+    "Compartilhado pela sua organização. Os assistentes agem como a conta da equipe.",
+  "connections.app.brokeredDesc":
+    "Os assistentes usam isto como você e veem só o que você pode ver.",
+  "connections.app.reassurance": "Nenhum assistente pode usar isto como você.",
+  "connections.app.tripPerAction": "Autorize abaixo as ações que você quiser.",
+  "connections.app.tripConnect":
+    "Ao conectar, você vai até {title} para aprovar o acesso.",
+  "connections.app.connectedDesc":
+    "Os assistentes que você permitir usam o seu {title} como você. Ao desconectar, o acesso deles é removido em todo lugar.",
+  "connections.app.notYours":
+    "Você não conecta este aplicativo por conta própria.",
+  "connections.app.oneShared":
+    "Os assistentes usam uma única conta compartilhada para este aplicativo, a mesma para todos.",
+  "connections.app.noApp":
+    "O {product} não tem nenhum aplicativo com esse nome.",
+  "connections.app.yourAccount": "Sua conta",
+  "connections.app.notAvailable":
+    "Ainda não está disponível. Um administrador precisa ligar isto primeiro.",
+  "connections.app.connectedAsYou":
+    "Os assistentes que você permitir usam isto como você e veem só o que você pode ver.",
+  "connections.app.notConnected":
+    "Nenhum assistente pode usar isto como você. Ao conectar, você vai até {vendor} para aprovar o acesso.",
+  "connections.app.disconnectedDone":
+    "Desconectado. O {product} não pode mais usar sua conta do {vendor}.",
+  "connections.app.disconnectedUnconfirmed":
+    "Desconectado aqui. O {vendor} não confirmou, então remova também o {product} nas configurações de acesso de terceiros da sua conta do {vendor}.",
+  "connections.app.accessDesc":
+    "O que você permitiu, como o {vendor} registrou. Pode ser menos do que o {product} pediu.",
+  "connections.app.access": "Acesso",
+  "connections.app.allowed": "Permitido",
+  "connections.app.vendorDidntSay": "O {vendor} não informou.",
+  "connections.identity.toolsDesc":
+    "Permite que seus assistentes leiam e mudem seus repositórios como você. Você conecta isto separadamente da sua conta acima.",
+  "connections.identity.tools": "Ferramentas",
+  "connections.identity.githubTools": "Ferramentas do GitHub",
+  "connections.identity.notConnected": "Não conectado",
+  "connections.mail.neverRun": "Ainda não foi executada.",
+  "connections.mail.lastRun": {
+    one: "Última execução {when}: {count} mensagem. {total} no total.",
+    many: "Última execução {when}: {count} de mensagens. {total} no total.",
+    other: "Última execução {when}: {count} mensagens. {total} no total.",
+  },
+  "connections.mail.on": "Ligada. {activity}",
+  "connections.mail.off": "Desligada",
+  "connections.mail.switchOff": "Desligar",
+  "connections.mail.switchOn": "Ligar",
+  "connections.mail.delete": "Excluir",
+  "connections.mail.lastProblem": "Último problema: {error}",
+  "connections.mail.description":
+    "Regras permanentes que você pediu no chat. Seus assistentes as guardam e as aplicam aos e-mails novos a cada poucos minutos; elas não são filtros do Gmail. Excluir uma regra não desfaz o que ela já fez.",
+  "connections.mail.title": "Regras de e-mail",
+  "connections.mail.search": "Buscar regras de e-mail",
+  "connections.mail.statusLabel": "Estado da regra",
+  "connections.mail.allStatuses": "Todos os estados",
+  "connections.mail.optActive": "Ativas",
+  "connections.mail.optPaused": "Em pausa",
+  "connections.mail.active": "Ativa",
+  "connections.mail.paused": "Em pausa",
+  "connections.mail.noMatch": "Nenhuma regra corresponde a esses filtros.",
+  "connections.mail.paging": {
+    one: "{from}–{to} de {count} regra",
+    many: "{from}–{to} de {count} de regras",
+    other: "{from}–{to} de {count} regras",
+  },
+  "connections.mail.previous": "Anterior",
+  "connections.mail.next": "Próxima",
+  "connections.secret.aMember": "Um membro",
+  "connections.secret.doneMemberCal":
+    "Conectado. {name} agora pode ler seu e-mail e seu calendário como você.",
+  "connections.secret.doneMember":
+    "Conectado. {name} agora pode ler seu e-mail como você.",
+  "connections.secret.doneBotsCal":
+    "Conectado. Os assistentes que você permitir agora podem ler seu e-mail e seu calendário como você.",
+  "connections.secret.doneBots":
+    "Conectado. Os assistentes que você permitir agora podem ler seu e-mail como você.",
+  "connections.secret.notAvailable":
+    "Ainda não está disponível. Um administrador precisa ligar isto primeiro.",
+  "connections.secret.statusError":
+    "Não foi possível carregar se você já conectou isto. Recarregue a página, ou pergunte a um administrador se continuar acontecendo.",
+  "connections.secret.yourAccount": "Sua conta",
+  "connections.secret.connectedCal":
+    "Conectado como {address}. Seu calendário também está conectado. Os assistentes que você permitir usam isto como você.",
+  "connections.secret.connectedNoCal":
+    "Conectado como {address}. Nenhum calendário está conectado. Os assistentes que você permitir usam isto como você.",
+  "connections.secret.notConnected":
+    "Nenhum assistente pode usar isto como você. Cole abaixo uma senha de app para conectar seu Gmail.",
+  "connections.secret.useDifferent": "Usar outra senha de app",
+  "connections.secret.disconnected":
+    "Desconectado. O {product} não pode mais ler seu e-mail nem seu calendário. Para ter certeza de que a senha de app deixe de funcionar, exclua-a também em {url}.",
+  "connections.secret.formDesc":
+    "Dois passos no Google, depois cole o que eles derem. Nada é salvo se o Gmail não aceitar.",
+  "connections.secret.connectTitle": "Conectar",
+  "connections.secret.memberWillUse": "{name} vai usar esta caixa de e-mail.",
+  "connections.secret.step1Lead":
+    "Ative a verificação em duas etapas na sua conta do Google e depois crie uma senha de app em",
+  "connections.secret.step1Tail":
+    ". Dê a ela o nome {product} e copie as dezesseis letras.",
+  "connections.secret.step2Lead":
+    "Para que seus assistentes vejam também seu calendário: no Google Agenda, abra as Configurações, escolha seu calendário e copie o",
+  "connections.secret.step2Link": "Endereço secreto no formato iCal",
+  "connections.secret.step2Tail": ". Este passo é opcional.",
+  "connections.secret.address": "Seu endereço do Gmail",
+  "connections.secret.password": "Senha de app",
+  "connections.secret.passwordHint":
+    "As dezesseis letras do Google, com ou sem os espaços. Não é a sua senha de costume.",
+  "connections.secret.calendar": "Endereço secreto do calendário (opcional)",
+  "connections.secret.calendarHint":
+    "Qualquer pessoa com este endereço pode ler seu calendário, então ele é guardado com o mesmo cuidado que a senha.",
+  "connections.secret.checking": "Verificando com o Gmail…",
+  "connections.secret.canDoTitle":
+    "O que isto permite que seus assistentes façam",
+  "connections.secret.canDoDesc":
+    "Uma senha de app abre toda a sua caixa de e-mail, então vale saber o que isto faz.",
+  "connections.secret.canDo":
+    "Seus assistentes podem buscar e ler seu e-mail e olhar seu calendário. Eles não podem excluir, mover nem rotular nada. Uma resposta só sai depois que você a aprovar, e só para pessoas que já estão na mensagem. Você pode desconectar a qualquer momento e pode excluir a senha de app no Google quando quiser.",
+  "connections.mode.goesShared": "A conta compartilhada será desconectada.",
+  "connections.mode.goesNoShared":
+    "Nenhuma conta compartilhada está conectada.",
+  "connections.mode.goesPersonal": {
+    one: "{count} conta pessoal será desconectada.",
+    many: "{count} de contas pessoais serão desconectadas.",
+    other: "{count} contas pessoais serão desconectadas.",
+  },
+  "connections.mode.makeShared": "Tornar {title} compartilhado",
+  "connections.mode.makePersonal": "Tornar {title} pessoal",
+  "connections.mode.titleShared": "Compartilhar uma única conta do {title}?",
+  "connections.mode.titlePersonal":
+    "Dar a cada pessoa a sua própria conta do {title}?",
+  "connections.mode.checking": "Verificando o que isto mudaria…",
+  "connections.mode.everyone":
+    "Todos que usarem um assistente com este aplicativo agirão como esta única conta.",
+  "connections.cancel": "Cancelar",
+  "connections.dir.description":
+    "O diretório de aplicativos de {name}. Adicione um aplicativo para tornar as ferramentas dele disponíveis aos assistentes. Cada pessoa ainda conecta a própria conta antes que ele leia qualquer coisa.",
+  "connections.dir.appsTitle": "Aplicativos",
+  "connections.dir.appsDesc":
+    "Busque pelo nome. Ninguém aqui revisou estes aplicativos.",
+  "connections.dir.searchAria": "Buscar nos aplicativos de {name}",
+  "connections.dir.searchPlaceholder": "Buscar pelo nome do aplicativo",
+  "connections.dir.noMatch":
+    'Nenhum aplicativo de {name} corresponde a "{query}".',
+  "connections.dir.none": "{name} não devolveu nenhum aplicativo.",
+  "connections.dir.actions": {
+    one: "{count} ação",
+    many: "{count} de ações",
+    other: "{count} ações",
+  },
+  "connections.dir.added": "Adicionado",
+  "connections.dir.adding": "Adicionando…",
+  "connections.dir.add": "Adicionar",
+  "connections.grants.consentFailed":
+    "O {product} respondeu sem um link de consentimento, então nada foi autorizado. Tente de novo, ou pergunte a um administrador se continuar acontecendo.",
+  "connections.grants.title": "Ações",
+  "connections.grants.readError":
+    "Não foi possível ler agora o que esta conta permite.",
+  "connections.grants.retry": "Tentar de novo",
+  "connections.grants.description":
+    "Agrupadas pela permissão que cada ação pede. Isto corresponde ao que a tela de consentimento mostra.",
+  "connections.grants.search": "Buscar ações",
+  "connections.grants.wholeApp": "Tudo neste aplicativo, aprovado em conjunto",
+  "connections.grants.noPermission": "Não pede nenhuma permissão própria",
+  "connections.grants.needs": "Precisa de {scopes}",
+  "connections.grants.authorize": "Autorizar",
+  "connections.grants.hidden": {
+    one: "Mais {count} ação ainda não autorizada. Busque para encontrá-la.",
+    many: "Mais {count} de ações ainda não autorizadas. Busque para encontrar uma.",
+    other:
+      "Mais {count} ações ainda não autorizadas. Busque para encontrar uma.",
+  },
+  "connections.grants.noMatch": "Nenhuma ação corresponde a essa busca.",
+  "connections.grants.before": "Antes de você autorizar {action}",
+  "connections.grants.continue": "Continuar para o consentimento",
+  "connections.grants.notRequired": "Não precisa de autorização.",
+  "connections.grants.authorized": "Autorizada.",
+  "connections.grants.notYet": "Ainda não autorizada.",
+  "connections.grants.notYetAdmin":
+    "Ainda não autorizada. Um administrador pode autorizá-la.",
+  "connections.grants.missing":
+    "Falta {missing}. Um administrador precisa definir isso. Autorizar não resolve.",
+  "connections.grants.missingSetting":
+    "Falta uma configuração. Um administrador precisa defini-la. Autorizar não resolve.",
+  "connections.grants.unknown":
+    "Não foi possível ler esta ação agora. {reason}",
+  "connections.row.connectKey":
+    "Este aplicativo se conecta com uma chave, não com uma página de login, então nada foi conectado. Recarregue a página e aperte Conectar de novo.",
+  "connections.row.noAuth":
+    "O {title} não precisa de conta. Os assistentes que o têm podem usá-lo como está.",
+  "connections.row.verified":
+    "Conectado com a sua chave. Última verificação: {date}.",
+  "connections.row.failedCheck":
+    "Sua chave não passou em uma verificação com o {title}. Pode ser a chave, ou o próprio {title}. Sua conta continua conectada. Aperte Verificar de novo para tentar outra vez, ou desconecte e conecte com uma chave nova.",
+  "connections.row.noSafeCheck":
+    "Conectado com a sua chave. Ela não foi verificada com o {title}. Na época, o {title} não tinha uma forma segura de verificar uma chave. Isso diz respeito ao aplicativo, não à sua chave.",
+  "connections.row.unchecked":
+    "Conectado com a sua chave. Ela não foi verificada com o {title}.",
+  "connections.row.keyStillWorks":
+    "Desconectado. Sua chave continua funcionando no {title}. Mude-a lá para encerrar todo o acesso.",
+  "connections.row.asksForKey":
+    "O {title} se conecta com uma chave que você já tem. Conectar pede por ela.",
+  "connections.row.signedIn": "Login feito com o {title}. {description}",
+  "connections.row.yourAccount": "Sua conta",
+  "connections.row.keyMissing": "Falta a chave",
+  "connections.row.recheck": "Verificar de novo",
+  "connections.row.rechecking": "Verificando…",
+  "connections.row.perAction": "Aprovado por ação",
+  "connections.row.connectYour": "Conecte sua conta",
+  "connections.row.checkingNeeds": "Verificando do que o aplicativo precisa…",
+  "connections.row.noNeeds":
+    "Não foi possível descobrir do que este aplicativo precisa. Feche isto e tente de novo.",
+  // connections-end
+  // computer-begin
+  "computer.tool.readPage": "",
+  "computer.tool.readPageCount": { one: "", other: "" },
+  "computer.tool.filledIn": "",
+  "computer.tool.choseIn": "",
+  "computer.tool.clicked": "",
+  "computer.tool.pressed": "",
+  "computer.tool.listedFiles": "",
+  "computer.tool.itemsInWorkspace": { one: "", other: "" },
+  "computer.tool.nothingSaved": "",
+  "computer.tool.readFile": "",
+  "computer.tool.ranCommand": "",
+  "computer.tool.addedToFile": "",
+  "computer.tool.savedFile": "",
+  "computer.tool.scrolled": "",
+  "computer.signIn.waiting": "",
+  "computer.signIn.signedIn": "",
+  "computer.signIn.failed": "",
+  "computer.signIn.open": "",
+  "computer.signIn.dialogTitle": "",
+  "computer.signIn.dialogBody": "",
+  "computer.output.truncated": "",
+  "computer.output.nothing": "",
+  "computer.output.timedOut": "",
+  "computer.output.exitCode": "",
+  "computer.activity.ran": "",
+  "computer.activity.read": "",
+  "computer.activity.saved": "",
+  "computer.activity.listed": "",
+  "computer.activity.workspace": "",
+  "computer.activity.refused": "",
+  "computer.activity.empty": "",
+  "computer.control.handBack": "",
+  "computer.control.take": "",
+  "computer.control.finishing": "",
+  "computer.control.close": "",
+  "computer.control.open": "",
+  "computer.panel.sidebar": "",
+  "computer.live.cantShow": "",
+  "computer.live.drivingLabel": "",
+  "computer.live.label": "",
+  "computer.view.aPage": "",
+  "computer.view.openedDuring": "",
+  "computer.view.noPage": "",
+  "computer.view.cantShow": "",
+  "computer.view.cantShowHelp": "",
+  "computer.view.blank": "",
+  "computer.view.waiting": "",
+  "computer.view.unavailable": "",
+  "computer.view.alt": "",
+  "computer.view.open": "",
+  "computer.view.youHaveControl": "",
+  "computer.view.botNeedsYou": "",
+  "computer.view.cancelRequest": "",
+  "computer.view.finishingBot": "",
+  "computer.view.recovery": "",
+  "computer.view.interrupted": "",
+  "computer.view.secretNeedsHost": "",
+  "computer.view.secretNeedsPage": "",
+  "computer.view.secretType": "",
+  "computer.view.secretPlaceholder": "",
+  "computer.view.secretGoesHost": "",
+  "computer.view.secretGoesPage": "",
+  "computer.view.sending": "",
+  "computer.view.send": "",
+  "computer.view.checking": "",
+  "computer.view.drivingOpen": "",
+  "computer.view.botHas": "",
+  "computer.view.dialog": "",
+  "computer.view.close": "",
+  "computer.view.turnAlt": "",
+  "computer.view.finishingYou": "",
+  "computer.view.drivingClick": "",
+  "computer.handoff.noCall": "",
+  "computer.handoff.answered": "",
+  "computer.handoff.running": "",
+  "computer.handoff.unreachable": "",
+  "computer.handoff.couldntResume": "",
+  "computer.handoff.waiting": "",
+  "computer.handoff.paused": "",
+  "computer.handoff.stopWaiting": "",
+  "computer.handoff.resume": "",
+  "computer.demo.everyWeekday": "",
+  "computer.demo.everyDay": "",
+  "computer.demo.everyMonday": "",
+  "computer.demo.everyHour": "",
+  "computer.demo.scheduled": "",
+  "computer.demo.seeRoutines": "",
+  "computer.demo.when": "",
+  "computer.demo.custom": "",
+  "computer.demo.cron": "",
+  "computer.demo.reportIn": "",
+  "computer.demo.onlyConversation": "",
+  "computer.demo.inputs": "",
+  "computer.demo.title": "",
+  "computer.demo.intro": "",
+  "computer.demo.recording": { one: "", other: "" },
+  "computer.demo.left": "",
+  "computer.demo.limitReached": "",
+  "computer.demo.stop": "",
+  "computer.demo.name": "",
+  "computer.demo.namePlaceholder": "",
+  "computer.demo.record": "",
+  "computer.demo.takeControl": "",
+  "computer.demo.entry": { one: "", other: "" },
+  "computer.demo.stoppedAtLimit": "",
+  "computer.demo.edit": "",
+  "computer.demo.runSchedule": "",
+  "computer.demo.reviewDraft": "",
+  "computer.demo.reviewTitle": "",
+  "computer.demo.reviewHelp": "",
+  "computer.demo.saveUse": "",
+  "computer.demo.couldntSave": "",
+  "computer.demo.ready": "",
+  // computer-end
+};

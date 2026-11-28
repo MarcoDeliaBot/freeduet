@@ -52,6 +52,8 @@ import {
   pluginsPageQueryOptions,
 } from "@/lib/plugins/queries";
 import { searchTextEntry } from "@/lib/search-text";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { englishT, type T, useT } from "@/freeduet/i18n/provider";
 
 /**
  * The services a Bot reads as you.
@@ -117,68 +119,39 @@ export const Route = createFileRoute("/_authed/_app/connections/")({
  * unrecognised code and the borrowed member are once again the same case, by construction rather
  * than by a list of names to keep out.
  */
-export const AUTHORIZATION_NOTICES: ReadonlyMap<string, string> = new Map([
-  [
-    "no-broker",
-    "Connecting apps isn't set up yet, so nothing was recorded. Ask an admin to set it up.",
-  ],
-  [
-    "not-supported",
-    "Apps here connect once, with Connect on the app's page. They aren't authorized one action at a time.",
-  ],
-  [
-    "missing-handle",
-    "That link doesn't say which authorization it finishes, so nothing was done. Start again from the app's page.",
-  ],
-  [
-    "no-attempt",
-    "There's no authorization in progress for you to finish. It may have expired, or started in another session. Start again from the app's page.",
-  ],
-  [
-    "vendor-unavailable",
-    `The app didn't answer when ${appConfig.brand.productName} tried to finish that authorization, so nothing was recorded. Try the link again in a moment.`,
-  ],
-  [
-    "not-your-authorization",
-    "That link doesn't match the authorization you have in progress, so nothing was recorded. Finish it in the tab you started it in, or start again from the app's page.",
-  ],
-  [
-    "not-finished",
-    "That authorization hasn't finished yet, so nothing was recorded. Finish it at the app, then open the link again.",
-  ],
-  [
-    "authorization-failed",
-    "The app didn't complete that authorization, so nothing was recorded. Start again from the app's page.",
-  ],
-  [
-    "context-changed",
-    "That app's account changed while the authorization was open, so nothing was recorded. Access given to the old account was removed. Start again from the app's page.",
-  ],
-  [
-    "not-permitted",
-    "You can't connect that app's account anymore, so nothing was recorded. Your access or the app's setup changed while the authorization was open. Ask an admin if you expected to finish it.",
-  ],
-  [
-    "cancelled",
-    "That authorization was cancelled while it was being finished, so nothing was recorded. The access it gave was removed.",
-  ],
-  [
-    "cancelled-left-live",
-    "That authorization was cancelled while it was being finished, so nothing was recorded. The access it gave couldn't be removed, so the app may still allow the action you cancelled. To remove it, disconnect the app from its page, then connect again and authorize only what you want.",
-  ],
-  [
-    "not-recorded",
-    "Couldn't record that authorization, so nothing was saved. Start again from the app's page, or ask an admin if it keeps happening.",
-  ],
+const AUTHORIZATION_IDS: ReadonlyMap<string, MessageId> = new Map([
+  ["no-broker", "connections.list.auth.no-broker"],
+  ["not-supported", "connections.list.auth.not-supported"],
+  ["missing-handle", "connections.list.auth.missing-handle"],
+  ["no-attempt", "connections.list.auth.no-attempt"],
+  ["vendor-unavailable", "connections.list.auth.vendor-unavailable"],
+  ["not-your-authorization", "connections.list.auth.not-your-authorization"],
+  ["not-finished", "connections.list.auth.not-finished"],
+  ["authorization-failed", "connections.list.auth.authorization-failed"],
+  ["context-changed", "connections.list.auth.context-changed"],
+  ["not-permitted", "connections.list.auth.not-permitted"],
+  ["cancelled", "connections.list.auth.cancelled"],
+  ["cancelled-left-live", "connections.list.auth.cancelled-left-live"],
+  ["not-recorded", "connections.list.auth.not-recorded"],
 ]);
+
+/** The English sentences, kept for what pins the set of codes and their wording. */
+export const AUTHORIZATION_NOTICES: ReadonlyMap<string, string> = new Map(
+  [...AUTHORIZATION_IDS].map(([code, id]) => [
+    code,
+    englishT(id, { product: appConfig.brand.productName }),
+  ]),
+);
 
 /** The sentence for a code the verifier sent back, or null for one this build does not know. */
 export function authorizationNoticeFor(
   authorized: string | undefined,
+  t: T = englishT,
 ): string | null {
-  return authorized
-    ? (keyedLookup(AUTHORIZATION_NOTICES, authorized) ?? null)
-    : null;
+  const id = authorized
+    ? keyedLookup(AUTHORIZATION_IDS, authorized)
+    : undefined;
+  return id ? t(id, { product: appConfig.brand.productName }) : null;
 }
 
 /** The same marks the admin connector list uses: these are the same vendors seen from your side. */
@@ -252,6 +225,7 @@ export function sharedAccountsListedOn(
 }
 
 function RouteComponent() {
+  const t = useT();
   const { connected: outcome, authorized, linked } = Route.useSearch();
   /*
    * ALL THREE READ ONCE HERE, AND ALL THREE DROPPED FROM THE URL BELOW — not just `?linked=`.
@@ -272,7 +246,7 @@ function RouteComponent() {
    */
   const [arrival] = React.useState(() => ({
     outcome,
-    authorizationNotice: authorizationNoticeFor(authorized),
+    authorized,
     linked: linkedNotice(linked),
   }));
   /* The same cached list the Linked accounts section reads, so a Disconnect there retracts a success here. */
@@ -376,8 +350,8 @@ function RouteComponent() {
     providers.isPending;
 
   const workspace = isFreeDuetApp();
-  const description =
-    "The apps and accounts your Bots use as you. Open one to connect it or change it.";
+  const description = t("connections.list.description");
+  const authorizationNotice = authorizationNoticeFor(arrival.authorized, t);
   const contents = (
     <>
       {/*
@@ -387,7 +361,7 @@ function RouteComponent() {
        */}
       {arrival.outcome === "failed" ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
-          Couldn't connect that account. Nothing was saved. Try again.
+          {t("connections.list.connectFailed")}
         </p>
       ) : null}
       {notice ? (
@@ -406,15 +380,15 @@ function RouteComponent() {
        * because three of its refusals have no app to name, and a notice that sometimes appears one
        * level in and sometimes here would be a notice people learn to look for in two places.
        */}
-      {arrival.authorizationNotice ? (
+      {authorizationNotice ? (
         <p className="mt-4 text-destructive text-sm" role="alert">
-          {arrival.authorizationNotice}
+          {authorizationNotice}
         </p>
       ) : null}
       <PageSection
         className={workspace ? "fd-accounts" : undefined}
         description={workspace ? undefined : description}
-        title="Your connections"
+        title={t("connections.list.title")}
       >
         {/*
          * BOTH APP READS DECIDE THIS. A `/api/plugins` that succeeded beside a
@@ -425,39 +399,35 @@ function RouteComponent() {
         {loading ? (
           workspace ? (
             <p className="mt-4 text-sm text-muted-foreground" role="status">
-              Loading connections…
+              {t("connections.list.loading")}
             </p>
           ) : null
         ) : plugins.error || connections.error ? (
           <p className="mt-4 text-destructive text-sm" role="alert">
-            Couldn't load your connections. Reload the page, or ask an admin if
-            it keeps happening.
+            {t("connections.list.loadError")}
           </p>
         ) : rows.length === 0 ? (
-          <PageEmpty>
-            Nothing to connect yet. Apps show up here once an admin turns them
-            on.
-          </PageEmpty>
+          <PageEmpty>{t("connections.list.empty")}</PageEmpty>
         ) : (
           <>
             <p className="mt-4 text-xs text-muted-foreground">
-              {inUse} in use · {rows.length} in all
+              {t("connections.list.count", { inUse, total: rows.length })}
             </p>
             <InputGroup className="mt-3 h-11 border-transparent bg-muted/60 shadow-none dark:bg-muted/60">
               <InputGroupAddon>
                 <IconSearch aria-hidden="true" className="size-4" />
               </InputGroupAddon>
               <InputGroupInput
-                aria-label="Search connections"
+                aria-label={t("connections.list.search")}
                 className="h-11"
-                placeholder="Search connections"
+                placeholder={t("connections.list.search")}
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
             </InputGroup>
             {matching.length === 0 ? (
               <p className="mt-8 text-sm text-muted-foreground" role="status">
-                Nothing matches “{search.trim()}”.
+                {t("connections.list.noMatch", { query: search.trim() })}
               </p>
             ) : (
               <div
@@ -480,8 +450,7 @@ function RouteComponent() {
         )}
         {links.error || providers.error ? (
           <p className="mt-4 text-destructive text-sm" role="alert">
-            Couldn't load GitHub and Slack, so they aren't listed. Reload the
-            page.
+            {t("connections.list.linksError")}
           </p>
         ) : null}
       </PageSection>
@@ -489,11 +458,15 @@ function RouteComponent() {
     </>
   );
   return workspace ? (
-    <WorkspaceShell title="Connections" icon="plug" description={description}>
+    <WorkspaceShell
+      title={t("nav.connections")}
+      icon="plug"
+      description={description}
+    >
       {contents}
     </WorkspaceShell>
   ) : (
-    <PageShell className="@container" title="Connections">
+    <PageShell className="@container" title={t("nav.connections")}>
       {contents}
     </PageShell>
   );
@@ -512,6 +485,7 @@ export function ConnectionItem({
   row: ConnectionRow;
   quickConnect?: boolean;
 }) {
+  const t = useT();
   const [problem, setProblem] = React.useState<string | null>(null);
   const connect = useMutation({
     ...connectAccountMutationOptions(),
@@ -519,9 +493,7 @@ export function ConnectionItem({
     onSuccess: (authorizationUrl) => {
       /* The same rule as the app's own page: a 200 with no address is not an address to follow. */
       if (authorizationUrl === null) {
-        setProblem(
-          "Couldn't start connecting, so nothing was connected. Try again, or ask an admin if it keeps happening.",
-        );
+        setProblem(t("connections.startFailed"));
         return;
       }
       window.location.href = authorizationUrl;
@@ -562,7 +534,12 @@ export function ConnectionItem({
       <div className="flex items-center gap-1">
         <div className="min-w-0 flex-1">{item}</div>
         <Button
-          aria-label={`${row.state === "needs_reconnect" ? "Reconnect" : "Connect"} ${row.title}`}
+          aria-label={t(
+            row.state === "needs_reconnect"
+              ? "connections.list.reconnectNamed"
+              : "connections.list.connectNamed",
+            { title: row.title },
+          )}
           className="min-h-11 shrink-0"
           disabled={connect.isPending}
           onClick={() => {
@@ -573,7 +550,11 @@ export function ConnectionItem({
           type="button"
           variant="outline"
         >
-          {row.state === "needs_reconnect" ? "Reconnect" : "Connect"}
+          {t(
+            row.state === "needs_reconnect"
+              ? "connections.reconnect"
+              : "connections.connect",
+          )}
         </Button>
       </div>
       {problem ? (
@@ -593,6 +574,7 @@ function ConnectionMark({ mark }: { mark: ConnectionRow["mark"] }) {
 }
 
 function ConnectionStateLabel({ state }: { state: ConnectionRow["state"] }) {
+  const t = useT();
   if (state === "connected") {
     return (
       <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -600,16 +582,24 @@ function ConnectionStateLabel({ state }: { state: ConnectionRow["state"] }) {
           aria-hidden="true"
           className="size-3.5 text-emerald-600 dark:text-emerald-400"
         />
-        Connected
+        {t("connections.connected")}
       </span>
     );
   }
   if (state === "team") {
-    return <span className="text-xs text-muted-foreground">Team account</span>;
+    return (
+      <span className="text-xs text-muted-foreground">
+        {t("connections.teamAccount")}
+      </span>
+    );
   }
   return (
     <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium">
-      {state === "needs_reconnect" ? "Reconnect" : "Connect"}
+      {t(
+        state === "needs_reconnect"
+          ? "connections.reconnect"
+          : "connections.connect",
+      )}
     </span>
   );
 }

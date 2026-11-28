@@ -10,6 +10,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Fragment } from "react";
+import { StalledHandoffRow } from "@/components/bot-profile/stalled-handoff";
 import {
   PageEmpty,
   PageRows,
@@ -25,6 +26,8 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { useAppLanguage, useT } from "@/freeduet/i18n/provider";
 import {
   cancelFollowUpMutationOptions,
   stopHandoffMutationOptions,
@@ -46,13 +49,13 @@ const ICONS: Record<ActivityKind, typeof IconBell> = {
   follow_up: IconClockPlay,
 };
 
-const KIND_LABEL: Record<ActivityKind, string> = {
-  routine: "Routine",
-  responsibility: "Responsibility",
-  handoff: "Delegated task",
-  approval: "Approval",
-  question: "Question",
-  follow_up: "Follow-up",
+const KIND_LABEL: Record<ActivityKind, MessageId> = {
+  routine: "bot.activity.kindRoutine",
+  responsibility: "bot.activity.kindResponsibility",
+  handoff: "bot.activity.kindHandoff",
+  approval: "bot.activity.kindApproval",
+  question: "bot.activity.kindQuestion",
+  follow_up: "bot.activity.kindFollowUp",
 };
 
 /** Where an item opens: its conversation when it has one, otherwise the screen that owns its kind. */
@@ -74,6 +77,7 @@ function linkFor(item: ActivityItem, agentId: string) {
   }
 }
 
+/** D171: a hand-off that gave up gets the plain "did not finish" row with Try again; the rest as before. */
 function ActivityRow({
   agentId,
   item,
@@ -81,11 +85,34 @@ function ActivityRow({
   agentId: string;
   item: ActivityItem;
 }) {
+  if (item.stalled)
+    return (
+      <StalledHandoffRow
+        agentId={agentId}
+        channelId={item.channelId}
+        id={item.id}
+        reason={item.stalled.reason}
+        task={item.title}
+        toName={item.stalled.toName}
+      />
+    );
+  return <PlainActivityRow agentId={agentId} item={item} />;
+}
+
+function PlainActivityRow({
+  agentId,
+  item,
+}: {
+  agentId: string;
+  item: ActivityItem;
+}) {
+  const t = useT();
+  const { language } = useAppLanguage();
   const stop = useMutation(stopHandoffMutationOptions(queryClient));
   const cancel = useMutation(cancelFollowUpMutationOptions(queryClient));
   const Icon = ICONS[item.kind];
   const link = linkFor(item, agentId);
-  const when = relativeTime(item.at);
+  const when = relativeTime(item.at, language);
   const control = item.stoppable ? (
     <Button
       disabled={stop.isPending}
@@ -93,7 +120,7 @@ function ActivityRow({
       size="sm"
       variant="outline"
     >
-      {stop.isPending ? "Stopping…" : "Stop"}
+      {stop.isPending ? t("bot.activity.stopping") : t("bot.activity.stop")}
     </Button>
   ) : item.cancellable ? (
     <Button
@@ -102,7 +129,7 @@ function ActivityRow({
       size="sm"
       variant="outline"
     >
-      {cancel.isPending ? "Cancelling…" : "Cancel"}
+      {cancel.isPending ? t("bot.activity.cancelling") : t("settings.cancel")}
     </Button>
   ) : null;
   const content = (
@@ -113,7 +140,8 @@ function ActivityRow({
       <ItemContent>
         <ItemTitle>{item.title}</ItemTitle>
         <ItemDescription>
-          {KIND_LABEL[item.kind]} · {item.needsYou ? "needs you" : item.status}
+          {t(KIND_LABEL[item.kind])} ·{" "}
+          {item.needsYou ? t("bot.activity.needsYou") : item.status}
           {when ? ` · ${when}` : ""}
           {item.detail ? ` · ${item.detail}` : ""}
         </ItemDescription>
@@ -131,7 +159,7 @@ function ActivityRow({
         <ItemActions>
           {link ? (
             <Button render={link} size="sm" variant="ghost">
-              Open
+              {t("bot.activity.open")}
             </Button>
           ) : null}
           {control}
@@ -178,13 +206,14 @@ function ActivitySection({
 
 /** In progress, Scheduled and Completed, read from the ledgers the work already lives in. */
 export function BotActivitySections({ agentId }: { agentId: string }) {
+  const t = useT();
   const activity = useQuery(botActivityQueryOptions(agentId));
   if (activity.isPending) return null;
   if (activity.error)
     return (
-      <PageSection title="Activity">
+      <PageSection title={t("bot.activity.title")}>
         <p className="mt-4 text-destructive text-sm" role="alert">
-          Couldn't load this Bot's activity. Reload the page.
+          {t("bot.activity.loadError")}
         </p>
       </PageSection>
     );
@@ -192,21 +221,21 @@ export function BotActivitySections({ agentId }: { agentId: string }) {
     <>
       <ActivitySection
         agentId={agentId}
-        empty="Nothing is running or waiting on you."
+        empty={t("bot.activity.emptyInProgress")}
         items={activity.data.inProgress}
-        title="In progress"
+        title={t("chat.inProgress")}
       />
       <ActivitySection
         agentId={agentId}
-        empty="Nothing is scheduled."
+        empty={t("bot.activity.emptyScheduled")}
         items={activity.data.scheduled}
-        title="Scheduled"
+        title={t("bot.activity.scheduled")}
       />
       <ActivitySection
         agentId={agentId}
-        empty="Nothing has finished yet."
+        empty={t("bot.activity.emptyCompleted")}
         items={activity.data.completed}
-        title="Completed"
+        title={t("bot.activity.completed")}
       />
     </>
   );

@@ -148,7 +148,7 @@ Each PR that touches policy.ts or catalogue.ts adds or updates its row in docs/U
 
 Recorded on 2026-11-14 on branch `connected-apps-slice-1`, from origin/main at 99ff3e8. `[code]` markers below were read at 99ff3e8.
 
-**On main before this slice.** S1 (Drive and Notion read lists) and S2 (Drive's write list matches its scope) landed through PR #156, commit 2c27caf, which is decision D33 in `docs/M1_PLAN.md` section 16. Drive has four read tools and an empty write list, with scope `drive.readonly` [code: openbot/server/src/plugins/catalogue.ts:376, 395-401]. Notion has two read tools [code: openbot/server/src/plugins/catalogue.ts:557]. Routines has two read tools [code: openbot/server/src/plugins/catalogue.ts:585].
+**On main before this slice.** S1 (Drive and Notion read lists) and S2 (Drive's write list matches its scope) landed through PR #156, commit 2c27caf, which is decision D33 in [`docs/M1_PLAN.md`](../M1_PLAN.md) section 16 ("A tool nobody calls a read is a write (D33)"). Drive has four read tools and an empty write list, with scope `drive.readonly` [code: openbot/server/src/plugins/catalogue.ts:376, 395-401]. Notion has two read tools [code: openbot/server/src/plugins/catalogue.ts:557]. Routines has two read tools [code: openbot/server/src/plugins/catalogue.ts:585].
 
 **This slice: no catalogue entry added.**
 

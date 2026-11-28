@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/item";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { useT } from "@/freeduet/i18n/provider";
 import { grantRoster } from "@/lib/agents/grant-roster";
 import { agentListQueryOptions } from "@/lib/agents/queries";
 import { setPluginGrantMutationOptions } from "@/lib/plugins/mutations";
@@ -42,6 +43,7 @@ function RouteComponent() {
     from: "/_authed/admin/plugins/$key_/tools/$tool",
   });
   const queryClient = useQueryClient();
+  const t = useT();
   const plugins = useQuery(pluginsPageQueryOptions());
   const { data: agents } = useQuery(agentListQueryOptions());
   /* The ones this person has hidden, so a grant one of them holds still has its switch here. */
@@ -71,7 +73,7 @@ function RouteComponent() {
   const tool = server?.tools.find((row) => row.name === toolName);
 
   const back = {
-    label: server?.title ?? "Plugin",
+    label: server?.title ?? t("admin.plugins.title"),
     linkProps: {
       params: { key },
       to: "/admin/plugins/$key" as const,
@@ -80,7 +82,7 @@ function RouteComponent() {
 
   /* Nothing rather than a placeholder, so no sentence asserts anything while the fetch is open. */
   if (plugins.isPending) {
-    return <PageShell title="Tool">{null}</PageShell>;
+    return <PageShell title={t("admin.plugins.tool.title")}>{null}</PageShell>;
   }
 
   /*
@@ -93,7 +95,7 @@ function RouteComponent() {
     return (
       <PageShell backButton={back} title={toolName}>
         <p className="mt-12 text-destructive text-sm" role="alert">
-          Couldn't load plugins. Reload the page.
+          {t("admin.plugins.loadError")}
         </p>
       </PageShell>
     );
@@ -103,7 +105,7 @@ function RouteComponent() {
     return (
       <PageShell
         backButton={back}
-        description="This connector has no tool with that name."
+        description={t("admin.plugins.tool.noTool")}
         title={toolName}
       >
         {/*
@@ -112,8 +114,8 @@ function RouteComponent() {
          */}
         <PageEmpty>
           {server
-            ? "It may have been removed since the tool list was last refreshed."
-            : "This connector isn't turned on."}
+            ? t("admin.plugins.tool.removed")
+            : t("admin.plugins.tool.notOn")}
         </PageEmpty>
       </PageShell>
     );
@@ -137,7 +139,7 @@ function RouteComponent() {
   return (
     <PageShell
       backButton={back}
-      description={tool.description || "This tool has no description."}
+      description={tool.description || t("admin.plugins.tool.noDesc")}
       title={toolName}
     >
       {error ? (
@@ -149,10 +151,10 @@ function RouteComponent() {
       <PageSection
         description={
           tool.effect === "write"
-            ? "This tool changes something at the vendor. Boundaries about writes apply to it."
-            : "This tool only reads. Boundaries about writes don't apply to it."
+            ? t("admin.plugins.tool.writeDesc")
+            : t("admin.plugins.tool.readDesc")
         }
-        title="What it does"
+        title={t("admin.plugins.tool.what")}
       >
         <PageRows>
           {/*
@@ -162,10 +164,9 @@ function RouteComponent() {
            */}
           <Item size="sm">
             <ItemContent>
-              <ItemTitle>Effect</ItemTitle>
+              <ItemTitle>{t("admin.plugins.tool.effect")}</ItemTitle>
               <ItemDescription>
-                Set by the connector, not the tool's name. Anything unknown
-                counts as a write.
+                {t("admin.plugins.tool.effectDesc")}
               </ItemDescription>
             </ItemContent>
             <ItemActions>
@@ -176,7 +177,9 @@ function RouteComponent() {
                     : "text-muted-foreground text-xs"
                 }
               >
-                {tool.effect === "write" ? "changes things" : "reads"}
+                {tool.effect === "write"
+                  ? t("admin.plugins.key.tools.writes")
+                  : t("admin.plugins.key.tools.reads")}
               </span>
             </ItemActions>
           </Item>
@@ -184,11 +187,11 @@ function RouteComponent() {
       </PageSection>
 
       <PageSection
-        description="A Bot can call this tool only while its switch is on. Turning it off applies from the next call."
-        title="Bots"
+        description={t("admin.plugins.tool.bots.description")}
+        title={t("admin.plugins.tool.bots.title")}
       >
         {bots.length === 0 ? (
-          <PageEmpty>No Bots yet. Create one to give it this tool.</PageEmpty>
+          <PageEmpty>{t("admin.plugins.tool.bots.empty")}</PageEmpty>
         ) : (
           <PageRows>
             {bots.map((bot, index) => {
@@ -199,12 +202,12 @@ function RouteComponent() {
                     <ItemContent>
                       <ItemTitle>{bot.name}</ItemTitle>
                       <ItemDescription>
-                        {bot.hidden ? "Hidden from your roster. " : ""}
+                        {bot.hidden ? `${t("admin.plugins.tool.hidden")} ` : ""}
                         {held
                           ? canCallBack(bot)
-                            ? "Can call this tool. Every call is still checked against boundaries and logged in Audit."
-                            : "Allowed, but this Bot has no callback token. Every call is refused. Issue one on its page, or set AGENT_TOOL_TOKEN."
-                          : "Can't call this tool. The Bot never sees it."}
+                            ? t("admin.plugins.tool.canCall")
+                            : t("admin.plugins.tool.noToken")
+                          : t("admin.plugins.tool.cantCall")}
                       </ItemDescription>
                     </ItemContent>
                     <ItemActions>
@@ -214,7 +217,10 @@ function RouteComponent() {
                        * flight, so switching one Bot does not freeze the rest of the list.
                        */}
                       <Switch
-                        aria-label={`Let ${bot.name} call ${toolName}`}
+                        aria-label={t("admin.plugins.tool.aria", {
+                          bot: bot.name,
+                          tool: toolName,
+                        })}
                         checked={held}
                         disabled={
                           setGrant.isPending &&

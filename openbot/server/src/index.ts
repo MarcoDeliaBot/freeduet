@@ -19,6 +19,7 @@ import { guardThreadRoutes } from "./freeduet/thread-routes";
 import type { AbstractAgent } from "@ag-ui/client";
 import { COMPUTER_GUIDANCE } from "@openbot/shared/bot-prompt";
 import { LISTEN_HOST_VARIABLE } from "@openbot/shared/listen-host";
+import type { OfferedFile } from "@openbot/shared/member-file";
 import { workOwner } from "@openbot/shared/work-owner";
 import { createTurnRunner } from "@openbot/toolkit/run-turn";
 import { and, eq, isNull, ne, sql } from "drizzle-orm";
@@ -46,8 +47,8 @@ import { wireCoordination } from "./agents/coordination-wiring";
 import { createAgentFetch } from "./agents/endpoint";
 import { createHandoffDesk } from "./agents/handoff";
 import { createHandedRequestLoader } from "./agents/handoff-request";
-import { createHopRelay } from "./agents/handoff-resume";
-import { createHandoffRunner } from "./agents/handoff-runner";
+import { createForwardHopCheck, createHopRelay } from "./agents/handoff-resume";
+import { createHandoffRunner, type HandoffWork } from "./agents/handoff-runner";
 import { startHandoffDelivery } from "./agents/handoff-wiring";
 import {
   createEngineChoices,
@@ -55,6 +56,11 @@ import {
 } from "./freeduet/engine-choices";
 import { useTeamFile } from "./freeduet/team-file-routes";
 import { createFullAccess, withFullAccess } from "./freeduet/full-access";
+import {
+  createHandoffFileStore,
+  handoffFileRecorder,
+  offeredNote,
+} from "./freeduet/handoff-files";
 import { memberFileTools } from "./freeduet/member-files";
 import { relayComputerTools } from "./freeduet/relay-computer";
 import {
@@ -1634,6 +1640,33 @@ const memberFiles = memberFileTools({
   capabilitiesOf,
 });
 
+// FreeDuet (D177): a file a colleague offered during a hand-off reaches the person's conversation and the asker.
+const handoffFileStore = createHandoffFileStore(database);
+const recordHandoffFile = handoffFileRecorder({
+  computerGateway,
+  agentProfileStore,
+  actorFor,
+  capabilitiesOf,
+  store: handoffFileStore,
+});
+// D177, and D178 for a hop resumed after a card: the same recorder, and the note for the asker.
+const recordOfferedFiles = async ({
+  work,
+  files,
+}: {
+  work: HandoffWork;
+  files: readonly OfferedFile[];
+}) => {
+  const recorded = [];
+  for (const file of files) {
+    const done = await recordHandoffFile({ work, file });
+    if (done) recorded.push(done);
+  }
+  return recorded.length > 0
+    ? offeredNote(work.toName ?? work.toBotId, recorded)
+    : null;
+};
+
 const loadToolsForActor =
   (actorId: string, initiator: AuditInitiator = PERSON_INITIATOR) =>
   async (botId: string) => [
@@ -2288,6 +2321,12 @@ const approvalSweep = repeatAfterEach(
         readApprovedRunAssertion(value, config.keyEncryptionKey),
       askerOf: async (run) =>
         (await sourceForCoordinationRun(run))?.botId ?? null,
+      offeredFiles: recordOfferedFiles,
+    }),
+    forwardHop: createForwardHopCheck({
+      database,
+      readRun: (value) =>
+        readApprovedRunAssertion(value, config.keyEncryptionKey),
     }),
     // Assigned further down, once delivery is wired.
     notify: (scope, input) => deliveryNotifications(scope, input),
@@ -2648,6 +2687,7 @@ if (config.handoff.maxDepth > 0 && config.handoff.maxPerRun > 0) {
     channelStore,
     // FreeDuet (D22): a relay turn gets the computer an ordinary turn of that Bot would.
     toolsForTurn: serverRunComputerTools,
+    offeredFiles: recordOfferedFiles,
   });
 }
 
@@ -3004,6 +3044,7 @@ const app = createApp(
     },
     groups: groupConversations,
     teamBots,
+    handoffFiles: handoffFileStore,
     lifecycle: {
       lifecycle: createBotLifecycleStore(database),
       reset: createBotReset({

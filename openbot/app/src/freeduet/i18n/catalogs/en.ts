@@ -1,0 +1,2927 @@
+import type { Entries } from "../translate";
+
+/**
+ * The source of every word of the app's own interface that is translated (docs/M1_PLAN.md D181).
+ * English is the source: every other catalogue in this folder has exactly these keys, and a value left
+ * empty there reads as English. Plural entries take `{count}`; a placeholder is `{name}`.
+ *
+ * Generated once from the first extraction; edited by hand since. Group by the screen a key is drawn on
+ * (the prefix before the first dot).
+ */
+export const EN = {
+  "sign.title": "Sign in to {product}",
+  "sign.continueWith": "Continue with {provider}",
+  "sign.opening": "Opening {provider}…",
+  "sign.openError": "Couldn't open {provider} sign-in. Try again.",
+  "sign.ssoRequired":
+    "Your organization requires you to sign in with your company account.",
+  "sign.pairLead":
+    "This browser is not paired with {product} yet. On the computer it runs on, run",
+  "sign.pairTail": ": it opens {product} here, ready to use.",
+  "sign.notSetUp": "Sign-in isn't set up yet. An admin has to set it up first.",
+  "sign.or": "or",
+  "sign.emailPlaceholder": "you@company.com",
+  "sign.openingCompany": "Opening…",
+  "sign.continueCompany": "Continue with your company account",
+  "sign.adminSignIn": "Admin sign-in",
+  "sign.noCompany": "No company sign-in is set up for that address.",
+  "shell.menu": "Menu",
+  "shell.everything": "Everything",
+  "shell.everythingLine": "All chat context across every channel",
+  "shell.channelsError": "Couldn't load your channels. Reload the page.",
+  "shell.channels": "Channels",
+  "shell.newChannel": "New channel",
+  "shell.archived": "Archived",
+  "shell.archivedChannels": "Archived channels",
+  "shell.unarchive": "Unarchive",
+  "shell.unarchiveNamed": "Unarchive {name}",
+  "shell.earlier": "Earlier conversations",
+  "shell.manage": "Manage",
+  "shell.signOut": "Sign out",
+  "nav.bots": "Bots",
+  "nav.connections": "Connections",
+  "nav.capabilities": "Capabilities",
+  "nav.routines": "Routines",
+  "nav.approvalRules": "Approval rules",
+  "nav.admin": "Admin",
+  "nav.dashboard": "Dashboard",
+  "nav.settings": "Settings",
+  "tab.main": "Main",
+  "tab.chat": "Chat",
+  "tab.tasks": "Tasks",
+  "tab.make": "Make",
+  "tab.waiting": "{tab}, {badge} waiting",
+  "header.chat": "{product} chat",
+  "header.settings": "Your settings",
+  "header.back": "Back",
+  "header.more": "More",
+  "composer.ask": "Ask anything",
+  "composer.message": "Message",
+  "composer.queue": "Queue message",
+  "composer.send": "Send message",
+  "composer.stop": "Stop the Bot",
+  "composer.showCall": "Show voice call",
+  "composer.startCall": "Start voice call",
+  "composer.callBot": "Call this Bot",
+  "composer.callUnsupported":
+    "Voice calls need a microphone and a secure (HTTPS) connection",
+  "composer.speak": "Speak a message",
+  "composer.dictateTitle": "Say everything you need to do",
+  "composer.attach": "Attach a file",
+  "composer.moreUnavailable": "More message options unavailable",
+  "composer.messageNamed": "Message {name}",
+  "chat.botsError": "Couldn't load your Bots. Reload the page.",
+  "chat.noBots": "There are no Bots yet.",
+  "chat.conversationError": "Couldn't load your conversation. Reload the page.",
+  "chat.stillStarting":
+    "The conversation is still starting. Try again in a moment.",
+  "chat.startError": "Couldn't start the conversation. Try again.",
+  "attention.questions": {
+    one: "{count} question",
+    other: "{count} questions",
+  },
+  "attention.approvals": {
+    one: "{count} approval",
+    other: "{count} approvals",
+  },
+  "attention.handoffs": {
+    one: "{count} stalled hand-off",
+    other: "{count} stalled hand-offs",
+  },
+  "attention.unread": {
+    one: "{count} unread conversation",
+    other: "{count} unread conversations",
+  },
+  "attention.needYou": {
+    one: "{count} thing needs you",
+    other: "{count} things need you",
+  },
+  "attention.open": "{summary}. Open Bots to deal with them.",
+  "attention.unreadMessages": "Unread messages",
+  "bots.new": "New Bot",
+  "bots.purpose":
+    "Your Bots and the ones shared with you. See what each is doing and what it needs from you.",
+  "bots.loadError": "Couldn't load your Bots. Reload the page.",
+  "bots.needsYou": "Needs you",
+  "bots.pinned": "Pinned",
+  "bots.yours": "Yours",
+  "bots.shared": "Shared with you",
+  "bots.allPinned": "Your Bots are all pinned above.",
+  "bots.allNeedYou": "Your Bots are all under Needs you.",
+  "bots.none": "You don't have any Bots yet. Create one with New Bot.",
+  "bots.nobodyShared": "Nobody has shared a Bot with you yet.",
+  "bots.hide": "Hide",
+  "bots.show": "Show",
+  "bots.hidden": "Hidden",
+  "bots.hiddenDescription": {
+    one: "{count} Bot you hid. Only your list changes.",
+    other: "{count} Bots you hid. Only your list changes.",
+  },
+  "bots.paused": "Paused",
+  "bots.message": "Message",
+  "bots.wroteIn": {
+    one: "{name} wrote in {count} conversation you have not read.",
+    other: "{name} wrote in {count} conversations you have not read.",
+  },
+  "bots.readNewest": "Read newest",
+  "bots.resuming": "Resuming…",
+  "bots.pausedResume": "Paused. Resume",
+  "botPage.purpose": "What this Bot is doing for you and how it's set up.",
+  "botPage.fallbackTitle": "Bot",
+  "botPage.openError": "Couldn't open this Bot. It may not be shared with you.",
+  "profile.forYou": "For you",
+  "profile.settingsError":
+    "Couldn't load this Bot's settings. Reload the page.",
+  "profile.active": "Active",
+  "profile.pausedDescription":
+    "Paused. Nothing runs for you until you turn it back on.",
+  "profile.activeDescription":
+    "Runs its routines, responsibilities, hand-offs and follow-ups for you.",
+  "profile.notifications": "Notifications",
+  "profile.notifyDescription": "{level}. Sidebar badges always show.",
+  "profile.notify.all": "Everything",
+  "profile.notify.needsInput": "Only when it needs me",
+  "profile.notify.none": "Nothing (badges only)",
+  "profile.browserNotifications": "Browser notifications",
+  "profile.browserOff":
+    "Off in this browser. Turn them on to hear when a Bot needs you.",
+  "profile.turnOn": "Turn on",
+  "profile.startConversation": "Start a conversation.",
+  "stalled.what": "{name} did not finish: {task}",
+  "stalled.why": "Why: {reason}.",
+  "stalled.retryError": "Could not try again. It may already be running.",
+  "stalled.dismissError": "Could not dismiss it. It may already be running.",
+  "stalled.dismissing": "Dismissing…",
+  "stalled.dismissed": "Dismissed",
+  "stalled.dismiss": "Dismiss",
+  "stalled.retrying": "Trying again…",
+  "stalled.queued": "Queued again",
+  "stalled.retry": "Try again",
+  "stalled.open": "Open conversation",
+  "dash.title": "Dashboard",
+  "dash.notAvailable": "Not available yet",
+  "dash.tokensNotCounted": "No turn has been counted yet today.",
+  "dash.countsUnavailable": "The token counts are not available now.",
+  "dash.enginesLink": "Manage engines",
+  "dash.teamLink": "All members",
+  "dash.waitingForYou": "Waiting for you",
+  "dash.available": "Available",
+  "dash.loading": "Loading your team…",
+  "dash.nothingWaits": "Nothing waits for you.",
+  "dash.thingsWait": {
+    one: "{count} thing waits for you.",
+    other: "{count} things wait for you.",
+  },
+  "dash.partialCount": "{reported} of {turns} attempts reported a count",
+  "dash.inputPlusOutput": "Input plus output, as each engine reported it",
+  "dash.nothingSaved": "Nothing went through a free engine yet today",
+  "dash.firstFor": {
+    one: "first for {count} member",
+    other: "first for {count} members",
+  },
+  "dash.members": { one: "{count} member", other: "{count} members" },
+  "dash.indicators": "Indicators",
+  "dash.tokensToday": "Tokens today",
+  "dash.savedToday": "Saved with free engines today",
+  "dash.waitingSub": "Questions, approvals and stalled hand-offs",
+  "dash.nextRoutine": "Next routine",
+  "dash.noRoutine": "No routine is scheduled.",
+  "dash.team": "Team",
+  "dash.engines": "Engines",
+  "dash.noEngine": "No engine is set up yet.",
+  "dash.perMemberAria": "Tokens per member",
+  "dash.perMember": "Tokens per member, today",
+  "dash.foot":
+    "Counts are what each engine reported, in UTC days. A recent-activity log and a plan-limit gauge are not available yet.",
+  "voice.heardNothing":
+    "I didn't hear anything. Tap the microphone to try again, or type.",
+  "voice.tapWhenDone": "Tap the microphone when you're done",
+  "voice.discard": "Discard",
+  "voice.start": "Start dictation",
+  "voice.stopAndSend": "Stop dictation and send",
+  "voice.typeInstead": "Type instead",
+  "voice.retry": "Retry",
+  "voice.recordAgain": "Record again",
+  "voice.writing": "Writing what you said…",
+  "voice.listeningStop": "Listening… I'll stop when you pause",
+  "voice.listening": "I'm listening, just start talking",
+  "voice.permission": "Waiting for microphone permission…",
+  "voice.widget.unavailable": "Call unavailable",
+  "voice.widget.connecting": "Connecting…",
+  "voice.widget.speaking": "{name} is speaking",
+  "voice.widget.working": "Working on your request",
+  "voice.widget.muted": "Your microphone is muted",
+  "voice.widget.listening": "Listening to you",
+  "voice.widget.ready": "Ready when you are",
+  "voice.widget.label": "Voice call with {name}",
+  "voice.widget.duration": "Call duration",
+  "voice.widget.expand": "Expand voice call",
+  "voice.widget.expandTitle": "Expand call",
+  "voice.widget.end": "End voice call",
+  "voice.widget.endTitle": "End call",
+  "voice.widget.returnChat": "Return to chat",
+  "voice.widget.returnChatTitle": "Return to chat · keep call open",
+  "voice.widget.settings": "Call settings",
+  "voice.widget.captions": "Show live captions",
+  "voice.widget.captionsEmpty":
+    "Speak when you’re ready. This call is part of this conversation.",
+  "voice.widget.you": "You",
+  "voice.widget.youMuted": "You · microphone muted",
+  "voice.widget.youNamed": "{name} (you)",
+  "voice.widget.mute": "Mute your microphone",
+  "voice.widget.unmute": "Unmute your microphone",
+  "voice.widget.muteTitle": "Mute your microphone · you’ll still hear the Bot",
+  "voice.session.slow":
+    "The call took too long to connect. Check microphone permission and try again.",
+  "voice.session.timeLimit":
+    "This call reached its 15-minute limit. You can start a new call.",
+  "voice.session.muteFailed":
+    "The microphone could not be changed. Please call again.",
+  "voice.session.lost": "The voice connection was lost.",
+  "voice.session.startFailed": "Could not start the voice call.",
+  "voice.session.transcriptLimit":
+    "This call reached its transcript limit. Start a new call to continue.",
+  "voice.session.responseFailed":
+    "The voice service could not complete its response. Please call again.",
+  "voice.session.serviceError":
+    "The voice service reported an error. Please end the call and try again.",
+  "voice.webrtc.unsupported":
+    "This browser does not support WebRTC voice calls.",
+  "voice.webrtc.playback":
+    "Audio playback was blocked. Allow sound in your browser, then call again.",
+  "voice.webrtc.lost":
+    "The voice connection was lost. Your chat is still available. Call again to reconnect.",
+  "voice.webrtc.micGone":
+    "The microphone disconnected. Check it and call again.",
+  "voice.webrtc.channelFailed":
+    "The voice connection failed. Please call again.",
+  "voice.webrtc.ended": "The voice call ended. You can call again.",
+  "voice.webrtc.unreadable":
+    "The voice service returned an unreadable event. Please call again.",
+  "voice.webrtc.connectFailed":
+    "Could not connect the voice call. Please try again.",
+  "voice.webrtc.invalid":
+    "The voice service returned an invalid connection. Please try again.",
+  "voice.webrtc.notConnected": "The voice call is no longer connected.",
+  "voice.websocket.audio":
+    "This browser could not start call audio. Allow sound and try again.",
+  "voice.websocket.config": "Invalid voice connection configuration.",
+  "voice.websocket.address": "Unsupported voice service address.",
+  "voice.websocket.startFailed": "Could not start the voice call.",
+  "voice.websocket.connect":
+    "Could not connect to Grok Voice. Check your connection and try again.",
+  "voice.websocket.closed":
+    "The voice connection closed. Your chat is still available.",
+  "voice.websocket.notConnected": "The voice call is no longer connected.",
+  "voice.websocket.invalid":
+    "The voice service sent invalid audio or controls. Please call again.",
+  "voice.websocket.slow":
+    "Your connection is too slow for live audio. Please call again.",
+  "voice.websocket.micGone":
+    "The microphone disconnected. Check it and call again.",
+  "voice.connection.unsupported":
+    "Voice calls need a supported browser and HTTPS or localhost.",
+  "voice.connection.unavailable":
+    "Voice calls are unavailable. Check the deployment's voice configuration.",
+  "voice.connection.transport":
+    "This deployment uses an unsupported voice connection.",
+  "dictation.controls.dictate": "Dictate a message",
+  "dictation.controls.cancel": "Cancel dictation",
+  "dictation.controls.transcribing": "Transcribing…",
+  "dictation.controls.listening": "Listening",
+  "dictation.controls.duration": "Recording duration",
+  "dictation.controls.stop": "Stop and transcribe",
+  "dictation.controls.stopTitle": "Stop and add to draft",
+  "dictation.controls.send": "Transcribe and send",
+  "dictation.recording.secure":
+    "The microphone only works on a secure page. Open FreeDuet on the computer where it runs (localhost), or ask whoever runs it to put it behind https.",
+  "dictation.recording.noRecorder":
+    "This browser cannot record audio. Try an up-to-date Chrome, Edge, Firefox or Safari.",
+  "dictation.recording.noFormat":
+    "This browser cannot record a supported audio format.",
+  "dictation.recording.tooLarge":
+    "Recording is too large. Try a shorter message.",
+  "dictation.recording.stopped":
+    "The microphone stopped recording. Please try again.",
+  "dictation.recording.interrupted":
+    "Recording was interrupted. Please try again.",
+  "dictation.recording.empty":
+    "The recording is empty or unsupported. Please record again.",
+  "dictation.recording.noSpeech":
+    "No speech was detected. Try recording again.",
+  "dictation.recording.failed": "Transcription failed. Please retry.",
+  "dictation.session.denied":
+    "Microphone access was denied. Allow it in your browser and try again.",
+  "dictation.session.startFailed":
+    "Could not start recording. Check your microphone and try again.",
+  "dictation.session.finishFailed":
+    "Could not finish recording. Please record again.",
+  "dictation.session.transcribeFailed": "Transcription failed. Please retry.",
+  "home.bots": "Meet your team and manage each Bot.",
+  "home.capabilities": "Skills and memory.",
+  "home.connectionsLabel": "Accounts, apps and mail rules",
+  "home.connections": "Connect an account, an app or your mail.",
+  "home.setupLabel": "Setup checklist",
+  "home.setup": "See what is set up and what is left.",
+  "home.approvalsLabel": "Approval rules and Full access",
+  "home.approvals": "What a Bot may do without asking you.",
+  "home.passwordsLabel": "Passwords",
+  "home.passwords": "Passwords your team may use.",
+  "home.routines": "Work that repeats on its own, and the week view.",
+  "home.notifications": "Where updates reach you.",
+  "home.admin": "Computers, credentials, boundaries, people and audit.",
+  "home.engines":
+    "Who answers for each Bot, in which order, and how much they used today. Your subscription stays first until you change the order.",
+  "home.safety": "Safety",
+  "home.jobs": "Jobs",
+  "home.system": "System",
+  "settings.description":
+    "Manage your team, connected accounts and personal preferences.",
+  "settings.sections": "Settings sections",
+  "settings.workspace": "Workspace",
+  "settings.preferences": "Preferences",
+  "settings.devices": "Devices & info",
+  "settings.appearance": "Appearance",
+  "settings.matchPhone": "Match phone",
+  "settings.light": "Light",
+  "settings.dark": "Dark",
+  "settings.voice": "Voice",
+  "settings.shortcuts": "Keyboard shortcuts",
+  "language.section": "Language",
+  "language.title": "App language",
+  "language.description":
+    "The language of menus and buttons. Your team writes to you in the language set in chat.",
+  "language.auto": "Automatic (browser)",
+  "settings.descriptionPlain": "How {product} looks and works for you.",
+  "wide.yourTeam": "Your team",
+  "wide.team": "Team",
+  "wide.stateWaiting": "Waiting for you",
+  "wide.stateWorking": "Working on it",
+  "wide.memberLabel": "{name}, {line}",
+  "chat.loadingConversation": "Loading this conversation",
+  "chat.readAloud": "Read aloud",
+  "chat.stopReading": "Stop reading",
+  "chat.thinking": "Thinking",
+  "chat.queued": "Queued",
+  "chat.removeQueued": "Remove queued message: {what}",
+  "chat.remove": "Remove",
+  "chat.routineRan": "Routine ran.",
+  "chat.firstDayYes": "Sounds right",
+  "chat.firstDayNo": "Something's off",
+  "chat.tryingAgain": "Trying again.",
+  "chat.responsibilityRan": "Responsibility ran.",
+  "chat.trigger": "Trigger:",
+  "chat.details": "Details",
+  "chat.via": "via {source}",
+  "chat.untitledFile": "Untitled file",
+  "chat.attachment": "Attachment",
+  "chat.attachmentLower": "attachment",
+  "chat.attachmentNamed": "Attachment: {name}",
+  "chat.unavailableNamed": "{name} is unavailable.",
+  "chat.unavailable": "This attachment is unavailable.",
+  "chat.openNamed": "Open {name}",
+  "chat.close": "Close",
+  "chat.generatedInterface": "This Bot's generated interface",
+  "chat.usedBrowser": "Used the browser",
+  "chat.hostAndMore": "{host} and {amount} more",
+  "chat.searchedWeb": "searched the web",
+  "chat.readPages": {
+    one: "read {amount} page",
+    other: "read {amount} pages",
+  },
+  "chat.browsedPages": {
+    one: "browsed {amount} page",
+    other: "browsed {amount} pages",
+  },
+  "chat.usedBrowserPhrase": "used the browser",
+  "chat.usedNamed": "used {name}",
+  "chat.usedConnectors": {
+    one: "used {amount} connector",
+    other: "used {amount} connectors",
+  },
+  "chat.usedTools": {
+    one: "used {amount} tool",
+    other: "used {amount} tools",
+  },
+  "chat.andJoin": "{head} and {last}",
+  "chat.inProgress": "In progress",
+  "chat.waitingForYou": "Waiting for you",
+  "chat.notCompleted": "Not completed",
+  "chat.blocked": "Blocked",
+  "chat.didntWork": "Didn't work",
+  "chat.couldntFinishStep": "Couldn't finish this step.",
+  "chat.issues": {
+    one: "{amount} issue",
+    other: "{amount} issues",
+  },
+  "settings.changesTitle": "Changes made in chat",
+  "settings.changesDescription":
+    "Settings a Bot changed from chat. Undo puts the old value back for seven days, and only while the setting still holds the value the change set.",
+  "settings.changesLoading": "Loading changes…",
+  "settings.changesEmpty": "No changes made in chat yet.",
+  "settings.undoFailed": "Couldn't undo the change. Try again.",
+  "settings.levelAll": "everything",
+  "settings.levelNeedsInput": "only when it needs you",
+  "settings.memberAdded": "{member} was added to your team",
+  "settings.nameChanged": "{bot}: your name for it went from {from} to {to}",
+  "settings.nameOwn": "its own name",
+  "settings.languageChanged":
+    "Your language for the team went from {from} to {to}",
+  "settings.deploymentOwn": "the deployment's own",
+  "settings.toneChanged": "{bot}: tone went from {from} to {to}",
+  "settings.notifyChanged": "{bot}: notifications went from {from} to {to}",
+  "settings.undone": "Undone",
+  "settings.undoGone": "Undo is no longer possible",
+  "settings.undoing": "Undoing…",
+  "settings.undo": "Undo",
+  "settings.devicesTitle": "Your devices",
+  "settings.devicesDescription":
+    "Sign in to the {product} app on your phone and turn on notifications to add it here.",
+  "settings.devicesEmpty": "No devices yet.",
+  "settings.deliveriesTitle": "Recent deliveries",
+  "settings.deliveriesEmpty": "No deliveries yet.",
+  "settings.repositories": "Repositories",
+  "settings.repositoriesDescription":
+    "Add a repository here, then add a webhook in GitHub with the address below and the same secret. Its events, like issues.opened, can then start a responsibility.",
+  "settings.addRepository": "Add a repository",
+  "settings.repositoriesEmpty":
+    "No repositories yet. Add one with Add a repository.",
+  "settings.repository": "Repository",
+  "settings.webhookSecret": "Webhook secret",
+  "settings.disconnect": "Disconnect",
+  "settings.sameSecret":
+    "Use the same secret when you add the webhook in GitHub.",
+  "settings.cancel": "Cancel",
+  "settings.connectEvents": "Connect events",
+  "settings.needsReconnect": "Needs reconnecting",
+  "settings.needsReconnectHandle": "Needs reconnecting · @{handle}",
+  "settings.linked": "Linked",
+  "settings.yourAccount": "Your account",
+  "settings.cantLink":
+    "You can't link a {provider} account yet. An admin has to set it up first.",
+  "settings.loadAccountError": "Couldn't load your account: {error}",
+  "settings.checkLinkError":
+    "Couldn't check whether you can link this account: {error}",
+  "settings.slackCodeError": "Couldn't create a Slack code: {error}",
+  "settings.githubConnectError": "Couldn't connect GitHub: {error}",
+  "settings.linkSlack": "Link your Slack account",
+  "settings.copied": "Copied",
+  "settings.copy": "Copy",
+  "settings.copyFailed": "Couldn't copy. Select the code and copy it yourself.",
+  "settings.codeExpires": "The code works once and expires in 10 minutes.",
+  "settings.done": "Done",
+  "settings.notLinked": "Not linked",
+  "settings.connect": "Connect",
+  "settings.connectNamed": "Connect {name}",
+  "settings.disconnectNamed": "Disconnect {name}",
+  "settings.disconnectError": "Couldn't disconnect {name}: {error}",
+  "settings.githubLinked": "Your GitHub account is linked.",
+  "settings.githubLinkFailed": "Couldn't link your GitHub account. Try again.",
+  "settings.githubTaken":
+    "That GitHub account is linked to someone else in {product}. Sign in to GitHub with another account and try again, or ask an admin.",
+  "settings.emphasisTitle": "Message list emphasis",
+  "settings.emphasisDescription":
+    "Choose which line stands out in the sidebar.",
+  "settings.emphasisBot": "Bot name",
+  "settings.emphasisConversation": "Conversation title",
+  "settings.loading": "Loading…",
+  "settings.saving": "Saving…",
+  "settings.emphasisPreview": "Message list preview",
+  "settings.sampleBot": "General Assistant",
+  "settings.sampleTitle": "Plan next week",
+  "settings.readAloudTitle": "Read replies aloud",
+  "settings.readAloudDescription":
+    "Adds a Read aloud button under each Bot reply. It uses a voice on this computer only, and nothing is sent elsewhere.",
+  "settings.noItalianVoice":
+    "No local Italian voice on this computer, so replies cannot be read aloud here.",
+  "settings.general": "General",
+  "settings.setup": "Setup",
+  "settings.approvals": "Approvals",
+  "settings.componentsGallery": "Components gallery",
+  "settings.backToApp": "Back to app",
+  "settings.standingTitle": "Standing instructions",
+  "settings.standingDescription":
+    "Applies to every Bot in every conversation. A Bot's role says what it does. This says how you want it done, like your writing style.",
+  "settings.charactersOf": "{used} of {limit} characters",
+  "settings.saved": "Saved",
+  "settings.save": "Save",
+  "settings.sharedBots": "Shared Bots",
+  "settings.sharedBotsDescription":
+    "A Bot shared with you uses its owner's apps. It uses yours only where you said yes in a conversation.",
+  "settings.appsSharedBots": "Apps you let shared Bots use",
+  "settings.resetDone": "Reset. Each shared Bot will ask again.",
+  "settings.resetDescription":
+    "Forget every answer, so each shared Bot asks again.",
+  "settings.reset": "Reset",
+  "settings.kindProgress": "Progress",
+  "settings.kindProgressDescription":
+    "Replies and results from work you weren't watching.",
+  "settings.kindDecision": "Decisions",
+  "settings.kindDecisionDescription": "Approvals a Bot needs before it acts.",
+  "settings.kindQuestion": "Questions",
+  "settings.kindQuestionDescription":
+    "Things a Bot asked you and is waiting on.",
+  "settings.switchLabel": "{kind} by {transport}",
+  "settings.notSetUp": "Not set up",
+  "settings.routingDescription":
+    "Where each kind of update goes when you're away. {product} on the web always shows everything.",
+  "settings.routingTitle": "Where updates go",
+  "settings.routingError":
+    "Couldn't load where your updates go. Reload the page.",
+  "settings.qrLabel": "QR code with the pairing link",
+  "settings.pairThisTitle": "Pair this browser",
+  "settings.pairThisDescription":
+    "On the computer FreeDuet runs on, open Settings, press Make a code under Pair a phone or another browser, then open the link it shows or type the code here.",
+  "settings.pairedDone": "This browser is paired with the computer.",
+  "settings.linkBroughtCode":
+    "The link brought a code. Name this browser and press Pair.",
+  "settings.code": "Code",
+  "settings.name": "Name",
+  "settings.phone": "Phone",
+  "settings.pairedDescription":
+    "A phone or another browser that is paired works like this one. Revoke one and it is cut off at its next request and signed out.",
+  "settings.pairedTitle": "Pair a phone or another browser",
+  "settings.makeCode": "Make a code",
+  "settings.cannotMakeCode":
+    "A code is made in the browser paired at the computer. This one cannot make one.",
+  "settings.runsOut":
+    "On the phone, signed in as you, scan this or open the link, or open Settings and type the code. It works once and runs out in {time}.",
+  "settings.codeRanOut": "That code has run out. Make a new one.",
+  "settings.localAddress":
+    "This address only works on this computer. A phone needs the address FreeDuet is reached at from outside; open that on the phone and type the code in Settings.",
+  "settings.thisBrowserTag": "(this browser)",
+  "settings.computer": "Computer",
+  "settings.phoneOrBrowser": "Phone or other browser",
+  "settings.madeWhen": "made {when}",
+  "settings.lastSeen": "last seen {when}",
+  "settings.rename": "Rename",
+  "settings.revoke": "Revoke",
+  // The Bot pages (D181 stage 2d): a Bot's activity, settings, access, Manage, Setup and Sharing,
+  // and the descriptions of its sub-pages (`bot.page.*`). Shared words reuse their existing keys.
+  "bot.activity.kindRoutine": "Routine",
+  "bot.activity.kindResponsibility": "Responsibility",
+  "bot.activity.kindHandoff": "Delegated task",
+  "bot.activity.kindApproval": "Approval",
+  "bot.activity.kindQuestion": "Question",
+  "bot.activity.kindFollowUp": "Follow-up",
+  "bot.activity.needsYou": "needs you",
+  "bot.activity.stop": "Stop",
+  "bot.activity.stopping": "Stopping…",
+  "bot.activity.cancelling": "Cancelling…",
+  "bot.activity.open": "Open",
+  "bot.activity.title": "Activity",
+  "bot.activity.scheduled": "Scheduled",
+  "bot.activity.completed": "Completed",
+  "bot.activity.emptyInProgress": "Nothing is running or waiting on you.",
+  "bot.activity.emptyScheduled": "Nothing is scheduled.",
+  "bot.activity.emptyCompleted": "Nothing has finished yet.",
+  "bot.activity.loadError":
+    "Couldn't load this Bot's activity. Reload the page.",
+  "bot.settings.heading": "Settings for this Bot",
+  "bot.area.responsibilities": "Responsibilities",
+  "bot.area.reaching": "Reaching you",
+  "bot.area.memory": "Memory",
+  "bot.area.access": "Skills and access",
+  "bot.area.sharing": "Sharing",
+  "bot.settings.activeCount": {
+    one: "{count} active",
+    other: "{count} active",
+  },
+  "bot.settings.noneActive": "None active",
+  "bot.settings.ruleCount": { one: "{count} rule", other: "{count} rules" },
+  "bot.settings.noRules": "No rules",
+  "bot.settings.routineCount": {
+    one: "{count} routine",
+    other: "{count} routines",
+  },
+  "bot.settings.noRoutines": "No routines",
+  "bot.access.skillsDescription":
+    "Turn on a skill to use it with this Bot. Type / in a conversation to run it.",
+  "bot.access.yourSkills": "Your skills",
+  "bot.access.skillsError": "Couldn't load your skills. Reload the page.",
+  "bot.access.noSkills": "No skills yet.",
+  "bot.access.writeOne": "Write one",
+  "bot.access.title": "What it can use",
+  "bot.access.grantedDescription":
+    "The apps and skills this Bot can use, and whether each app is ready for you. It can't use anything else.",
+  "bot.access.grantedError":
+    "Couldn't load what this Bot can use. Reload the page.",
+  "bot.access.readyError":
+    "Couldn't check whether each app is ready for you. Reload the page.",
+  "bot.access.noApps":
+    "No apps yet. An admin has to add them. Until then this Bot can only talk with you.",
+  "bot.access.toolsAndMore": "{list} and {count} more",
+  "bot.access.toolCount": { one: "{count} tool", other: "{count} tools" },
+  "bot.access.skillLabel": "Skill",
+  "bot.access.manageNamed": "Manage {title} on this Bot",
+  "bot.reset.conversations": {
+    one: "{count} conversation",
+    other: "{count} conversations",
+  },
+  "bot.reset.memorySources": {
+    one: "{count} memory source",
+    other: "{count} memory sources",
+  },
+  "bot.reset.memories": {
+    one: "{count} imported memory",
+    other: "{count} imported memories",
+  },
+  "bot.reset.routines": { one: "{count} routine", other: "{count} routines" },
+  "bot.reset.responsibilities": {
+    one: "{count} responsibility",
+    other: "{count} responsibilities",
+  },
+  "bot.reset.followUps": {
+    one: "{count} scheduled follow-up",
+    other: "{count} scheduled follow-ups",
+  },
+  "bot.reset.formedMemories": {
+    one: "{count} memory it formed",
+    other: "{count} memories it formed",
+  },
+  "bot.reset.research": {
+    one: "{count} background research",
+    other: "{count} background research",
+  },
+  "bot.reset.standing": {
+    one: "{count} standing permission",
+    other: "{count} standing permissions",
+  },
+  "bot.reset.title": "Reset {name}?",
+  "bot.reset.description":
+    "This deletes what {name} has with you. Other people's conversations and data stay. You can't undo this.",
+  "bot.reset.planError": "Couldn't check what a reset would delete. Try again.",
+  "bot.reset.done": "Done. {name} starts fresh with you.",
+  "bot.reset.nothing": "There's nothing of yours to delete.",
+  "bot.reset.willDelete": "This will delete:",
+  "bot.reset.sharedKept": {
+    one: "{count} conversation is shared with other people or Bots and will be kept.",
+    other:
+      "{count} conversations are shared with other people or Bots and will be kept.",
+  },
+  "bot.reset.memoriesKept": "Memories you told a Bot yourself are kept.",
+  "bot.reset.resetting": "Resetting…",
+  "bot.reset.submit": "Delete and reset",
+  "bot.manage.pinnedAssigned":
+    "An admin assigned it to you. It stays at the top of your Bots list.",
+  "bot.manage.pinnedOn":
+    "At the top of your Bots list. Only your list changes.",
+  "bot.manage.pinnedOff":
+    "Keep it at the top of your Bots list. Only your list changes.",
+  "bot.manage.hiddenAssigned":
+    "An admin assigned it to you. You can't hide it.",
+  "bot.manage.hiddenOn":
+    "Under Hidden on your Bots list. Only your list changes.",
+  "bot.manage.hiddenOff": "Take it off your Bots list. Only your list changes.",
+  "bot.manage.duplicate": "Duplicate",
+  "bot.manage.duplicateDescription":
+    "Make your own copy. Its conversations and keys aren't copied.",
+  "bot.manage.resetDescription":
+    "Delete your conversations with it, what it remembers for you, and its scheduled work. You'll see the list first.",
+  "bot.manage.delete": "Delete",
+  "bot.manage.deleteDescription":
+    "Deletes it for everyone. You can't undo this.",
+  "bot.manage.deleteTitle": "Delete {name}?",
+  "bot.manage.deleteConfirm": "It's deleted for everyone. You can't undo this.",
+  "bot.manage.deleting": "Deleting…",
+  "bot.setup.title": "Title",
+  "bot.setup.whatItDoes": "What it does",
+  "bot.setup.identity": "Identity",
+  "bot.setup.systemOwned": "System owned",
+  "bot.setup.systemOwnedDescription":
+    "Comes with {product}. It doesn't belong to a person.",
+  "bot.setup.visibility": "Visibility",
+  "bot.setup.visiblePrivate":
+    "Only you can see it and start conversations with it.",
+  "bot.setup.visiblePublic": "Everyone on {product} can find and use it.",
+  "bot.setup.private": "Private",
+  "bot.setup.public": "Public",
+  "bot.setup.saveError": "Couldn't save. Try again.",
+  "bot.setup.checkField": "Check this field and try again.",
+  "bot.setup.connection": "Connection",
+  "bot.setup.builtIn": "Built in",
+  "bot.setup.agentUrl": "Agent URL",
+  "bot.setup.builtInDescription":
+    "Runs inside {product}. There's nothing to connect.",
+  "bot.sharing.published": "Published",
+  "bot.sharing.toWholeTeam": "To the whole team",
+  "bot.sharing.toPeople": "To {who}",
+  "bot.sharing.groupNamed": "group {name}",
+  "bot.sharing.teamPrivate": "Each person's conversations with it are private.",
+  "bot.sharing.notVisibleYet":
+    "Teammates can't see it until it has a real name and a description.",
+  "bot.sharing.unpublish": "Unpublish",
+  "bot.sharing.link": "Link",
+  "bot.sharing.linkDescription": "Opens a private conversation with it.",
+  "bot.sharing.copyLink": "Copy link",
+  "bot.sharing.publicNotPublished":
+    "Not published to the team. It's public, so everyone on {product} can already use it.",
+  "bot.sharing.onlyYouCanUse": "Not published. Only you can use it.",
+  "bot.sharing.notPublished": "Not published.",
+  "bot.sharing.whoPublishedTo": "Who it is published to",
+  "bot.sharing.publish": "Publish",
+  "bot.sharing.publishNote":
+    "Publishing doesn't change its visibility. You can unpublish at any time.",
+  "bot.sharing.audience": "Audience",
+  "bot.sharing.notPublishedSummary": "Not published",
+  "bot.sharing.theWholeTeam": "The whole team",
+  "bot.sharing.specificPeople": "Specific people or groups",
+  "bot.sharing.peopleCount": { one: "{count} person", other: "{count} people" },
+  "bot.sharing.groupCount": { one: "{count} group", other: "{count} groups" },
+  "bot.sharing.assignToGroups": "Assign to groups",
+  "bot.sharing.assignDescription":
+    "Pins this Bot at the top of every group member's Bots list. Use * for the whole team.",
+  "bot.sharing.publishedTo": "Published to",
+  "bot.sharing.peopleByEmail": "People, by email",
+  "bot.sharing.commaSeparated": "Comma separated",
+  "bot.sharing.groups": "Groups",
+  "bot.sharing.update": "Update",
+  "bot.sharing.publishToTeam": "Publish to team",
+  "bot.sharing.assignNamed": "Assign {name} to a group",
+  "bot.sharing.assignNote":
+    "It's pinned at the top of every member's Bots list.",
+  "bot.sharing.groupOrStar": "Group, or *",
+  "bot.sharing.wholeTeamPlaceholder": "* for the whole team",
+  "bot.sharing.assign": "Assign",
+  "bot.sharing.removeNamed": "Remove {name}",
+  "bot.sharing.wholeTeam": "Whole team",
+  "bot.sharing.notAssigned": "Not assigned to any group.",
+  "bot.sharing.assignRow": "Assign to a group",
+  "bot.page.accessPurpose": "The skills, apps and other Bots this Bot can use.",
+  "bot.page.approvalsPurpose": "What this Bot can do without asking you first.",
+  "bot.page.memoryPurpose":
+    "The apps this Bot learns from, and the research it does for you in the background.",
+  "bot.page.memoryPointer": "What your Bots remember about you is in",
+  "bot.page.reachPurpose":
+    "Continue a conversation with this Bot in Slack, Microsoft Teams, or by text message.",
+  "bot.page.responsibilitiesPurpose":
+    "Ongoing goals this Bot works on for you. See what started each run and what it found.",
+  "bot.page.routinesPurpose":
+    "What this Bot does for you on a schedule. Turn one off, run it now, or delete it.",
+  "bot.page.setupPurpose":
+    "Who this Bot is, who can find it, and where it runs.",
+  "bot.page.sharingPurpose":
+    "Who else can use this Bot. Each person's conversations with it are private.",
+  // The Bot sub-pages' contents (D181 stage 2e): memory sources, suggestions, reaching you, responsibilities
+  // and routines, the summaries of lib/agents/bot-summaries.ts and the time phrases of lib/relative-time.ts.
+  // Shared words reuse their existing keys (`botPage.fallbackTitle` is "Bot"); `bot.choose` is "Choose a Bot".
+  "bot.choose": "Choose a Bot",
+  "memory.addSource": "Add source",
+  "memory.title": "App sources",
+  "memory.description":
+    "Apps you connected that this Bot can read show up here, and you can add more. Sources refresh every 15 minutes. Only this Bot sees what they hold.",
+  "memory.empty": "No sources yet. Add one with Add source.",
+  "memory.upToDate": "Up to date",
+  "memory.off": "Turned off",
+  "memory.lastRead": "Last read {when}",
+  "memory.syncNow": "Sync now",
+  "memory.readNamed": "Read {name}",
+  "memory.addTitle": "Add a source",
+  "memory.addDescription":
+    "{product} reads it now, then every 15 minutes while it's on.",
+  "memory.enterNumber": "Enter a number for {name}.",
+  "memory.cantShow":
+    "This one has settings {product} can't show. Choose another.",
+  "memory.checkSettings": "Check the source settings.",
+  "memory.whatToRead": "What to read",
+  "memory.chooseWhat": "Choose what to read",
+  "memory.sourceName": "Source name",
+  "memory.chooseValue": "Choose a value",
+  "memory.reading": "Reading source…",
+  "memory.addAndSync": "Add and sync source",
+  "suggestions.everyHour": "Every hour",
+  "suggestions.every4Hours": "Every 4 hours",
+  "suggestions.twiceDay": "Twice a day",
+  "suggestions.onceDay": "Once a day",
+  "suggestions.everyMinutes": {
+    one: "Every {count} minute",
+    other: "Every {count} minutes",
+  },
+  "suggestions.yourBot": "Your Bot",
+  "suggestions.title": "Suggested next steps",
+  "suggestions.from": "From {app}",
+  "suggestions.connectedApp": "a connected app",
+  "suggestions.openRecord": "Open record",
+  "suggestions.startTask": "Start as task",
+  "suggestions.empty":
+    "No suggestions right now. Bots with background research on will suggest next steps here.",
+  "suggestions.turnOnResearch": "Turn on research",
+  "suggestions.researchDescription":
+    "Off until you turn it on for this Bot, unless your administrator turned it on for everyone. When it is on, it looks through the apps it can already read every four hours, forms memories for you to review and suggests next steps. It can only read: it cannot send messages, change anything in an app, or use a browser or computer. Turn it off or remove it and it stays that way.",
+  "suggestions.researchTitle": "Background research",
+  "suggestions.researchOff": "Background research is off.",
+  "suggestions.turnOnDialog": "Turn on background research",
+  "suggestions.turnOnDescription":
+    "It reads on a schedule and delivers what it suggests to a channel it is in.",
+  "suggestions.deliverTo": "Deliver suggestions to",
+  "suggestions.chooseChannel": "Choose a channel",
+  "suggestions.howOften": "How often",
+  "suggestions.focus": "What to look for (optional)",
+  "suggestions.off": "Off",
+  "suggestions.researchingNow": "Researching now",
+  "suggestions.lastRan": "Last ran {when}",
+  "suggestions.turnOff": "Turn off",
+  "reaching.linkSlack": "Link Slack",
+  "reaching.linkTeams": "Link Microsoft Teams",
+  "reaching.connectPhone": "Connect a phone",
+  "reaching.sumSlack": "Continue a conversation from Slack.",
+  "reaching.sumTeams": "Continue a conversation from Microsoft Teams.",
+  "reaching.sumSms": "Continue a conversation by text message.",
+  "reaching.codeOnWay":
+    "A verification code is on its way. Enter it to finish.",
+  "reaching.linkReady":
+    "Your link code is ready to send. Open this to see it again.",
+  "reaching.smsNotSet":
+    "Text messages aren't set up yet. An admin has to turn them on first.",
+  "reaching.notSet":
+    "Not set up yet. An admin has to turn on Slack and Teams first.",
+  "reaching.pointerBefore":
+    "Your devices, recent deliveries, and where each kind of update goes are in",
+  "reaching.connected": "Connected destinations",
+  "reaching.noDestinations": "No destinations connected.",
+  "reaching.optedOut": "You texted STOP. Text START to resume.",
+  "reaching.disconnect": "Disconnect",
+  "reaching.channelNote":
+    "In a Slack or Teams channel that others can read, the Bot replies to you in a direct message.",
+  "reaching.connectTitle": "Connect a conversation",
+  "reaching.oneAtATime":
+    "Each account or phone number works with one conversation at a time. Linking it here moves it from the one it's linked to now.",
+  "reaching.conversation": "Conversation",
+  "reaching.chooseConversation": "Choose a conversation",
+  "reaching.loadMore": "Load more conversations",
+  "reaching.phoneNumber": "Phone number",
+  "reaching.sendCode": "Send verification code",
+  "reaching.verificationCode": "Verification code",
+  "reaching.confirmPhone": "Confirm phone",
+  "reaching.linkExpires": {
+    one: "Send this message to the {product} app in {platform} within {count} minute. It links that account to this conversation and Bot.",
+    other:
+      "Send this message to the {product} app in {platform} within {count} minutes. It links that account to this conversation and Bot.",
+  },
+  "responsibilities.new": "New responsibility",
+  "responsibilities.title": "Goals",
+  "responsibilities.empty":
+    "No responsibilities yet. Add one with New responsibility.",
+  "responsibilities.emptyBot":
+    "No responsibilities for this Bot yet. Add one with New responsibility.",
+  "routines.neverRun": "Hasn't run yet",
+  "routines.running": "Running…",
+  "routines.missed": "Missed {when}",
+  "routines.failed": "Failed {when}",
+  "routines.skipped": "Skipped {when}",
+  "routines.ran": "Ran {when}",
+  "routines.finished": "Finished {when}",
+  "routines.noRuns": "No runs yet.",
+  "routines.runNow": "Run now",
+  "routines.triggered": "Triggered",
+  "routines.scheduled": "Scheduled",
+  "routines.sweepChecked":
+    "{product} last checked them {when}. None will run until it starts again. Ask an admin if this keeps happening.",
+  "routines.sweepNever":
+    "{product} hasn't started running routines yet, so none of these will run. Ask an admin to set this up.",
+  "routines.notRunning": "Routines aren't running.",
+  "routines.loadError": "Couldn't load your routines. Reload the page.",
+  "routines.emptyBot":
+    'No routines for this Bot yet. Ask it something like "every weekday at 9, send me…" and it shows up here.',
+  "routines.empty":
+    'No routines yet. Ask a Bot something like "every weekday at 9, send me…" and it shows up here.',
+  "routines.enableAria": "Enable the routine scheduled {schedule}",
+  "routines.channelGone": "Conversation deleted",
+  "routines.untitledChannel": "Untitled conversation",
+  "routines.due": "Due",
+  "routines.next": "Next {when}",
+  "routines.runNowTitle":
+    "Runs it now, for real. The Bot does the work and posts in the conversation.",
+  "routines.pausedTurnOn": "This routine is paused. Turn it on first.",
+  "routines.runNowAria": "Run the routine scheduled {schedule} now",
+  "routines.historyAria": "Run history for the routine scheduled {schedule}",
+  "routines.history": "History",
+  "routines.deleteAria": "Delete the routine scheduled {schedule}",
+  "routines.deleteTitle": 'Delete "{schedule}"?',
+  "routines.deleteDescription":
+    "This routine stops for good. You can't undo this.",
+  "routines.week": "Week",
+  "routines.nextRuns": "Next runs",
+  "routines.viewAria": "View",
+  "summary.nothingGranted": "Nothing granted",
+  "summary.skills": {
+    one: "{count} skill",
+    other: "{count} skills",
+  },
+  "summary.apps": {
+    one: "{count} app",
+    other: "{count} apps",
+  },
+  "summary.everyonePublic": "Everyone (public)",
+  "summary.notShared": "Not shared",
+  "summary.specificPeople": "Specific people and groups",
+  "summary.onlyIn": "Only in {product}",
+  "summary.nothingConnected": "Nothing connected",
+  "summary.sources": {
+    one: "{count} source",
+    other: "{count} sources",
+  },
+  "summary.researchOn": "Background research on",
+  "summary.researchOnAfter": "background research on",
+  "time.justNow": "just now",
+  "time.minutesAgo": {
+    one: "{count} min ago",
+    other: "{count} min ago",
+  },
+  "time.hoursAgo": {
+    one: "{count} hr ago",
+    other: "{count} hr ago",
+  },
+  "time.yesterday": "yesterday",
+  "time.daysAgo": {
+    one: "{count} day ago",
+    other: "{count} days ago",
+  },
+  "time.weeksAgo": {
+    one: "{count} wk ago",
+    other: "{count} wk ago",
+  },
+  "time.recently": "recently",
+  "approvals.behaviour.allow": "Take action without asking",
+  "approvals.behaviour.preApproved": "Take action if pre-approved",
+  "approvals.behaviour.ask": "Ask before taking action",
+  "approvals.behaviour.handOff": "Hand off to you",
+  "approvals.host.ask": "Ask every time",
+  "approvals.host.allow": "Always allow",
+  "approvals.host.never": "Never",
+  "approvals.teamRule": "{label} (team rule)",
+  "approvals.matchOn": "on {scope}",
+  "approvals.matchFor": "for {bot}",
+  "approvals.locked": "Locked",
+  "approvals.behaviourFor": "Behaviour for {tool}",
+  "approvals.formLead": "A tool or app, and what a Bot does before using it.",
+  "approvals.formHelp":
+    "Use * to match anything. mcp/gmail/* means every Gmail tool. A target of *.example.com means every page on that site.",
+  "approvals.field.tool": "Tool or app",
+  "approvals.field.effect": "Kind of action",
+  "approvals.field.scope": "Target",
+  "approvals.field.scopeHint": "*, a site, a folder, a Bot name",
+  "approvals.field.bot": "Bot",
+  "approvals.field.botHint": "* for every Bot",
+  "approvals.field.behaviour": "Behaviour",
+  "approvals.saveRule": "Save rule",
+  "approvals.addRule": "Add a rule",
+  "approvals.rulesOff":
+    "An admin has turned off personal rules. Yours are kept but don't apply.",
+  "approvals.bot.lead":
+    'The strictest matching rule wins. An "ask" rule beats an "allow" rule. Rules for every Bot are in',
+  "approvals.bot.settingsLink": "Settings → Approvals",
+  "approvals.bot.title": "Rules",
+  "approvals.bot.empty": "No rules for this Bot.",
+  "approvals.adminLead": "Team settings and shared account requests are in",
+  "approvals.adminLink": "Admin → Approvals",
+  "approvals.before.title": "Before a Bot acts",
+  "approvals.before.askTitle": "Ask before making changes",
+  "approvals.before.askLine":
+    "Review a Bot's changes to websites, connected apps, and files.",
+  "approvals.before.autoTitle": "Auto-review",
+  "approvals.before.autoEnforced": "An admin requires this.",
+  "approvals.before.autoLine":
+    "Before a Bot does something that could affect your accounts or share information, {product} checks it against your request and your rules. If it can't tell, it asks you.",
+  "approvals.before.hostTitle": "Commands on your computer",
+  "approvals.before.hostLimited": 'An admin limits this to "{limit}".',
+  "approvals.before.hostLine":
+    "The {product} desktop app still shows you each command before it runs.",
+  "approvals.every.lead":
+    'The strictest matching rule wins. An "ask" rule beats an "allow" rule. Team rules are locked. Passwords and security settings are always handed to you, and so are payments unless you turn on Full access for a Bot below. Rules for one Bot are on',
+  "approvals.every.botPage": "that Bot's page",
+  "approvals.every.title": "Rules for every Bot",
+  "approvals.every.empty": "No rules yet.",
+  "approvals.other.lead":
+    "These don't match a Bot you can open. They still apply to any Bot they match. Remove the ones you don't want.",
+  "approvals.other.title": "Rules for other Bots",
+  "approvals.page.description":
+    "Choose when your Bots ask before they change things. Rules here apply to all of them.",
+  "approvals.admin.description":
+    "What members' Bots must ask before they act, rules for everyone, and requests to use shared accounts.",
+  "approvals.team.title": "Team settings",
+  "approvals.team.enforce": "Require auto-review for everyone",
+  "approvals.team.custom": "Let members set personal rules",
+  "approvals.team.hostTitle": "Commands on members' computers, at most",
+  "approvals.team.hostLine": "A member's own stricter setting still applies.",
+  "approvals.team.rulesLead":
+    "These apply to every member's Bots. Members can't change them.",
+  "approvals.team.rulesTitle": "Team rules",
+  "approvals.team.empty": "No team rules.",
+  "approvals.team.addRule": "Add a team rule",
+  "approvals.shared.title": "Shared account requests",
+  "approvals.shared.wants": "{bot} wants the shared {account} account",
+  "approvals.shared.why.refusedCall":
+    "An action was blocked. This Bot reaches more people than approved.",
+  "approvals.shared.why.publish": "Its owner widened who can reach it.",
+  "approvals.shared.why.trigger":
+    "Its owner added a trigger that lets outside messages steer it.",
+  "approvals.shared.why.grant": "It was given the app's actions.",
+  "approvals.shared.now": "Now:",
+  "approvals.shared.notApproved": "Not approved",
+  "approvals.shared.asked": "Asked:",
+  "approvals.shared.approve": "Approve",
+  "approvals.shared.decline": "Decline",
+  "tasks.updated": "Updated {ago}",
+  "routines.status.running": "Running",
+  "routines.status.succeeded": "Succeeded",
+  "routines.status.failed": "Failed",
+  "routines.status.skipped": "Skipped",
+  "routines.status.waiting": "Waiting for you",
+  "routines.status.missed": "Missed",
+  "routines.history.empty":
+    "No runs yet. A run appears here once a routine has fired, or after you press Run now.",
+  "routines.history.aBot": "A Bot",
+  "routines.history.latest": {
+    one: "Showing the latest {count} run.",
+    other: "Showing the latest {count} runs.",
+  },
+  "routines.history.deleted": "A routine that has since been deleted",
+  "routines.history.waitingNote":
+    "Waiting for your approval. Open the conversation to answer it.",
+  "responsibilities.status.completed": "Completed",
+  "responsibilities.summary.paused": "Nothing starts it until you resume it",
+  "responsibilities.summary.trigger": "{kind} trigger",
+  "responsibilities.summary.starts": "Starts on {starts}",
+  "responsibilities.summary.asked": "Runs when asked",
+  "responsibilities.source.manual": "Manual",
+  "responsibilities.source.schedule": "Schedule",
+  "responsibilities.source.connector": "Connected app",
+  "responsibilities.progress": "Progress",
+  "responsibilities.lastResult": "Last result",
+  "responsibilities.activeOn": "Its events and triggers start it.",
+  "responsibilities.activeOff": "Paused. Its triggers won't start it.",
+  "responsibilities.runNowLine":
+    "Runs it now, for real. The Bot does the work and can post and take actions.",
+  "responsibilities.complete": "Complete",
+  "responsibilities.completeLine":
+    "Mark it done. Nothing starts it after this.",
+  "responsibilities.field.title": "Title",
+  "responsibilities.field.instruction": "Instruction",
+  "responsibilities.field.criteria": "Success criteria",
+  "responsibilities.events": "Events",
+  "responsibilities.saving": "Saving…",
+  "responsibilities.run.queued": "Queued",
+  "responsibilities.run.waiting":
+    "Waiting for {kind}. Answer at the top of this Bot's page or in the conversation.",
+  "responsibilities.runs": "Runs",
+  "responsibilities.viewRuns": "View runs",
+  "responsibilities.hideRuns": "Hide runs",
+  "passwords.description":
+    "Logins you saved when signing a Bot in to a website. Bots never see them, and you confirm each use.",
+  "passwords.saved": "Saved logins",
+  "passwords.loadError": "Couldn't load your passwords. Reload the page.",
+  "passwords.off":
+    "An admin has turned off saved passwords. Your logins are kept but won't be offered.",
+  "passwords.empty":
+    "No saved logins. Choose Save to Passwords when you sign a Bot in to a website.",
+  "passwords.lastUsed": "last used {date}",
+  "passwords.neverUsed": "never used",
+  "passwords.deleteAria": "Delete login for {origin}",
+  "settings.notificationsPage":
+    "Where your Bots' updates reach you when you're away. Set how much each Bot sends on its own page.",
+  "fullaccess.label.noPayments": "Full access without payments",
+  "fullaccess.label.full": "Full access",
+  "fullaccess.off": "Off",
+  "fullaccess.description":
+    "Safe by default: your Bots ask before they send, pay, sign, book or delete. For each Bot you can choose to let it do these without asking.",
+  "fullaccess.offTerm": "Off:",
+  "fullaccess.offText":
+    "the Bot asks before it sends, pays, signs, books or deletes.",
+  "fullaccess.noPaymentsTerm": "Full access without payments:",
+  "fullaccess.noPaymentsText":
+    "it sends, signs, books and deletes without asking. Payments and purchases still ask you.",
+  "fullaccess.fullTerm": "Full access:",
+  "fullaccess.fullText":
+    "it also pays and buys without asking. There is no limit on the amount until spending caps exist (planned for v0.4).",
+  "fullaccess.askTitle": "Give {name} {label}?",
+  "fullaccess.give": "Give {label}",
+  "fullaccess.full.p1":
+    "{name} will send, pay, sign, book and delete without asking you first. It can act on what it reads, such as an email or a web page, so only turn this on if you trust it with that.",
+  "fullaccess.full.p2":
+    "There is no limit on the amount it can pay: spending caps do not exist yet (they are planned for v0.4). To keep payments and purchases asking you, choose Full access without payments instead.",
+  "fullaccess.full.p3":
+    "Passwords and security settings still need you. When an automatic reviewer is set up, it also reads each command and script the member runs on its computer once for that, even if you switched the reviewer off; when none is set up, a command is not read. This applies to what you ask in your own chats, not to routines or check-ins. You can turn it off at any time, and it stops at once.",
+  "fullaccess.noPayments.p1":
+    "{name} will send, sign, book and delete without asking you first. Payments and purchases still ask you. It can act on what it reads, such as an email or a web page, so only turn this on if you trust it with that.",
+  "fullaccess.noPayments.p2":
+    "The app recognises a payment by its built-in checks, so a message that only mentions a payment may ask too, and a payment worded in an unusual way might not be caught. Passwords and security settings still need you. When an automatic reviewer is set up, it also reads each command and script the member runs on its computer once for a password, a security setting or a payment made that way, even if you switched the reviewer off; when none is set up, a command is not read. This applies to what you ask in your own chats, not to routines or check-ins. You can turn it off at any time, and it stops at once.",
+  "fullaccess.noBots": "No Bots yet.",
+  "fullaccess.legend": "Access for {name}",
+  "fullaccess.radioAria": "{label} for {name}",
+  "fullaccess.summary.off":
+    "Asks before it sends, pays, signs, books or deletes.",
+  "fullaccess.summary.noPayments":
+    "Acts without asking, except that payments and purchases still ask you. Since {since}.",
+  "fullaccess.summary.full":
+    "Acts without asking, payments included, with no limit on the amount. Since {since}.",
+  "fullaccess.doneTitle": "Done without asking",
+  "fullaccess.doneDescription":
+    "What a Bot with Full access did without asking you, newest first.",
+  "fullaccess.nothingYet": "Nothing yet.",
+  "approvals.audience.owner": "Only its owner",
+  "approvals.audience.team": "Everyone",
+  "approvals.audience.outside": ", and outside input",
+  "approvals.audience.nobody": "Nobody named",
+  "approvals.audience.groups": {
+    one: "The group {names}",
+    other: "The groups {names}",
+  },
+  "approvals.audience.people": {
+    one: "{count} person",
+    other: "{count} people",
+  },
+  "approvals.audience.join": "{a} and {b}",
+  "access.req.title": "Requests",
+  "access.req.loadError": "Couldn't load access requests. Reload the page.",
+  "access.req.descApp":
+    "People asking for this app. Approve does what they asked, right away.",
+  "access.req.descAll":
+    "People asking for an app to be turned on, given to a Bot, or connected. Approve does what they asked, right away.",
+  "access.req.aBot": "a Bot",
+  "access.req.theBot": "the Bot",
+  "access.req.somebody": "Somebody",
+  "access.req.enable": "Turn on {app} for {bot}",
+  "access.req.grantMore": "Give {bot} more of {app}: {list}",
+  "access.req.grant": "Give {app} to {bot}",
+  "access.req.connectShared": "Connect the shared {app} account",
+  "access.req.asked": "{who} asked {when}{forBot}.",
+  "access.req.forBot": ", for {bot}",
+  "access.req.approving": "Approving…",
+  "access.req.botPage": "the Bot's page under {app}",
+  "access.req.toolRead": "{name} (read-only)",
+  "access.req.toolWrite": "{name} (changes something)",
+  "access.req.gives":
+    "Approving gives {bot} exactly these tools and nothing else: {list}.",
+  "access.req.readOnly":
+    "Approving gives {bot} only {app}'s read-only actions. Choose any others on {page}.",
+  "access.req.canSend": {
+    one: "{names} can send on the person's behalf.",
+    other: "{names} can each send on the person's behalf.",
+  },
+  "access.req.unreviewed": {
+    one: "No reviewed list says what {names} does in {app}, so it may send on the person's behalf.",
+    other:
+      "No reviewed list says what {names} do in {app}, so each may send on the person's behalf.",
+  },
+  "access.req.neverGives": {
+    one: "Approving never gives a tool like that: allow it in settings, on {page}.",
+    other:
+      "Approving never gives tools like that: allow them in settings, on {page}.",
+  },
+  "access.req.and": "{a} and {b}",
+  "passwords.saveTo": "Save to Passwords",
+  "responsibilities.run.waitKind.approval": "your approval",
+  "responsibilities.run.waitKind.question": "your answer",
+  "responsibilities.run.waitKind.handoff": "you to take over",
+  "responsibilities.run.waitKind.signIn": "you to sign in",
+  "responsibilities.run.waitKind.other": "you",
+  "responsibilities.new.description":
+    "An ongoing goal. The Bot works on it in the conversation you pick.",
+  "responsibilities.new.chooseConversation": "Choose a conversation",
+  "responsibilities.new.loadMore": "Load more conversations",
+  "responsibilities.new.titleExample": "Keep the customer report up to date",
+  "responsibilities.new.criteriaExample":
+    "The report contains the current quarter's graph and a source link.",
+  "responsibilities.new.eventSource": "Event source",
+  "responsibilities.new.source.none": "Run when asked",
+  "responsibilities.new.githubHelp":
+    "Events come from the repositories you connected in {link}.",
+  "responsibilities.new.eventType": "Event type",
+  "responsibilities.new.creating": "Creating…",
+  "responsibilities.new.create": "Create responsibility",
+  "triggers.kind.email": "Email",
+  "triggers.help.webhook":
+    "POST JSON to this URL with the Authorization header, or with Standard Webhooks signature headers. A 200 means it was received, not that the run finished.",
+  "triggers.help.github":
+    "In the repository's Settings → Webhooks, set the payload URL to this URL, content type application/json, and the secret to the key.",
+  "triggers.help.linear":
+    "In Linear, Settings → API → Webhooks: set the URL, then paste the signing secret Linear shows here.",
+  "triggers.help.sentry":
+    "In a Sentry internal integration, set the webhook URL, then paste the integration's client secret here.",
+  "triggers.help.pagerduty":
+    "In PagerDuty, Integrations → Generic Webhooks (v3): set the URL, then paste the secret shown on creation here.",
+  "triggers.help.email": "Send or forward mail to this address to start a run.",
+  "triggers.help.slack":
+    "Starts on Slack events this Bot receives. Messages sent before you added the trigger are ignored.",
+  "triggers.slack.mention": "The Bot is mentioned",
+  "triggers.slack.phrase": "A message contains a phrase",
+  "triggers.slack.reaction": "A reaction is added",
+  "triggers.slack.message": "Any message",
+  "triggers.f.inChannels": "in {channels}",
+  "triggers.f.everyChannel": "in every channel the Bot is in",
+  "triggers.f.mention": "when the Bot is mentioned",
+  "triggers.f.anyMessage": "on any message",
+  "triggers.f.phrases": "on messages containing {phrases}",
+  "triggers.f.or": " or ",
+  "triggers.f.reactions": "on reactions",
+  "triggers.f.slack": "{what} {where} (workspace {team})",
+  "triggers.f.events": "events {types}",
+  "triggers.f.everyEvent": "every event",
+  "triggers.f.where": "where {path} = {equals}",
+  "triggers.f.from": "from {from}",
+  "triggers.f.fromSenders": "from {senders} (authenticated)",
+  "triggers.title": "Triggers",
+  "triggers.add": "Add trigger",
+  "triggers.notActive.paused":
+    "This responsibility is paused. Its triggers won't start it.",
+  "triggers.notActive.completed":
+    "This responsibility is completed. Its triggers won't start it.",
+  "triggers.none":
+    "No triggers. It runs when you press Run now, or on the events above.",
+  "triggers.removeForGood": "Remove for good",
+  "triggers.keep": "Keep",
+  "triggers.runOnAria": "Run on this {kind} trigger",
+  "triggers.postTo": "POST to",
+  "triggers.copyUrl": "Copy URL",
+  "triggers.copyAddress": "Copy address",
+  "triggers.emailOff":
+    "Email isn't set up on {product} yet, so this address can't receive mail. An admin has to turn it on.",
+  "triggers.key": "Key",
+  "triggers.copyKey": "Copy key",
+  "triggers.copyHeader": "Copy header",
+  "triggers.showKey": "Show key",
+  "triggers.replaceKey": "Replace key",
+  "triggers.secretSaved": "Signing secret saved",
+  "triggers.secretWaiting": "Waiting for the signing secret",
+  "triggers.secret": "Signing secret",
+  "triggers.pasteNew": "Paste a new secret to replace it",
+  "triggers.paste": "Paste the signing secret",
+  "triggers.saveSecret": "Save secret",
+  "triggers.addDescription":
+    "Something outside {product} that starts this responsibility.",
+  "triggers.slackTeam": "Slack team ID",
+  "triggers.fireOn": "Fire on",
+  "triggers.phrases": "Phrases (comma separated)",
+  "triggers.reactions": "Reactions (blank: any)",
+  "triggers.channelIds": "Channel IDs (blank: all the Bot is in)",
+  "triggers.eventTypes": "Event types",
+  "triggers.onlyWhen": "Only when field",
+  "triggers.equals": "equals",
+  "triggers.repository": "Repository (optional)",
+  "triggers.senders": "Allowed senders (blank: nobody)",
+  "triggers.secretLater": "Signing secret (can be added later)",
+  "triggers.adding": "Adding…",
+  "triggers.addKind": "Add {kind} trigger",
+  "triggers.example.webhook": "deploy.finished (blank: any)",
+  "routines.cal.intro":
+    "The next {days} days, for the routines that are switched on. Times are in your time zone.",
+  "routines.cal.none": "No routines yet, so nothing is scheduled.",
+  "routines.cal.noneOn":
+    "None of these routines is switched on, so none will run.",
+  "routines.cal.nothing": "Nothing is scheduled in the next {days} days.",
+  "routines.cal.truncated":
+    "Only the first {max} runs in these {days} days are listed.",
+  "routines.cal.paused": {
+    one: "{count} routine paused, so not listed here. Switch one on to see when it runs.",
+    other:
+      "{count} routines paused, so not listed here. Switch one on to see when it runs.",
+  },
+  "routines.week.nothing": "Nothing is scheduled for the rest of this week.",
+  "routines.week.label": "This week",
+  "routines.week.today": "today",
+  "routines.week.now": "Now, {time}",
+  "routines.week.next": "Next:",
+  "routines.week.nothingElse": "Nothing else is scheduled this week.",
+  "routines.week.truncated":
+    "Only the first runs in the next days are listed, so a very busy routine may not show every day.",
+  "routines.week.historyError":
+    "Runs that already happened could not be loaded, so they are not shown.",
+  "routines.week.note":
+    "Times are in your time zone. A routine that runs more often than hourly shows as one block for the day.",
+  "routines.week.summary": "{count} runs, every ~{minutes} min",
+  "routines.week.gone": "{label}, conversation deleted",
+  "routines.card.label": "Routine",
+  "routines.card.cancelled": "Routine cancelled",
+  "routines.card.readError": "This routine could not be read.",
+  "routines.card.reading": "Reading this routine…",
+  "routines.card.gone": "This routine no longer exists",
+  "routines.card.cannotSend":
+    "This conversation cannot take a message right now. Write the change in the message box below.",
+  "routines.card.confirm": "Cancel this routine?",
+  "routines.card.yes": "Yes, cancel it",
+  "routines.card.no": "No, keep it",
+  "routines.card.pause": "Pause",
+  "routines.card.resume": "Resume",
+  "routines.card.edit": "Edit",
+  "routines.card.whatChange": "What should change?",
+  "routines.card.send": "Send change",
+  "routines.card.writeBelow": "Write the change in the message box below.",
+  "routines.card.close": "Close",
+  "admin.boundaries.title": "Boundaries",
+  "admin.boundaries.descLead":
+    "What a Bot can and can't do with its computer. Every action is checked before it happens. Refusals show in",
+  "admin.boundaries.descAudit": "Audit",
+  "admin.boundaries.descTail": "with the rule that refused them.",
+  "admin.boundaries.whenTitle": "When a rule matches",
+  "admin.boundaries.whenDesc":
+    "Stop the action, or record it and let it through. Recording lets you try a rule on real activity before it refuses anything.",
+  "admin.boundaries.modeEnforce": "Stop the action",
+  "admin.boundaries.modeRecord": "Record it and allow it",
+  "admin.boundaries.modeEnforceNote":
+    "The Bot is stopped and told which rule refused it.",
+  "admin.boundaries.modeRecordNote":
+    "Nothing is stopped. Each match is recorded as if it had been refused.",
+  "admin.boundaries.neverTitle": "Bots may never",
+  "admin.boundaries.neverLead":
+    "Checked first. A match stops the action, and the Bot is told which rule refused it. Rules are CEL. They can check",
+  "admin.boundaries.neverMid1": ", the element, the",
+  "admin.boundaries.neverMid2": "pressed, the file, the",
+  "admin.boundaries.neverMid3": "run, and",
+  "admin.boundaries.neverMid4": "for outside tools.",
+  "admin.boundaries.neverMid5": "says what started the run:",
+  "admin.boundaries.neverTail": "A scheduled run acts as its owner, so",
+  "admin.boundaries.neverTail2":
+    "alone can't tell you that. A rule that can't be evaluated counts as a match. A typo never lets an action through.",
+  "admin.boundaries.or": "or",
+  "admin.boundaries.noRules": "No rules. Every action is allowed and recorded.",
+  "admin.boundaries.remove": "Remove",
+  "admin.boundaries.ruleLabel": "A rule, written in CEL",
+  "admin.boundaries.testing": "Testing…",
+  "admin.boundaries.testFirst": "Test first",
+  "admin.boundaries.addRule": "Add rule",
+  "admin.boundaries.preset.form": "Never submit a form",
+  "admin.boundaries.preset.formCost":
+    "Also stops the Bot pressing Enter anywhere else. A form can submit from Enter in any field. It does not cover choosing in a menu or a date field, whose change can submit a form by itself.",
+  "admin.boundaries.preset.password": "Never type into a password field",
+  "admin.boundaries.preset.passwordCost":
+    "A password box with a different label isn't covered. The rule matches the label.",
+  "admin.boundaries.preset.social": "Stay off social media",
+  "admin.boundaries.preset.socialCost":
+    "Only these two hosts. A link that redirects there from elsewhere is allowed.",
+  "admin.boundaries.otherwiseTitle": "Otherwise they may",
+  "admin.boundaries.otherwiseDesc":
+    "Applies to anything the list above didn't catch. An empty list here allows nothing, and every action is refused.",
+  "admin.boundaries.allowAll": "true, anything not refused above",
+  "admin.boundaries.saved":
+    "Saved. It applies to the next action any Bot takes.",
+  "admin.boundaries.footer":
+    "Changes apply to the next action any Bot takes. They stay after a restart.",
+  "admin.boundaries.dry.none":
+    "No recorded computer actions to test against yet. The rule is valid. You'll see what it matches once Bots have acted.",
+  "admin.boundaries.dry.zero":
+    "Tested on the last {scanned} recorded actions. This rule would have refused none. It may still match future ones.",
+  "admin.boundaries.dry.some":
+    "Tested on the last {scanned} recorded actions. This rule would have refused {refused}.",
+  "admin.boundaries.dry.wouldRefuse": "Would refuse",
+  "admin.boundaries.dry.wouldAllow": "Would now allow",
+  "admin.boundaries.dry.on": "on “{name}”",
+  "admin.boundaries.dry.running": "running",
+  "admin.boundaries.dry.touching": "touching {file}",
+  "admin.boundaries.dry.first":
+    "Showing the first {shown}. The count above covers everything checked.",
+  "admin.people.title": "People",
+  "admin.people.desc":
+    "Everybody who has signed in. Admins can open these screens. Everybody else talks to Bots.",
+  "admin.people.whoTitle": "Who is here",
+  "admin.people.whoDesc":
+    "Addresses in INITIAL_ADMIN_EMAILS are always admins. You can't change them here.",
+  "admin.people.stopped": {
+    one: "Stopped {count} computer",
+    other: "Stopped {count} computers",
+  },
+  "admin.people.stoppedFailed": ". {failed} couldn't be stopped",
+  "admin.people.disksKept": ". Their disks are kept.",
+  "admin.people.searchLabel": "Search people",
+  "admin.people.searchPlaceholder": "Search by name or address",
+  "admin.people.loadError": "Couldn't load people. Reload the page.",
+  "admin.people.noMatch": 'Nobody matches "{query}".',
+  "admin.people.nobody":
+    "Nobody has signed in yet. People show here once they do.",
+  "admin.people.lastSignedIn": "last signed in {date}",
+  "admin.people.neverSignedIn": "never signed in",
+  "admin.people.noProvider": "no provider",
+  "admin.people.accessRemoved": "Access removed",
+  "admin.people.adminByConfig": "Admin by configuration",
+  "admin.people.stopComputers": "Stop computers",
+  "admin.people.restore": "Restore",
+  "admin.people.remove": "Remove",
+  "admin.people.adminSwitch": "Admin: {email}",
+  "admin.people.loading": "Loading…",
+  "admin.people.showMore": "Show more",
+  "admin.boundaries.and": "and",
+  "admin.credentials.title": "Credentials",
+  "admin.credentials.add": "Add credential",
+  "admin.credentials.desc":
+    "Keys and tokens for this deployment. {product} never shows a secret after it is saved.",
+  "admin.credentials.dialogDesc":
+    "Saved for this deployment. You won't see the secret again.",
+  "admin.credentials.type": "Type",
+  "admin.credentials.model": "Model",
+  "admin.credentials.connector": "Connector",
+  "admin.credentials.provider": "Provider",
+  "admin.credentials.keyId": "Key ID",
+  "admin.credentials.secret": "Secret",
+  "admin.credentials.replaces":
+    "This key already has an active credential. Saving replaces it and revokes the old one.",
+  "admin.credentials.saveError": "Couldn't save the credential. Try again.",
+  "admin.credentials.cancel": "Cancel",
+  "admin.credentials.saving": "Saving…",
+  "admin.credentials.save": "Save credential",
+  "admin.credentials.savedTitle": "Saved credentials",
+  "admin.credentials.loadError": "Couldn't load credentials. Reload the page.",
+  "admin.credentials.empty": "No credentials yet. Add one with Add credential.",
+  "admin.credentials.revoked": "revoked",
+  "admin.credentials.active": "active",
+  "admin.credentials.revoke": "Revoke",
+  "admin.idp.title": "Identity providers",
+  "admin.idp.add": "Add a provider",
+  "admin.idp.desc":
+    "Your company's own SAML or OpenID Connect provider. People sign in with their email, and its domain picks the provider.",
+  "admin.idp.registeredTitle": "Registered",
+  "admin.idp.registeredDesc":
+    "Google, Microsoft and Okta are set in the environment. They don't show here.",
+  "admin.idp.loadError": "Couldn't load identity providers. Reload the page.",
+  "admin.idp.empty":
+    "No identity providers yet. Add one with the metadata from your identity team.",
+  "admin.idp.remove": "Remove",
+  "admin.idp.dialogTitle": "Add an identity provider",
+  "admin.idp.name": "Name",
+  "admin.idp.domain": "Email domain",
+  "admin.idp.domainNote":
+    "Anybody with an address at this domain signs in here. Separate several with commas.",
+  "admin.idp.issuer": "Issuer",
+  "admin.idp.signOnUrl": "Sign-on URL",
+  "admin.idp.metadata": "Metadata XML",
+  "admin.idp.metadataNote":
+    "The file from your identity team. It includes the signing certificate.",
+  "admin.idp.clientId": "Client ID",
+  "admin.idp.clientSecret": "Client secret",
+  "admin.idp.cancel": "Cancel",
+  "admin.idp.adding": "Adding…",
+  "admin.idp.addShort": "Add",
+  "admin.audit.decision.bot.declined": "The Bot declined",
+  "admin.audit.decision.agent.stream_stalled": "The Bot stopped responding",
+  "admin.audit.decision.computer.policy_loaded": "Boundary at start-up",
+  "admin.audit.decision.computer.isolation_loaded": "Isolation at start-up",
+  "admin.audit.decision.computer.control_taken": "A person took control",
+  "admin.audit.decision.computer.control_released":
+    "Control went back to the Bot",
+  "admin.audit.decision.computer.help_requested": "The Bot asked for help",
+  "admin.audit.decision.computer.secret_requested":
+    "The Bot asked for a secret",
+  "admin.audit.decision.computer.secret_supplied": "A person supplied a secret",
+  "admin.audit.decision.computer.reset": "The computer was reset",
+  "admin.audit.decision.computer.updated": "The computer was updated",
+  "admin.audit.decision.computer.stopped": "A person pressed stop",
+  "admin.audit.decision.component.granted": "Granted to this Bot",
+  "admin.audit.decision.component.revoked": "Taken away from this Bot",
+  "admin.audit.decision.component.published": "Published. Every Bot can use it",
+  "admin.audit.decision.component.unpublished":
+    "Unpublished. No Bot can use it",
+  "admin.audit.decision.component.draft_saved":
+    "Draft saved, not yet published",
+  "admin.audit.decision.component.refused": "Refused",
+  "admin.audit.decision.component.function_granted": "Can read this",
+  "admin.audit.decision.component.function_revoked": "Can no longer read this",
+  "admin.audit.decision.component.function_called": "Read real data",
+  "admin.audit.decision.component.function_refused": "Refused",
+  "admin.audit.decision.component.function_failed": "Couldn't read it",
+  "admin.audit.decision.mcp.tools_discovered": "Tools offered for one run",
+  "admin.audit.decision.mcp.call_succeeded": "Called on this Bot's behalf",
+  "admin.audit.decision.mcp.call_rejected": "Blocked",
+  "admin.audit.decision.mcp.call_failed": "The server didn't answer",
+  "admin.audit.decision.mcp.callback_refused":
+    "Couldn't confirm which Bot it was",
+  "admin.audit.decision.configuration.changed": "Configuration changed",
+  "admin.audit.decision.credential.created": "Credential saved",
+  "admin.audit.discovery.under-floor": "Few enough tools to offer them all",
+  "admin.audit.discovery.nothing-declared":
+    "No skill declares any of these tools",
+  "admin.audit.discovery.unavailable": "Couldn't choose, so all were offered",
+  "admin.audit.discovery.nothing-chosen":
+    "No skill applied, so all were offered",
+  "admin.audit.discovery.selected": "Chosen by skill",
+  "admin.audit.title": "Audit",
+  "admin.audit.desc":
+    "Every action a Bot took, and every one this deployment's policy refused.",
+  "admin.audit.export": "Export CSV",
+  "admin.audit.exporting": "Exporting…",
+  "admin.audit.refresh": "Refresh",
+  "admin.audit.exportFailed": "Couldn't export audit events. Try again.",
+  "admin.audit.filter.all": "Everything",
+  "admin.audit.filter.computer": "Computer actions",
+  "admin.audit.filter.blocked": "Blocked",
+  "admin.audit.filter.didNot": "Did not happen",
+  "admin.audit.filter.nobody": "Nobody watching",
+  "admin.audit.capped":
+    "The file has the newest {count} events, not all of them. Narrow the filter or dates to export the rest.",
+  "admin.audit.loadError": "Couldn't load the audit log. Reload the page.",
+  "admin.audit.empty": "No events match this filter yet.",
+  "admin.audit.col.when": "When",
+  "admin.audit.col.what": "What",
+  "admin.audit.col.on": "On",
+  "admin.audit.col.bot": "Bot",
+  "admin.audit.col.startedBy": "Started by",
+  "admin.audit.col.decision": "Decision",
+  "admin.audit.by.routine": "A routine",
+  "admin.audit.by.handedOnBy": "Handed on by {name}",
+  "admin.audit.by.handedOn": "Handed on",
+  "admin.audit.by.memory": "A memory source",
+  "admin.audit.by.responsibility": "A responsibility",
+  "admin.audit.by.deployment": "This deployment",
+  "admin.audit.by.remote": "A browser not paired with the computer",
+  "admin.audit.by.person": "A person",
+  "admin.audit.routed.mention": "The person chose this Bot",
+  "admin.audit.routed.default": "Sent to the default Bot",
+  "admin.audit.routed.meant": "Sent to the Bot it was meant for",
+  "admin.audit.toolsOf": "{offered} of {granted} tools",
+  "admin.audit.blocked": "Blocked",
+  "admin.audit.didNot": "Did not happen",
+  "admin.audit.allowed": "Allowed",
+  "admin.audit.reportedByBot": ", reported by the Bot itself",
+  "admin.audit.dryRun": "dry-run: recorded, not enforced",
+  "admin.nav.back": "Back to app",
+  "admin.nav.overview": "Overview",
+  "admin.nav.reach": "What Bots can reach",
+  "admin.nav.do": "What Bots can do",
+  "admin.nav.in": "Who can get in",
+  "admin.nav.happened": "What happened",
+  "admin.nav.credentials": "Credentials",
+  "admin.nav.boundaries": "Boundaries",
+  "admin.nav.approvals": "Approvals",
+  "admin.nav.computers": "Computers",
+  "admin.nav.plugins": "Plugins",
+  "admin.nav.skills": "Skills",
+  "admin.nav.learning": "Automatic learning",
+  "admin.nav.components": "UI components",
+  "admin.nav.playground": "Playground",
+  "admin.nav.people": "People",
+  "admin.nav.idp": "Identity providers",
+  "admin.nav.audit": "Audit",
+  "admin.enterprise.mode.allow_all": "Allow all network access",
+  "admin.enterprise.mode.defaults_plus_allowlist":
+    "Defaults plus team allowlist",
+  "admin.enterprise.mode.allowlist_only": "Team allowlist only",
+  "admin.enterprise.noPolicy":
+    "No policy. Bot computers can reach anything the cluster allows",
+  "admin.enterprise.locked": " · locked",
+  "admin.enterprise.loadError":
+    "Couldn't load enterprise controls. Reload the page.",
+  "admin.enterprise.title": "Enterprise controls",
+  "admin.enterprise.description":
+    "What members can use, how Bot computers reach the network, and what is recorded. Every change shows in Audit.",
+  "admin.enterprise.signin.description":
+    "Addresses in {env} can always use social sign-in as an emergency way in. Each of those sign-ins shows in Audit.",
+  "admin.enterprise.signin.title": "Sign-in",
+  "admin.enterprise.sso.title": "Require SSO",
+  "admin.enterprise.sso.on":
+    "People can only sign in through a registered SAML or OpenID Connect provider.",
+  "admin.enterprise.sso.off":
+    "People can also sign in with Google, Microsoft or Okta.",
+  "admin.enterprise.scim.title": "SCIM provisioning",
+  "admin.enterprise.scim.on":
+    "Directory base URL {url} with the {env} bearer token. Deprovisioning ends sessions, blocks the address, retires connector credentials and stops their computers.",
+  "admin.enterprise.scim.unsetUrl": "(set BETTER_AUTH_URL)",
+  "admin.enterprise.scim.off":
+    "Off. Set {env} to accept provisioning from Okta, Entra or another directory.",
+  "admin.enterprise.on": "On",
+  "admin.enterprise.off": "Off",
+  "admin.enterprise.cap.description":
+    "Each switch applies to the whole organization. A role can override it, and a directory group can get a capability the organization has off.",
+  "admin.enterprise.cap.title": "Capabilities",
+  "admin.enterprise.cap.offFor":
+    "Off for everybody, unless a role or group turns it on.",
+  "admin.enterprise.over.title": "Role and group overrides",
+  "admin.enterprise.over.none": "None. Everybody gets the switches above",
+  "admin.enterprise.over.set": "{count} set",
+  "admin.enterprise.net.description":
+    "Where Bot computers can connect. Changes reach running computers within seconds, without a restart. A group policy replaces the organization's unless it is locked.",
+  "admin.enterprise.net.title": "Network",
+  "admin.enterprise.net.org": "Organization",
+  "admin.enterprise.net.group": "Group: {name}",
+  "admin.enterprise.net.addGroup": "Add a group policy",
+  "admin.enterprise.mcp.description":
+    "With the allowlist on, Bots can only call tools on the MCP servers approved here. Calls to any other server are refused.",
+  "admin.enterprise.mcp.title": "MCP servers",
+  "admin.enterprise.mcp.only": "Only approved servers",
+  "admin.enterprise.mcp.approved": "{count} approved",
+  "admin.enterprise.mcp.offDesc":
+    "Off. Bots can use any registered server they have access to.",
+  "admin.enterprise.mcp.onlyAria": "Only approved MCP servers",
+  "admin.enterprise.mcp.approveAria": "Approve {name}",
+  "admin.enterprise.models.description":
+    "The built-in Bot runs on {model}. A remote Bot chooses its own, and the model it reports is recorded.",
+  "admin.enterprise.models.configured": "the deployment's configured model",
+  "admin.enterprise.models.title": "Models",
+  "admin.enterprise.models.allowlist": "Model allowlist",
+  "admin.enterprise.models.allowlistOn":
+    "A built-in Bot on an unlisted model is refused before it runs.",
+  "admin.enterprise.models.allowlistOff": "Off. Any model can be used.",
+  "admin.enterprise.models.allowed": "Allowed models",
+  "admin.enterprise.models.none": "None listed",
+  "admin.enterprise.models.listDesc":
+    "One model per line, as provider/model, for example {example}.",
+  "admin.enterprise.rec.description":
+    "Set {env} to stream audit events and Bot actions to your OpenTelemetry collector or SIEM. They are tagged {tag}.",
+  "admin.enterprise.rec.title": "Recording and export",
+  "admin.enterprise.rec.action": "Action Recording",
+  "admin.enterprise.rec.actionOn":
+    "Shell commands Bots run are recorded with secrets removed, and kept {days} days.",
+  "admin.enterprise.rec.actionOff": "Off. Commands show in Audit only.",
+  "admin.enterprise.rec.otel": "OpenTelemetry export",
+  "admin.enterprise.rec.otelOn": "Exporting over OTLP/HTTP.",
+  "admin.enterprise.rec.otelOff": "Not set up. Set {env} on the server.",
+  "admin.enterprise.comp.description":
+    "Stopping a computer ends its running Bots and keeps its disk. The Bot gets a fresh computer next session. To stop one person's computers, go to People.",
+  "admin.enterprise.comp.title": "Computers",
+  "admin.enterprise.comp.stopInactive": "Stop inactive computers",
+  "admin.enterprise.comp.afterDays": "After {days} days without use",
+  "admin.enterprise.usage.error": "Couldn't load model usage. Reload the page.",
+  "admin.enterprise.usage.empty": "No Bot runs in the last 30 days.",
+  "admin.enterprise.usage.runs": "{runs} runs by {people} {who} in 30 days",
+  "admin.enterprise.usage.person": "person",
+  "admin.enterprise.usage.people": "people",
+  "admin.enterprise.usage.refused": " · {count} off the allowlist",
+  "admin.enterprise.recorded.error":
+    "Couldn't load recorded actions. Reload the page.",
+  "admin.enterprise.recorded.empty": "No commands recorded yet.",
+  "admin.enterprise.recorded.local": "Member's machine",
+  "admin.enterprise.recorded.bot": "Bot {id}",
+  "admin.enterprise.sweep.stopping": "Stopping…",
+  "admin.enterprise.sweep.now": "Stop inactive computers now",
+  "admin.enterprise.sweep.stopped": "Stopped {count}.",
+  "admin.enterprise.ov.admins": "Admins",
+  "admin.enterprise.ov.members": "Members",
+  "admin.enterprise.ov.group": "Group: {name}",
+  "admin.enterprise.ov.scope": "Scope",
+  "admin.enterprise.ov.groupNote":
+    "A group can only add. Grant gives its members the capability even when the organization has it off.",
+  "admin.enterprise.ov.roleNote":
+    "A role's setting replaces the organization switch for everybody with that role.",
+  "admin.enterprise.ov.forScope": "{title} for {scope}",
+  "admin.enterprise.ov.inherit": "Inherit",
+  "admin.enterprise.ov.grant": "Grant",
+  "admin.enterprise.netd.org": "Organization network policy",
+  "admin.enterprise.netd.group": "Group network policy",
+  "admin.enterprise.netd.groupLabel": "Group",
+  "admin.enterprise.netd.mode": "Mode",
+  "admin.enterprise.netd.allowlist": "Allowlist",
+  "admin.enterprise.netd.help":
+    "One per line. A domain covers its subdomains. *.name covers only subdomains. An IP range can list ports. Defaults are {first} and {more} more package and source hosts.",
+  "admin.enterprise.netd.lock": "Lock so groups can't replace this policy",
+  "admin.enterprise.netd.remove": "Remove policy",
+  "admin.enterprise.days.label": "Days without use",
+  "admin.enterprise.days.help": "0 turns it off. Checked hourly.",
+  "admin.plugins.title": "Plugins",
+  "admin.plugins.description":
+    "What this deployment can reach, and which Bots can use it. A plugin you add is for everybody. Choose which Bots get its tools on its page.",
+  "admin.plugins.loadError": "Couldn't load plugins. Reload the page.",
+  "admin.plugins.connected.description":
+    "Added for everybody. Open one to set it up and choose which Bots get its tools.",
+  "admin.plugins.connected.title": "Connected",
+  "admin.plugins.connected.empty":
+    "Nothing connected yet. Pick one from the list below.",
+  "admin.plugins.explore.description":
+    "Reviewed, first-party servers. Open one to add it.",
+  "admin.plugins.explore.title": "Explore plugins",
+  "admin.plugins.explore.empty": "Every plugin in the catalogue is connected.",
+  "admin.plugins.notAdded": "Not added",
+  "admin.plugins.more.title": "More apps",
+  "admin.plugins.sum.notConnected": "Not connected",
+  "admin.plugins.sum.noTools": "No tools yet",
+  "admin.plugins.sum.tools": { one: "{count} tool", other: "{count} tools" },
+  "admin.plugins.sum.toolsNoBots": "{tools} · no Bots",
+  "admin.plugins.sum.bots": { one: "{count} Bot", other: "{count} Bots" },
+  "admin.plugins.requests": {
+    one: "{count} request",
+    other: "{count} requests",
+  },
+  "admin.plugins.key.grant.none": "No Bots",
+  "admin.plugins.key.grant.one": "1 Bot",
+  "admin.plugins.key.grant.all": "All Bots",
+  "admin.plugins.key.grant.some": "{held} of {total} Bots",
+  "admin.plugins.key.held.none": "No tools",
+  "admin.plugins.key.held.one": "1 tool",
+  "admin.plugins.key.held.all": "Every tool",
+  "admin.plugins.key.held.some": "{held} of {total} tools",
+  "admin.plugins.key.notApproved": "Not approved",
+  "admin.plugins.key.unreadableTitle": "Your account",
+  "admin.plugins.key.unreadable":
+    "Couldn't load whether you've connected an account here. Reload the page, or check this deployment's logs if it keeps happening.",
+  "admin.plugins.key.noConsent":
+    "{product} got no consent link back, so nothing was connected. Try again, or check this connector's setup if it keeps happening.",
+  "admin.plugins.key.reassurance":
+    "Setup is complete without it, and it reaches your documents only.",
+  "admin.plugins.key.notPlugin.description":
+    "There is no plugin with that name, here or in the catalogue.",
+  "admin.plugins.key.notPlugin.title": "Not a plugin",
+  "admin.plugins.key.notPlugin.empty": "Nothing to configure.",
+  "admin.plugins.key.enable.title": "Enable for this deployment",
+  "admin.plugins.key.enable.on":
+    "Bots can be given its tools. Turning this off removes it and every Bot's access to its tools.",
+  "admin.plugins.key.enable.off":
+    "No Bot can reach this vendor. Turn it on to set it up and give Bots its tools.",
+  "admin.plugins.key.enable.aria": "Enable {title} for this deployment",
+  "admin.plugins.key.whose.title": "Whose account",
+  "admin.plugins.key.whose.shared": "One shared account for everyone.",
+  "admin.plugins.key.whose.personal": "Each person connects their own.",
+  "admin.plugins.key.whose.makePersonal": "Make personal",
+  "admin.plugins.key.whose.makeShared": "Make shared",
+  "admin.plugins.key.conn.oauth":
+    "This vendor answers as whoever is asking. The deployment registers an OAuth client, and each person connects their own account. A Bot only sees what that person can see.",
+  "admin.plugins.key.conn.secret":
+    "This vendor answers as whoever is asking. Each person pastes their own app password on their Connections page. There is nothing to register here, and the deployment keeps no password of its own.",
+  "admin.plugins.key.conn.builtin":
+    "Built into this deployment. There is no vendor to reach and no credential to keep. A call runs as whoever asked.",
+  "admin.plugins.key.conn.bearer":
+    "What this deployment sends to the vendor. One credential for everybody.",
+  "admin.plugins.key.conn.title": "Connection",
+  "admin.plugins.key.builtin.desc":
+    "Nothing to set up. These tools run inside this deployment, on its own data.",
+  "admin.plugins.key.builtin.badge": "Built in",
+  "admin.plugins.key.secret.title": "App password",
+  "admin.plugins.key.secret.desc":
+    "Each person makes their own at Google and pastes it on their Connections page. It reaches their whole mailbox, so what Bots may do is decided by the tools you grant below.",
+  "admin.plugins.key.secret.badge": "Per person",
+  "admin.plugins.key.reach.title": "How this is reached",
+  "admin.plugins.key.token.title": "Access token",
+  "admin.plugins.key.token.desc": "Sent with every call to this vendor.",
+  "admin.plugins.key.saved": "Saved",
+  "admin.plugins.key.notSet": "Not set",
+  "admin.plugins.key.client.title": "OAuth client",
+  "admin.plugins.key.client.selfDesc":
+    "This deployment registers itself with the vendor on first connect. There is nothing to paste.",
+  "admin.plugins.key.client.selfBadge": "Self-registered",
+  "admin.plugins.key.client.desc":
+    "Identifies this deployment to the vendor. On its own, it can't reach anyone's documents.",
+  "admin.plugins.key.client.registered": "Registered",
+  "admin.plugins.key.client.notRegistered": "Not registered",
+  "admin.plugins.key.team.connected":
+    "Connected{who}. Every Bot with these tools acts as this account.",
+  "admin.plugins.key.team.as": " as {name}",
+  "admin.plugins.key.team.by": " by {name}",
+  "admin.plugins.key.team.disconnected":
+    "No team account is connected. Bots with these tools are refused.",
+  "admin.plugins.key.team.heading": "Team account",
+  "admin.plugins.key.team.notice": "Sign in as the team account, not your own.",
+  "admin.plugins.key.mine.connected":
+    "Connected. A Bot with these tools uses your {title} as you. {note}",
+  "admin.plugins.key.mine.tryConnect":
+    "Connect your own account to try this connector. {note}",
+  "admin.plugins.key.oauthAcct.connected":
+    "Connected. A Bot with these tools uses your {title} as you. Everybody else connects their own.",
+  "admin.plugins.key.oauthAcct.connect":
+    "Connect your own account to try this connector. Setup is complete without it, and it reaches your documents only.",
+  "admin.plugins.key.connected": "Connected",
+  "admin.plugins.key.connect": "Connect",
+  "admin.plugins.key.instance.title": "Instance host",
+  "admin.plugins.key.instance.desc":
+    "This vendor gives every customer their own hostname. It is checked against the vendor's pattern before it is saved.",
+  "admin.plugins.key.docs.builtin": "Documentation",
+  "admin.plugins.key.docs.vendor": "Vendor documentation",
+  "admin.plugins.key.docs.builtinDesc":
+    "What these tools offer, from the people who maintain them.",
+  "admin.plugins.key.docs.vendorDesc":
+    "What this server offers, from the people who maintain it.",
+  "admin.plugins.key.redirect.dynamic":
+    "The deployment registers its redirect URI itself. There is nothing to add at the vendor.",
+  "admin.plugins.key.redirect.manual":
+    "Add this to the client's authorised redirect URIs at the vendor, exactly as written. One wrong character fails there, with an error that doesn't mention {product}.",
+  "admin.plugins.key.redirect.noUrl":
+    "This deployment has no public URL, so nobody can finish connecting. Set {env}.",
+  "admin.plugins.key.tools.refresh": "Refresh tools",
+  "admin.plugins.key.tools.grant": "Grant tools…",
+  "admin.plugins.key.tools.description":
+    "A Bot only sees the tools it has been given. Each call is checked when it happens, so removing access applies from the next call.",
+  "admin.plugins.key.tools.title": "Tools",
+  "admin.plugins.key.tools.empty":
+    "No tools listed. Refresh tools to check again.",
+  "admin.plugins.key.tools.writes": "changes things",
+  "admin.plugins.key.tools.reads": "reads",
+  "admin.plugins.key.byBot": "By Bot",
+  "admin.plugins.key.byBot.hidden":
+    "Hidden from your roster. Turn this app's actions on or off one at a time.",
+  "admin.plugins.key.byBot.shown":
+    "Turn this app's actions on or off one at a time.",
+  "admin.plugins.key.gone.description":
+    "This vendor no longer lists these. No Bot sees them, and none can call them. The access is still saved, and comes back if the vendor lists the tool again. To remove it, use the Bot's own page.",
+  "admin.plugins.key.gone.title": "Given but no longer listed",
+  "admin.plugins.key.gone.row": "Not listed by {title}{asOf}.",
+  "admin.plugins.key.gone.asOf": " as of the last refresh",
+  "admin.plugins.key.dlg.client": "OAuth client for {title}",
+  "admin.plugins.key.dlg.instance": "Instance host for {title}",
+  "admin.plugins.key.dlg.token": "Access token for {title}",
+  "admin.plugins.key.dlg.clientDesc":
+    "From the vendor's console. The secret is saved in this deployment's vault and never shown again.",
+  "admin.plugins.key.dlg.instanceDesc":
+    "Your own hostname with this vendor. It is checked against the vendor's pattern before it is saved.",
+  "admin.plugins.key.dlg.tokenDesc":
+    "Saved in this deployment's vault and never shown again.",
+  "admin.plugins.key.dlg.clientId": "Client ID",
+  "admin.plugins.key.dlg.clientSecret": "Client secret",
+  "admin.plugins.key.gr.title": "Grant tools",
+  "admin.plugins.key.gr.description":
+    "Each grant is its own row in Audit. Tools that change things are still checked against the boundaries on every call.",
+  "admin.plugins.key.gr.to": "To",
+  "admin.plugins.key.gr.reads": "Reads",
+  "admin.plugins.key.gr.writes": "Changes things",
+  "admin.plugins.key.gr.selectAll": "Select all",
+  "admin.plugins.key.gr.button": "Grant",
+  "admin.plugins.key.gr.progress": "Granting {current} of {total}…",
+  "admin.plugins.key.gr.summary": {
+    one: "Grant {count} tool to {names}.",
+    other: "Grant {count} tools to {names}.",
+  },
+  "admin.plugins.key.gr.changing": {
+    one: "{count} changes things.",
+    other: "{count} change things.",
+  },
+  "admin.home.reach.desc":
+    "What a Bot can touch outside {product}, and the limits on it.",
+  "admin.home.credentials.desc": "Keys and tokens for this deployment.",
+  "admin.home.boundaries.desc": "Things no Bot may ever do.",
+  "admin.home.approvals.desc": "What members' Bots must ask before they act.",
+  "admin.home.computers.desc": "The machines Bots run tools on.",
+  "admin.home.do.desc": "Apps, skills and interface pieces every Bot can use.",
+  "admin.home.plugins.desc":
+    "The services {product} can reach, and which Bots can use them.",
+  "admin.home.skills.desc": "Named instructions anybody can run with /.",
+  "admin.home.learning.desc":
+    "Learn from finished conversations and review the skills it proposes.",
+  "admin.home.components.desc":
+    "Custom pieces a Bot can draw in a conversation.",
+  "admin.home.playground.desc":
+    "Write a component and watch it render as you type.",
+  "admin.home.engines.desc":
+    "The AI engines members run on, and whether each one can answer now.",
+  "admin.home.people.desc":
+    "Everybody who has signed in, who the admins are, and whose access was removed.",
+  "admin.home.enterprise.desc":
+    "Roles and groups, required SSO, SCIM, network policy, MCP and model allowlists, Action Recording.",
+  "admin.home.idp.desc":
+    "Your company's SAML or OpenID Connect provider, matched by email domain.",
+  "admin.home.audit.desc": "Every action taken in {product}, and who took it.",
+  "admin.home.description":
+    "Settings for everybody in this deployment. A change here affects every person and every Bot.",
+  "admin.plugins.directoryError":
+    "Couldn't load the plugin settings. Reload the page.",
+  "admin.components.description":
+    "What each Bot can answer with. Every published component is on for every Bot. Turn one off and that Bot never sees it. Changes and refusals show in Audit.",
+  "admin.components.loadError": "Couldn't load components. Reload the page.",
+  "admin.components.emptyTitle": "No components yet",
+  "admin.components.emptyDesc": "Components your Bots can use will show here.",
+  "admin.audit.silence.quiet": "Silent for {seconds}s",
+  "admin.audit.silence.nothing": "{quiet}, having said nothing at all",
+  "admin.audit.silence.after": {
+    one: "{quiet}, after {count} chunk",
+    other: "{quiet}, after {count} chunks",
+  },
+  "admin.compDetail.title": "Components",
+  "admin.compDetail.noSuch.title": "No such component",
+  "admin.compDetail.noSuch.description":
+    "There is no component with that name.",
+  "admin.compDetail.noSuch.hint":
+    "It may have been renamed, or this deployment no longer ships it.",
+  "admin.compDetail.back": "Back to components",
+  "admin.compDetail.grant.noBots": "No Bots yet",
+  "admin.compDetail.grant.all": {
+    one: "All {count} Bots",
+    other: "All {count} Bots",
+  },
+  "admin.compDetail.grant.none": "No Bots",
+  "admin.compDetail.grant.some": "{granted} of {total} Bots",
+  "admin.compDetail.fn.none": "This deployment has no data functions",
+  "admin.compDetail.fn.nothing":
+    "Nothing. It shows only what the Bot passes it.",
+  "admin.compDetail.notPublished": "Not published. No Bot can see it.",
+  "admin.compDetail.config.title": "Configuration",
+  "admin.compDetail.config.description":
+    "What this component is for, and which Bots can answer with it.",
+  "admin.compDetail.notInBuild.title": "Not in this build",
+  "admin.compDetail.notInBuild.description":
+    "{product} can't draw it. The settings below have no effect.",
+  "admin.compDetail.published": "Published",
+  "admin.compDetail.published.on": "Bots can answer with it.",
+  "admin.compDetail.published.off": "No Bot can use it.",
+  "admin.compDetail.published.changes":
+    "The description has unpublished changes.",
+  "admin.compDetail.description": "Description",
+  "admin.compDetail.nothingYet": "Nothing yet",
+  "admin.compDetail.availableTo": "Available to",
+  "admin.compDetail.canRead": "Can read",
+  "admin.compDetail.details": "Details",
+  "admin.compDetail.kind": "Kind",
+  "admin.compDetail.calledAs": "Called as",
+  "admin.compDetail.lastChanged": "Last changed",
+  "admin.compDetail.by": "by {name}",
+  "admin.compDetail.descDlg.description":
+    "What the model reads when it decides to use this. It has no effect until the component is published.",
+  "admin.compDetail.grantsDlg.description":
+    "Turn a Bot off and it never learns this component exists. Changes apply right away.",
+  "admin.compDetail.grantsDlg.empty": "No Bots yet.",
+  "admin.compDetail.fnDlg.description":
+    "The data this component can fetch to draw itself. This is separate from Available to. With all of these off, it shows only what the Bot passes it. Every read shows in Audit. Changes apply right away.",
+  "admin.compDetail.fnDlg.empty": "This deployment has no data functions.",
+  "admin.computers.description":
+    "Each Bot's browser and the profile it keeps. The profile keeps a Bot signed in. Resetting it signs the Bot out of everything.",
+  "admin.computers.loadError": "Couldn't load the computers. Reload the page.",
+  "admin.computers.shared.lead": "Every Bot is sharing one computer.",
+  "admin.computers.shared.before":
+    "They share its logins, files and session. A Bot can reach what another signed into. Set",
+  "admin.computers.shared.after": "to give each Bot its own.",
+  "admin.computers.perBot":
+    "Each Bot has its own computer, with its own container, files and browser profile.",
+  "admin.computers.list.title": "Computers in this deployment",
+  "admin.computers.list.error": "Couldn't load the list.",
+  "admin.computers.list.empty":
+    "No computers yet. One shows up the first time a Bot opens a page.",
+  "admin.computers.running": "Browser running since {time}",
+  "admin.computers.notRunning":
+    "No browser running. It starts when the Bot next needs it.",
+  "admin.computers.egress.unknown": "Egress not reported",
+  "admin.computers.egress.direct": "Leaves directly",
+  "admin.computers.egress.via": "Leaves through {egress}",
+  "admin.computers.updateAvailable": "Update available",
+  "admin.computers.update": "Update computer",
+  "admin.computers.working": "Working…",
+  "admin.computers.stop": "Stop browser",
+  "admin.computers.reset": "Reset",
+  "admin.computers.resetTitle": "Reset {name}'s computer?",
+  "admin.computers.resetDesc":
+    "Its profile is deleted. The Bot is signed out of every service and starts clean. You can't undo this.",
+  "admin.computers.resetting": "Resetting…",
+  "admin.computers.resetIt": "Reset it",
+  "admin.computers.updateTitle": "Update {name}'s computer?",
+  "admin.computers.updateDesc":
+    "It moves to the computer image this deployment now runs. Its files and sign-ins are kept. If it's running, it restarts and stops what it's doing.",
+  "admin.computers.updating": "Updating…",
+  "admin.computers.updateIt": "Update it",
+  "admin.computers.foot.stopLead": "Stop",
+  "admin.computers.foot.stopRest":
+    "closes the browser and keeps its logins. It starts again the next time the Bot needs it.",
+  "admin.computers.foot.resetLead": "Reset",
+  "admin.computers.foot.resetRest":
+    "deletes the profile and signs the Bot out of everything.",
+  "admin.computers.foot.updateLead": "Update computer",
+  "admin.computers.foot.updateRest":
+    "shows when a computer runs an older image. It moves the computer to the new one and keeps its files and sign-ins.",
+  "admin.computers.foot.audit": "All three show in",
+  "admin.computers.host.description":
+    "Choose folders a Bot can read on this computer. The desktop app asks before each edit or command. Access ends when you stop {product}.",
+  "admin.computers.host.title": "Folders on this computer",
+  "admin.computers.host.offline":
+    "The desktop app is offline. Open it to approve folders or run commands.",
+  "admin.computers.host.noBots":
+    "No Bots yet. Create one, then choose its folders.",
+  "admin.computers.host.choose": "Choose folder",
+  "admin.computers.host.waiting": "Waiting…",
+  "admin.computers.host.readOnlyNote":
+    "Folders are read-only. When a Bot needs to write, the desktop app asks you first.",
+  "admin.computers.host.stopAccess": "Stop folder access",
+  "admin.computers.host.stopping": "Stopping…",
+  "admin.computers.host.viewAudit": "View audit",
+  "admin.computers.host.readOnly": "Read-only",
+  "admin.computers.host.revoke": "Revoke",
+  "admin.computers.host.revoking": "Revoking…",
+  "admin.computers.host.pendingFrom": "{label} from {owner}.",
+  "admin.computers.host.pendingFromFor": "{label} from {owner} for {name}.",
+  "admin.computers.host.folders": {
+    one: "{count} read-only folder",
+    other: "{count} read-only folders",
+  },
+  "admin.computers.host.requests": {
+    one: "{count} pending request",
+    other: "{count} pending requests",
+  },
+  "admin.computers.host.none": "No folders approved.",
+  "admin.computers.host.owner": "the desktop owner",
+  "admin.computers.host.p.write":
+    "File change waiting for approval or to finish",
+  "admin.computers.host.p.run": "Command waiting for approval or to finish",
+  "admin.computers.host.p.list": "Listing files",
+  "admin.computers.host.p.read": "Reading a file",
+  "admin.computers.host.p.stop": "Stopping folder work",
+  "admin.computers.host.p.default": "Folder access waiting for approval",
+  "admin.learning.description":
+    "Learn from finished conversations, review the skills Intelligence proposes, and give published skills to Bots.",
+  "admin.learning.auto.assigned":
+    '{product} assigned this Intelligence project\'s "{container}" container automatically. You can change it here.',
+  "admin.learning.auto.absent":
+    'This Intelligence project has no "{container}" Learning container yet. Nothing is collected.',
+  "admin.learning.auto.notEntitled":
+    "This Intelligence project's plan doesn't include Learning. No container was assigned.",
+  "admin.learning.auto.unavailable":
+    "Couldn't reach Intelligence to find this project's Learning container. {product} will try again.",
+  "admin.learning.target.container": "{label} container ID",
+  "admin.learning.target.revision": "Exact revision (optional)",
+  "admin.learning.target.revisionAria": "{label} revision",
+  "admin.learning.target.latest": "Latest published",
+  "admin.learning.create.busy": "Creating…",
+  "admin.learning.create.button": "Create the {container} container",
+  "admin.learning.create.note":
+    "Uses this deployment's credential, not the runtime key.",
+  "admin.learning.create.how": "To create it: ",
+  "admin.learning.part.title": "Participation",
+  "admin.learning.part.description":
+    "Container changes apply to new conversations. Existing ones keep their first container. Containers must already exist in the same Intelligence project. Until you save here, {product} uses that project's openbot container.",
+  "admin.learning.part.loading": "Loading Learning settings…",
+  "admin.learning.part.turnOn": "Turn on automatic learning and skill delivery",
+  "admin.learning.part.default": "Default",
+  "admin.learning.part.hint":
+    "With no default, Bots without their own container are left out. IDs are 1 to 64 lowercase letters, numbers and single hyphens. Leave revision empty to use the latest published skills.",
+  "admin.learning.part.perBot": "Per-Bot participation",
+  "admin.learning.part.botListError":
+    "Couldn't load the Bot list. Saved settings for each Bot are below.",
+  "admin.learning.part.botAria": "{name} participation",
+  "admin.learning.part.inherit": "Use deployment default",
+  "admin.learning.part.exclude": "Leave out of Learning",
+  "admin.learning.part.container": "Use a specific container",
+  "admin.learning.part.saving": "Saving…",
+  "admin.learning.part.save": "Save Learning settings",
+  "admin.learning.part.saved": "Settings saved.",
+  "admin.learning.rev.title": "Review and publish",
+  "admin.learning.rev.description":
+    "Intelligence studies finished conversations and proposes skills. Review and publish them in Intelligence. Bots only use published skills.",
+  "admin.learning.rev.showFor": "Show the container for",
+  "admin.learning.rev.default": "Deployment default",
+  "admin.learning.rev.checking": "Checking Intelligence…",
+  "admin.learning.rev.invalid":
+    "The selected container or its instrumentation isn't available.",
+  "admin.learning.rev.selection": "Choose a Bot, or set a default container.",
+  "admin.learning.rev.none": "No Learning container is assigned.",
+  "admin.learning.rev.threads": "Threads ready",
+  "admin.learning.rev.candidates": "Candidates to review",
+  "admin.learning.rev.published": "Published skills",
+  "admin.learning.rev.insights": "Insights",
+  "admin.learning.rev.running": "An analysis is running.",
+  "admin.learning.rev.latest": "Latest analysis: {status}.",
+  "admin.learning.rev.noRun": "No analysis has run yet.",
+  "admin.learning.rev.manage": "Manage Learning in Intelligence",
+  "admin.learning.rev.reviewCandidates": "Review skill candidates",
+  "admin.learning.rev.viewRuns": "View analysis runs",
+  "admin.learning.del.title": "Skill delivery",
+  "admin.learning.del.checking": "Checking delivery…",
+  "admin.learning.del.off": "Delivery is off for this Bot.",
+  "admin.learning.del.waiting":
+    "Waiting for the first verified skill snapshot.",
+  "admin.learning.del.stale":
+    "Using the last verified snapshot. A refresh is pending.",
+  "admin.learning.del.ok": "A verified snapshot is available.",
+  "admin.learning.del.revision": "Loaded revision: {revision}",
+  "admin.learning.del.lastChecked": "Last checked:",
+  "admin.learning.rev.refresh": "Refresh status",
+  "admin.learning.rev.footer":
+    "Managing Learning needs your Intelligence account and project access. {product} keeps project credentials on the server. Turning Learning off here keeps settings and conversation assignments. Schedules and publishing stay in Intelligence.",
+  "admin.playground.validJson": "{label} must be valid JSON: {reason}",
+  "admin.playground.invalidJson": "invalid JSON",
+  "admin.playground.notObject": "{label} must be a JSON object, not {kind}.",
+  "admin.playground.schemaLabel": "Arguments (JSON Schema)",
+  "admin.playground.sampleLabel": "Sample arguments",
+  "admin.playground.fixBeforeSave": "Fix the JSON fields before saving.",
+  "admin.playground.draftSaved": "Draft saved.",
+  "admin.playground.published": "Published.",
+  "admin.playground.description":
+    "Write a component and publish it without redeploying. Your edits are a draft. Conversations only show what is published.",
+  "admin.playground.saveDraft": "Save draft",
+  "admin.playground.publish": "Publish",
+  "admin.playground.title": "Title",
+  "admin.playground.titlePlaceholder": "Refund card",
+  "admin.playground.told": "What the model is told about it",
+  "admin.playground.toldPlaceholder":
+    "Show a refund with its amount, reason and status.",
+  "admin.playground.preview": "Preview",
+  "admin.playground.noSample": "The sample arguments aren't available.",
+  "admin.playground.fixBeforePreview": "Fix the JSON fields before previewing.",
+  "admin.playground.saved.title": "Saved here",
+  "admin.playground.saved.empty":
+    "Nothing saved yet. Save a draft to see it here.",
+  "admin.playground.saved.published": "published, revision {revision}",
+  "admin.playground.saved.draftOnly": "draft only, no Bot can draw it",
+  "admin.playground.saved.edited": "edited since publishing",
+  "admin.playground.open": "Open",
+  "admin.playground.delete": "Delete",
+  "admin.playground.saved.note":
+    "Publishing makes it available to every Bot. Turn it off for one Bot on the UI components page.",
+  "admin.playground.del.title": "Delete {name}?",
+  "admin.playground.del.description":
+    "It's removed from this deployment, and no Bot can draw it. You can't undo this.",
+  "admin.playground.del.confirm": "Delete it",
+  "admin.plugins.tool.title": "Tool",
+  "admin.plugins.tool.noTool": "This connector has no tool with that name.",
+  "admin.plugins.tool.removed":
+    "It may have been removed since the tool list was last refreshed.",
+  "admin.plugins.tool.notOn": "This connector isn't turned on.",
+  "admin.plugins.tool.noDesc": "This tool has no description.",
+  "admin.plugins.tool.writeDesc":
+    "This tool changes something at the vendor. Boundaries about writes apply to it.",
+  "admin.plugins.tool.readDesc":
+    "This tool only reads. Boundaries about writes don't apply to it.",
+  "admin.plugins.tool.what": "What it does",
+  "admin.plugins.tool.effect": "Effect",
+  "admin.plugins.tool.effectDesc":
+    "Set by the connector, not the tool's name. Anything unknown counts as a write.",
+  "admin.plugins.tool.bots.title": "Bots",
+  "admin.plugins.tool.bots.description":
+    "A Bot can call this tool only while its switch is on. Turning it off applies from the next call.",
+  "admin.plugins.tool.bots.empty":
+    "No Bots yet. Create one to give it this tool.",
+  "admin.plugins.tool.hidden": "Hidden from your roster.",
+  "admin.plugins.tool.canCall":
+    "Can call this tool. Every call is still checked against boundaries and logged in Audit.",
+  "admin.plugins.tool.noToken":
+    "Allowed, but this Bot has no callback token. Every call is refused. Issue one on its page, or set AGENT_TOOL_TOKEN.",
+  "admin.plugins.tool.cantCall": "Can't call this tool. The Bot never sees it.",
+  "admin.plugins.tool.aria": "Let {bot} call {tool}",
+  "admin.plugins.bot.title": "Bot",
+  "admin.plugins.bot.notOn": "No app with that name is turned on.",
+  "admin.plugins.bot.nothing": "Nothing to give a Bot here.",
+  "admin.plugins.bot.notBot.title": "Not a Bot",
+  "admin.plugins.bot.notBot.description": "There is no Bot with that name.",
+  "admin.plugins.bot.notBot.hint":
+    "It may have been deleted after you opened this page.",
+  "admin.plugins.bot.noDesc": "This action has no description.",
+  "admin.plugins.bot.destroys": "destroys things",
+  "admin.plugins.bot.description":
+    "Which {app} actions {bot} can call. Turning one off applies from the next call.",
+  "admin.plugins.bot.pageTitle": "{bot} and {app}",
+  "admin.plugins.bot.noActions":
+    "{app} lists no actions. Refresh its tools to check again.",
+  "admin.plugins.bot.searchAria": "Search {app} actions",
+  "admin.plugins.bot.searchPlaceholder": "Search by action name",
+  "admin.plugins.bot.wouldHold": {
+    one: "This Bot would then have {count} tool from this app.",
+    other: "This Bot would then have {count} tools from this app.",
+  },
+  "admin.plugins.bot.turnOnReads": "Turn on every read-only action",
+  "admin.plugins.bot.reads.title": "Reads",
+  "admin.plugins.bot.reads.description":
+    "These only read. Boundaries about writes don't apply to them.",
+  "admin.plugins.bot.reads.noMatch":
+    'Nothing that only reads matches "{query}".',
+  "admin.plugins.bot.reads.none": "{app} has no read-only actions.",
+  "admin.plugins.bot.writes.title": "Changes things",
+  "admin.plugins.bot.writes.description":
+    "These change something at the vendor. Boundaries about writes apply to them.",
+  "admin.plugins.bot.writes.noMatch":
+    'Nothing that changes things matches "{query}".',
+  "admin.plugins.bot.writes.none": "{app} has no actions that change things.",
+  "admin.plugins.bot.shared.title": "Let {bot} use the shared {app} account?",
+  "admin.plugins.bot.allowing": "Allowing…",
+  "admin.plugins.bot.allow": "Allow",
+  "admin.shared.sentence.write":
+    "Anyone who can use this Bot can do this as the shared account.",
+  "admin.shared.sentence.read":
+    "Anyone who can use this Bot can read what this account can read.",
+  "admin.shared.owner": "Only its owner",
+  "admin.shared.named": "Named: {who}",
+  "admin.shared.team": "Everyone",
+  "admin.shared.legend": "Who can use the shared account through this Bot",
+  "admin.shared.outside":
+    "Messages from outside (email, Slack, webhooks) can use it",
+  "admin.shared.skipped": {
+    one: "One action this app lists was left out, because a tool name may only use letters, digits, underscores and hyphens: ",
+    other:
+      "{count} actions this app lists were left out, because a tool name may only use letters, digits, underscores and hyphens: ",
+  },
+  "admin.vocab.browse": "Browse {name}",
+  "admin.vocab.dirDesc.composio":
+    "A few hundred apps. Each person connects their own account.",
+  "admin.vocab.dirDesc.arcade":
+    "Apps nobody here has reviewed. Each person connects their own account.",
+  "admin.vocab.readFailure":
+    "Couldn't load {name}'s app directory. Reload the page.",
+  "admin.vocab.moreApps": "Apps from {name}. Nobody here has reviewed them.",
+  "admin.vocab.notSetUp":
+    "Not set up. Set {envVar} on this deployment to browse its apps.",
+  "admin.vocab.connection":
+    "Reached through {name}, which holds each person's own account.",
+  "admin.vocab.reach.description":
+    "{name} holds the account. This deployment sends one key and who is asking. Each person connects their own, and a Bot sees only what that person can see. There is no token to paste.",
+  "admin.vocab.reach.badge": "Through {name}",
+  "admin.vocab.disconnect": "Disconnecting also ends the account at {name}.",
+  "admin.vocab.trip.stem":
+    "{name} approves one action at a time, so there's nothing to connect for the whole app.",
+  "admin.vocab.trip.below": "Authorize the actions you want below.",
+  "admin.vocab.trip.settings": "Authorize them from Connections.",
+  "admin.vocab.keyMissing":
+    "Set {envVar} on this deployment. Until then, this account can't be connected or disconnected here. The app stays turned on, and its tool grants still stand.",
+  "admin.vocab.siblings": {
+    one: "Disconnecting also ends your access to {names}, which shares this connection.",
+    other:
+      "Disconnecting also ends your access to {names}, which share this connection.",
+  },
+  "admin.vocab.unansweredMore": {
+    one: "{count} other app couldn't be checked and may be affected too.",
+    other: "{count} other apps couldn't be checked and may be affected too.",
+  },
+  "admin.vocab.unansweredOnly": {
+    one: "{count} app on this connection couldn't be checked, so disconnecting may end it too.",
+    other:
+      "{count} apps on this connection couldn't be checked, so disconnecting may end them too.",
+  },
+  "admin.vocab.join2": "{a} and {b}",
+  "admin.vocab.joinMany": "{list} and {last}",
+  "admin.skills.write": "Write a skill",
+  "admin.skills.description":
+    "Named instructions anybody can run with /. A skill adds no access. It can only ask a Bot to use what it already has.",
+  "admin.skills.installed.title": "Installed",
+  "admin.skills.installed.description":
+    "For everybody in this deployment. People write their own on their Skills page.",
+  "admin.skills.loadError": "Couldn't load skills. Reload the page.",
+  "admin.skills.empty": "No skills yet. Write one with Write a skill.",
+  "admin.skills.dlg.title": "Write a skill for everybody",
+  "admin.skills.dlg.description":
+    "People type the slug after /. The Bot then follows the instructions. Everybody can use it, and you choose which Bots have it.",
+  "admin.skills.slug": "Slug",
+  "admin.skills.title": "Title",
+  "admin.skills.summary": "Summary",
+  "admin.skills.summaryPlaceholder": "One line",
+  "admin.skills.instructions": "Instructions",
+  "admin.skills.instructionsPlaceholder":
+    "What the Bot should do when this skill is used.",
+  "admin.skills.install": "Install skill",
+  "engines.intro":
+    "The engine is what does the thinking for each member. Your own sign-ins answer first unless you choose another order; anything paid stays off until you say so.",
+  "engines.loadFailed": "Couldn't load the engines. Reload the page.",
+  "engines.fallback": "The engines could not be listed.",
+  "engines.noEngines": "No engines are reported yet.",
+  "engines.statesTitle": "Engines and their state",
+  "engines.sectionsLabel": "Engine sections",
+  "engines.tab.overview": "Overview",
+  "engines.tab.providers": "Providers",
+  "engines.tab.members": "Bot assignments",
+  "engines.tab.usage": "Usage",
+  "engines.asideLabel": "Keys and spending",
+  "engines.keys.title": "Keys",
+  "engines.keys.text":
+    "Only keys for gateways will be kept here. Your Claude and ChatGPT sign-ins are never stored by FreeDuet.",
+  "engines.keys.notBuilt":
+    "A key is added on its engine's card. It is kept on this installation and never shown again.",
+  "engines.spending.title": "Spending",
+  "engines.spending.text":
+    "Spending is not shown on this page yet. A paid engine runs only if this installation allows it.",
+  "engines.today": "Today",
+  "engines.reason.off":
+    "The engines are switched off on this installation (FREEDUET_ROUTER=off), so there is nothing to show.",
+  "engines.reason.not_set_up":
+    "No FreeDuet agent is set up on this installation, so there are no engines to show.",
+  "engines.reason.unreachable":
+    "The FreeDuet agent did not answer, so the engines cannot be read right now. This page asks again every 30 seconds.",
+  "engines.state.ready": "Ready",
+  "engines.state.degraded": "Ready, but it has had recent errors",
+  "engines.state.limitedAt": "Reached its limit until {at}",
+  "engines.state.limited": "Reached its limit for now",
+  "engines.state.outOfCreditAt": "Out of credit, trying again at {at}",
+  "engines.state.outOfCredit": "Out of credit",
+  "engines.state.notAnsweringAt": "Not answering, trying again at {at}",
+  "engines.state.notAnswering": "Not answering for now",
+  "engines.state.checking": "Checking whether it answers again",
+  "engines.state.gatewayKey":
+    "Its gateway did not accept the key. Check the key you gave it.",
+  "engines.state.signedOut":
+    "Signed out: sign in again with the engine's own login",
+  "engines.state.refusedWhy": "Not run: {reason}",
+  "engines.state.refused": "Not run: the reason is not known.",
+  "engines.state.unknown": "State not known",
+  "engines.state.toolsAsText":
+    "Its last answer wrote its tool calls as text instead of using them: choose a model that supports tools",
+  "engines.pill.working": "Working",
+  "engines.pill.checking": "Checking",
+  "engines.pill.limited": "Limited",
+  "engines.pill.outOfCredit": "Out of credit",
+  "engines.pill.notAnswering": "Not answering",
+  "engines.pill.signedOut": "Signed out",
+  "engines.pill.locked": "Locked",
+  "engines.pill.unknown": "Not known",
+  "engines.members.title": "Who uses what",
+  "engines.members.description":
+    "The engines each member tries, in the order it tries them, and what happens when one runs out. A change applies from the member's next message, and you can undo it.",
+  "engines.members.col.member": "Member",
+  "engines.members.col.order": "Order of engines",
+  "engines.members.col.switching": "When an engine runs out",
+  "engines.order.note":
+    "Use the arrows to move an engine one place. Your own logins come first unless you choose otherwise: if a move puts a free or a paid engine before them, you are asked to confirm it first.",
+  "engines.order.warnTitle.free_before_login":
+    "A free engine would answer before your own login",
+  "engines.order.warnTitle.paid_before_free_or_login":
+    "A paid engine would come before a free engine or a login",
+  "engines.order.warnText.free_before_login":
+    "If it is a cloud service, this member's messages go to that provider first and it may keep them. Its answers may also be of lower quality than your login's.",
+  "engines.order.warnText.paid_before_free_or_login":
+    "A paid engine answers before the engines after it, so what it answers may cost money. If it is first in the list, every message may cost money from the first one. It runs only after you have switched paid engines on and set your limits.",
+  "engines.order.newLabel": "New order:",
+  "engines.order.tick": "I understand, use this order",
+  "engines.order.confirm": "Confirm",
+  "engines.order.tickLabel": "I understand, use this order for {name}",
+  "engines.order.confirmLabel": "Confirm the new order for {name}",
+  "engines.order.cancelLabel": "Cancel the new order for {name}",
+  "engines.order.own": "Your order: logins are not first",
+  "engines.order.recommended": "Use the recommended order",
+  "engines.order.recommendedLabel": "Use the recommended order for {name}",
+  "engines.order.moveUp": "Move {engine} up for {name}",
+  "engines.order.moveDown": "Move {engine} down for {name}",
+  "engines.order.saveFailed": "The order could not be saved.",
+  "engines.claude.default": "Subscription default",
+  "engines.claude.effort.low": "Low",
+  "engines.claude.effort.medium": "Medium",
+  "engines.claude.effort.high": "High",
+  "engines.claude.effort.xhigh": "Extra high",
+  "engines.claude.effort.max": "Max",
+  "engines.claude.effortLabel": "Effort",
+  "engines.claude.note":
+    "Claude Code only. A model your subscription cannot use ends that turn with Claude Code's own error. Nothing is switched off, and Subscription default undoes the choice.",
+  "engines.claude.modelAria": "Claude model for {name}",
+  "engines.claude.effortAria": "Claude effort for {name}",
+  "engines.claude.saved":
+    "Claude choice saved. It applies from the next message.",
+  "engines.members.saveFailed": "Your choice could not be saved.",
+  "engines.members.undoFailed": "That change could not be undone.",
+  "engines.mode.groupLabel": "When an engine runs out, for {name}",
+  "engines.mode.controlLabel": "{label} for {name}",
+  "engines.mode.undoLabel": "Undo the change for {name}",
+  "engines.mode.automatic.label": "Switch automatically",
+  "engines.mode.automatic.effect":
+    "When an engine runs out, the next one answers and you are told which.",
+  "engines.mode.askFirst.label": "Ask me first",
+  "engines.mode.askFirst.effect":
+    "When an engine runs out, you are asked: switch, wait, or name another engine.",
+  "engines.leftOut.line": "Not used: {engine}, because {why}.",
+  "engines.leftOut.locked": "the installation's file does not allow it",
+  "engines.leftOut.disabled": "it is switched off",
+  "engines.leftOut.paid_gateway":
+    "it is a paid gateway, which FreeDuet does not run yet",
+  "engines.leftOut.metered_off": "paid engines are switched off",
+  "engines.leftOut.cap_zero": "its spending cap is zero",
+  "engines.leftOut.not_set_up": "it is not set up on this installation",
+  "engines.leftOut.other": "it will not run",
+  "engines.chain.none": "No engine can answer for this member now.",
+  "engines.chain.one": "Tries only {engine}.",
+  "engines.chain.many": "Tries {list}.",
+  "engines.chain.then": ", then ",
+  "engines.pin":
+    "Pinned to {engine} by the installation's file: it never switches to another engine.",
+  "engines.alone":
+    "Only {engine} is set up for this member, so there is nothing to switch to yet. Your choice is kept for when there is.",
+  "engines.source.yours": "Your choice. The installation's file says: {mode}.",
+  "engines.source.file": "From the installation's file.",
+  "engines.block.not_at_the_computer":
+    "Change these on the computer FreeDuet runs on.",
+  "engines.block.not_paired_with_the_computer":
+    "Pair this browser with the computer FreeDuet runs on first: run `bash scripts/open.sh` there and open the link here.",
+  "engines.block.agent_too_old": "Update FreeDuet to change this.",
+  "engines.block.choices_unreadable":
+    "Your choices could not be read, so the installation's settings are in use. Nothing you chose is lost.",
+  "engines.saved": "Saved. It applies from the member's next message.",
+  "engines.undone":
+    "Undone. The previous setting applies from the member's next message.",
+  "engines.providers.title": "Add an engine",
+  "engines.providers.description":
+    "Switch an engine on, paste its key and press Save, then press Test. A change applies from the next message.",
+  "engines.providers.pickerLabel": "Provider",
+  "engines.providers.blurb.ollama": "Models that run on your own computer.",
+  "engines.providers.blurb.llamacpp":
+    "A llama.cpp server on your own computer or network.",
+  "engines.providers.blurb.lmstudio":
+    "The local server of LM Studio on your own computer.",
+  "engines.providers.blurb.freellmapi":
+    "A router you run yourself that pools free tiers from many providers behind one address.",
+  "engines.providers.blurb.groq": "Fast open models, free with daily limits.",
+  "engines.providers.blurb.google": "Gemini models, free with limits.",
+  "engines.providers.blurb.mistral":
+    "Mistral models on the free plan, with limits.",
+  "engines.providers.blurb.openrouter":
+    "Only models that cost nothing: an id ending in :free, or openrouter/free.",
+  "engines.providers.blurb.cloudflare":
+    "Open models on Cloudflare, free with a daily allowance. Put your own account in the address.",
+  "engines.providers.blurb.cerebras": "Very fast open models.",
+  "engines.providers.blurb.anthropic-api": "Claude on pay-as-you-go credits.",
+  "engines.providers.tag.local": "Local",
+  "engines.providers.tag.router": "Advanced: your own router",
+  "engines.providers.tag.free": "Free with limits",
+  "engines.providers.tag.trial": "Trial, needs a card",
+  "engines.providers.tag.paid": "Paid",
+  "engines.providers.cloudWarning":
+    "Data sent to this service leaves your computer.",
+  "engines.providers.routerWarning":
+    "Your messages go to the router, which passes them on to the free providers you enabled inside it. They leave your computer, and those providers may keep them.",
+  "engines.providers.routerAdvanced":
+    "Advanced option, not a recommended default: the project describes itself as for personal experimentation only. FreeDuet does not install or run it. Your provider keys stay inside it; FreeDuet keeps only the one access token it gives you.",
+  "engines.providers.routerAddress":
+    "Its own default port, 3001, is FreeDuet's. Run it on another port and write the address with /v1 at the end. On this computer http is fine. Off this computer only your own network is accepted (a LAN address or a .local name), over https. A public host is refused.",
+  "engines.providers.address": "Server address",
+  "engines.providers.loadList": "Load list",
+  "engines.providers.saveSettings": "Save settings",
+  "engines.providers.test": "Test",
+  "engines.providers.freeModelsNote":
+    "Free models change often and may keep what you send.",
+  "engines.providers.freeModelsLoading":
+    "Loading the free models that can use tools.",
+  "engines.providers.freeModelsStale":
+    "Could not reach OpenRouter just now. This is the last list that was loaded.",
+  "engines.providers.freeModelsFallback":
+    "Could not reach OpenRouter just now. Only the free router is offered.",
+  "engines.providers.freeRouterLabel":
+    "openrouter/free (OpenRouter picks a free model)",
+  "engines.providers.keySaved": "Key saved. It is never shown again.",
+  "engines.providers.keyPlaceholder": "Paste the key here",
+  "engines.providers.notOnKey": "Not on yet. Paste the key and press Save.",
+  "engines.providers.notOnSettings":
+    "Not on yet. Choose a model and press Save settings.",
+  "engines.providers.settingsSaved": "Saved. It applies from the next message.",
+  "engines.providers.keyRemoved": "Key removed. The engine is off.",
+  "engines.providers.lockedOwnFile":
+    "You wrote an engines file of your own, so these cards only show it. Change it there.",
+  "engines.providers.users.paid":
+    "Off until spending caps exist. FreeDuet will not let a paid engine run before then.",
+  "engines.providers.users.trial":
+    "Its free tier is a trial that needs a card, so FreeDuet does not offer it as free. It stays off.",
+  "engines.providers.users.members":
+    "For members: yes, after their Claude login. For the light assistants: yes.",
+  "engines.providers.users.notYet":
+    "For members: not yet. For the light assistants: yes.",
+  "engines.providers.check.ok": "It answered. It works.",
+  "engines.providers.check.key_rejected":
+    "The key was not accepted. Check it and save it again.",
+  "engines.providers.check.model_missing":
+    "The server does not know that model. Check the model name.",
+  "engines.providers.check.rate_limited":
+    "The limit or the credit is used up for now. Try again later.",
+  "engines.providers.check.other":
+    "Nothing answered, or the answer was not understood.",
+  "engines.providers.freeNote":
+    "\u201cFree\u201d is FreeDuet's label, taken from the provider's terms. Some providers (Google, for one) bill you if billing is switched on for your project.",
+  "engines.providers.useFor": "Use for",
+  "engines.providers.useForNone":
+    "No member uses it yet. The light assistants do. Tick the members who may send their work to this service.",
+  "engines.providers.warn.inbox": "Sends your mail to this service.",
+  "engines.providers.warn.concierge": "Sends your bookings to this service.",
+  "engines.providers.modelsEmpty": "The list is empty. Type the model name.",
+  "engines.providers.modelsLoaded": {
+    one: "{count} model loaded. Pick one in the box.",
+    other: "{count} models loaded. Pick one in the box.",
+  },
+  "engines.providers.switchOn": "Switch on {name}",
+  "engines.providers.changeFailed": "That could not be changed.",
+  "engines.providers.keySaveFailed": "The key could not be saved.",
+  "engines.providers.listFailed": "The list could not be loaded.",
+  "engines.providers.keyRemoveFailed": "The key could not be removed.",
+  "engines.providers.saveFailed": "That could not be saved.",
+  "engines.providers.testFailed": "The test could not be run.",
+  "engines.tokens.title": "Tokens",
+  "engines.tokens.description":
+    "What each member used on each engine, as the engine itself reported it. Days are counted in UTC.",
+  "engines.tokens.fallback": "The token counts could not be loaded.",
+  "engines.tokens.empty": "No turn has been counted yet.",
+  "engines.tokens.unavailable": "The token counts are not available now.",
+  "engines.tokens.problem":
+    "The file that keeps the counts could not be read, so some numbers may be missing.",
+  "engines.tokens.notReported": "not reported",
+  "engines.tokens.col.engine": "Engine",
+  "engines.tokens.col.week": "Last 7 days",
+  "engines.tokens.allMembers": "All members",
+  "engines.tokens.note":
+    "Input counts every token the model was given, cached ones included. Each row counts engine attempts: a retry on the same engine counts again. An attempt whose engine reported nothing adds its time and no tokens. Time is measured here, from the start to the end of each attempt.",
+  "engines.tokens.savedWeek": "Saved in the last 7 days",
+  "engines.tokens.savedNote":
+    "Saved means tokens that went through free engines, in the cloud or on your own computer. Your Claude Code subscription is a flat rate and paid engines cost money, so neither counts.",
+  "engines.tokens.currencyHelp":
+    "Click an amount to switch between euros and dollars.",
+  "engines.tokens.reference":
+    "At {model} list prices ({input} in, {output} out per million tokens, {date}); {euro} = {rate} ({rateDate}).",
+  "engines.tokens.under": "under {amount}",
+  "engines.tokens.nothingYet": "nothing yet",
+  "engines.tokens.plus": "plus {time}",
+  "engines.tokens.toDollars": "{amount}. Show amounts in dollars",
+  "engines.tokens.toEuros": "{amount}. Show amounts in euros",
+  "engines.tokens.amount": "{amount} tokens",
+  "engines.tokens.timeLocal": "{time} on your own GPU",
+  "engines.tokens.timeCloud": "{time} on a free cloud engine",
+  "engines.tokens.and": " and ",
+  "engines.tokens.timeTail": "{parts}, tokens not reported",
+  "engines.tokens.cell": "{input}\u00a0in\u00a0·\u00a0{output}\u00a0out",
+  "engines.tokens.partial": "{reported} of {total} attempts reported",
+  "engines.dur.under": "under 1 min",
+  "engines.dur.min": "{minutes} min",
+  "engines.dur.hourMin": "{hours} h {minutes} min",
+  "engines.usage.bySource": "By source",
+  "engines.usage.byMember": "By member",
+  "engines.usage.time": "Time",
+  "engines.usage.source.person": "You",
+  "engines.usage.source.routine": "Routines",
+  "engines.usage.source.handoff": "Between members",
+  "engines.usage.source.other": "Other",
+  "engines.usage.source.unknown": "Earlier (not recorded)",
+  "engines.usage.title": "Where the last 7 days went",
+  "engines.usage.note":
+    "Shares are of the tokens the engines reported (input plus output), or of the time when Time is chosen; attempts that reported no tokens add time only. \u201cYou\u201d is your own messages, \u201cRoutines\u201d is routines and check-ins, \u201cBetween members\u201d is hand-offs, and \u201cOther\u201d is anything else, such as a deployment's own runs.",
+  "engines.usage.nothing": "Nothing was counted in the last 7 days.",
+  "engines.usage.chartsFailed":
+    "The usage charts could not be drawn. The table below is not affected.",
+  "engines.usage.restMembers": "Other members",
+  "engines.usage.limitTitle": "Plan limits",
+  "engines.usage.limitNone": "No engine is held back by a limit right now.",
+  "engines.usage.limitNote":
+    "A percentage of your plan's weekly limit is not shown: the subscription does not report it to FreeDuet. An engine says so only when it has reached a limit, with the time it is expected back.",
+  "engines.usage.range": "{from} to {to}, UTC days",
+  "engines.usage.splitBy": "Split by",
+  "engines.usage.measure": "Measure",
+  "engines.usage.perDay": "{title}: {metric} per day",
+  "engines.usage.perDayUtc": "{title}: {metric} per day, UTC",
+  "engines.usage.day": "Day",
+  // connections-begin
+  "connections.connect": "Connect",
+  "connections.reconnect": "Reconnect",
+  "connections.connected": "Connected",
+  "connections.teamAccount": "Team account",
+  "connections.disconnect": "Disconnect",
+  "connections.disconnecting": "Disconnecting…",
+  "connections.startFailed":
+    "Couldn't start connecting, so nothing was connected. Try again, or ask an admin if it keeps happening.",
+  "connections.list.auth.no-broker":
+    "Connecting apps isn't set up yet, so nothing was recorded. Ask an admin to set it up.",
+  "connections.list.auth.not-supported":
+    "Apps here connect once, with Connect on the app's page. They aren't authorized one action at a time.",
+  "connections.list.auth.missing-handle":
+    "That link doesn't say which authorization it finishes, so nothing was done. Start again from the app's page.",
+  "connections.list.auth.no-attempt":
+    "There's no authorization in progress for you to finish. It may have expired, or started in another session. Start again from the app's page.",
+  "connections.list.auth.vendor-unavailable":
+    "The app didn't answer when {product} tried to finish that authorization, so nothing was recorded. Try the link again in a moment.",
+  "connections.list.auth.not-your-authorization":
+    "That link doesn't match the authorization you have in progress, so nothing was recorded. Finish it in the tab you started it in, or start again from the app's page.",
+  "connections.list.auth.not-finished":
+    "That authorization hasn't finished yet, so nothing was recorded. Finish it at the app, then open the link again.",
+  "connections.list.auth.authorization-failed":
+    "The app didn't complete that authorization, so nothing was recorded. Start again from the app's page.",
+  "connections.list.auth.context-changed":
+    "That app's account changed while the authorization was open, so nothing was recorded. Access given to the old account was removed. Start again from the app's page.",
+  "connections.list.auth.not-permitted":
+    "You can't connect that app's account anymore, so nothing was recorded. Your access or the app's setup changed while the authorization was open. Ask an admin if you expected to finish it.",
+  "connections.list.auth.cancelled":
+    "That authorization was cancelled while it was being finished, so nothing was recorded. The access it gave was removed.",
+  "connections.list.auth.cancelled-left-live":
+    "That authorization was cancelled while it was being finished, so nothing was recorded. The access it gave couldn't be removed, so the app may still allow the action you cancelled. To remove it, disconnect the app from its page, then connect again and authorize only what you want.",
+  "connections.list.auth.not-recorded":
+    "Couldn't record that authorization, so nothing was saved. Start again from the app's page, or ask an admin if it keeps happening.",
+  "connections.list.description":
+    "The apps and accounts your Bots use as you. Open one to connect it or change it.",
+  "connections.list.connectFailed":
+    "Couldn't connect that account. Nothing was saved. Try again.",
+  "connections.list.title": "Your connections",
+  "connections.list.loading": "Loading connections…",
+  "connections.list.loadError":
+    "Couldn't load your connections. Reload the page, or ask an admin if it keeps happening.",
+  "connections.list.empty":
+    "Nothing to connect yet. Apps show up here once an admin turns them on.",
+  "connections.list.count": "{inUse} in use · {total} in all",
+  "connections.list.search": "Search connections",
+  "connections.list.noMatch": "Nothing matches “{query}”.",
+  "connections.list.linksError":
+    "Couldn't load GitHub and Slack, so they aren't listed. Reload the page.",
+  "connections.list.connectNamed": "Connect {title}",
+  "connections.list.reconnectNamed": "Reconnect {title}",
+  "connections.app.landed": "You just authorized {action}.",
+  "connections.app.pendingTitle": "Account",
+  "connections.app.loadError":
+    "Couldn't load this connection. Reload the page, or ask an admin if it keeps happening.",
+  "connections.app.appLoadError":
+    "Couldn't load this app. Reload the page, or ask an admin if it keeps happening.",
+  "connections.app.notSetUp":
+    "{title} isn't set up yet. An admin has to turn it on before anyone can connect it.",
+  "connections.app.sharedDesc":
+    "Shared by your organisation. Bots act as the team account.",
+  "connections.app.brokeredDesc":
+    "Bots use this as you, and see only what you can see.",
+  "connections.app.reassurance": "No Bot can use this as you.",
+  "connections.app.tripPerAction": "Authorize the actions you want below.",
+  "connections.app.tripConnect":
+    "Connecting takes you to {title} to approve access.",
+  "connections.app.connectedDesc":
+    "Bots you allow use your {title} as you. Disconnecting removes their access everywhere.",
+  "connections.app.notYours": "You don't connect this app yourself.",
+  "connections.app.oneShared":
+    "Bots use one shared account for this app, the same for everybody.",
+  "connections.app.noApp": "{product} has no app by that name.",
+  "connections.app.yourAccount": "Your account",
+  "connections.app.notAvailable":
+    "Not available yet. An admin has to turn this on first.",
+  "connections.app.connectedAsYou":
+    "Bots you allow use this as you, and see only what you can see.",
+  "connections.app.notConnected":
+    "No Bot can use this as you. Connecting takes you to {vendor} to approve access.",
+  "connections.app.disconnectedDone":
+    "Disconnected. {product} can't use your {vendor} account any more.",
+  "connections.app.disconnectedUnconfirmed":
+    "Disconnected here. {vendor} didn't confirm it, so also remove {product} in your {vendor} account's third-party access settings.",
+  "connections.app.accessDesc":
+    "What you allowed, as {vendor} recorded it. This can be less than {product} asked for.",
+  "connections.app.access": "Access",
+  "connections.app.allowed": "Allowed",
+  "connections.app.vendorDidntSay": "{vendor} didn't say.",
+  "connections.identity.toolsDesc":
+    "Lets your Bots read and change your repositories as you. You connect this separately from your account above.",
+  "connections.identity.tools": "Tools",
+  "connections.identity.githubTools": "GitHub tools",
+  "connections.identity.notConnected": "Not connected",
+  "connections.mail.neverRun": "Has not run yet.",
+  "connections.mail.lastRun": {
+    one: "Last run {when}: {count} message. {total} in all.",
+    other: "Last run {when}: {count} messages. {total} in all.",
+  },
+  "connections.mail.on": "On. {activity}",
+  "connections.mail.off": "Off",
+  "connections.mail.switchOff": "Switch off",
+  "connections.mail.switchOn": "Switch on",
+  "connections.mail.delete": "Delete",
+  "connections.mail.lastProblem": "Last problem: {error}",
+  "connections.mail.description":
+    "Standing rules you asked for in chat. Your Bots keep and apply them to new mail every few minutes; they are not Gmail filters. Deleting a rule does not undo what it already did.",
+  "connections.mail.title": "Mail rules",
+  "connections.mail.search": "Search mail rules",
+  "connections.mail.statusLabel": "Rule status",
+  "connections.mail.allStatuses": "All statuses",
+  "connections.mail.optActive": "Active",
+  "connections.mail.optPaused": "Paused",
+  "connections.mail.active": "Active",
+  "connections.mail.paused": "Paused",
+  "connections.mail.noMatch": "No rules match these filters.",
+  "connections.mail.paging": {
+    one: "{from}–{to} of {count} rule",
+    other: "{from}–{to} of {count} rules",
+  },
+  "connections.mail.previous": "Previous",
+  "connections.mail.next": "Next",
+  "connections.secret.aMember": "A member",
+  "connections.secret.doneMemberCal":
+    "Connected. {name} can now read your mail and calendar as you.",
+  "connections.secret.doneMember":
+    "Connected. {name} can now read your mail as you.",
+  "connections.secret.doneBotsCal":
+    "Connected. Bots you allow can now read your mail and calendar as you.",
+  "connections.secret.doneBots":
+    "Connected. Bots you allow can now read your mail as you.",
+  "connections.secret.notAvailable":
+    "Not available yet. An admin has to turn this on first.",
+  "connections.secret.statusError":
+    "Couldn't load whether you've connected this. Reload the page, or ask an admin if it keeps happening.",
+  "connections.secret.yourAccount": "Your account",
+  "connections.secret.connectedCal":
+    "Connected as {address}. Your calendar is connected too. Bots you allow use this as you.",
+  "connections.secret.connectedNoCal":
+    "Connected as {address}. No calendar is connected. Bots you allow use this as you.",
+  "connections.secret.notConnected":
+    "No Bot can use this as you. Paste an app password below to connect your Gmail.",
+  "connections.secret.useDifferent": "Use a different app password",
+  "connections.secret.disconnected":
+    "Disconnected. {product} can't read your mail or calendar any more. To be sure the app password stops working, delete it at {url} too.",
+  "connections.secret.formDesc":
+    "Two steps at Google, then paste what they give you. Nothing is saved unless Gmail accepts it.",
+  "connections.secret.connectTitle": "Connect",
+  "connections.secret.memberWillUse": "{name} will use this mailbox.",
+  "connections.secret.step1Lead":
+    "Turn on 2-Step Verification for your Google account, then make an app password at",
+  "connections.secret.step1Tail":
+    ". Name it {product} and copy the sixteen letters.",
+  "connections.secret.step2Lead":
+    "To let your Bots see your calendar too: in Google Calendar, open Settings, choose your calendar, and copy its",
+  "connections.secret.step2Link": "Secret address in iCal format",
+  "connections.secret.step2Tail": ". This one is optional.",
+  "connections.secret.address": "Your Gmail address",
+  "connections.secret.password": "App password",
+  "connections.secret.passwordHint":
+    "The sixteen letters from Google, with or without the spaces. Not your usual password.",
+  "connections.secret.calendar": "Calendar secret address (optional)",
+  "connections.secret.calendarHint":
+    "Anyone with this address can read your calendar, so it is kept as carefully as the password.",
+  "connections.secret.checking": "Checking with Gmail…",
+  "connections.secret.canDoTitle": "What this lets your Bots do",
+  "connections.secret.canDoDesc":
+    "An app password opens your whole mailbox, so it is worth knowing what this does.",
+  "connections.secret.canDo":
+    "Your Bots can search and read your mail and look at your calendar. They cannot delete, move or label anything. A reply goes out only after you approve it, and only to people already on the message. You can disconnect at any time, and you can delete the app password at Google whenever you like.",
+  "connections.mode.goesShared": "The shared account will be disconnected.",
+  "connections.mode.goesNoShared": "No shared account is connected.",
+  "connections.mode.goesPersonal": {
+    one: "{count} personal account will be disconnected.",
+    other: "{count} personal accounts will be disconnected.",
+  },
+  "connections.mode.makeShared": "Make {title} shared",
+  "connections.mode.makePersonal": "Make {title} personal",
+  "connections.mode.titleShared": "Share one {title} account?",
+  "connections.mode.titlePersonal": "Give everyone their own {title} account?",
+  "connections.mode.checking": "Checking what this would change…",
+  "connections.mode.everyone":
+    "Everyone using a Bot with this app will act as this one account.",
+  "connections.cancel": "Cancel",
+  "connections.dir.description":
+    "{name}'s app directory. Add an app to make its tools available to Bots. Each person still connects their own account before it reads anything.",
+  "connections.dir.appsTitle": "Apps",
+  "connections.dir.appsDesc":
+    "Search by name. Nobody here has reviewed these apps.",
+  "connections.dir.searchAria": "Search {name} apps",
+  "connections.dir.searchPlaceholder": "Search by app name",
+  "connections.dir.noMatch": 'No {name} app matches "{query}".',
+  "connections.dir.none": "{name} returned no apps.",
+  "connections.dir.actions": {
+    one: "{count} action",
+    other: "{count} actions",
+  },
+  "connections.dir.added": "Added",
+  "connections.dir.adding": "Adding…",
+  "connections.dir.add": "Add",
+  "connections.grants.consentFailed":
+    "{product} answered without a consent link, so nothing was authorized. Try again, or ask an admin if it keeps happening.",
+  "connections.grants.title": "Actions",
+  "connections.grants.readError":
+    "Couldn't read what this account allows right now.",
+  "connections.grants.retry": "Retry",
+  "connections.grants.description":
+    "Grouped by the permission each action asks for. This matches what the consent screen shows.",
+  "connections.grants.search": "Search actions",
+  "connections.grants.wholeApp": "Everything in this app, approved together",
+  "connections.grants.noPermission": "Asks for no permission of its own",
+  "connections.grants.needs": "Needs {scopes}",
+  "connections.grants.authorize": "Authorize",
+  "connections.grants.hidden": {
+    one: "{count} more action not yet authorized. Search to find it.",
+    other: "{count} more actions not yet authorized. Search to find one.",
+  },
+  "connections.grants.noMatch": "No action matches that search.",
+  "connections.grants.before": "Before you authorize {action}",
+  "connections.grants.continue": "Continue to consent",
+  "connections.grants.notRequired": "Needs no authorization.",
+  "connections.grants.authorized": "Authorized.",
+  "connections.grants.notYet": "Not authorized yet.",
+  "connections.grants.notYetAdmin":
+    "Not authorized yet. An admin can authorize it.",
+  "connections.grants.missing":
+    "Missing {missing}. An admin has to set it. Authorizing can't fix it.",
+  "connections.grants.missingSetting":
+    "A setting is missing. An admin has to set it. Authorizing can't fix it.",
+  "connections.grants.unknown": "Couldn't read this one right now. {reason}",
+  "connections.row.connectKey":
+    "This app connects with a key, not a sign-in page, so nothing was connected. Reload the page and press Connect again.",
+  "connections.row.noAuth":
+    "{title} doesn't need an account. Bots that have it can use it as it is.",
+  "connections.row.verified": "Connected with your key. Last checked {date}.",
+  "connections.row.failedCheck":
+    "Your key didn't pass a check with {title}. That may be the key, or {title} itself. Your account is still connected. Press Re-check to try again, or disconnect and connect with a new key.",
+  "connections.row.noSafeCheck":
+    "Connected with your key. It hasn't been checked with {title}. At the time, {title} had no safe way to check a key. That's about the app, not your key.",
+  "connections.row.unchecked":
+    "Connected with your key. It hasn't been checked with {title}.",
+  "connections.row.keyStillWorks":
+    "Disconnected. Your key still works at {title}. Change it there to stop all access.",
+  "connections.row.asksForKey":
+    "{title} connects with a key you already have. Connect asks for it.",
+  "connections.row.signedIn": "Signed in with {title}. {description}",
+  "connections.row.yourAccount": "Your account",
+  "connections.row.keyMissing": "Key missing",
+  "connections.row.recheck": "Re-check",
+  "connections.row.rechecking": "Checking…",
+  "connections.row.perAction": "Approved per action",
+  "connections.row.connectYour": "Connect your account",
+  "connections.row.checkingNeeds": "Checking what the app needs…",
+  "connections.row.noNeeds":
+    "Couldn't find out what this app needs. Close this and try again.",
+  // connections-end
+  // computer-begin
+  "computer.tool.readPage": "Read the page",
+  "computer.tool.readPageCount": {
+    one: "{count} thing it can act on",
+    other: "{count} things it can act on",
+  },
+  "computer.tool.filledIn": "Filled in",
+  "computer.tool.choseIn": "Chose in",
+  "computer.tool.clicked": "Clicked",
+  "computer.tool.pressed": "Pressed",
+  "computer.tool.listedFiles": "Listed files",
+  "computer.tool.itemsInWorkspace": {
+    one: "{count} item in the workspace",
+    other: "{count} items in the workspace",
+  },
+  "computer.tool.nothingSaved": "nothing saved yet",
+  "computer.tool.readFile": "Read file",
+  "computer.tool.ranCommand": "Ran a command",
+  "computer.tool.addedToFile": "Added to file",
+  "computer.tool.savedFile": "Saved file",
+  "computer.tool.scrolled": "Scrolled",
+  "computer.signIn.waiting": "Waiting for you to sign in",
+  "computer.signIn.signedIn": "Signed in",
+  "computer.signIn.failed": "Sign-in did not complete",
+  "computer.signIn.open": "Open private sign-in",
+  "computer.signIn.dialogTitle": "Sign in to {site}",
+  "computer.signIn.dialogBody":
+    "Goes to your Bot's browser, not into this conversation.",
+  "computer.output.truncated":
+    "The output was too long. This is the end of it.",
+  "computer.output.nothing": "It printed nothing.",
+  "computer.output.timedOut": "It ran too long and was stopped.",
+  "computer.output.exitCode": "Exit code {code}.",
+  "computer.activity.ran": "Ran",
+  "computer.activity.read": "Read",
+  "computer.activity.saved": "Saved",
+  "computer.activity.listed": "Listed",
+  "computer.activity.workspace": "the workspace",
+  "computer.activity.refused": "A boundary refused it.",
+  "computer.activity.empty":
+    "Nothing yet. Commands the Bot runs and files it reads appear here.",
+  "computer.control.handBack": "Hand back",
+  "computer.control.take": "Take control",
+  "computer.control.finishing": "Finishing the current action…",
+  "computer.control.close": "Close Computer",
+  "computer.control.open": "Open Computer",
+  "computer.panel.sidebar": "Computer sidebar",
+  "computer.live.cantShow": "Couldn't show the screen.",
+  "computer.live.drivingLabel":
+    "The Bot's screen. You have control. Click and type here.",
+  "computer.live.label": "The Bot's screen, live",
+  "computer.view.aPage": "A page",
+  "computer.view.openedDuring":
+    "Opened during this turn. The screen has moved on since.",
+  "computer.view.noPage": "This turn did not open a page.",
+  "computer.view.cantShow": "Can't show the screen right now",
+  "computer.view.cantShowHelp":
+    "The Bot may still be working. If this keeps happening, ask an admin to check its Computer.",
+  "computer.view.blank": "The Bot hasn't opened a page yet.",
+  "computer.view.waiting": "Waiting for the Bot's screen…",
+  "computer.view.unavailable": "The screen isn't available right now.",
+  "computer.view.alt": "What the Bot is looking at",
+  "computer.view.open": "Open the Bot's screen full size",
+  "computer.view.youHaveControl": "You have control",
+  "computer.view.botNeedsYou": "The Bot needs you.",
+  "computer.view.cancelRequest": "Cancel request",
+  "computer.view.finishingBot":
+    "Finishing the Bot's current action before giving you control…",
+  "computer.view.recovery":
+    "The Computer stopped while you had control. Take control to check the page, then hand it back to the Bot.",
+  "computer.view.interrupted":
+    "The Computer stopped before anyone took control. The Bot will ask again if it still needs you.",
+  "computer.view.secretNeedsHost": "{host} needs {what}",
+  "computer.view.secretNeedsPage": "The page needs {what}",
+  "computer.view.secretType": "Type it here and it goes into the page.",
+  "computer.view.secretPlaceholder": "Never shown to the Bot",
+  "computer.view.secretGoesHost":
+    "Goes straight to {host}. {product} never sees it.",
+  "computer.view.secretGoesPage":
+    "Goes straight to the page. {product} never sees it.",
+  "computer.view.sending": "Sending…",
+  "computer.view.send": "Send to the page",
+  "computer.view.checking": "Checking who has control…",
+  "computer.view.drivingOpen":
+    "You have control. Open the screen to click and type.",
+  "computer.view.botHas": "The Bot has control.",
+  "computer.view.dialog": "The Bot's screen",
+  "computer.view.close": "Close the Bot's screen",
+  "computer.view.turnAlt": "What this turn had open",
+  "computer.view.finishingYou":
+    "Finishing the current action before giving you control…",
+  "computer.view.drivingClick": "You have control. Click and type on the page.",
+  "computer.handoff.noCall":
+    "The handoff's tool call is not in this conversation.",
+  "computer.handoff.answered": "This tool call is already answered.",
+  "computer.handoff.running": "This task is already running.",
+  "computer.handoff.unreachable":
+    "The computer could not be reached. Retry to resume.",
+  "computer.handoff.couldntResume": "Couldn't resume the task.",
+  "computer.handoff.waiting": "Waiting for this browser handoff to finish.",
+  "computer.handoff.paused": "A browser task is paused in this conversation.",
+  "computer.handoff.stopWaiting": "Stop waiting",
+  "computer.handoff.resume": "Resume task",
+  "computer.demo.everyWeekday": "Every weekday at 09:00",
+  "computer.demo.everyDay": "Every day at 09:00",
+  "computer.demo.everyMonday": "Every Monday at 09:00",
+  "computer.demo.everyHour": "Every hour",
+  "computer.demo.scheduled": "Scheduled. /{slug} next runs {when}.",
+  "computer.demo.seeRoutines": "See routines",
+  "computer.demo.when": "When it runs ({timezone})",
+  "computer.demo.custom": "Custom cron expression",
+  "computer.demo.cron": "Cron (minute hour day month weekday)",
+  "computer.demo.reportIn": "Report in",
+  "computer.demo.onlyConversation": "This Bot's only conversation",
+  "computer.demo.inputs": "Inputs for each run (optional)",
+  "computer.demo.title": "Teach a browser workflow",
+  "computer.demo.intro":
+    "Take control, record the steps, then review the skill it drafts. Typed values and images aren't recorded. Recording stops after ten minutes.",
+  "computer.demo.recording": {
+    one: "Recording {title} · {count} step",
+    other: "Recording {title} · {count} steps",
+  },
+  "computer.demo.left": "{time} left",
+  "computer.demo.limitReached": "Time limit reached. Stopping…",
+  "computer.demo.stop": "Stop recording",
+  "computer.demo.name": "Workflow name",
+  "computer.demo.namePlaceholder": "Find an invoice",
+  "computer.demo.record": "Record your steps",
+  "computer.demo.takeControl":
+    "Take control of the browser to start recording.",
+  "computer.demo.entry": {
+    one: "{title} · {count} step",
+    other: "{title} · {count} steps",
+  },
+  "computer.demo.stoppedAtLimit": "stopped at the ten-minute limit",
+  "computer.demo.edit": "Edit /{slug}",
+  "computer.demo.runSchedule": "Run on a schedule",
+  "computer.demo.reviewDraft": "Review skill draft",
+  "computer.demo.reviewTitle": "Review and edit the skill",
+  "computer.demo.reviewHelp":
+    "Rename the inputs and say what the result should be.",
+  "computer.demo.saveUse": "Save and use with this Bot",
+  "computer.demo.couldntSave": "Couldn't save the skill.",
+  "computer.demo.ready":
+    "/{slug} is ready on this Bot. Type it in the conversation with your inputs, or choose Run on a schedule to make it a routine.",
+  // computer-end
+} satisfies Entries;
+
+export type MessageId = keyof typeof EN;

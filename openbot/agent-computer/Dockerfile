@@ -1,4 +1,5 @@
-# The Bot's computer installs the Playwright browser it launches, plus the command-line tools the video
+# The Bot's computer installs the Playwright browsers (Chromium, Firefox, WebKit) and, for the member's shell, the
+# `playwright` package at the same version (D175), plus the command-line tools the video
 # maker (Cam) works with: ffmpeg, git and python3 with venv, plus the office toolkit (python-docx,
 # openpyxl, python-pptx, pypdf, reportlab, pdfplumber, defusedxml) in its own virtual environment,
 # `office-inspect`, our own read-only inspector (docs/design/office-files.md, slices S1 and S2), and headless
@@ -30,6 +31,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # image fails to build. Playwright names each browser's folder after its revision, so this checks the folder names.
 RUN ls -d /ms-playwright/chromium-* /ms-playwright/firefox-* /ms-playwright/webkit-* >/dev/null \
   && echo "browsers: $(ls /ms-playwright | tr '\n' ' ')"
+
+# D175: the `playwright` package for the member's shell, at EXACTLY the version that installed the browsers above
+# (the same ARG, never a second number), global (Bun puts it in $BUN_INSTALL/install/global/node_modules and the
+# `playwright` command in /usr/local/bin) so that `require('playwright')`, `playwright --version` and `playwright test`
+# find it with no network. `@playwright/test` is the same version, for tests written against it. `--ignore-scripts`
+# says what Bun does anyway for dependencies (it runs no lifecycle script of a package); the browsers come from the
+# install above, never from here. PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD comes after the browsers are installed (it would
+# skip that install too): a `playwright install` a member types then downloads nothing and says why. NODE_PATH and these
+# two variables are passed to the shell by `environmentForCommand` (src/shell.ts).
+RUN bun install -g --ignore-scripts "playwright@${PLAYWRIGHT_VERSION}" "@playwright/test@${PLAYWRIGHT_VERSION}" \
+  && rm -rf /usr/local/install/cache /root/.cache /tmp/*
+ENV NODE_PATH=/usr/local/install/global/node_modules
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+COPY agent-computer/image-check/playwright-ready.cjs /opt/image-check/playwright-ready.cjs
+# Build check: the package version and the /ms-playwright revisions must agree, and the package must load.
+RUN node /opt/image-check/playwright-ready.cjs --expect "${PLAYWRIGHT_VERSION}" \
+  && playwright --version
 
 # The office toolkit: one virtual environment at /opt/office, built here because a Bot's computer cannot
 # install anything when it runs (root with every capability dropped, no sudo). Every package is pinned to
@@ -81,6 +99,26 @@ RUN /usr/lib/libreoffice/program/soffice --headless --version \
   && office-convert pdf t.docx > /dev/null \
   && office-python -c "import openpyxl; v = openpyxl.load_workbook('t.recalculated.xlsx', data_only=True).active['A3'].value; assert v == 42.5, v; assert open('t.pdf', 'rb').read(5) == b'%PDF-'" \
   && cd / && rm -rf /tmp/lo-smoke /root/.cache
+
+# The game-development library for Kai (docs/M1_PLAN.md section 107, D151): awesome-gamedev-agent-skills
+# (Apache-2.0), fetched at one pinned commit, unmodified, into /opt/gamedev-skills. Only `router/`, `skills/`,
+# LICENSE and NOTICE are kept (its repo-level scripts, tests, docs and .git are not shipped). The build fails if the
+# fetched commit is not the pinned one or if LICENSE or NOTICE differ from the text that was reviewed on 25 November 2026.
+# Only Kai's prompt names this folder. Moving the pin needs the same review again.
+ARG GAMEDEV_SKILLS_SHA=c6ca6c41c839b68319ffc08430b99ab768debc32
+ARG GAMEDEV_SKILLS_LICENSE_SHA256=6f82dcfeb95a1c0a0452180a3b16f21bf82111780018fed59d95a052b5b75f6c
+ARG GAMEDEV_SKILLS_NOTICE_SHA256=2dcb65b1c5be24e5ba11e937f3996100f4e980d8cf8ac5b30ba1d70dae6c40f8
+RUN git init -q /tmp/gamedev-src \
+  && git -C /tmp/gamedev-src fetch -q --depth 1 https://github.com/gamedev-skills/awesome-gamedev-agent-skills "${GAMEDEV_SKILLS_SHA}" \
+  && git -C /tmp/gamedev-src checkout -q FETCH_HEAD \
+  && test "$(git -C /tmp/gamedev-src rev-parse HEAD)" = "${GAMEDEV_SKILLS_SHA}" \
+  && cd /tmp/gamedev-src \
+  && echo "${GAMEDEV_SKILLS_LICENSE_SHA256}  LICENSE" | sha256sum -c - \
+  && echo "${GAMEDEV_SKILLS_NOTICE_SHA256}  NOTICE" | sha256sum -c - \
+  && mkdir -p /opt/gamedev-skills \
+  && cp -r router skills LICENSE NOTICE /opt/gamedev-skills/ \
+  && chmod -R a-w /opt/gamedev-skills \
+  && cd / && rm -rf /tmp/gamedev-src /root/.cache
 
 WORKDIR /app
 # The lockfile as well as the manifest: `--frozen-lockfile` with no lockfile present resolves afresh

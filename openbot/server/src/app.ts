@@ -95,11 +95,17 @@ import { mountDesktopConnectionFailure } from "./desktop-connection-failure";
 import { createTranscriptionProvider } from "./dictation/provider";
 import { createDictationRoutes } from "./dictation/routes";
 import { threadReaderClient } from "./freeduet/backend";
+import { createBuildInfoRoutes } from "./freeduet/build-info-routes";
 import { isHosted } from "./freeduet/deployment";
 import type { EngineChoices } from "./freeduet/engine-choices";
 import { createEnginesRoutes } from "./freeduet/engines-routes";
 import { createImportPreviewRoutes } from "./freeduet/import/preview-routes";
 import { createTeamFileRoutes } from "./freeduet/team-file-routes";
+import {
+  createHandoffFileRoutes,
+  type HandoffFileStore,
+} from "./freeduet/handoff-files";
+import { createWorkStatusRoutes } from "./freeduet/work-status-routes";
 import type { HostAccessBroker } from "./host-access/broker";
 import { createHostAccessRoutes } from "./host-access/routes";
 import { identityRoutes } from "./identity/routes";
@@ -477,6 +483,8 @@ export function createApp(
     lifecycle?: BotLifecycleServices;
     /** Settings in chat (docs/design/settings-in-chat.md, slice 1): the person's Undo of a change from chat. */
     settingChanges?: SettingChanges;
+    /** D177: the files a colleague offered during a hand-off, drawn under the hand-off line. */
+    handoffFiles?: Pick<HandoffFileStore, "list">;
     /** The person's engine choices, changed from the Engines page (docs/design/engines-dashboard.md). */
     engineChoices?: EngineChoices;
     /** D60: programs on the person's own computer (docs/design/programs-on-your-computer.md). Absent: no routes. */
@@ -815,6 +823,8 @@ export function createApp(
       "/api/freeduet/import",
       createImportPreviewRoutes(requireUser, coworker.memory.store),
     );
+  // D162: which build is running (version, commit, time). Signed in, read-only.
+  app.route("/api/freeduet/build", createBuildInfoRoutes(requireUser));
   // The team file export (docs/design/team-file.md, slice S2): administrators only, read-only.
   app.route("/api/freeduet/team-file", createTeamFileRoutes(requireUser));
   app.on(["PUT", "PATCH", "DELETE"], "/api/auth/scim/*", (context) =>
@@ -1819,6 +1829,21 @@ export function createApp(
     app.route(
       "/api/bots",
       createBotLifecycleRoutes(coworker.lifecycle, requireUser),
+    );
+  // D168: who is working and on what, read from the hop queue; signed in, read-only.
+  if (coworker?.lifecycle)
+    app.route(
+      "/api/freeduet/work-status",
+      createWorkStatusRoutes(requireUser, {
+        hops: coworker.lifecycle.activity.workStatusRows,
+        attention: coworker.lifecycle.activity.attention,
+      }),
+    );
+  // D177: a colleague's offered files, narrowed to the signed-in person; the Download itself is the computer route.
+  if (coworker?.handoffFiles)
+    app.route(
+      "/api/freeduet/handoff-files",
+      createHandoffFileRoutes(requireUser, coworker.handoffFiles),
     );
   if (coworker?.settingChanges)
     app.route(

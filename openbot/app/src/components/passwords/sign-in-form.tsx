@@ -7,6 +7,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useId, useState } from "react";
+import { useT } from "@/freeduet/i18n/provider";
 import { PageRows, PageSection } from "@/components/layout/page-shell";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -49,6 +50,7 @@ import { queryClient } from "@/query-client";
  * its own, cleared from state the same way.
  */
 export function SignInForm({ requestId }: { requestId: string }) {
+  const t = useT();
   const request = useQuery({
     ...signInRequestQueryOptions(requestId),
     // Polled so a takeover finishing elsewhere, or the request expiring, shows here.
@@ -318,7 +320,7 @@ export function SignInForm({ requestId }: { requestId: string }) {
                 checked={save}
                 onCheckedChange={(checked) => setSave(checked === true)}
               />
-              Save to Passwords
+              {t("passwords.saveTo")}
             </label>
           ) : null}
           {failure ? (

@@ -8,6 +8,8 @@
  */
 
 import type { ProviderView } from "./engines-providers-text";
+import type { MessageId } from "./i18n/catalogs";
+import { englishT, type T } from "./i18n/provider";
 
 export type EngineState =
   | "ready"
@@ -110,9 +112,17 @@ export type EnginesReading = {
   cannotChange?: ChangeBlock | null;
 };
 
+/**
+ * The locale a time or a date is written in. English keeps the 24-hour "Sun 15 Nov" style this page has always used
+ * (`en-GB`); every other language writes in its own.
+ */
+export function timeLocale(language: string): string {
+  return language === "en" ? "en-GB" : language;
+}
+
 /** The clock on the person's own device, 24 hours, as the rest of the admin screens write times. */
-function clock(moment: Date, timeZone?: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
+function clock(moment: Date, timeZone?: string, language = "en"): string {
+  return new Intl.DateTimeFormat(timeLocale(language), {
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
@@ -132,343 +142,437 @@ function calendarDay(moment: Date, timeZone?: string): string {
 /**
  * A time the person can read: "17:00" when it is today, "Sun 15 Nov, 09:00" when it is another day. Null when the
  * text is not a time. `now` and `timeZone` are given by tests; the page passes neither, so the browser's own zone
- * and clock are used.
+ * and clock are used. `language` is the app language (English when none): the zone stays the person's own.
  */
 export function untilText(
   until: string,
   now: Date = new Date(),
   timeZone?: string,
+  language = "en",
 ): string | null {
   const moment = new Date(until);
   if (Number.isNaN(moment.getTime())) return null;
   if (calendarDay(moment, timeZone) === calendarDay(now, timeZone)) {
-    return clock(moment, timeZone);
+    return clock(moment, timeZone, language);
   }
-  const day = new Intl.DateTimeFormat("en-GB", {
+  let locale = timeLocale(language);
+  try {
+    new Intl.DateTimeFormat(locale);
+  } catch {
+    locale = "en-GB";
+  }
+  const day = new Intl.DateTimeFormat(locale, {
     weekday: "short",
     day: "numeric",
     month: "short",
     timeZone,
   }).format(moment);
-  return `${day}, ${clock(moment, timeZone)}`;
+  return `${day}, ${clock(moment, timeZone, language)}`;
 }
 
 /**
  * One engine's state, in one plain sentence. The kind is read only for a signed-out engine, and the refusal only for an
- * engine that is not run; every other state reads the same whatever they hold.
+ * engine that is not run; every other state reads the same whatever they hold. `t` and `language` are the app's
+ * (English when not given).
  */
 export function engineStateText(
   engine: Pick<EngineSummary, "state" | "until"> &
     Partial<Pick<EngineSummary, "kind" | "refusal" | "note">>,
   now: Date = new Date(),
   timeZone?: string,
+  t: T = englishT,
+  language = "en",
 ): string {
-  const said = engineStateBase(engine, now, timeZone);
+  const said = engineStateBase(engine, now, timeZone, t, language);
   return engine.note === "tools_as_text"
-    ? `${said}. ${TOOLS_AS_TEXT_NOTE}`
+    ? `${said}. ${t("engines.state.toolsAsText")}`
     : said;
 }
 
 /** D116: what the page adds to an engine whose last answer was a tool call written as text. */
-export const TOOLS_AS_TEXT_NOTE =
-  "Its last answer wrote its tool calls as text instead of using them: choose a model that supports tools";
+export const TOOLS_AS_TEXT_NOTE = englishT("engines.state.toolsAsText");
 
 function engineStateBase(
   engine: Pick<EngineSummary, "state" | "until"> &
     Partial<Pick<EngineSummary, "kind" | "refusal">>,
   now: Date,
-  timeZone?: string,
+  timeZone: string | undefined,
+  t: T,
+  language: string,
 ): string {
-  const at = engine.until ? untilText(engine.until, now, timeZone) : null;
+  const at = engine.until
+    ? untilText(engine.until, now, timeZone, language)
+    : null;
   switch (engine.state) {
     case "ready":
-      return "Ready";
+      return t("engines.state.ready");
     case "degraded":
-      return "Ready, but it has had recent errors";
+      return t("engines.state.degraded");
     case "limited":
-      return at ? `Reached its limit until ${at}` : "Reached its limit for now";
+      return at
+        ? t("engines.state.limitedAt", { at })
+        : t("engines.state.limited");
     case "out_of_credit":
-      return at ? `Out of credit, trying again at ${at}` : "Out of credit";
+      return at
+        ? t("engines.state.outOfCreditAt", { at })
+        : t("engines.state.outOfCredit");
     case "not_answering":
       return at
-        ? `Not answering, trying again at ${at}`
-        : "Not answering for now";
+        ? t("engines.state.notAnsweringAt", { at })
+        : t("engines.state.notAnswering");
     case "checking":
-      return "Checking whether it answers again";
+      return t("engines.state.checking");
     case "signed_out":
       // A gateway has a key, not a login: its remedy is the key.
       return engine.kind === "anthropic-compatible"
-        ? "Its gateway did not accept the key. Check the key you gave it."
-        : "Signed out: sign in again with the engine's own login";
+        ? t("engines.state.gatewayKey")
+        : t("engines.state.signedOut");
     case "refused":
+      // The reason is the server's own sentence and stays as it was sent.
       return engine.refusal
-        ? `Not run: ${engine.refusal}`
-        : "Not run: the reason is not known.";
+        ? t("engines.state.refusedWhy", { reason: engine.refusal })
+        : t("engines.state.refused");
     default:
-      return "State not known";
+      return t("engines.state.unknown");
   }
 }
 
 /** Why the page lists nothing, in one sentence. */
-export function engineReasonText(reason: EngineReason): string {
+export function engineReasonText(
+  reason: EngineReason,
+  t: T = englishT,
+): string {
   switch (reason) {
     case "off":
-      return "The engines are switched off on this installation (FREEDUET_ROUTER=off), so there is nothing to show.";
+      return t("engines.reason.off");
     case "not_set_up":
-      return "No FreeDuet agent is set up on this installation, so there are no engines to show.";
+      return t("engines.reason.not_set_up");
     case "unreachable":
-      return "The FreeDuet agent did not answer, so the engines cannot be read right now. This page asks again every 30 seconds.";
+      return t("engines.reason.unreachable");
   }
 }
 
-/** The page's title, and the one sentence under it (the approved direction, 14 November 2026). */
-export const ENGINES_TITLE = "Engines";
-export const ENGINES_INTRO =
-  "The engine is what does the thinking for each member. Your own sign-ins answer first unless you choose another order; anything paid stays off until you say so.";
+/** The page's title, and the one sentence under it (the approved direction, 14 November 2026). The English forms; the page reads the catalogue. */
+export const ENGINES_TITLE = englishT("dash.engines");
+export const ENGINES_INTRO = englishT("engines.intro");
 
 /** Said when the list cannot be read at all; the page is not reloaded for the person. */
-export const LOAD_FAILED = "Couldn't load the engines. Reload the page.";
+export const LOAD_FAILED = englishT("engines.loadFailed");
 /** The message the request helper uses when the server gives no sentence of its own. */
-export const ENGINES_FALLBACK = "The engines could not be listed.";
+export const ENGINES_FALLBACK = englishT("engines.fallback");
 /** Said when the server answers with a list that holds no engine. */
-export const NO_ENGINES = "No engines are reported yet.";
+export const NO_ENGINES = englishT("engines.noEngines");
 /** The name of the section that holds the engine cards, for screen readers. */
-export const ENGINE_STATES_TITLE = "Engines and their state";
+export const ENGINE_STATES_TITLE = englishT("engines.statesTitle");
 
 /** The tones a state's word can be drawn in. Each one is a duet status pair that clears 4.5:1 in both themes. */
 export type EnginePillTone = "green" | "red" | "blue" | "amber" | "neutral";
 
+/** The catalogue id of each state's word. */
+const PILL_IDS: Record<EngineState, MessageId> = {
+  ready: "engines.pill.working",
+  degraded: "engines.pill.working",
+  checking: "engines.pill.checking",
+  limited: "engines.pill.limited",
+  out_of_credit: "engines.pill.outOfCredit",
+  not_answering: "engines.pill.notAnswering",
+  signed_out: "engines.pill.signedOut",
+  refused: "engines.pill.locked",
+  unknown: "engines.pill.unknown",
+};
+
+const PILL_TONES: Record<EngineState, EnginePillTone> = {
+  ready: "green",
+  degraded: "green",
+  checking: "blue",
+  limited: "neutral",
+  out_of_credit: "amber",
+  not_answering: "red",
+  signed_out: "amber",
+  refused: "amber",
+  unknown: "neutral",
+};
+
 /**
- * The word on an engine's card for each state the server names. Each word is the state in plain English: no state is
+ * The word on an engine's card for each state the server names, in English. Each word is the state in plain English: no state is
  * added here. The server has nine states and every one has a word. "Off" and "Not built yet" have no state behind them,
  * so the page does not show them.
  */
-export const ENGINE_PILLS: Record<
-  EngineState,
-  { label: string; tone: EnginePillTone }
-> = {
-  ready: { label: "Working", tone: "green" },
-  degraded: { label: "Working", tone: "green" },
-  checking: { label: "Checking", tone: "blue" },
-  limited: { label: "Limited", tone: "neutral" },
-  out_of_credit: { label: "Out of credit", tone: "amber" },
-  not_answering: { label: "Not answering", tone: "red" },
-  signed_out: { label: "Signed out", tone: "amber" },
-  refused: { label: "Locked", tone: "amber" },
-  unknown: { label: "Not known", tone: "neutral" },
-};
+export const ENGINE_PILLS = Object.fromEntries(
+  (Object.keys(PILL_IDS) as EngineState[]).map((state) => [
+    state,
+    { label: englishT(PILL_IDS[state]), tone: PILL_TONES[state] },
+  ]),
+) as Record<EngineState, { label: string; tone: EnginePillTone }>;
 
 /** The word and tone for a state. A state this page was not written for reads as "Not known", never as a guess. */
-export function enginePill(state: string): {
+export function enginePill(
+  state: string,
+  t: T = englishT,
+): {
   label: string;
   tone: EnginePillTone;
 } {
-  return Object.hasOwn(ENGINE_PILLS, state)
-    ? ENGINE_PILLS[state as EngineState]
-    : ENGINE_PILLS.unknown;
+  const known: EngineState = Object.hasOwn(PILL_IDS, state)
+    ? (state as EngineState)
+    : "unknown";
+  return { label: t(PILL_IDS[known]), tone: PILL_TONES[known] };
 }
 
 /** The Keys panel: words only. The place to add a key is not built (design doc slice 7d), so it has no field. */
-export const KEYS_TITLE = "Keys";
-export const KEYS_TEXT =
-  "Only keys for gateways will be kept here. Your Claude and ChatGPT sign-ins are never stored by FreeDuet.";
-export const KEYS_NOT_BUILT =
-  "A key is added on its engine's card. It is kept on this installation and never shown again.";
+export const KEYS_TITLE = englishT("engines.keys.title");
+export const KEYS_TEXT = englishT("engines.keys.text");
+export const KEYS_NOT_BUILT = englishT("engines.keys.notBuilt");
 
 /**
  * The Spending panel. The server sends no spending figure yet, so the page shows no amount. It says what it cannot show,
  * because a member's metered engine joins its order when the installation's file enables it.
  */
-export const SPENDING_TITLE = "Spending";
-export const SPENDING_TEXT =
-  "Spending is not shown on this page yet. A paid engine runs only if this installation allows it.";
+export const SPENDING_TITLE = englishT("engines.spending.title");
+export const SPENDING_TEXT = englishT("engines.spending.text");
 
 /** The aside beside the engines, for screen readers. */
-export const ASIDE_LABEL = "Keys and spending";
+export const ASIDE_LABEL = englishT("engines.asideLabel");
 
-/** The members section: its title, what it says, and the three column headings of its table. */
-export const MEMBERS_TITLE = "Who uses what";
-export const MEMBERS_DESCRIPTION =
-  "The engines each member tries, in the order it tries them, and what happens when one runs out. A change applies from the member's next message, and you can undo it.";
+/** The members section: its title, what it says, and the three column headings of its table (English; the page reads the catalogue). */
+export const MEMBERS_TITLE = englishT("engines.members.title");
+export const MEMBERS_DESCRIPTION = englishT("engines.members.description");
 /** D112: the order by hand. One sentence above the table, and the words a screen reader reads for each arrow. */
-export const ORDER_NOTE =
-  "Use the arrows to move an engine one place. Your own logins come first unless you choose otherwise: if a move puts a free or a paid engine before them, you are asked to confirm it first.";
+export const ORDER_NOTE = englishT("engines.order.note");
 /** D115: the two ways an order can leave the group order (logins, then free, then paid), as the server names them. */
 export type OrderBreakKind = "free_before_login" | "paid_before_free_or_login";
 export const ORDER_BREAK_KINDS: readonly OrderBreakKind[] = [
   "free_before_login",
   "paid_before_free_or_login",
 ];
-export const ORDER_WARNING_TITLE: Record<OrderBreakKind, string> = {
-  free_before_login: "A free engine would answer before your own login",
+const WARNING_TITLE_IDS: Record<OrderBreakKind, MessageId> = {
+  free_before_login: "engines.order.warnTitle.free_before_login",
   paid_before_free_or_login:
-    "A paid engine would come before a free engine or a login",
+    "engines.order.warnTitle.paid_before_free_or_login",
+};
+const WARNING_TEXT_IDS: Record<OrderBreakKind, MessageId> = {
+  free_before_login: "engines.order.warnText.free_before_login",
+  paid_before_free_or_login: "engines.order.warnText.paid_before_free_or_login",
+};
+export const ORDER_WARNING_TITLE: Record<OrderBreakKind, string> = {
+  free_before_login: englishT(WARNING_TITLE_IDS.free_before_login),
+  paid_before_free_or_login: englishT(
+    WARNING_TITLE_IDS.paid_before_free_or_login,
+  ),
 };
 export const ORDER_WARNING_TEXT: Record<OrderBreakKind, string> = {
-  free_before_login:
-    "If it is a cloud service, this member's messages go to that provider first and it may keep them. Its answers may also be of lower quality than your login's.",
-  paid_before_free_or_login:
-    "A paid engine answers before the engines after it, so what it answers may cost money. If it is first in the list, every message may cost money from the first one. It runs only after you have switched paid engines on and set your limits.",
+  free_before_login: englishT(WARNING_TEXT_IDS.free_before_login),
+  paid_before_free_or_login: englishT(
+    WARNING_TEXT_IDS.paid_before_free_or_login,
+  ),
 };
-export const ORDER_NEW_LABEL = "New order:";
-export const ORDER_TICK = "I understand, use this order";
-export const ORDER_CONFIRM = "Confirm";
-export const ORDER_CANCEL = "Cancel";
-export const orderTickLabel = (name: string): string =>
-  `I understand, use this order for ${name}`;
-export const orderConfirmLabel = (name: string): string =>
-  `Confirm the new order for ${name}`;
-export const orderCancelLabel = (name: string): string =>
-  `Cancel the new order for ${name}`;
-export const orderWarningGroupLabel = (name: string): string =>
-  `Confirm the new order for ${name}`;
-export const OWN_ORDER_NOTE = "Your order: logins are not first";
-export const RECOMMENDED_ORDER_BUTTON = "Use the recommended order";
-export const recommendedOrderLabel = (name: string): string =>
-  `Use the recommended order for ${name}`;
-export const moveUpLabel = (engine: string, name: string): string =>
-  `Move ${engine} up for ${name}`;
-export const moveDownLabel = (engine: string, name: string): string =>
-  `Move ${engine} down for ${name}`;
+/** The warning's title and text for a kind of break, in the app's language. */
+export const orderWarningTitle = (
+  kind: OrderBreakKind,
+  t: T = englishT,
+): string => t(WARNING_TITLE_IDS[kind]);
+export const orderWarningText = (
+  kind: OrderBreakKind,
+  t: T = englishT,
+): string => t(WARNING_TEXT_IDS[kind]);
+export const ORDER_NEW_LABEL = englishT("engines.order.newLabel");
+export const ORDER_TICK = englishT("engines.order.tick");
+export const ORDER_CONFIRM = englishT("engines.order.confirm");
+export const ORDER_CANCEL = englishT("settings.cancel");
+export const orderTickLabel = (name: string, t: T = englishT): string =>
+  t("engines.order.tickLabel", { name });
+export const orderConfirmLabel = (name: string, t: T = englishT): string =>
+  t("engines.order.confirmLabel", { name });
+export const orderCancelLabel = (name: string, t: T = englishT): string =>
+  t("engines.order.cancelLabel", { name });
+export const orderWarningGroupLabel = (name: string, t: T = englishT): string =>
+  t("engines.order.confirmLabel", { name });
+export const OWN_ORDER_NOTE = englishT("engines.order.own");
+export const RECOMMENDED_ORDER_BUTTON = englishT("engines.order.recommended");
+export const recommendedOrderLabel = (name: string, t: T = englishT): string =>
+  t("engines.order.recommendedLabel", { name });
+export const moveUpLabel = (
+  engine: string,
+  name: string,
+  t: T = englishT,
+): string => t("engines.order.moveUp", { engine, name });
+export const moveDownLabel = (
+  engine: string,
+  name: string,
+  t: T = englishT,
+): string => t("engines.order.moveDown", { engine, name });
 /** D139: the id of the subscription Claude Code engine in a member's chain; the model and effort choices show beside it only. */
 export const CLAUDE_ENGINE_ID = "claude-code";
-export const CLAUDE_DEFAULT_OPTION = "Subscription default";
+export const CLAUDE_DEFAULT_OPTION = englishT("engines.claude.default");
+/** The model names are product names and stay as they are. */
 export const CLAUDE_MODEL_OPTIONS: { value: ClaudeModel; label: string }[] = [
   { value: "haiku", label: "Haiku" },
   { value: "sonnet", label: "Sonnet" },
   { value: "opus", label: "Opus" },
 ];
-export const CLAUDE_EFFORT_OPTIONS: { value: ClaudeEffort; label: string }[] = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-  { value: "xhigh", label: "Extra high" },
-  { value: "max", label: "Max" },
-];
-export const CLAUDE_MODEL_LABEL = "Model";
-export const CLAUDE_EFFORT_LABEL = "Effort";
-export const CLAUDE_CHOICE_NOTE =
-  "Claude Code only. A model your subscription cannot use ends that turn with Claude Code's own error. Nothing is switched off, and Subscription default undoes the choice.";
-export const claudeModelLabel = (name: string): string =>
-  `Claude model for ${name}`;
-export const claudeEffortLabel = (name: string): string =>
-  `Claude effort for ${name}`;
-export const CLAUDE_SAVED_TEXT =
-  "Claude choice saved. It applies from the next message.";
+const EFFORT_IDS: Record<ClaudeEffort, MessageId> = {
+  low: "engines.claude.effort.low",
+  medium: "engines.claude.effort.medium",
+  high: "engines.claude.effort.high",
+  xhigh: "engines.claude.effort.xhigh",
+  max: "engines.claude.effort.max",
+};
+export const CLAUDE_EFFORT_OPTIONS: { value: ClaudeEffort; label: string }[] = (
+  ["low", "medium", "high", "xhigh", "max"] as const
+).map((value) => ({ value, label: englishT(EFFORT_IDS[value]) }));
+/** The effort choices with their words in the app's language; the values sent to the server are the same. */
+export const claudeEffortOptions = (
+  t: T = englishT,
+): { value: ClaudeEffort; label: string }[] =>
+  CLAUDE_EFFORT_OPTIONS.map(({ value }) => ({
+    value,
+    label: t(EFFORT_IDS[value]),
+  }));
+export const CLAUDE_MODEL_LABEL = englishT("admin.credentials.model");
+export const CLAUDE_EFFORT_LABEL = englishT("engines.claude.effortLabel");
+export const CLAUDE_CHOICE_NOTE = englishT("engines.claude.note");
+export const claudeModelLabel = (name: string, t: T = englishT): string =>
+  t("engines.claude.modelAria", { name });
+export const claudeEffortLabel = (name: string, t: T = englishT): string =>
+  t("engines.claude.effortAria", { name });
+export const CLAUDE_SAVED_TEXT = englishT("engines.claude.saved");
 
 export const MEMBER_COLUMNS = {
-  member: "Member",
-  order: "Order of engines",
-  switching: "When an engine runs out",
+  member: englishT("engines.members.col.member"),
+  order: englishT("engines.members.col.order"),
+  switching: englishT("engines.members.col.switching"),
 } as const;
 
 /** The name of the two-answer group in a member's row, and of each answer's control (the words a screen reader reads). */
-export const modeGroupLabel = (name: string): string =>
-  `When an engine runs out, for ${name}`;
-export const modeControlLabel = (label: string, name: string): string =>
-  `${label} for ${name}`;
-export const undoLabel = (name: string): string =>
-  `Undo the change for ${name}`;
-export const UNDO_BUTTON = "Undo";
+export const modeGroupLabel = (name: string, t: T = englishT): string =>
+  t("engines.mode.groupLabel", { name });
+export const modeControlLabel = (
+  label: string,
+  name: string,
+  t: T = englishT,
+): string => t("engines.mode.controlLabel", { label, name });
+export const undoLabel = (name: string, t: T = englishT): string =>
+  t("engines.mode.undoLabel", { name });
+export const UNDO_BUTTON = englishT("settings.undo");
 
-/** The two modes, each with the words the router itself uses to the person when an engine runs out (engine_notices.py). */
-export const ENGINE_MODES: readonly {
+const MODE_IDS: Record<EngineMode, { label: MessageId; effect: MessageId }> = {
+  automatic: {
+    label: "engines.mode.automatic.label",
+    effect: "engines.mode.automatic.effect",
+  },
+  "ask-first": {
+    label: "engines.mode.askFirst.label",
+    effect: "engines.mode.askFirst.effect",
+  },
+};
+
+/** The two modes in the app's language, each with the words the router itself uses to the person when an engine runs out (engine_notices.py). The `mode` values are what the server sends and are never translated. */
+export function engineModes(t: T = englishT): readonly {
   mode: EngineMode;
   label: string;
   effect: string;
-}[] = [
-  {
-    mode: "automatic",
-    label: "Switch automatically",
-    effect:
-      "When an engine runs out, the next one answers and you are told which.",
-  },
-  {
-    mode: "ask-first",
-    label: "Ask me first",
-    effect:
-      "When an engine runs out, you are asked: switch, wait, or name another engine.",
-  },
-];
+}[] {
+  return (["automatic", "ask-first"] as const).map((mode) => ({
+    mode,
+    label: t(MODE_IDS[mode].label),
+    effect: t(MODE_IDS[mode].effect),
+  }));
+}
+
+/** The two modes in English. */
+export const ENGINE_MODES = engineModes(englishT);
 
 /** The mode as a short label, for the sentence that says what the installation's file has. */
-export function modeLabel(mode: EngineMode): string {
-  return ENGINE_MODES.find((entry) => entry.mode === mode)?.label ?? mode;
+export function modeLabel(mode: EngineMode, t: T = englishT): string {
+  const ids = MODE_IDS[mode];
+  return ids ? t(ids.label) : mode;
 }
 
 /** Why a member's engine will not run, in a few words that follow "not used:". */
-const LEFT_OUT_WORDS: Record<LeftOutWhy, string> = {
-  locked: "the installation's file does not allow it",
-  disabled: "it is switched off",
-  paid_gateway: "it is a paid gateway, which FreeDuet does not run yet",
-  metered_off: "paid engines are switched off",
-  cap_zero: "its spending cap is zero",
-  not_set_up: "it is not set up on this installation",
-  other: "it will not run",
+const LEFT_OUT_IDS: Record<LeftOutWhy, MessageId> = {
+  locked: "engines.leftOut.locked",
+  disabled: "engines.leftOut.disabled",
+  paid_gateway: "engines.leftOut.paid_gateway",
+  metered_off: "engines.leftOut.metered_off",
+  cap_zero: "engines.leftOut.cap_zero",
+  not_set_up: "engines.leftOut.not_set_up",
+  other: "engines.leftOut.other",
 };
 
 /** The engines a member will try, in order, as one sentence. `nameOf` turns an engine id into its name. */
 export function chainText(
   chain: readonly string[],
   nameOf: (id: string) => string,
+  t: T = englishT,
 ): string {
   const names = chain.map(nameOf);
-  if (names.length === 0) return "No engine can answer for this member now.";
-  if (names.length === 1) return `Tries only ${names[0]}.`;
-  return `Tries ${names.join(", then ")}.`;
+  if (names.length === 0) return t("engines.chain.none");
+  if (names.length === 1)
+    return t("engines.chain.one", { engine: names[0] as string });
+  return t("engines.chain.many", { list: names.join(t("engines.chain.then")) });
 }
 
 /** One engine in a member's list that will not run, with the reason. */
 export function leftOutText(
   entry: { id: string; why: LeftOutWhy },
   nameOf: (id: string) => string,
+  t: T = englishT,
 ): string {
-  return `Not used: ${nameOf(entry.id)}, because ${LEFT_OUT_WORDS[entry.why] ?? LEFT_OUT_WORDS.other}.`;
+  return t("engines.leftOut.line", {
+    engine: nameOf(entry.id),
+    why: t(LEFT_OUT_IDS[entry.why] ?? LEFT_OUT_IDS.other),
+  });
 }
 
 /** What a pin means, when the installation's file pins a member to one engine. */
-export function pinText(pin: string, nameOf: (id: string) => string): string {
-  return `Pinned to ${nameOf(pin)} by the installation's file: it never switches to another engine.`;
+export function pinText(
+  pin: string,
+  nameOf: (id: string) => string,
+  t: T = englishT,
+): string {
+  return t("engines.pin", { engine: nameOf(pin) });
 }
 
 /** The line for a member with one engine only: a choice made now is kept for when there are more. Null otherwise. */
 export function aloneText(
   chain: readonly string[],
   nameOf: (id: string) => string,
+  t: T = englishT,
 ): string | null {
   const [only] = chain;
   if (chain.length !== 1 || only === undefined) return null;
-  return `Only ${nameOf(only)} is set up for this member, so there is nothing to switch to yet. Your choice is kept for when there is.`;
+  return t("engines.alone", { engine: nameOf(only) });
 }
 
 /** Whose value the member's mode is. */
 export function sourceText(
   member: Pick<MemberSummary, "chosen" | "fileMode">,
+  t: T = englishT,
 ): string {
   return member.chosen
-    ? `Your choice. The installation's file says: ${modeLabel(member.fileMode).toLowerCase()}.`
-    : "From the installation's file.";
+    ? t("engines.source.yours", {
+        mode: modeLabel(member.fileMode, t).toLowerCase(),
+      })
+    : t("engines.source.file");
 }
 
 /** Why the controls are not usable, in one sentence. The unreadable choices have a banner of their own. */
-export function blockText(block: ChangeBlock): string {
+export function blockText(block: ChangeBlock, t: T = englishT): string {
   switch (block) {
     case "not_at_the_computer":
-      return "Change these on the computer FreeDuet runs on.";
+      return t("engines.block.not_at_the_computer");
     case "not_paired_with_the_computer":
-      return "Pair this browser with the computer FreeDuet runs on first: run `bash scripts/open.sh` there and open the link here.";
+      return t("engines.block.not_paired_with_the_computer");
     case "agent_too_old":
-      return "Update FreeDuet to change this.";
+      return t("engines.block.agent_too_old");
     case "choices_unreadable":
-      return CHOICES_UNREADABLE;
+      return t("engines.block.choices_unreadable");
   }
 }
 
 /** The banner for stored choices that cannot be read: the installation's settings are in use. */
-export const CHOICES_UNREADABLE =
-  "Your choices could not be read, so the installation's settings are in use. Nothing you chose is lost.";
+export const CHOICES_UNREADABLE = englishT("engines.block.choices_unreadable");
 
 /** What is said right after a change, and after an Undo. */
-export const SAVED_TEXT = "Saved. It applies from the member's next message.";
-export const UNDONE_TEXT =
-  "Undone. The previous setting applies from the member's next message.";
+export const SAVED_TEXT = englishT("engines.saved");
+export const UNDONE_TEXT = englishT("engines.undone");

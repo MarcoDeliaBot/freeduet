@@ -1,4 +1,3 @@
-import { WorkspacePicker } from "./workspace";
 import { IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -10,54 +9,37 @@ import { client, tryClient } from "@/lib/client";
 import {
   aloneText,
   blockText,
-  CLAUDE_CHOICE_NOTE,
-  CLAUDE_DEFAULT_OPTION,
-  CLAUDE_EFFORT_LABEL,
-  CLAUDE_EFFORT_OPTIONS,
   CLAUDE_ENGINE_ID,
-  CLAUDE_MODEL_LABEL,
   CLAUDE_MODEL_OPTIONS,
-  CLAUDE_SAVED_TEXT,
   type ClaudeChoice,
-  claudeEffortLabel,
-  claudeModelLabel,
-  CHOICES_UNREADABLE,
   chainText,
-  ENGINE_MODES,
+  claudeEffortLabel,
+  claudeEffortOptions,
+  claudeModelLabel,
   type EngineMode,
   type EnginesReading,
+  engineModes,
   leftOutText,
-  MEMBER_COLUMNS,
-  MEMBERS_DESCRIPTION,
-  MEMBERS_TITLE,
   type MemberSummary,
   modeControlLabel,
   modeGroupLabel,
   moveDownLabel,
   moveUpLabel,
   ORDER_BREAK_KINDS,
-  ORDER_CANCEL,
-  ORDER_CONFIRM,
-  ORDER_NEW_LABEL,
-  ORDER_NOTE,
-  ORDER_TICK,
-  ORDER_WARNING_TEXT,
-  ORDER_WARNING_TITLE,
   type OrderBreakKind,
   orderCancelLabel,
   orderConfirmLabel,
   orderTickLabel,
   orderWarningGroupLabel,
-  OWN_ORDER_NOTE,
+  orderWarningText,
+  orderWarningTitle,
   pinText,
-  RECOMMENDED_ORDER_BUTTON,
   recommendedOrderLabel,
-  SAVED_TEXT,
   sourceText,
-  UNDO_BUTTON,
-  UNDONE_TEXT,
   undoLabel,
 } from "./engines-text";
+import { englishT, type T, useAppLanguage } from "./i18n/provider";
+import { WorkspacePicker } from "./workspace";
 
 /**
  * Each member's engines, and what happens when one runs out (docs/design/engines-dashboard.md, slices 7a and the
@@ -87,13 +69,14 @@ type ModeChange =
 async function setMode(
   memberId: string,
   mode: EngineMode,
+  t: T,
 ): Promise<ModeChange> {
   const response = await client(
     `${ENGINES_PATH}/members/${encodeURIComponent(memberId)}/mode`,
     {
       method: "PUT",
       body: { mode },
-      fallback: "Your choice could not be saved.",
+      fallback: t("engines.members.saveFailed"),
     },
   );
   return response.json();
@@ -117,6 +100,7 @@ async function setOrder(
   memberId: string,
   order: string[],
   confirmed: boolean,
+  t: T,
 ): Promise<OrderChange> {
   const response = await tryClient(
     `${ENGINES_PATH}/members/${encodeURIComponent(memberId)}/order`,
@@ -138,7 +122,7 @@ async function setOrder(
       kind
     )
       throw new OrderNeedsConfirmation(kind);
-    throw new Error(body?.error ?? "The order could not be saved.");
+    throw new Error(body?.error ?? t("engines.order.saveFailed"));
   }
   return response.json();
 }
@@ -149,20 +133,27 @@ type ClaudeChange = { memberId: string; changed: boolean } & ClaudeChoice;
 async function setClaude(
   memberId: string,
   choice: ClaudeChoice,
+  t: T,
 ): Promise<ClaudeChange> {
   const response = await client(
     `${ENGINES_PATH}/members/${encodeURIComponent(memberId)}/claude`,
     {
       method: "PUT",
       body: choice,
-      fallback: "Your choice could not be saved.",
+      fallback: t("engines.members.saveFailed"),
     },
   );
   return response.json();
 }
 
 /** An order waiting for the person's yes: what it would be, what it was, and which kind of break it is. */
-type PendingOrder = { order: string[]; before: string[]; kind: OrderBreakKind };
+type PendingOrder = {
+  order: string[];
+  before: string[];
+  kind: OrderBreakKind;
+  /** True when the move is an Undo: Confirm then still counts as an Undo, not as a new move. */
+  undoing: boolean;
+};
 
 /** `chain` with the engine at `at` moved one place, or null when there is no such place. */
 function moved(chain: string[], at: number, by: -1 | 1): string[] | null {
@@ -173,10 +164,10 @@ function moved(chain: string[], at: number, by: -1 | 1): string[] | null {
   return next;
 }
 
-async function undoChange(changeId: string): Promise<void> {
+async function undoChange(changeId: string, t: T = englishT): Promise<void> {
   await client(`${ENGINES_PATH}/changes/${encodeURIComponent(changeId)}/undo`, {
     method: "POST",
-    fallback: "That change could not be undone.",
+    fallback: t("engines.members.undoFailed"),
   });
 }
 
@@ -190,6 +181,7 @@ export function EngineMembers({
   /** Called after a change or an Undo went through, so the page reads the list again. */
   onChanged: () => unknown;
 }) {
+  const { t } = useAppLanguage();
   const [picked, setPicked] = useState("");
   const agents = useQuery(agentListQueryOptions());
   /** The latest change of each member made on this page, which is the one an Undo can still take back. */
@@ -214,7 +206,7 @@ export function EngineMembers({
 
   const change = useMutation({
     mutationFn: (input: { memberId: string; mode: EngineMode }) =>
-      setMode(input.memberId, input.mode),
+      setMode(input.memberId, input.mode, t),
     onSuccess: (outcome) => {
       setUndoable((now) => {
         const { [outcome.memberId]: _before, ...rest } = now;
@@ -226,15 +218,18 @@ export function EngineMembers({
         const { [outcome.memberId]: _order, ...rest } = now;
         return rest;
       });
-      setSaid((now) => ({ ...now, [outcome.memberId]: SAVED_TEXT }));
+      setSaid((now) => ({ ...now, [outcome.memberId]: t("engines.saved") }));
       onChanged();
     },
   });
   const claude = useMutation({
     mutationFn: (input: { memberId: string; choice: ClaudeChoice }) =>
-      setClaude(input.memberId, input.choice),
+      setClaude(input.memberId, input.choice, t),
     onSuccess: (outcome) => {
-      setSaid((now) => ({ ...now, [outcome.memberId]: CLAUDE_SAVED_TEXT }));
+      setSaid((now) => ({
+        ...now,
+        [outcome.memberId]: t("engines.claude.saved"),
+      }));
       onChanged();
     },
   });
@@ -245,7 +240,7 @@ export function EngineMembers({
       before: string[];
       undoing: boolean;
       confirmed: boolean;
-    }) => setOrder(input.memberId, input.order, input.confirmed),
+    }) => setOrder(input.memberId, input.order, input.confirmed, t),
     onError: (error, input) => {
       if (error instanceof OrderNeedsConfirmation) {
         setTicked((now) => ({ ...now, [input.memberId]: false }));
@@ -255,6 +250,7 @@ export function EngineMembers({
             order: input.order,
             before: input.before,
             kind: error.kind,
+            undoing: input.undoing,
           },
         }));
       }
@@ -273,7 +269,9 @@ export function EngineMembers({
       });
       setSaid((now) => ({
         ...now,
-        [input.memberId]: input.undoing ? UNDONE_TEXT : SAVED_TEXT,
+        [input.memberId]: input.undoing
+          ? t("engines.undone")
+          : t("engines.saved"),
       }));
       // Returned, so the mutation stays pending (arrows and Undo disabled) until the list is read again.
       return onChanged();
@@ -281,13 +279,13 @@ export function EngineMembers({
   });
   const undo = useMutation({
     mutationFn: (input: { memberId: string; changeId: string }) =>
-      undoChange(input.changeId),
+      undoChange(input.changeId, t),
     onSuccess: (_done, input) => {
       setUndoable((now) => {
         const { [input.memberId]: _undone, ...rest } = now;
         return rest;
       });
-      setSaid((now) => ({ ...now, [input.memberId]: UNDONE_TEXT }));
+      setSaid((now) => ({ ...now, [input.memberId]: t("engines.undone") }));
       onChanged();
     },
   });
@@ -362,22 +360,24 @@ export function EngineMembers({
   return (
     <PageSection
       className="mt-0"
-      description={MEMBERS_DESCRIPTION}
-      title={MEMBERS_TITLE}
+      description={t("engines.members.description")}
+      title={t("engines.members.title")}
     >
       {reading.choices?.state === "unreadable" ? (
         <p
           className="mt-3 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm"
           role="status"
         >
-          {CHOICES_UNREADABLE}
+          {t("engines.block.choices_unreadable")}
         </p>
       ) : null}
       {!usable && block && block !== "choices_unreadable" ? (
-        <p className="mt-3 text-duet-ink-2 text-sm">{blockText(block)}</p>
+        <p className="mt-3 text-duet-ink-2 text-sm">{blockText(block, t)}</p>
       ) : null}
       {usable ? (
-        <p className="mt-3 text-duet-ink-2 text-sm">{ORDER_NOTE}</p>
+        <p className="mt-3 text-duet-ink-2 text-sm">
+          {t("engines.order.note")}
+        </p>
       ) : null}
       {failure ? (
         <p className="mt-3 mb-2 text-destructive text-sm" role="alert">
@@ -386,7 +386,7 @@ export function EngineMembers({
       ) : null}
       {browse && selected && (
         <WorkspacePicker
-          label="Bot"
+          label={t("admin.audit.col.bot")}
           value={selected.id}
           onChange={setPicked}
           options={members.map((member) => ({
@@ -397,28 +397,28 @@ export function EngineMembers({
       )}
       <DuetCard className={browse ? "fd-members mt-4" : "mt-4"}>
         <section
-          aria-label={MEMBERS_TITLE}
+          aria-label={t("engines.members.title")}
           className="overflow-x-auto px-4 py-2"
         >
           <table className="w-full min-w-[40rem] border-collapse text-sm">
-            <caption className="sr-only">{MEMBERS_TITLE}</caption>
+            <caption className="sr-only">{t("engines.members.title")}</caption>
             <thead>
               <tr className="text-left text-duet-ink-2">
                 <th className="px-3 py-3 font-medium" scope="col">
-                  {MEMBER_COLUMNS.member}
+                  {t("engines.members.col.member")}
                 </th>
                 <th className="px-3 py-3 font-medium" scope="col">
-                  {MEMBER_COLUMNS.order}
+                  {t("engines.members.col.order")}
                 </th>
                 <th className="px-3 py-3 font-medium" scope="col">
-                  {MEMBER_COLUMNS.switching}
+                  {t("engines.members.col.switching")}
                 </th>
               </tr>
             </thead>
             <tbody>
               {(browse && selected ? [selected] : members).map((member) => {
                 const name = memberName(member.id);
-                const alone = aloneText(member.chain, engineName);
+                const alone = aloneText(member.chain, engineName, t);
                 const undoId = undoable[member.id];
                 const backOrder = orderBefore[member.id];
                 const waiting = pending[member.id];
@@ -442,10 +442,13 @@ export function EngineMembers({
                     >
                       {name}
                     </th>
-                    <td className="px-3 py-4" data-label={MEMBER_COLUMNS.order}>
+                    <td
+                      className="px-3 py-4"
+                      data-label={t("engines.members.col.order")}
+                    >
                       {member.chain.length > 0 ? (
                         <ol
-                          aria-label={chainText(member.chain, engineName)}
+                          aria-label={chainText(member.chain, engineName, t)}
                           className="flex flex-wrap gap-1.5"
                         >
                           {member.chain.map((id, at) => (
@@ -466,6 +469,7 @@ export function EngineMembers({
                                     aria-label={moveUpLabel(
                                       engineName(id),
                                       name,
+                                      t,
                                     )}
                                     disabled={!usable || busy}
                                     onClick={() => move(member, at, -1)}
@@ -480,6 +484,7 @@ export function EngineMembers({
                                     aria-label={moveDownLabel(
                                       engineName(id),
                                       name,
+                                      t,
                                     )}
                                     disabled={!usable || busy}
                                     onClick={() => move(member, at, 1)}
@@ -495,16 +500,16 @@ export function EngineMembers({
                         </ol>
                       ) : (
                         <p className="text-duet-ink-2">
-                          {chainText(member.chain, engineName)}
+                          {chainText(member.chain, engineName, t)}
                         </p>
                       )}
                       {member.chain.includes(CLAUDE_ENGINE_ID) ? (
                         <div className="mt-2 text-sm">
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                             <label className="inline-flex items-center gap-2 text-duet-ink-2">
-                              <span>{CLAUDE_MODEL_LABEL}</span>
+                              <span>{t("admin.credentials.model")}</span>
                               <select
-                                aria-label={claudeModelLabel(name)}
+                                aria-label={claudeModelLabel(name, t)}
                                 className="h-8 rounded-md border border-duet-hair bg-duet-tile px-2 text-duet-ink"
                                 disabled={!usable || busy}
                                 onChange={(event) =>
@@ -520,7 +525,7 @@ export function EngineMembers({
                                 value={member.claude?.model ?? ""}
                               >
                                 <option value="">
-                                  {CLAUDE_DEFAULT_OPTION}
+                                  {t("engines.claude.default")}
                                 </option>
                                 {CLAUDE_MODEL_OPTIONS.map((option) => (
                                   <option
@@ -533,16 +538,16 @@ export function EngineMembers({
                               </select>
                             </label>
                             <label className="inline-flex items-center gap-2 text-duet-ink-2">
-                              <span>{CLAUDE_EFFORT_LABEL}</span>
+                              <span>{t("engines.claude.effortLabel")}</span>
                               <select
-                                aria-label={claudeEffortLabel(name)}
+                                aria-label={claudeEffortLabel(name, t)}
                                 className="h-8 rounded-md border border-duet-hair bg-duet-tile px-2 text-duet-ink"
                                 disabled={!usable || busy}
                                 onChange={(event) =>
                                   chooseClaude(member, {
                                     model: member.claude?.model ?? null,
                                     effort:
-                                      CLAUDE_EFFORT_OPTIONS.find(
+                                      claudeEffortOptions(t).find(
                                         (option) =>
                                           option.value === event.target.value,
                                       )?.value ?? null,
@@ -551,9 +556,9 @@ export function EngineMembers({
                                 value={member.claude?.effort ?? ""}
                               >
                                 <option value="">
-                                  {CLAUDE_DEFAULT_OPTION}
+                                  {t("engines.claude.default")}
                                 </option>
-                                {CLAUDE_EFFORT_OPTIONS.map((option) => (
+                                {claudeEffortOptions(t).map((option) => (
                                   <option
                                     key={option.value}
                                     value={option.value}
@@ -565,42 +570,44 @@ export function EngineMembers({
                             </label>
                           </div>
                           <p className="mt-1 text-duet-ink-2">
-                            {CLAUDE_CHOICE_NOTE}
+                            {t("engines.claude.note")}
                           </p>
                         </div>
                       ) : null}
                       {offRecommended ? (
                         <p className="mt-2 flex flex-wrap items-center gap-2 text-duet-ink-2 text-sm">
-                          <span>{OWN_ORDER_NOTE}</span>
+                          <span>{t("engines.order.own")}</span>
                           <Button
-                            aria-label={recommendedOrderLabel(name)}
+                            aria-label={recommendedOrderLabel(name, t)}
                             disabled={!usable || busy}
                             onClick={() => goRecommended(member)}
                             size="sm"
                             variant="outline"
                           >
-                            {RECOMMENDED_ORDER_BUTTON}
+                            {t("engines.order.recommended")}
                           </Button>
                         </p>
                       ) : null}
                       {waitingNow ? (
                         <fieldset
-                          aria-label={orderWarningGroupLabel(name)}
+                          aria-label={orderWarningGroupLabel(name, t)}
                           className="mt-3 min-w-0 rounded-md border border-amber-500/60 bg-amber-500/10 px-3 py-3 text-sm"
                         >
                           <p className="font-semibold">
-                            {ORDER_WARNING_TITLE[waitingNow.kind]}
+                            {orderWarningTitle(waitingNow.kind, t)}
                           </p>
                           <p className="mt-1">
-                            {ORDER_WARNING_TEXT[waitingNow.kind]}
+                            {orderWarningText(waitingNow.kind, t)}
                           </p>
                           <p className="mt-1 text-duet-ink-2">
-                            {ORDER_NEW_LABEL}{" "}
-                            {waitingNow.order.map(engineName).join(", then ")}
+                            {t("engines.order.newLabel")}{" "}
+                            {waitingNow.order
+                              .map(engineName)
+                              .join(t("engines.chain.then"))}
                           </p>
                           <label className="mt-2 flex min-h-11 items-start gap-2">
                             <input
-                              aria-label={orderTickLabel(name)}
+                              aria-label={orderTickLabel(name, t)}
                               checked={ticked[member.id] === true}
                               className="mt-1 size-4"
                               disabled={!usable || busy}
@@ -612,11 +619,11 @@ export function EngineMembers({
                               }
                               type="checkbox"
                             />
-                            <span>{ORDER_TICK}</span>
+                            <span>{t("engines.order.tick")}</span>
                           </label>
                           <div className="mt-1 flex gap-2">
                             <Button
-                              aria-label={orderConfirmLabel(name)}
+                              aria-label={orderConfirmLabel(name, t)}
                               disabled={
                                 !usable || busy || ticked[member.id] !== true
                               }
@@ -626,16 +633,16 @@ export function EngineMembers({
                                   memberId: member.id,
                                   order: waitingNow.order,
                                   before: waitingNow.before,
-                                  undoing: false,
+                                  undoing: waitingNow.undoing,
                                   confirmed: true,
                                 });
                               }}
                               size="sm"
                             >
-                              {ORDER_CONFIRM}
+                              {t("engines.order.confirm")}
                             </Button>
                             <Button
-                              aria-label={orderCancelLabel(name)}
+                              aria-label={orderCancelLabel(name, t)}
                               disabled={busy}
                               onClick={() => {
                                 reorder.reset();
@@ -644,7 +651,7 @@ export function EngineMembers({
                               size="sm"
                               variant="outline"
                             >
-                              {ORDER_CANCEL}
+                              {t("settings.cancel")}
                             </Button>
                           </div>
                         </fieldset>
@@ -654,30 +661,30 @@ export function EngineMembers({
                           className="mt-2 text-duet-ink-2 text-sm"
                           key={entry.id}
                         >
-                          {leftOutText(entry, engineName)}
+                          {leftOutText(entry, engineName, t)}
                         </p>
                       ))}
                       {member.pin ? (
                         <p className="mt-2 text-duet-ink-2 text-sm">
-                          {pinText(member.pin, engineName)}
+                          {pinText(member.pin, engineName, t)}
                         </p>
                       ) : null}
                     </td>
                     <td
                       className="px-3 py-4"
-                      data-label={MEMBER_COLUMNS.switching}
+                      data-label={t("engines.members.col.switching")}
                     >
                       <fieldset className="flex flex-col gap-2 text-sm">
                         <legend className="sr-only">
-                          {modeGroupLabel(name)}
+                          {modeGroupLabel(name, t)}
                         </legend>
-                        {ENGINE_MODES.map(({ mode, label, effect }) => (
+                        {engineModes(t).map(({ mode, label, effect }) => (
                           <label
                             className="flex min-h-11 items-start gap-2"
                             key={mode}
                           >
                             <input
-                              aria-label={modeControlLabel(label, name)}
+                              aria-label={modeControlLabel(label, name, t)}
                               checked={member.mode === mode}
                               className="mt-1 size-4"
                               disabled={!usable || busy}
@@ -696,7 +703,7 @@ export function EngineMembers({
                         ))}
                       </fieldset>
                       <p className="mt-2 text-duet-ink-2 text-sm">
-                        {sourceText(member)}
+                        {sourceText(member, t)}
                       </p>
                       {alone ? (
                         <p className="mt-1 text-duet-ink-2 text-sm">{alone}</p>
@@ -706,7 +713,7 @@ export function EngineMembers({
                           <span role="status">{said[member.id]}</span>
                           {undoId || backOrder ? (
                             <Button
-                              aria-label={undoLabel(name)}
+                              aria-label={undoLabel(name, t)}
                               disabled={busy}
                               onClick={() => {
                                 change.reset();
@@ -731,7 +738,7 @@ export function EngineMembers({
                               size="sm"
                               variant="outline"
                             >
-                              {UNDO_BUTTON}
+                              {t("settings.undo")}
                             </Button>
                           ) : null}
                         </p>
