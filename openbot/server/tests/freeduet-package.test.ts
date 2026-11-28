@@ -1418,8 +1418,8 @@ describe("Ada, Kai and Lumi (D148)", () => {
     };
     // Kai has two more cases from D151 (kai-5, an ordinary request; kai-6, a safety case), so his list and his safety count are longer. Ada has ada-5 from D160 (the read-back reply, not a safety case).
     for (const [member, prefix, count, safety] of [
-      ["webdev", "ada", 5, 2],
-      ["gamedev", "kai", 6, 3],
+      ["webdev", "ada", 6, 2],
+      ["gamedev", "kai", 7, 3],
       ["designer", "lumi", 4, 2],
     ] as const) {
       const own = list.filter((entry) => entry.member === member);
@@ -2317,7 +2317,7 @@ describe("D161: Jules, Cam and Kai say what their cases expect", () => {
     ],
     video: [
       "When a clip arrives, your first reply asks for that confirmation and says that you will use nothing from the clip until the person has said so: no cut, no frame, no sound, no music.",
-      "Say too that each file stays in your own computer, in your workspace, until the person presses Download.",
+      "Say too that each file stays in your own computer until the person presses Download.",
     ],
     gamedev: [
       "Asked to publish or upload, say at once that you do not publish on your own and that it happens only with the person's own yes, through the tool that does it, so that the approval card asks;",
@@ -2467,5 +2467,53 @@ describe("D179: Iris writes complete briefs", () => {
       "never its hidden reasoning",
     ])
       expect({ s, said: skills.includes(s) }).toEqual({ s, said: true });
+  });
+});
+
+/* D192: Kai's game reached the person as a path in his computer. A builder hands each finished file over with offer_file and names it, not its path. */
+describe("D192: builders hand files over, never a path in their computer", () => {
+  const cannotOpen =
+    "The person cannot open a path in your workspace, so never tell them to fetch a file from a path or a folder of your computer";
+  const sentences: Record<string, string[]> = {
+    gamedev: [`${cannotOpen}, and in your report name the file, not its path.`],
+    designer: [
+      `${cannotOpen}, and in your report name the file, not its path.`,
+    ],
+    video: [`${cannotOpen}, and in your answer name the file, not its path.`],
+    webdev: [
+      `${cannotOpen}: hand each finished file over with offer_file, in a hand-off too, and in your report name the file, not its path.`,
+    ],
+    writer: [
+      `${cannotOpen}: hand each finished file over with offer_file, in a hand-off too, and in your report name the file, not its path.`,
+    ],
+    bookkeeper: [
+      `${cannotOpen}: hand each finished file over with offer_file, in a hand-off too, and in your report name the file, not its path.`,
+    ],
+  };
+  for (const [id, list] of Object.entries(sentences))
+    test(`${id} says the rule and hands each file over with offer_file`, async () => {
+      const rows = await memberRows();
+      const flat = String(
+        rows.find((row) => row.id === id)?.system_prompt ?? "",
+      ).replace(/\s+/g, " ");
+      for (const sentence of list)
+        expect({ id, sentence, said: flat.includes(sentence) }).toEqual({
+          id,
+          sentence,
+          said: true,
+        });
+    });
+
+  test("the report tables of Kai, Lumi and Cam no longer ask where a file is in the workspace", async () => {
+    const rows = await memberRows();
+    for (const id of ["gamedev", "designer", "video"]) {
+      const flat = String(
+        rows.find((row) => row.id === id)?.system_prompt ?? "",
+      ).replace(/\s+/g, " ");
+      expect({
+        id,
+        asks: flat.includes("where it is in your workspace"),
+      }).toEqual({ id, asks: false });
+    }
   });
 });
