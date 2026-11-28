@@ -12,6 +12,7 @@ import { selfHostBannerOptions } from "./freeduet/no-promotions";
 import { pinModelBaseToRouter } from "./freeduet/model-base";
 import { withFreeDuetTeam } from "./freeduet/person-team";
 import { personLanguageReaderFor } from "./freeduet/person-language-choice";
+import { openHandoffsReaderFor } from "./freeduet/open-handoffs";
 import { personToneReaderFor } from "./freeduet/person-tone";
 // FreeDuet: CopilotKit Intelligence optional (#42, docs/UPSTREAM_TOUCHES.md).
 import { createThreadBackend } from "./freeduet/backend";
@@ -2004,6 +2005,7 @@ const routineRunner = createRoutineRunner({
  * invisible: it runs, and quietly holds different tools or a different role from the one the person
  * is talking to.
  */
+const runActivity = createActivityStore(database);
 const baseAgentResolver = createActorAgentResolver({
   loadAgents: loadAgentsForActor,
   model: runtimeModel,
@@ -2039,6 +2041,15 @@ const baseAgentResolver = createActorAgentResolver({
   // And the language this person chose for the team, over the deployment's (8.10.3).
   loadPersonLanguageForActor: (ownerUserId) =>
     personLanguageReaderFor(database, ownerUserId),
+  // D185: the hand-offs this conversation has open, from the hop queue, for Iris's run.
+  loadOpenHandoffsForActor: (ownerUserId) =>
+    openHandoffsReaderFor(
+      {
+        hops: runActivity.workStatusRows,
+        attention: runActivity.attention,
+      },
+      ownerUserId,
+    ),
 });
 // Every Bot a person runs learns which OpenDuet channel its run is in. See openduet/run-channel.ts.
 const actorAgentResolver = withRunChannels(baseAgentResolver, (owner, thread) =>

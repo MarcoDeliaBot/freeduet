@@ -18,6 +18,9 @@ from dataclasses import dataclass, field
 from .engine_choices import PROP as ENGINE_CHOICES_PROP
 from .engine_choices import Choices
 from .engine_choices import from_props as engine_choices_from_props
+from .open_handoffs import PROP as OPEN_HANDOFFS_PROP
+from .open_handoffs import OpenHandoffs
+from .open_handoffs import from_props as open_handoffs_from_props
 from .person_language import PROP as PERSON_LANGUAGE_PROP
 from .person_language import from_props as person_language_from_props
 from .person_tone import PROP as PERSON_TONE_PROP
@@ -48,6 +51,8 @@ class RunInput:
     person_tone: str | None = None
     # What the person chose for this member on the Engines page, when they chose anything (engine_choices.py).
     engine_choices: Choices | None = None
+    # The hand-offs this conversation has open, from the server's hop queue, on Iris's runs; None is unknown (open_handoffs.py, D185).
+    open_handoffs: OpenHandoffs | None = None
 
 
 def _strings(value) -> list[str]:
@@ -87,6 +92,7 @@ def parse_run_input(body) -> RunInput:
         person_language=person_language_from_props(props.get(PERSON_LANGUAGE_PROP)),
         person_tone=person_tone_from_props(props.get(PERSON_TONE_PROP)),
         engine_choices=engine_choices_from_props(props.get(ENGINE_CHOICES_PROP)),
+        open_handoffs=open_handoffs_from_props(props.get(OPEN_HANDOFFS_PROP)),
     )
 
 
