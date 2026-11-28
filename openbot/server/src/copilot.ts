@@ -61,6 +61,10 @@ import {
   type LoadPersonTone,
   PersonToneMiddleware,
 } from "./freeduet/person-tone";
+import {
+  type LoadOpenHandoffs,
+  OpenHandoffsMiddleware,
+} from "./freeduet/open-handoffs";
 import { observeIntelligenceAuthentication } from "./intelligence-client";
 import { RemoteLearnedSkillsMiddleware } from "./learning/remote";
 import {
@@ -593,6 +597,8 @@ export async function buildAgents(
   loadPersonTone?: LoadPersonTone,
   /** The language this person chose, over the deployment's (freeduet/person-language-choice.ts). */
   loadPersonLanguage?: LoadPersonLanguage,
+  /** The hand-offs this conversation has open, told to Iris with her run (freeduet/open-handoffs.ts, D185). */
+  loadOpenHandoffs?: LoadOpenHandoffs,
 ): Promise<Record<string, AbstractAgent>> {
   let vendors: readonly string[] = [];
   try {
@@ -657,6 +663,8 @@ export async function buildAgents(
           built.use(new PersonToneMiddleware(agent.id, loadPersonTone));
         if (loadPersonLanguage)
           built.use(new PersonLanguageMiddleware(loadPersonLanguage));
+        // Always: with no loader it only drops a forged key (D185).
+        built.use(new OpenHandoffsMiddleware(agent.id, loadOpenHandoffs));
         return [agent.id, built];
       }),
     ),
@@ -1668,6 +1676,7 @@ export async function resolveRuntimeAgents(
   loadPersonalMemory?: LoadPersonalMemory,
   loadPersonTone?: LoadPersonTone,
   loadPersonLanguage?: LoadPersonLanguage,
+  loadOpenHandoffs?: LoadOpenHandoffs,
 ): Promise<Record<string, AbstractAgent>> {
   const all = await loadAgents();
   if (all.length === 0) {
@@ -1706,6 +1715,7 @@ export async function resolveRuntimeAgents(
     loadPersonalMemory,
     loadPersonTone,
     loadPersonLanguage,
+    loadOpenHandoffs,
   );
 }
 

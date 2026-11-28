@@ -574,7 +574,11 @@ export function createActivityStore(database: Database) {
      * "who is working" card and dots (D168). Rows as the queue holds them; `freeduet/work-status.ts` reads
      * their state. Never a relay or a notice, never another person's.
      */
-    async workStatusRows(ownerUserId: string, sinceMs: number) {
+    async workStatusRows(
+      ownerUserId: string,
+      sinceMs: number,
+      threadId?: string,
+    ) {
       return database
         .select({
           key: workItems.key,
@@ -592,6 +596,10 @@ export function createActivityStore(database: Database) {
             eq(workItems.kind, HANDOFF_KIND),
             sql`${workItems.payload}->>'actorId' = ${ownerUserId}`,
             sql`${workItems.payload}->>'answerIn' is null`,
+            // D185: one asking conversation, in the query, so the 50-row cap is never spent on others.
+            threadId === undefined
+              ? undefined
+              : sql`${workItems.payload}->>'threadId' = ${threadId}`,
             or(
               isNull(workItems.finishedAt),
               gte(workItems.finishedAt, new Date(Date.now() - sinceMs)),

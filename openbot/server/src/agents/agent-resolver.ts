@@ -15,6 +15,7 @@ import {
 } from "../copilot";
 import type { AcquireLearnedSkills } from "../learning/runtime";
 import type { LoadPersonLanguage } from "../freeduet/person-language-choice";
+import type { LoadOpenHandoffs } from "../freeduet/open-handoffs";
 import type { LoadPersonTone } from "../freeduet/person-tone";
 import type { LoadPersonalMemory } from "../memory/tools";
 import type { AgentActor } from "./profile-types";
@@ -76,6 +77,8 @@ export type ActorAgentResolverDependencies = {
   loadPersonToneForActor?: (actorId: string) => LoadPersonTone;
   /** The language this person chose for the team (freeduet/person-language-choice.ts). */
   loadPersonLanguageForActor?: (actorId: string) => LoadPersonLanguage;
+  /** The hand-offs a conversation has open, for Iris's run (freeduet/open-handoffs.ts, D185). */
+  loadOpenHandoffsForActor?: (actorId: string) => LoadOpenHandoffs;
 };
 
 /**
@@ -121,6 +124,7 @@ export function createActorAgentResolver(
       deps.loadPersonalMemoryForActor?.(actor.id),
       deps.loadPersonToneForActor?.(actor.id),
       deps.loadPersonLanguageForActor?.(actor.id),
+      deps.loadOpenHandoffsForActor?.(actor.id),
     );
 
   const resolveAgentsForActor = async (
