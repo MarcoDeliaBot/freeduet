@@ -69,6 +69,7 @@ import type {
   ComputerStatus,
   ControlState,
   DownloadFileInput,
+  FinishedFilesResult,
   HumanInput,
   HumanInputResult,
   KeyInput,
@@ -243,6 +244,11 @@ export interface ComputerGateway {
     actor: ActionActor,
     input: ListFilesInput,
   ): Promise<ListFilesResult>;
+  listFinishedFiles(
+    botId: string,
+    actor: ActionActor,
+    signal?: AbortSignal,
+  ): Promise<FinishedFilesResult>;
   runCommand(
     botId: string,
     actor: ActionActor,
@@ -1362,6 +1368,27 @@ export function createComputerGateway(
             name: describeFile(input.path).name || "download",
           };
         },
+      );
+    },
+
+    /**
+     * The member's folder of finished work, for the person's Files panel (D194).
+     *
+     * Decided and audited as `computer_download_file` / `download_file` on the path `out`, not as the
+     * general listing: the panel exists only to lead to a Download, so whoever a rule keeps from
+     * downloading is kept from the list too, never the reverse. Names, sizes and times only.
+     */
+    listFinishedFiles(
+      botId: string,
+      actor: ActionActor,
+      signal?: AbortSignal,
+    ) {
+      return govern(
+        "computer_download_file",
+        botId,
+        actor,
+        { filePath: "out", ...(signal ? { signal } : {}) },
+        () => post<FinishedFilesResult>(botId, "/files/finished", {}, signal),
       );
     },
 

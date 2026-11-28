@@ -705,6 +705,34 @@ export function createComputerRoutes(
     ),
   );
 
+  /**
+   * The member's finished work, read only (D194): `out/` and below, names, sizes and times.
+   *
+   * Same person check as the download (the `/:botId/*` middleware above) and the same gateway
+   * decision and audit (`computer_download_file`). Every path in the answer starts with `out/` and
+   * is cleaned again here, so the panel's Download links can only ask the download route for it.
+   */
+  routes.get("/:botId/files/finished", async (context) => {
+    try {
+      const result = await gateway.listFinishedFiles(
+        context.req.param("botId"),
+        actorOf(context.var.actor),
+        context.req.raw.signal,
+      );
+      const files = (result.files ?? []).filter(
+        (file) =>
+          typeof file.path === "string" &&
+          file.path.startsWith("out/") &&
+          !file.path.split("/").includes("..") &&
+          !file.path.split("/").some((part) => part.startsWith(".")),
+      );
+      context.header("cache-control", "private, no-store");
+      return context.json({ files, truncated: result.truncated === true });
+    } catch (error) {
+      return actionFailure(context, error);
+    }
+  });
+
   routes.post("/:botId/files/read", (context) =>
     act(context, (botId, actor, body) => {
       if (typeof body?.path !== "string" || !body.path.trim()) {

@@ -1663,6 +1663,18 @@ serve<StreamData>({
         }
       }
 
+      // The finished work under out/ (D194), read only: names, sizes and times.
+      if (url.pathname === "/files/finished" && request.method === "POST") {
+        try {
+          return json(await workspace.listFinished());
+        } catch (error) {
+          return json(
+            { error: describe(error, "The finished work could not be listed.") },
+            fileStatus(error),
+          );
+        }
+      }
+
       if (url.pathname === "/files/list" && request.method === "POST") {
         const body = (await request.json().catch(() => null)) as {
           path?: unknown;

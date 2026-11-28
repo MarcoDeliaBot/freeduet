@@ -335,6 +335,21 @@ export type ListFilesResult = {
   truncated: boolean;
 };
 
+/** One finished file in the member's out folder (D194): the computer's `/files/finished`. */
+export type FinishedFile = {
+  /** Relative to the workspace and starting with `out/`; the download route takes it as it is. */
+  path: string;
+  name: string;
+  bytes: number;
+  modifiedMs: number;
+};
+
+export type FinishedFilesResult = {
+  files: FinishedFile[];
+  /** True when there were more files than the listing shows. */
+  truncated: boolean;
+};
+
 export type ReadFileInput = { path: string };
 export type DownloadFileInput = { path: string };
 export type ReadFileResult = {
