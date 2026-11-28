@@ -2074,6 +2074,129 @@ export const it: Catalog<typeof EN> = {
   "admin.playground.del.description":
     "Viene rimosso da questa installazione e nessun Bot può più mostrarlo. Non puoi annullare questa azione.",
   "admin.playground.del.confirm": "Elimina",
+  "admin.plugins.tool.backFallback": "Plugin",
+  "admin.plugins.tool.title": "Strumento",
+  "admin.plugins.tool.noTool":
+    "Questo connettore non ha alcuno strumento con quel nome.",
+  "admin.plugins.tool.removed":
+    "Potrebbe essere stato rimosso dall'ultimo aggiornamento dell'elenco degli strumenti.",
+  "admin.plugins.tool.notOn": "Questo connettore non è attivo.",
+  "admin.plugins.tool.noDesc": "Questo strumento non ha una descrizione.",
+  "admin.plugins.tool.writeDesc":
+    "Questo strumento modifica qualcosa presso il fornitore. I limiti sulle scritture valgono per lui.",
+  "admin.plugins.tool.readDesc":
+    "Questo strumento si limita a leggere. I limiti sulle scritture non valgono per lui.",
+  "admin.plugins.tool.what": "Che cosa fa",
+  "admin.plugins.tool.effect": "Effetto",
+  "admin.plugins.tool.effectDesc":
+    "Lo stabilisce il connettore, non il nome dello strumento. Ciò che non è noto conta come una scrittura.",
+  "admin.plugins.tool.bots.title": "Assistenti",
+  "admin.plugins.tool.bots.description":
+    "Un assistente può chiamare questo strumento solo finché il suo interruttore è attivo. Disattivarlo vale dalla chiamata successiva.",
+  "admin.plugins.tool.bots.empty":
+    "Ancora nessun assistente. Creane uno per dargli questo strumento.",
+  "admin.plugins.tool.hidden": "Nascosto dal tuo elenco.",
+  "admin.plugins.tool.canCall":
+    "Può chiamare questo strumento. Ogni chiamata viene comunque controllata rispetto ai limiti e registrata in Audit.",
+  "admin.plugins.tool.noToken":
+    "Consentito, ma questo assistente non ha un token di richiamo. Ogni chiamata viene rifiutata. Emettine uno nella sua pagina oppure imposta AGENT_TOOL_TOKEN.",
+  "admin.plugins.tool.cantCall":
+    "Non può chiamare questo strumento. L'assistente non lo vede mai.",
+  "admin.plugins.tool.aria": "Lascia che {bot} chiami {tool}",
+  "admin.plugins.bot.title": "Assistente",
+  "admin.plugins.bot.notOn": "Nessuna app con quel nome è attiva.",
+  "admin.plugins.bot.nothing": "Qui non c'è nulla da dare a un assistente.",
+  "admin.plugins.bot.notBot.title": "Non è un assistente",
+  "admin.plugins.bot.notBot.description":
+    "Non esiste alcun assistente con quel nome.",
+  "admin.plugins.bot.notBot.hint":
+    "Potrebbe essere stato eliminato dopo che hai aperto questa pagina.",
+  "admin.plugins.bot.noDesc": "Questa azione non ha una descrizione.",
+  "admin.plugins.bot.destroys": "distrugge cose",
+  "admin.plugins.bot.description":
+    "Quali azioni di {app} può chiamare {bot}. Disattivarne una vale dalla chiamata successiva.",
+  "admin.plugins.bot.pageTitle": "{bot} e {app}",
+  "admin.plugins.bot.noActions":
+    "{app} non elenca alcuna azione. Aggiorna i suoi strumenti per ricontrollare.",
+  "admin.plugins.bot.searchAria": "Cerca tra le azioni di {app}",
+  "admin.plugins.bot.searchPlaceholder": "Cerca per nome dell'azione",
+  "admin.plugins.bot.wouldHold": {
+    one: "Questo assistente avrebbe allora {count} strumento di questa app.",
+    other: "Questo assistente avrebbe allora {count} strumenti di questa app.",
+  },
+  "admin.plugins.bot.turnOnReads": "Attiva ogni azione di sola lettura",
+  "admin.plugins.bot.reads.title": "Letture",
+  "admin.plugins.bot.reads.description":
+    "Queste azioni si limitano a leggere. I limiti sulle scritture non valgono per loro.",
+  "admin.plugins.bot.reads.noMatch":
+    'Nessuna azione di sola lettura corrisponde a "{query}".',
+  "admin.plugins.bot.reads.none": "{app} non ha azioni di sola lettura.",
+  "admin.plugins.bot.writes.title": "Apporta modifiche",
+  "admin.plugins.bot.writes.description":
+    "Queste azioni modificano qualcosa presso il fornitore. I limiti sulle scritture valgono per loro.",
+  "admin.plugins.bot.writes.noMatch":
+    'Nessuna azione che apporta modifiche corrisponde a "{query}".',
+  "admin.plugins.bot.writes.none":
+    "{app} non ha azioni che apportano modifiche.",
+  "admin.plugins.bot.shared.title":
+    "Consentire a {bot} di usare l'account {app} condiviso?",
+  "admin.plugins.bot.allowing": "Consento…",
+  "admin.plugins.bot.allow": "Consenti",
+  "admin.shared.sentence.write":
+    "Chiunque possa usare questo assistente può farlo con l'account condiviso.",
+  "admin.shared.sentence.read":
+    "Chiunque possa usare questo assistente può leggere ciò che questo account può leggere.",
+  "admin.shared.owner": "Solo il suo proprietario",
+  "admin.shared.named": "Persone indicate: {who}",
+  "admin.shared.team": "Tutti",
+  "admin.shared.legend":
+    "Chi può usare l'account condiviso tramite questo assistente",
+  "admin.shared.outside":
+    "I messaggi dall'esterno (email, Slack, webhook) possono usarlo",
+  "admin.shared.skipped": {
+    one: "Un'azione elencata da questa app è stata esclusa, perché il nome di uno strumento può usare solo lettere, cifre, trattini bassi e trattini: ",
+    other:
+      "{count} azioni elencate da questa app sono state escluse, perché il nome di uno strumento può usare solo lettere, cifre, trattini bassi e trattini: ",
+  },
+  "admin.vocab.browse": "Sfoglia {name}",
+  "admin.vocab.dirDesc.composio":
+    "Qualche centinaio di app. Ogni persona collega il proprio account.",
+  "admin.vocab.dirDesc.arcade":
+    "App che nessuno qui ha verificato. Ogni persona collega il proprio account.",
+  "admin.vocab.readFailure":
+    "Non è stato possibile caricare l'elenco delle app di {name}. Ricarica la pagina.",
+  "admin.vocab.moreApps": "App di {name}. Nessuno qui le ha verificate.",
+  "admin.vocab.notSetUp":
+    "Non configurato. Imposta {envVar} su questa installazione per sfogliarne le app.",
+  "admin.vocab.connection":
+    "Raggiunta tramite {name}, che conserva l'account di ogni persona.",
+  "admin.vocab.reach.description":
+    "L'account è conservato da {name}. Questa installazione invia una chiave e chi sta chiedendo. Ogni persona collega il proprio e un assistente vede solo ciò che vede quella persona. Non c'è alcun token da incollare.",
+  "admin.vocab.reach.badge": "Tramite {name}",
+  "admin.vocab.disconnect": "Scollegare termina anche l'account presso {name}.",
+  "admin.vocab.trip.stem":
+    "{name} approva un'azione alla volta, quindi non c'è nulla da collegare per l'intera app.",
+  "admin.vocab.trip.below": "Autorizza qui sotto le azioni che vuoi.",
+  "admin.vocab.trip.settings": "Autorizzale da Connessioni.",
+  "admin.vocab.keyMissing":
+    "Imposta {envVar} su questa installazione. Finché non lo fai, questo account non può essere collegato né scollegato da qui. L'app resta attiva e le concessioni dei suoi strumenti restano valide.",
+  "admin.vocab.siblings": {
+    one: "Scollegare termina anche il tuo accesso a {names}, che condivide questa connessione.",
+    other:
+      "Scollegare termina anche il tuo accesso a {names}, che condividono questa connessione.",
+  },
+  "admin.vocab.unansweredMore": {
+    one: "{count} altra app non ha potuto essere controllata e potrebbe essere interessata anch'essa.",
+    other:
+      "{count} altre app non hanno potuto essere controllate e potrebbero essere interessate anch'esse.",
+  },
+  "admin.vocab.unansweredOnly": {
+    one: "{count} app su questa connessione non ha potuto essere controllata, quindi scollegare potrebbe terminare anche quella.",
+    other:
+      "{count} app su questa connessione non hanno potuto essere controllate, quindi scollegare potrebbe terminare anche quelle.",
+  },
+  "admin.vocab.join2": "{a} e {b}",
+  "admin.vocab.joinMany": "{list} e {last}",
   "admin.skills.write": "Scrivi una skill",
   "admin.skills.description":
     "Istruzioni con un nome che chiunque può avviare con /. Una skill non aggiunge alcun accesso. Può solo chiedere a un Bot di usare ciò che ha già.",

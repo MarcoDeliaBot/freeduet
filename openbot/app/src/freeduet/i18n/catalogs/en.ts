@@ -1987,6 +1987,122 @@ export const EN = {
   "admin.playground.del.description":
     "It's removed from this deployment, and no Bot can draw it. You can't undo this.",
   "admin.playground.del.confirm": "Delete it",
+  "admin.plugins.tool.backFallback": "Plugin",
+  "admin.plugins.tool.title": "Tool",
+  "admin.plugins.tool.noTool": "This connector has no tool with that name.",
+  "admin.plugins.tool.removed":
+    "It may have been removed since the tool list was last refreshed.",
+  "admin.plugins.tool.notOn": "This connector isn't turned on.",
+  "admin.plugins.tool.noDesc": "This tool has no description.",
+  "admin.plugins.tool.writeDesc":
+    "This tool changes something at the vendor. Boundaries about writes apply to it.",
+  "admin.plugins.tool.readDesc":
+    "This tool only reads. Boundaries about writes don't apply to it.",
+  "admin.plugins.tool.what": "What it does",
+  "admin.plugins.tool.effect": "Effect",
+  "admin.plugins.tool.effectDesc":
+    "Set by the connector, not the tool's name. Anything unknown counts as a write.",
+  "admin.plugins.tool.bots.title": "Bots",
+  "admin.plugins.tool.bots.description":
+    "A Bot can call this tool only while its switch is on. Turning it off applies from the next call.",
+  "admin.plugins.tool.bots.empty":
+    "No Bots yet. Create one to give it this tool.",
+  "admin.plugins.tool.hidden": "Hidden from your roster.",
+  "admin.plugins.tool.canCall":
+    "Can call this tool. Every call is still checked against boundaries and logged in Audit.",
+  "admin.plugins.tool.noToken":
+    "Allowed, but this Bot has no callback token. Every call is refused. Issue one on its page, or set AGENT_TOOL_TOKEN.",
+  "admin.plugins.tool.cantCall": "Can't call this tool. The Bot never sees it.",
+  "admin.plugins.tool.aria": "Let {bot} call {tool}",
+  "admin.plugins.bot.title": "Bot",
+  "admin.plugins.bot.notOn": "No app with that name is turned on.",
+  "admin.plugins.bot.nothing": "Nothing to give a Bot here.",
+  "admin.plugins.bot.notBot.title": "Not a Bot",
+  "admin.plugins.bot.notBot.description": "There is no Bot with that name.",
+  "admin.plugins.bot.notBot.hint":
+    "It may have been deleted after you opened this page.",
+  "admin.plugins.bot.noDesc": "This action has no description.",
+  "admin.plugins.bot.destroys": "destroys things",
+  "admin.plugins.bot.description":
+    "Which {app} actions {bot} can call. Turning one off applies from the next call.",
+  "admin.plugins.bot.pageTitle": "{bot} and {app}",
+  "admin.plugins.bot.noActions":
+    "{app} lists no actions. Refresh its tools to check again.",
+  "admin.plugins.bot.searchAria": "Search {app} actions",
+  "admin.plugins.bot.searchPlaceholder": "Search by action name",
+  "admin.plugins.bot.wouldHold": {
+    one: "This Bot would then have {count} tool from this app.",
+    other: "This Bot would then have {count} tools from this app.",
+  },
+  "admin.plugins.bot.turnOnReads": "Turn on every read-only action",
+  "admin.plugins.bot.reads.title": "Reads",
+  "admin.plugins.bot.reads.description":
+    "These only read. Boundaries about writes don't apply to them.",
+  "admin.plugins.bot.reads.noMatch":
+    'Nothing that only reads matches "{query}".',
+  "admin.plugins.bot.reads.none": "{app} has no read-only actions.",
+  "admin.plugins.bot.writes.title": "Changes things",
+  "admin.plugins.bot.writes.description":
+    "These change something at the vendor. Boundaries about writes apply to them.",
+  "admin.plugins.bot.writes.noMatch":
+    'Nothing that changes things matches "{query}".',
+  "admin.plugins.bot.writes.none": "{app} has no actions that change things.",
+  "admin.plugins.bot.shared.title": "Let {bot} use the shared {app} account?",
+  "admin.plugins.bot.allowing": "Allowing…",
+  "admin.plugins.bot.allow": "Allow",
+  "admin.shared.sentence.write":
+    "Anyone who can use this Bot can do this as the shared account.",
+  "admin.shared.sentence.read":
+    "Anyone who can use this Bot can read what this account can read.",
+  "admin.shared.owner": "Only its owner",
+  "admin.shared.named": "Named: {who}",
+  "admin.shared.team": "Everyone",
+  "admin.shared.legend": "Who can use the shared account through this Bot",
+  "admin.shared.outside":
+    "Messages from outside (email, Slack, webhooks) can use it",
+  "admin.shared.skipped": {
+    one: "One action this app lists was left out, because a tool name may only use letters, digits, underscores and hyphens: ",
+    other:
+      "{count} actions this app lists were left out, because a tool name may only use letters, digits, underscores and hyphens: ",
+  },
+  "admin.vocab.browse": "Browse {name}",
+  "admin.vocab.dirDesc.composio":
+    "A few hundred apps. Each person connects their own account.",
+  "admin.vocab.dirDesc.arcade":
+    "Apps nobody here has reviewed. Each person connects their own account.",
+  "admin.vocab.readFailure":
+    "Couldn't load {name}'s app directory. Reload the page.",
+  "admin.vocab.moreApps": "Apps from {name}. Nobody here has reviewed them.",
+  "admin.vocab.notSetUp":
+    "Not set up. Set {envVar} on this deployment to browse its apps.",
+  "admin.vocab.connection":
+    "Reached through {name}, which holds each person's own account.",
+  "admin.vocab.reach.description":
+    "{name} holds the account. This deployment sends one key and who is asking. Each person connects their own, and a Bot sees only what that person can see. There is no token to paste.",
+  "admin.vocab.reach.badge": "Through {name}",
+  "admin.vocab.disconnect": "Disconnecting also ends the account at {name}.",
+  "admin.vocab.trip.stem":
+    "{name} approves one action at a time, so there's nothing to connect for the whole app.",
+  "admin.vocab.trip.below": "Authorize the actions you want below.",
+  "admin.vocab.trip.settings": "Authorize them from Connections.",
+  "admin.vocab.keyMissing":
+    "Set {envVar} on this deployment. Until then, this account can't be connected or disconnected here. The app stays turned on, and its tool grants still stand.",
+  "admin.vocab.siblings": {
+    one: "Disconnecting also ends your access to {names}, which shares this connection.",
+    other:
+      "Disconnecting also ends your access to {names}, which share this connection.",
+  },
+  "admin.vocab.unansweredMore": {
+    one: "{count} other app couldn't be checked and may be affected too.",
+    other: "{count} other apps couldn't be checked and may be affected too.",
+  },
+  "admin.vocab.unansweredOnly": {
+    one: "{count} app on this connection couldn't be checked, so disconnecting may end it too.",
+    other:
+      "{count} apps on this connection couldn't be checked, so disconnecting may end them too.",
+  },
+  "admin.vocab.join2": "{a} and {b}",
+  "admin.vocab.joinMany": "{list} and {last}",
   "admin.skills.write": "Write a skill",
   "admin.skills.description":
     "Named instructions anybody can run with /. A skill adds no access. It can only ask a Bot to use what it already has.",

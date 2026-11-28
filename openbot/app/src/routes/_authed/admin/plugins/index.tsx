@@ -126,6 +126,7 @@ function RouteComponent() {
   const moreApps = moreAppsRow(
     provider,
     plugins.data?.composioConfigured ?? false,
+    t,
   );
 
   /*
@@ -283,7 +284,7 @@ function RouteComponent() {
           </PageSection>
 
           <PageSection
-            description={moreAppsSectionDescription(provider)}
+            description={moreAppsSectionDescription(provider, t)}
             title={t("admin.plugins.more.title")}
           >
             <PageRows>
@@ -303,7 +304,7 @@ function RouteComponent() {
                      redirected it straight back. The field is a literal union over the generated
                      route tree, so a path no route answers does not compile. */
                   render={
-                    <Link to={providerVocabulary(provider).directoryPath} />
+                    <Link to={providerVocabulary(provider, t).directoryPath} />
                   }
                   size="sm"
                 >
