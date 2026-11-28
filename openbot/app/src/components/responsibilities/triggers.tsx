@@ -11,6 +11,8 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Fragment, useId, useState } from "react";
 import { SharedAppNotice } from "@/components/plugins/shared-app-notice";
+import type { MessageId } from "@/freeduet/i18n/catalogs";
+import { englishT, type T, useT } from "@/freeduet/i18n/provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -61,15 +63,26 @@ import {
 } from "@/lib/responsibilities";
 import { queryClient } from "@/query-client";
 
-export const KIND_LABEL: Record<TriggerKind, string> = {
+/** Product names stay as they are; only "Email" is a word of the app's own. */
+const BRAND_LABEL: Record<Exclude<TriggerKind, "email">, string> = {
   webhook: "Webhook",
   github: "GitHub",
   linear: "Linear",
   sentry: "Sentry",
   pagerduty: "PagerDuty",
-  email: "Email",
   slack: "Slack",
 };
+export const kindLabel = (kind: TriggerKind, t: T = englishT): string =>
+  kind === "email" ? t("triggers.kind.email") : BRAND_LABEL[kind];
+const KIND_KEYS: TriggerKind[] = [
+  "webhook",
+  "github",
+  "linear",
+  "sentry",
+  "pagerduty",
+  "email",
+  "slack",
+];
 const KIND_ICON: Record<TriggerKind, typeof IconWebhook> = {
   webhook: IconWebhook,
   github: IconBrandGithub,
@@ -79,20 +92,14 @@ const KIND_ICON: Record<TriggerKind, typeof IconWebhook> = {
   email: IconMail,
   slack: IconBrandSlack,
 };
-const KIND_HELP: Record<TriggerKind, string> = {
-  webhook:
-    "POST JSON to this URL with the Authorization header, or with Standard Webhooks signature headers. A 200 means it was received, not that the run finished.",
-  github:
-    "In the repository's Settings → Webhooks, set the payload URL to this URL, content type application/json, and the secret to the key.",
-  linear:
-    "In Linear, Settings → API → Webhooks: set the URL, then paste the signing secret Linear shows here.",
-  sentry:
-    "In a Sentry internal integration, set the webhook URL, then paste the integration's client secret here.",
-  pagerduty:
-    "In PagerDuty, Integrations → Generic Webhooks (v3): set the URL, then paste the secret shown on creation here.",
-  email: "Send or forward mail to this address to start a run.",
-  slack:
-    "Starts on Slack events this Bot receives. Messages sent before you added the trigger are ignored.",
+const KIND_HELP: Record<TriggerKind, MessageId> = {
+  webhook: "triggers.help.webhook",
+  github: "triggers.help.github",
+  linear: "triggers.help.linear",
+  sentry: "triggers.help.sentry",
+  pagerduty: "triggers.help.pagerduty",
+  email: "triggers.help.email",
+  slack: "triggers.help.slack",
 };
 const VENDOR_SECRET: ReadonlySet<TriggerKind> = new Set([
   "linear",
@@ -100,11 +107,11 @@ const VENDOR_SECRET: ReadonlySet<TriggerKind> = new Set([
   "pagerduty",
 ]);
 const SLACK_MODE = {
-  mention: "The Bot is mentioned",
-  phrase: "A message contains a phrase",
-  reaction: "A reaction is added",
-  message: "Any message",
-} as const;
+  mention: "triggers.slack.mention",
+  phrase: "triggers.slack.phrase",
+  reaction: "triggers.slack.reaction",
+  message: "triggers.slack.message",
+} as const satisfies Record<string, MessageId>;
 type SlackMode = keyof typeof SLACK_MODE;
 const list = (value: string) =>
   value
@@ -113,6 +120,7 @@ const list = (value: string) =>
     .filter(Boolean);
 
 function CopyButton({ value, label }: { value: string; label: string }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   return (
     <Button
@@ -125,7 +133,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
         setTimeout(() => setCopied(false), 1500);
       }}
     >
-      {copied ? "Copied" : label}
+      {copied ? t("settings.copied") : label}
     </Button>
   );
 }
@@ -139,34 +147,45 @@ function Copyable({ children }: { children: string }) {
   );
 }
 
-function describeFilter(config: TriggerConfig) {
+function describeFilter(config: TriggerConfig, t: T = englishT) {
   if (config.kind === "slack") {
     const where = config.channels.length
-      ? `in ${config.channels.join(", ")}`
-      : "in every channel the Bot is in";
+      ? t("triggers.f.inChannels", { channels: config.channels.join(", ") })
+      : t("triggers.f.everyChannel");
     const what =
       config.mode === "mention"
-        ? "when the Bot is mentioned"
+        ? t("triggers.f.mention")
         : config.mode === "message"
-          ? "on any message"
+          ? t("triggers.f.anyMessage")
           : config.mode === "phrase"
-            ? `on messages containing ${config.phrases.map((phrase) => `"${phrase}"`).join(" or ")}`
-            : `on reactions${config.reactions.length ? ` :${config.reactions.join(": :")}:` : ""}`;
-    return `${what} ${where} (workspace ${config.teamId})`;
+            ? t("triggers.f.phrases", {
+                phrases: config.phrases
+                  .map((phrase) => `"${phrase}"`)
+                  .join(t("triggers.f.or")),
+              })
+            : `${t("triggers.f.reactions")}${config.reactions.length ? ` :${config.reactions.join(": :")}:` : ""}`;
+    return t("triggers.f.slack", { what, where, team: config.teamId });
   }
   const parts = [
     config.filter.eventTypes.length
-      ? `events ${config.filter.eventTypes.join(", ")}`
-      : "every event",
+      ? t("triggers.f.events", { types: config.filter.eventTypes.join(", ") })
+      : t("triggers.f.everyEvent"),
   ];
   if (config.filter.field)
     parts.push(
-      `where ${config.filter.field.path} = ${config.filter.field.equals}`,
+      t("triggers.f.where", {
+        path: config.filter.field.path,
+        equals: config.filter.field.equals,
+      }),
     );
   if (config.kind === "github" && config.repository)
-    parts.push(`from ${config.repository}`);
+    parts.push(t("triggers.f.from", { from: config.repository }));
   if (config.kind === "email" && config.allowedSenders.length)
-    parts.push(`from ${config.allowedSenders.join(", ")} (authenticated)`);
+    parts.push(
+      t("triggers.f.fromSenders", {
+        senders: config.allowedSenders.join(", "),
+      }),
+    );
   return parts.join(" ");
 }
 
@@ -176,6 +195,7 @@ function describeFilter(config: TriggerConfig) {
  * the list refetching after the write that produced it.
  */
 export function Triggers({ goal }: { goal: ResponsibilityRecord }) {
+  const t = useT();
   const triggers = useQuery(triggersQueryOptions(goal.id));
   const [adding, setAdding] = useState(false);
   const [freshSecret, setFreshSecret] = useState<{
@@ -185,7 +205,7 @@ export function Triggers({ goal }: { goal: ResponsibilityRecord }) {
   return (
     <section className="grid gap-2">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="font-medium text-sm">Triggers</h3>
+        <h3 className="font-medium text-sm">{t("triggers.title")}</h3>
         <Button
           size="sm"
           variant="outline"
@@ -193,12 +213,14 @@ export function Triggers({ goal }: { goal: ResponsibilityRecord }) {
           onClick={() => setAdding(true)}
         >
           <IconPlus />
-          Add trigger
+          {t("triggers.add")}
         </Button>
       </div>
       {goal.status !== "active" && (
         <p className="text-muted-foreground text-xs">
-          This responsibility is {goal.status}. Its triggers won't start it.
+          {goal.status === "completed"
+            ? t("triggers.notActive.completed")
+            : t("triggers.notActive.paused")}
         </p>
       )}
       {triggers.error && (
@@ -207,9 +229,7 @@ export function Triggers({ goal }: { goal: ResponsibilityRecord }) {
         </p>
       )}
       {triggers.data?.length === 0 && (
-        <p className="text-muted-foreground text-xs">
-          No triggers. It runs when you press Run now, or on the events above.
-        </p>
+        <p className="text-muted-foreground text-xs">{t("triggers.none")}</p>
       )}
       {triggers.data?.length ? (
         <div className="overflow-hidden rounded-lg">
@@ -263,6 +283,7 @@ function TriggerRow({
   /** A write that produced a new key; the triggers list itself refetches from the write. */
   onChanged: (secret: string | null) => void;
 }) {
+  const t = useT();
   const [secret, setSecret] = useState<string | null>(freshSecret);
   const [pasted, setPasted] = useState("");
   const [confirmRemove, setConfirmRemove] = useState(false);
@@ -294,10 +315,10 @@ function TriggerRow({
         <Icon />
       </ItemMedia>
       <ItemContent>
-        <ItemTitle>{KIND_LABEL[trigger.kind]}</ItemTitle>
+        <ItemTitle>{kindLabel(trigger.kind, t)}</ItemTitle>
         <ItemDescription className="line-clamp-none">
-          {describeFilter(trigger.config)}
-          {trigger.enabled ? "" : " · Paused"}
+          {describeFilter(trigger.config, t)}
+          {trigger.enabled ? "" : ` · ${t("bots.paused")}`}
         </ItemDescription>
       </ItemContent>
       <ItemActions>
@@ -309,14 +330,14 @@ function TriggerRow({
               disabled={remove.isPending}
               onClick={() => remove.mutate(trigger)}
             >
-              Remove for good
+              {t("triggers.removeForGood")}
             </Button>
             <Button
               size="sm"
               variant="ghost"
               onClick={() => setConfirmRemove(false)}
             >
-              Keep
+              {t("triggers.keep")}
             </Button>
           </>
         ) : (
@@ -326,10 +347,12 @@ function TriggerRow({
               variant="ghost"
               onClick={() => setConfirmRemove(true)}
             >
-              Remove
+              {t("chat.remove")}
             </Button>
             <Switch
-              aria-label={`Run on this ${KIND_LABEL[trigger.kind]} trigger`}
+              aria-label={t("triggers.runOnAria", {
+                kind: kindLabel(trigger.kind, t),
+              })}
               checked={trigger.enabled}
               disabled={toggle.isPending}
               onCheckedChange={() =>
@@ -341,38 +364,42 @@ function TriggerRow({
       </ItemActions>
       <ItemFooter className="flex-col items-stretch">
         <p className="text-muted-foreground text-xs">
-          {KIND_HELP[trigger.kind]}
+          {t(KIND_HELP[trigger.kind])}
         </p>
         {url && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs">POST to</span>
+            <span className="text-xs">{t("triggers.postTo")}</span>
             <Copyable>{url}</Copyable>
-            <CopyButton value={url} label="Copy URL" />
+            <CopyButton value={url} label={t("triggers.copyUrl")} />
           </div>
         )}
         {trigger.kind === "email" &&
           (trigger.address ? (
             <div className="flex flex-wrap items-center gap-2">
               <Copyable>{trigger.address}</Copyable>
-              <CopyButton value={trigger.address} label="Copy address" />
+              <CopyButton
+                value={trigger.address}
+                label={t("triggers.copyAddress")}
+              />
             </div>
           ) : (
             <p className="text-amber-600 text-xs dark:text-amber-500">
-              Email isn't set up on {appConfig.brand.productName} yet, so this
-              address can't receive mail. An admin has to turn it on.
+              {t("triggers.emailOff", {
+                product: appConfig.brand.productName,
+              })}
             </p>
           ))}
         {generated && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs">Key</span>
+            <span className="text-xs">{t("triggers.key")}</span>
             {shown ? (
               <>
                 <Copyable>{shown}</Copyable>
-                <CopyButton value={shown} label="Copy key" />
+                <CopyButton value={shown} label={t("triggers.copyKey")} />
                 {trigger.kind === "webhook" && (
                   <CopyButton
                     value={`Authorization: Bearer ${shown}`}
-                    label="Copy header"
+                    label={t("triggers.copyHeader")}
                   />
                 )}
               </>
@@ -385,7 +412,7 @@ function TriggerRow({
                   reveal.mutate(trigger.id, { onSuccess: setSecret })
                 }
               >
-                Show key
+                {t("triggers.showKey")}
               </Button>
             )}
             <Button
@@ -394,7 +421,7 @@ function TriggerRow({
               disabled={rotate.isPending}
               onClick={rotateSecret}
             >
-              Replace key
+              {t("triggers.replaceKey")}
             </Button>
           </div>
         )}
@@ -417,25 +444,25 @@ function TriggerRow({
               }
             >
               {trigger.hasSecret
-                ? "Signing secret saved"
-                : "Waiting for the signing secret"}
+                ? t("triggers.secretSaved")
+                : t("triggers.secretWaiting")}
             </span>
             <div className="flex items-center gap-2">
               <Input
-                aria-label="Signing secret"
+                aria-label={t("triggers.secret")}
                 type="password"
                 autoComplete="new-password"
                 placeholder={
                   trigger.hasSecret
-                    ? "Paste a new secret to replace it"
-                    : "Paste the signing secret"
+                    ? t("triggers.pasteNew")
+                    : t("triggers.paste")
                 }
                 value={pasted}
                 onChange={(event) => setPasted(event.target.value)}
                 required
               />
               <Button size="sm" type="submit" disabled={rotate.isPending}>
-                Save secret
+                {t("triggers.saveSecret")}
               </Button>
             </div>
           </form>
@@ -472,6 +499,7 @@ function NewTriggerDialog({
     secret: string | null;
   }) => void;
 }) {
+  const t = useT();
   const id = useId();
   const [kind, setKind] = useState<TriggerKind>("webhook");
   const [eventTypes, setEventTypes] = useState("");
@@ -516,7 +544,7 @@ function NewTriggerDialog({
   // The triggers list and the shared-app requests both refetch from the write itself.
   const create = useMutation(createTriggerMutationOptions(queryClient));
   const placeholder: Record<TriggerKind, string> = {
-    webhook: "deploy.finished (blank: any)",
+    webhook: t("triggers.example.webhook"),
     github: "issues.opened, pull_request",
     linear: "Issue.create, Comment",
     sentry: "issue.created, event_alert.triggered",
@@ -530,10 +558,11 @@ function NewTriggerDialog({
           would otherwise render a nested dialog with no backdrop at all. */}
       <DialogContent overlayClassName="bg-black/20 supports-backdrop-filter:backdrop-blur-sm">
         <DialogHeader>
-          <DialogTitle>Add trigger</DialogTitle>
+          <DialogTitle>{t("triggers.add")}</DialogTitle>
           <DialogDescription>
-            Something outside {appConfig.brand.productName} that starts this
-            responsibility.
+            {t("triggers.addDescription", {
+              product: appConfig.brand.productName,
+            })}
           </DialogDescription>
         </DialogHeader>
         <DialogBody className="mt-4 overflow-y-auto">
@@ -557,9 +586,13 @@ function NewTriggerDialog({
           >
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor={`${id}-kind`}>Trigger</FieldLabel>
+                <FieldLabel htmlFor={`${id}-kind`}>
+                  {t("triggers.title")}
+                </FieldLabel>
                 <Select
-                  items={KIND_LABEL}
+                  items={Object.fromEntries(
+                    KIND_KEYS.map((key) => [key, kindLabel(key, t)]),
+                  )}
                   onValueChange={(value) => {
                     if (value) setKind(value as TriggerKind);
                   }}
@@ -569,20 +602,20 @@ function NewTriggerDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(Object.keys(KIND_LABEL) as TriggerKind[]).map((value) => (
+                    {KIND_KEYS.map((value) => (
                       <SelectItem key={value} value={value}>
-                        {KIND_LABEL[value]}
+                        {kindLabel(value, t)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <FieldDescription>{KIND_HELP[kind]}</FieldDescription>
+                <FieldDescription>{t(KIND_HELP[kind])}</FieldDescription>
               </Field>
               {kind === "slack" ? (
                 <FieldGroup className="sm:grid sm:grid-cols-2">
                   <Field>
                     <FieldLabel htmlFor={`${id}-team`}>
-                      Slack team ID
+                      {t("triggers.slackTeam")}
                     </FieldLabel>
                     <Input
                       id={`${id}-team`}
@@ -593,9 +626,16 @@ function NewTriggerDialog({
                     />
                   </Field>
                   <Field>
-                    <FieldLabel htmlFor={`${id}-mode`}>Fire on</FieldLabel>
+                    <FieldLabel htmlFor={`${id}-mode`}>
+                      {t("triggers.fireOn")}
+                    </FieldLabel>
                     <Select
-                      items={SLACK_MODE}
+                      items={Object.fromEntries(
+                        Object.entries(SLACK_MODE).map(([key, modeId]) => [
+                          key,
+                          t(modeId),
+                        ]),
+                      )}
                       onValueChange={(value) => {
                         if (value) setMode(value as SlackMode);
                       }}
@@ -608,7 +648,7 @@ function NewTriggerDialog({
                         {(Object.keys(SLACK_MODE) as SlackMode[]).map(
                           (value) => (
                             <SelectItem key={value} value={value}>
-                              {SLACK_MODE[value]}
+                              {t(SLACK_MODE[value])}
                             </SelectItem>
                           ),
                         )}
@@ -618,7 +658,7 @@ function NewTriggerDialog({
                   {mode === "phrase" && (
                     <Field>
                       <FieldLabel htmlFor={`${id}-phrases`}>
-                        Phrases (comma separated)
+                        {t("triggers.phrases")}
                       </FieldLabel>
                       <Input
                         id={`${id}-phrases`}
@@ -631,7 +671,7 @@ function NewTriggerDialog({
                   {mode === "reaction" && (
                     <Field>
                       <FieldLabel htmlFor={`${id}-reactions`}>
-                        Reactions (blank: any)
+                        {t("triggers.reactions")}
                       </FieldLabel>
                       <Input
                         id={`${id}-reactions`}
@@ -643,7 +683,7 @@ function NewTriggerDialog({
                   )}
                   <Field>
                     <FieldLabel htmlFor={`${id}-channels`}>
-                      Channel IDs (blank: all the Bot is in)
+                      {t("triggers.channelIds")}
                     </FieldLabel>
                     <Input
                       id={`${id}-channels`}
@@ -656,7 +696,9 @@ function NewTriggerDialog({
               ) : (
                 <FieldGroup className="sm:grid sm:grid-cols-2">
                   <Field className="sm:col-span-2">
-                    <FieldLabel htmlFor={`${id}-types`}>Event types</FieldLabel>
+                    <FieldLabel htmlFor={`${id}-types`}>
+                      {t("triggers.eventTypes")}
+                    </FieldLabel>
                     <Input
                       id={`${id}-types`}
                       placeholder={placeholder[kind]}
@@ -666,7 +708,7 @@ function NewTriggerDialog({
                   </Field>
                   <Field>
                     <FieldLabel htmlFor={`${id}-path`}>
-                      Only when field
+                      {t("triggers.onlyWhen")}
                     </FieldLabel>
                     <Input
                       id={`${id}-path`}
@@ -676,7 +718,9 @@ function NewTriggerDialog({
                     />
                   </Field>
                   <Field>
-                    <FieldLabel htmlFor={`${id}-equals`}>equals</FieldLabel>
+                    <FieldLabel htmlFor={`${id}-equals`}>
+                      {t("triggers.equals")}
+                    </FieldLabel>
                     <Input
                       id={`${id}-equals`}
                       placeholder="ENG"
@@ -687,7 +731,7 @@ function NewTriggerDialog({
                   {kind === "github" && (
                     <Field className="sm:col-span-2">
                       <FieldLabel htmlFor={`${id}-repo`}>
-                        Repository (optional)
+                        {t("triggers.repository")}
                       </FieldLabel>
                       <Input
                         id={`${id}-repo`}
@@ -700,7 +744,7 @@ function NewTriggerDialog({
                   {kind === "email" && (
                     <Field className="sm:col-span-2">
                       <FieldLabel htmlFor={`${id}-senders`}>
-                        Allowed senders (blank: nobody)
+                        {t("triggers.senders")}
                       </FieldLabel>
                       <Input
                         id={`${id}-senders`}
@@ -713,7 +757,7 @@ function NewTriggerDialog({
                   {VENDOR_SECRET.has(kind) && (
                     <Field className="sm:col-span-2">
                       <FieldLabel htmlFor={`${id}-secret`}>
-                        Signing secret (can be added later)
+                        {t("triggers.secretLater")}
                       </FieldLabel>
                       <Input
                         id={`${id}-secret`}
@@ -737,7 +781,7 @@ function NewTriggerDialog({
         </DialogBody>
         <DialogFooter className="mt-4">
           <Button onClick={onClose} size="sm" type="button" variant="outline">
-            Cancel
+            {t("settings.cancel")}
           </Button>
           <Button
             disabled={create.isPending}
@@ -745,7 +789,9 @@ function NewTriggerDialog({
             size="sm"
             type="submit"
           >
-            {create.isPending ? "Adding…" : `Add ${KIND_LABEL[kind]} trigger`}
+            {create.isPending
+              ? t("triggers.adding")
+              : t("triggers.addKind", { kind: kindLabel(kind, t) })}
           </Button>
         </DialogFooter>
       </DialogContent>

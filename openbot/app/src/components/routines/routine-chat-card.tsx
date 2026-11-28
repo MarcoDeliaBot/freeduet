@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useConversationSend } from "@/components/channels/conversation-send";
+import { useT } from "@/freeduet/i18n/provider";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -50,6 +51,7 @@ export function RoutineChatCard({
   /** The browser's zone. The card reads it from the browser unless a caller names one. */
   deviceZone?: string | undefined;
 }) {
+  const t = useT();
   const queryClient = useQueryClient();
   const routines = useQuery(routinesQueryOptions());
   const setEnabled = useMutation(setRoutineEnabledMutationOptions(queryClient));
@@ -70,7 +72,7 @@ export function RoutineChatCard({
   if (remove.isSuccess) {
     return (
       <CardFrame>
-        <p role="status">Routine cancelled</p>
+        <p role="status">{t("routines.card.cancelled")}</p>
       </CardFrame>
     );
   }
@@ -81,10 +83,10 @@ export function RoutineChatCard({
       <CardFrame>
         {routines.isError ? (
           <p role="alert">
-            {routines.error?.message ?? "This routine could not be read."}
+            {routines.error?.message ?? t("routines.card.readError")}
           </p>
         ) : (
-          <p role="status">Reading this routine…</p>
+          <p role="status">{t("routines.card.reading")}</p>
         )}
       </CardFrame>
     );
@@ -98,8 +100,8 @@ export function RoutineChatCard({
       <CardFrame>
         <p role="status">
           {routines.isFetching
-            ? "Reading this routine…"
-            : "This routine no longer exists"}
+            ? t("routines.card.reading")
+            : t("routines.card.gone")}
         </p>
       </CardFrame>
     );
@@ -117,9 +119,7 @@ export function RoutineChatCard({
       setChangeNote(null);
       return;
     }
-    setChangeNote(
-      "This conversation cannot take a message right now. Write the change in the message box below.",
-    );
+    setChangeNote(t("routines.card.cannotSend"));
   }
 
   return (
@@ -132,19 +132,19 @@ export function RoutineChatCard({
               routine.timezone,
               deviceZone,
             )
-          : "Paused"}
+          : t("bots.paused")}
       </p>
 
       {confirming ? (
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <p role="status">Cancel this routine?</p>
+          <p role="status">{t("routines.card.confirm")}</p>
           <Button
             disabled={remove.isPending}
             onClick={() => remove.mutate(routineId)}
             size="sm"
             variant="destructive"
           >
-            Yes, cancel it
+            {t("routines.card.yes")}
           </Button>
           <Button
             onClick={() => setConfirming(false)}
@@ -152,7 +152,7 @@ export function RoutineChatCard({
             size="sm"
             variant="outline"
           >
-            No, keep it
+            {t("routines.card.no")}
           </Button>
         </div>
       ) : null}
@@ -166,7 +166,9 @@ export function RoutineChatCard({
           size="sm"
           variant="outline"
         >
-          {routine.enabled ? "Pause" : "Resume"}
+          {routine.enabled
+            ? t("routines.card.pause")
+            : t("routines.card.resume")}
         </Button>
         <Button
           aria-expanded={editing}
@@ -174,7 +176,7 @@ export function RoutineChatCard({
           size="sm"
           variant="outline"
         >
-          Edit
+          {t("routines.card.edit")}
         </Button>
         <Button
           disabled={busy}
@@ -185,14 +187,14 @@ export function RoutineChatCard({
           size="sm"
           variant="outline"
         >
-          Cancel
+          {t("settings.cancel")}
         </Button>
       </div>
 
       {editing ? (
         <div className="mt-3">
           <label className="font-medium" htmlFor={changeId}>
-            What should change?
+            {t("routines.card.whatChange")}
           </label>
           <Textarea
             className="mt-1"
@@ -208,11 +210,11 @@ export function RoutineChatCard({
                 onClick={sendChange}
                 size="sm"
               >
-                Send change
+                {t("routines.card.send")}
               </Button>
             ) : (
               <p className="text-muted-foreground">
-                Write the change in the message box below.
+                {t("routines.card.writeBelow")}
               </p>
             )}
             <Button
@@ -223,7 +225,7 @@ export function RoutineChatCard({
               size="sm"
               variant="ghost"
             >
-              Close
+              {t("routines.card.close")}
             </Button>
           </div>
           {changeNote ? <p role="alert">{changeNote}</p> : null}
@@ -236,9 +238,10 @@ export function RoutineChatCard({
 }
 
 function CardFrame({ children }: { children: ReactNode }) {
+  const t = useT();
   return (
     <section
-      aria-label="Routine"
+      aria-label={t("routines.card.label")}
       className="mt-2 max-w-prose rounded-lg border border-border bg-card p-3 text-sm"
     >
       {children}

@@ -3,6 +3,7 @@ import {
   type QueryClient,
   queryOptions,
 } from "@tanstack/react-query";
+import { englishT, type T } from "@/freeduet/i18n/provider";
 import { client } from "@/lib/client";
 
 export type SharedAudience = "owner" | "people" | "team";
@@ -109,21 +110,33 @@ export function requestSharedUseMutationOptions(queryClient: QueryClient) {
   });
 }
 
-export function describeApproval(approval: SharedUseApproval): string {
-  const outside = approval.outsideInput ? ", and outside input" : "";
-  if (approval.audience === "owner") return `Only its owner${outside}`;
-  if (approval.audience === "team") return `Everyone${outside}`;
+export function describeApproval(
+  approval: SharedUseApproval,
+  t: T = englishT,
+): string {
+  const outside = approval.outsideInput ? t("approvals.audience.outside") : "";
+  if (approval.audience === "owner")
+    return `${t("approvals.audience.owner")}${outside}`;
+  if (approval.audience === "team")
+    return `${t("approvals.audience.team")}${outside}`;
   const groups = approval.members
     .filter((member) => member.kind === "group")
     .map((member) => member.value);
   const people = approval.members.filter(
     (member) => member.kind === "user",
   ).length;
-  const parts = [
-    ...(groups.length
-      ? [`The group${groups.length > 1 ? "s" : ""} ${groups.join(", ")}`]
-      : []),
-    ...(people ? [`${people} ${people === 1 ? "person" : "people"}`] : []),
-  ];
-  return `${parts.join(" and ") || "Nobody named"}${outside}`;
+  const groupText = groups.length
+    ? t("approvals.audience.groups", {
+        count: groups.length,
+        names: groups.join(", "),
+      })
+    : "";
+  const peopleText = people
+    ? t("approvals.audience.people", { count: people })
+    : "";
+  const parts =
+    groupText && peopleText
+      ? t("approvals.audience.join", { a: groupText, b: peopleText })
+      : groupText || peopleText;
+  return `${parts || t("approvals.audience.nobody")}${outside}`;
 }

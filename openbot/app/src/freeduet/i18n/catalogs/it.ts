@@ -989,7 +989,7 @@ export const it: Catalog<typeof EN> = {
   "responsibilities.saving": "Salvataggio…",
   "responsibilities.run.queued": "In coda",
   "responsibilities.run.waiting":
-    "In attesa di {kind}. Rispondi in cima alla pagina di questo Bot o nella conversazione.",
+    "In attesa {kind}. Rispondi in cima alla pagina di questo Bot o nella conversazione.",
   "responsibilities.runs": "Esecuzioni",
   "responsibilities.viewRuns": "Mostra le esecuzioni",
   "responsibilities.hideRuns": "Nascondi le esecuzioni",
@@ -1007,4 +1007,238 @@ export const it: Catalog<typeof EN> = {
   "passwords.deleteAria": "Elimina l'accesso per {origin}",
   "settings.notificationsPage":
     "Dove ti raggiungono gli aggiornamenti dei tuoi Bot quando non ci sei. Quanto invia ogni Bot lo imposti nella sua pagina.",
+  "fullaccess.label.noPayments": "Accesso completo senza pagamenti",
+  "fullaccess.label.full": "Accesso completo",
+  "fullaccess.off": "Disattivato",
+  "fullaccess.description":
+    "Sicuro per impostazione predefinita: i tuoi Bot chiedono prima di inviare, pagare, firmare, prenotare o eliminare. Per ogni Bot puoi scegliere di lasciargli fare queste cose senza chiedere.",
+  "fullaccess.offTerm": "Disattivato:",
+  "fullaccess.offText":
+    "il Bot chiede prima di inviare, pagare, firmare, prenotare o eliminare.",
+  "fullaccess.noPaymentsTerm": "Accesso completo senza pagamenti:",
+  "fullaccess.noPaymentsText":
+    "invia, firma, prenota ed elimina senza chiedere. Pagamenti e acquisti chiedono comunque a te.",
+  "fullaccess.fullTerm": "Accesso completo:",
+  "fullaccess.fullText":
+    "paga e acquista anche senza chiedere. Non c'è alcun limite all'importo finché non esistono i limiti di spesa (previsti per la v0.4).",
+  "fullaccess.askTitle": "Dare a {name} «{label}»?",
+  "fullaccess.give": "Dai «{label}»",
+  "fullaccess.full.p1":
+    "{name} invierà, pagherà, firmerà, prenoterà ed eliminerà senza chiederti prima. Può agire su ciò che legge, come un'email o una pagina web, quindi attivalo solo se ti fidi di lui in questo.",
+  "fullaccess.full.p2":
+    "Non c'è alcun limite all'importo che può pagare: i limiti di spesa non esistono ancora (sono previsti per la v0.4). Per far chiedere sempre a te pagamenti e acquisti, scegli invece Accesso completo senza pagamenti.",
+  "fullaccess.full.p3":
+    "Password e impostazioni di sicurezza richiedono comunque te. Quando è configurato un revisore automatico, legge anche una volta ogni comando e script che il membro esegue sul suo computer, anche se hai disattivato il revisore; quando non ce n'è nessuno, i comandi non vengono letti. Vale per ciò che chiedi nelle tue chat, non per routine o check-in. Puoi disattivarlo in qualsiasi momento e si ferma subito.",
+  "fullaccess.noPayments.p1":
+    "{name} invierà, firmerà, prenoterà ed eliminerà senza chiederti prima. Pagamenti e acquisti chiedono comunque a te. Può agire su ciò che legge, come un'email o una pagina web, quindi attivalo solo se ti fidi di lui in questo.",
+  "fullaccess.noPayments.p2":
+    "L'app riconosce un pagamento con i suoi controlli integrati, quindi anche un messaggio che si limita a nominare un pagamento può chiedere, e un pagamento scritto in modo insolito potrebbe non essere riconosciuto. Password e impostazioni di sicurezza richiedono comunque te. Quando è configurato un revisore automatico, legge anche una volta ogni comando e script che il membro esegue sul suo computer per una password, un'impostazione di sicurezza o un pagamento fatto così, anche se hai disattivato il revisore; quando non ce n'è nessuno, i comandi non vengono letti. Vale per ciò che chiedi nelle tue chat, non per routine o check-in. Puoi disattivarlo in qualsiasi momento e si ferma subito.",
+  "fullaccess.noBots": "Ancora nessun Bot.",
+  "fullaccess.legend": "Accesso per {name}",
+  "fullaccess.radioAria": "{label} per {name}",
+  "fullaccess.summary.off":
+    "Chiede prima di inviare, pagare, firmare, prenotare o eliminare.",
+  "fullaccess.summary.noPayments":
+    "Agisce senza chiedere, tranne che pagamenti e acquisti chiedono comunque a te. Dal {since}.",
+  "fullaccess.summary.full":
+    "Agisce senza chiedere, pagamenti compresi, senza alcun limite all'importo. Dal {since}.",
+  "fullaccess.doneTitle": "Fatto senza chiedere",
+  "fullaccess.doneDescription":
+    "Che cosa ha fatto senza chiederti un Bot con Accesso completo, dal più recente.",
+  "fullaccess.nothingYet": "Ancora niente.",
+  "approvals.audience.owner": "Solo il suo proprietario",
+  "approvals.audience.team": "Tutti",
+  "approvals.audience.outside": ", e input dall'esterno",
+  "approvals.audience.nobody": "Nessuno indicato",
+  "approvals.audience.groups": {
+    one: "Il gruppo {names}",
+    other: "I gruppi {names}",
+  },
+  "approvals.audience.people": {
+    one: "{count} persona",
+    other: "{count} persone",
+  },
+  "approvals.audience.join": "{a} e {b}",
+  "access.req.title": "Richieste",
+  "access.req.loadError":
+    "Impossibile caricare le richieste di accesso. Ricarica la pagina.",
+  "access.req.descApp":
+    "Persone che chiedono questa app. Approva fa subito ciò che hanno chiesto.",
+  "access.req.descAll":
+    "Persone che chiedono di attivare un'app, darla a un Bot o collegarla. Approva fa subito ciò che hanno chiesto.",
+  "access.req.aBot": "un Bot",
+  "access.req.theBot": "il Bot",
+  "access.req.somebody": "Qualcuno",
+  "access.req.enable": "Attivare {app} per {bot}",
+  "access.req.grantMore": "Dare a {bot} altro di {app}: {list}",
+  "access.req.grant": "Dare {app} a {bot}",
+  "access.req.connectShared": "Collegare l'account condiviso di {app}",
+  "access.req.asked": "{who} ha chiesto {when}{forBot}.",
+  "access.req.forBot": ", per {bot}",
+  "access.req.approving": "Approvo…",
+  "access.req.botPage": "la pagina del Bot sotto {app}",
+  "access.req.toolRead": "{name} (sola lettura)",
+  "access.req.toolWrite": "{name} (modifica qualcosa)",
+  "access.req.gives":
+    "Approvando dai a {bot} esattamente questi strumenti e nient'altro: {list}.",
+  "access.req.readOnly":
+    "Approvando dai a {bot} solo le azioni di sola lettura di {app}. Scegli le altre in {page}.",
+  "access.req.canSend": {
+    one: "{names} può inviare per conto della persona.",
+    other: "{names} possono inviare ciascuno per conto della persona.",
+  },
+  "access.req.unreviewed": {
+    one: "Nessun elenco verificato dice che cosa fa {names} in {app}, quindi potrebbe inviare per conto della persona.",
+    other:
+      "Nessun elenco verificato dice che cosa fanno {names} in {app}, quindi ciascuno potrebbe inviare per conto della persona.",
+  },
+  "access.req.neverGives": {
+    one: "Approvando non si dà mai uno strumento di questo tipo: consentilo nelle impostazioni, in {page}.",
+    other:
+      "Approvando non si danno mai strumenti di questo tipo: consentili nelle impostazioni, in {page}.",
+  },
+  "access.req.and": "{a} e {b}",
+  "passwords.saveTo": "Salva in Password",
+  "responsibilities.run.waitKind.approval": "della tua approvazione",
+  "responsibilities.run.waitKind.question": "della tua risposta",
+  "responsibilities.run.waitKind.handoff": "del tuo intervento",
+  "responsibilities.run.waitKind.signIn": "del tuo accesso",
+  "responsibilities.run.waitKind.other": "di te",
+  "responsibilities.new.description":
+    "Un obiettivo continuo. Il Bot ci lavora nella conversazione che scegli.",
+  "responsibilities.new.chooseConversation": "Scegli una conversazione",
+  "responsibilities.new.loadMore": "Carica altre conversazioni",
+  "responsibilities.new.titleExample": "Tieni aggiornato il report clienti",
+  "responsibilities.new.criteriaExample":
+    "Il report contiene il grafico del trimestre in corso e un link alla fonte.",
+  "responsibilities.new.eventSource": "Origine degli eventi",
+  "responsibilities.new.source.none": "Esegui su richiesta",
+  "responsibilities.new.githubHelp":
+    "Gli eventi arrivano dai repository che hai collegato in {link}.",
+  "responsibilities.new.eventType": "Tipo di evento",
+  "responsibilities.new.creating": "Creo…",
+  "responsibilities.new.create": "Crea responsabilità",
+  "triggers.kind.email": "E-mail",
+  "triggers.help.webhook":
+    "Invia un POST con JSON a questo URL con l'header Authorization, oppure con gli header di firma Standard Webhooks. Un 200 significa che è stato ricevuto, non che l'esecuzione è finita.",
+  "triggers.help.github":
+    "In Settings → Webhooks del repository imposta come payload URL questo URL, come content type application/json e come secret la chiave.",
+  "triggers.help.linear":
+    "In Linear, Settings → API → Webhooks: imposta l'URL, poi incolla qui il segreto di firma che Linear mostra.",
+  "triggers.help.sentry":
+    "In un'integrazione interna di Sentry imposta l'URL del webhook, poi incolla qui il client secret dell'integrazione.",
+  "triggers.help.pagerduty":
+    "In PagerDuty, Integrations → Generic Webhooks (v3): imposta l'URL, poi incolla qui il segreto mostrato alla creazione.",
+  "triggers.help.email":
+    "Invia o inoltra un'email a questo indirizzo per avviare un'esecuzione.",
+  "triggers.help.slack":
+    "Parte con gli eventi Slack che questo Bot riceve. I messaggi inviati prima di aggiungere il trigger vengono ignorati.",
+  "triggers.slack.mention": "Il Bot viene menzionato",
+  "triggers.slack.phrase": "Un messaggio contiene una frase",
+  "triggers.slack.reaction": "Viene aggiunta una reazione",
+  "triggers.slack.message": "Qualsiasi messaggio",
+  "triggers.f.inChannels": "nei canali {channels}",
+  "triggers.f.everyChannel": "in ogni canale in cui c'è il Bot",
+  "triggers.f.mention": "quando il Bot viene menzionato",
+  "triggers.f.anyMessage": "a qualsiasi messaggio",
+  "triggers.f.phrases": "sui messaggi che contengono {phrases}",
+  "triggers.f.or": " o ",
+  "triggers.f.reactions": "sulle reazioni",
+  "triggers.f.slack": "{what} {where} (spazio di lavoro {team})",
+  "triggers.f.events": "eventi {types}",
+  "triggers.f.everyEvent": "ogni evento",
+  "triggers.f.where": "dove {path} = {equals}",
+  "triggers.f.from": "da {from}",
+  "triggers.f.fromSenders": "da {senders} (autenticati)",
+  "triggers.title": "Trigger",
+  "triggers.add": "Aggiungi trigger",
+  "triggers.notActive.paused":
+    "Questa responsabilità è in pausa. I suoi trigger non la avviano.",
+  "triggers.notActive.completed":
+    "Questa responsabilità è completata. I suoi trigger non la avviano.",
+  "triggers.none":
+    "Nessun trigger. Parte quando premi Esegui ora, o con gli eventi qui sopra.",
+  "triggers.removeForGood": "Rimuovi per sempre",
+  "triggers.keep": "Tieni",
+  "triggers.runOnAria": "Esegui con questo trigger {kind}",
+  "triggers.postTo": "POST a",
+  "triggers.copyUrl": "Copia URL",
+  "triggers.copyAddress": "Copia indirizzo",
+  "triggers.emailOff":
+    "L'email non è ancora configurata su {product}, quindi questo indirizzo non può ricevere posta. Deve attivarla un amministratore.",
+  "triggers.key": "Chiave",
+  "triggers.copyKey": "Copia chiave",
+  "triggers.copyHeader": "Copia header",
+  "triggers.showKey": "Mostra chiave",
+  "triggers.replaceKey": "Sostituisci chiave",
+  "triggers.secretSaved": "Segreto di firma salvato",
+  "triggers.secretWaiting": "In attesa del segreto di firma",
+  "triggers.secret": "Segreto di firma",
+  "triggers.pasteNew": "Incolla un nuovo segreto per sostituirlo",
+  "triggers.paste": "Incolla il segreto di firma",
+  "triggers.saveSecret": "Salva segreto",
+  "triggers.addDescription":
+    "Qualcosa fuori da {product} che avvia questa responsabilità.",
+  "triggers.slackTeam": "ID del team Slack",
+  "triggers.fireOn": "Scatta quando",
+  "triggers.phrases": "Frasi (separate da virgole)",
+  "triggers.reactions": "Reazioni (vuoto: qualsiasi)",
+  "triggers.channelIds": "ID dei canali (vuoto: tutti quelli del Bot)",
+  "triggers.eventTypes": "Tipi di evento",
+  "triggers.onlyWhen": "Solo quando il campo",
+  "triggers.equals": "è uguale a",
+  "triggers.repository": "Repository (facoltativo)",
+  "triggers.senders": "Mittenti consentiti (vuoto: nessuno)",
+  "triggers.secretLater": "Segreto di firma (si può aggiungere dopo)",
+  "triggers.adding": "Aggiungo…",
+  "triggers.addKind": "Aggiungi trigger {kind}",
+  "triggers.example.webhook": "deploy.finished (vuoto: qualsiasi)",
+  "routines.cal.intro":
+    "I prossimi {days} giorni, per le routine attive. Gli orari sono nel tuo fuso orario.",
+  "routines.cal.none":
+    "Ancora nessuna routine, quindi non c'è nulla in programma.",
+  "routines.cal.noneOn":
+    "Nessuna di queste routine è attiva, quindi nessuna verrà eseguita.",
+  "routines.cal.nothing":
+    "Non c'è nulla in programma nei prossimi {days} giorni.",
+  "routines.cal.truncated":
+    "Sono elencate solo le prime {max} esecuzioni di questi {days} giorni.",
+  "routines.cal.paused": {
+    one: "{count} routine in pausa, quindi non è elencata qui. Attivala per vedere quando viene eseguita.",
+    other:
+      "{count} routine in pausa, quindi non sono elencate qui. Attivane una per vedere quando viene eseguita.",
+  },
+  "routines.week.nothing":
+    "Non c'è nulla in programma per il resto di questa settimana.",
+  "routines.week.label": "Questa settimana",
+  "routines.week.today": "oggi",
+  "routines.week.now": "Adesso, {time}",
+  "routines.week.next": "Prossima:",
+  "routines.week.nothingElse": "Nient'altro in programma questa settimana.",
+  "routines.week.truncated":
+    "Sono elencate solo le prime esecuzioni dei prossimi giorni, quindi una routine molto frequente potrebbe non comparire ogni giorno.",
+  "routines.week.historyError":
+    "Non è stato possibile caricare le esecuzioni già avvenute, quindi non sono mostrate.",
+  "routines.week.note":
+    "Gli orari sono nel tuo fuso orario. Una routine che parte più spesso di una volta all'ora compare come un unico blocco per il giorno.",
+  "routines.week.summary": "{count} esecuzioni, ogni ~{minutes} min",
+  "routines.week.gone": "{label}, conversazione eliminata",
+  "routines.card.label": "Scheda della routine",
+  "routines.card.cancelled": "Routine annullata",
+  "routines.card.readError": "Non è stato possibile leggere questa routine.",
+  "routines.card.reading": "Leggo questa routine…",
+  "routines.card.gone": "Questa routine non esiste più",
+  "routines.card.cannotSend":
+    "Questa conversazione non può ricevere un messaggio adesso. Scrivi la modifica nella casella dei messaggi qui sotto.",
+  "routines.card.confirm": "Annullare questa routine?",
+  "routines.card.yes": "Sì, annullala",
+  "routines.card.no": "No, tienila",
+  "routines.card.pause": "Metti in pausa",
+  "routines.card.resume": "Riprendi",
+  "routines.card.edit": "Modifica",
+  "routines.card.whatChange": "Che cosa vuoi cambiare?",
+  "routines.card.send": "Invia la modifica",
+  "routines.card.writeBelow":
+    "Scrivi la modifica nella casella dei messaggi qui sotto.",
+  "routines.card.close": "Chiudi",
 };

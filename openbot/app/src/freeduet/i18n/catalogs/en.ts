@@ -969,6 +969,234 @@ export const EN = {
   "passwords.deleteAria": "Delete login for {origin}",
   "settings.notificationsPage":
     "Where your Bots' updates reach you when you're away. Set how much each Bot sends on its own page.",
+  "fullaccess.label.noPayments": "Full access without payments",
+  "fullaccess.label.full": "Full access",
+  "fullaccess.off": "Off",
+  "fullaccess.description":
+    "Safe by default: your Bots ask before they send, pay, sign, book or delete. For each Bot you can choose to let it do these without asking.",
+  "fullaccess.offTerm": "Off:",
+  "fullaccess.offText":
+    "the Bot asks before it sends, pays, signs, books or deletes.",
+  "fullaccess.noPaymentsTerm": "Full access without payments:",
+  "fullaccess.noPaymentsText":
+    "it sends, signs, books and deletes without asking. Payments and purchases still ask you.",
+  "fullaccess.fullTerm": "Full access:",
+  "fullaccess.fullText":
+    "it also pays and buys without asking. There is no limit on the amount until spending caps exist (planned for v0.4).",
+  "fullaccess.askTitle": "Give {name} {label}?",
+  "fullaccess.give": "Give {label}",
+  "fullaccess.full.p1":
+    "{name} will send, pay, sign, book and delete without asking you first. It can act on what it reads, such as an email or a web page, so only turn this on if you trust it with that.",
+  "fullaccess.full.p2":
+    "There is no limit on the amount it can pay: spending caps do not exist yet (they are planned for v0.4). To keep payments and purchases asking you, choose Full access without payments instead.",
+  "fullaccess.full.p3":
+    "Passwords and security settings still need you. When an automatic reviewer is set up, it also reads each command and script the member runs on its computer once for that, even if you switched the reviewer off; when none is set up, a command is not read. This applies to what you ask in your own chats, not to routines or check-ins. You can turn it off at any time, and it stops at once.",
+  "fullaccess.noPayments.p1":
+    "{name} will send, sign, book and delete without asking you first. Payments and purchases still ask you. It can act on what it reads, such as an email or a web page, so only turn this on if you trust it with that.",
+  "fullaccess.noPayments.p2":
+    "The app recognises a payment by its built-in checks, so a message that only mentions a payment may ask too, and a payment worded in an unusual way might not be caught. Passwords and security settings still need you. When an automatic reviewer is set up, it also reads each command and script the member runs on its computer once for a password, a security setting or a payment made that way, even if you switched the reviewer off; when none is set up, a command is not read. This applies to what you ask in your own chats, not to routines or check-ins. You can turn it off at any time, and it stops at once.",
+  "fullaccess.noBots": "No Bots yet.",
+  "fullaccess.legend": "Access for {name}",
+  "fullaccess.radioAria": "{label} for {name}",
+  "fullaccess.summary.off":
+    "Asks before it sends, pays, signs, books or deletes.",
+  "fullaccess.summary.noPayments":
+    "Acts without asking, except that payments and purchases still ask you. Since {since}.",
+  "fullaccess.summary.full":
+    "Acts without asking, payments included, with no limit on the amount. Since {since}.",
+  "fullaccess.doneTitle": "Done without asking",
+  "fullaccess.doneDescription":
+    "What a Bot with Full access did without asking you, newest first.",
+  "fullaccess.nothingYet": "Nothing yet.",
+  "approvals.audience.owner": "Only its owner",
+  "approvals.audience.team": "Everyone",
+  "approvals.audience.outside": ", and outside input",
+  "approvals.audience.nobody": "Nobody named",
+  "approvals.audience.groups": {
+    one: "The group {names}",
+    other: "The groups {names}",
+  },
+  "approvals.audience.people": {
+    one: "{count} person",
+    other: "{count} people",
+  },
+  "approvals.audience.join": "{a} and {b}",
+  "access.req.title": "Requests",
+  "access.req.loadError": "Couldn't load access requests. Reload the page.",
+  "access.req.descApp":
+    "People asking for this app. Approve does what they asked, right away.",
+  "access.req.descAll":
+    "People asking for an app to be turned on, given to a Bot, or connected. Approve does what they asked, right away.",
+  "access.req.aBot": "a Bot",
+  "access.req.theBot": "the Bot",
+  "access.req.somebody": "Somebody",
+  "access.req.enable": "Turn on {app} for {bot}",
+  "access.req.grantMore": "Give {bot} more of {app}: {list}",
+  "access.req.grant": "Give {app} to {bot}",
+  "access.req.connectShared": "Connect the shared {app} account",
+  "access.req.asked": "{who} asked {when}{forBot}.",
+  "access.req.forBot": ", for {bot}",
+  "access.req.approving": "Approving…",
+  "access.req.botPage": "the Bot's page under {app}",
+  "access.req.toolRead": "{name} (read-only)",
+  "access.req.toolWrite": "{name} (changes something)",
+  "access.req.gives":
+    "Approving gives {bot} exactly these tools and nothing else: {list}.",
+  "access.req.readOnly":
+    "Approving gives {bot} only {app}'s read-only actions. Choose any others on {page}.",
+  "access.req.canSend": {
+    one: "{names} can send on the person's behalf.",
+    other: "{names} can each send on the person's behalf.",
+  },
+  "access.req.unreviewed": {
+    one: "No reviewed list says what {names} does in {app}, so it may send on the person's behalf.",
+    other:
+      "No reviewed list says what {names} do in {app}, so each may send on the person's behalf.",
+  },
+  "access.req.neverGives": {
+    one: "Approving never gives a tool like that: allow it in settings, on {page}.",
+    other:
+      "Approving never gives tools like that: allow them in settings, on {page}.",
+  },
+  "access.req.and": "{a} and {b}",
+  "passwords.saveTo": "Save to Passwords",
+  "responsibilities.run.waitKind.approval": "your approval",
+  "responsibilities.run.waitKind.question": "your answer",
+  "responsibilities.run.waitKind.handoff": "you to take over",
+  "responsibilities.run.waitKind.signIn": "you to sign in",
+  "responsibilities.run.waitKind.other": "you",
+  "responsibilities.new.description":
+    "An ongoing goal. The Bot works on it in the conversation you pick.",
+  "responsibilities.new.chooseConversation": "Choose a conversation",
+  "responsibilities.new.loadMore": "Load more conversations",
+  "responsibilities.new.titleExample": "Keep the customer report up to date",
+  "responsibilities.new.criteriaExample":
+    "The report contains the current quarter's graph and a source link.",
+  "responsibilities.new.eventSource": "Event source",
+  "responsibilities.new.source.none": "Run when asked",
+  "responsibilities.new.githubHelp":
+    "Events come from the repositories you connected in {link}.",
+  "responsibilities.new.eventType": "Event type",
+  "responsibilities.new.creating": "Creating…",
+  "responsibilities.new.create": "Create responsibility",
+  "triggers.kind.email": "Email",
+  "triggers.help.webhook":
+    "POST JSON to this URL with the Authorization header, or with Standard Webhooks signature headers. A 200 means it was received, not that the run finished.",
+  "triggers.help.github":
+    "In the repository's Settings → Webhooks, set the payload URL to this URL, content type application/json, and the secret to the key.",
+  "triggers.help.linear":
+    "In Linear, Settings → API → Webhooks: set the URL, then paste the signing secret Linear shows here.",
+  "triggers.help.sentry":
+    "In a Sentry internal integration, set the webhook URL, then paste the integration's client secret here.",
+  "triggers.help.pagerduty":
+    "In PagerDuty, Integrations → Generic Webhooks (v3): set the URL, then paste the secret shown on creation here.",
+  "triggers.help.email": "Send or forward mail to this address to start a run.",
+  "triggers.help.slack":
+    "Starts on Slack events this Bot receives. Messages sent before you added the trigger are ignored.",
+  "triggers.slack.mention": "The Bot is mentioned",
+  "triggers.slack.phrase": "A message contains a phrase",
+  "triggers.slack.reaction": "A reaction is added",
+  "triggers.slack.message": "Any message",
+  "triggers.f.inChannels": "in {channels}",
+  "triggers.f.everyChannel": "in every channel the Bot is in",
+  "triggers.f.mention": "when the Bot is mentioned",
+  "triggers.f.anyMessage": "on any message",
+  "triggers.f.phrases": "on messages containing {phrases}",
+  "triggers.f.or": " or ",
+  "triggers.f.reactions": "on reactions",
+  "triggers.f.slack": "{what} {where} (workspace {team})",
+  "triggers.f.events": "events {types}",
+  "triggers.f.everyEvent": "every event",
+  "triggers.f.where": "where {path} = {equals}",
+  "triggers.f.from": "from {from}",
+  "triggers.f.fromSenders": "from {senders} (authenticated)",
+  "triggers.title": "Triggers",
+  "triggers.add": "Add trigger",
+  "triggers.notActive.paused":
+    "This responsibility is paused. Its triggers won't start it.",
+  "triggers.notActive.completed":
+    "This responsibility is completed. Its triggers won't start it.",
+  "triggers.none":
+    "No triggers. It runs when you press Run now, or on the events above.",
+  "triggers.removeForGood": "Remove for good",
+  "triggers.keep": "Keep",
+  "triggers.runOnAria": "Run on this {kind} trigger",
+  "triggers.postTo": "POST to",
+  "triggers.copyUrl": "Copy URL",
+  "triggers.copyAddress": "Copy address",
+  "triggers.emailOff":
+    "Email isn't set up on {product} yet, so this address can't receive mail. An admin has to turn it on.",
+  "triggers.key": "Key",
+  "triggers.copyKey": "Copy key",
+  "triggers.copyHeader": "Copy header",
+  "triggers.showKey": "Show key",
+  "triggers.replaceKey": "Replace key",
+  "triggers.secretSaved": "Signing secret saved",
+  "triggers.secretWaiting": "Waiting for the signing secret",
+  "triggers.secret": "Signing secret",
+  "triggers.pasteNew": "Paste a new secret to replace it",
+  "triggers.paste": "Paste the signing secret",
+  "triggers.saveSecret": "Save secret",
+  "triggers.addDescription":
+    "Something outside {product} that starts this responsibility.",
+  "triggers.slackTeam": "Slack team ID",
+  "triggers.fireOn": "Fire on",
+  "triggers.phrases": "Phrases (comma separated)",
+  "triggers.reactions": "Reactions (blank: any)",
+  "triggers.channelIds": "Channel IDs (blank: all the Bot is in)",
+  "triggers.eventTypes": "Event types",
+  "triggers.onlyWhen": "Only when field",
+  "triggers.equals": "equals",
+  "triggers.repository": "Repository (optional)",
+  "triggers.senders": "Allowed senders (blank: nobody)",
+  "triggers.secretLater": "Signing secret (can be added later)",
+  "triggers.adding": "Adding…",
+  "triggers.addKind": "Add {kind} trigger",
+  "triggers.example.webhook": "deploy.finished (blank: any)",
+  "routines.cal.intro":
+    "The next {days} days, for the routines that are switched on. Times are in your time zone.",
+  "routines.cal.none": "No routines yet, so nothing is scheduled.",
+  "routines.cal.noneOn":
+    "None of these routines is switched on, so none will run.",
+  "routines.cal.nothing": "Nothing is scheduled in the next {days} days.",
+  "routines.cal.truncated":
+    "Only the first {max} runs in these {days} days are listed.",
+  "routines.cal.paused": {
+    one: "{count} routine paused, so not listed here. Switch one on to see when it runs.",
+    other:
+      "{count} routines paused, so not listed here. Switch one on to see when it runs.",
+  },
+  "routines.week.nothing": "Nothing is scheduled for the rest of this week.",
+  "routines.week.label": "This week",
+  "routines.week.today": "today",
+  "routines.week.now": "Now, {time}",
+  "routines.week.next": "Next:",
+  "routines.week.nothingElse": "Nothing else is scheduled this week.",
+  "routines.week.truncated":
+    "Only the first runs in the next days are listed, so a very busy routine may not show every day.",
+  "routines.week.historyError":
+    "Runs that already happened could not be loaded, so they are not shown.",
+  "routines.week.note":
+    "Times are in your time zone. A routine that runs more often than hourly shows as one block for the day.",
+  "routines.week.summary": "{count} runs, every ~{minutes} min",
+  "routines.week.gone": "{label}, conversation deleted",
+  "routines.card.label": "Routine",
+  "routines.card.cancelled": "Routine cancelled",
+  "routines.card.readError": "This routine could not be read.",
+  "routines.card.reading": "Reading this routine…",
+  "routines.card.gone": "This routine no longer exists",
+  "routines.card.cannotSend":
+    "This conversation cannot take a message right now. Write the change in the message box below.",
+  "routines.card.confirm": "Cancel this routine?",
+  "routines.card.yes": "Yes, cancel it",
+  "routines.card.no": "No, keep it",
+  "routines.card.pause": "Pause",
+  "routines.card.resume": "Resume",
+  "routines.card.edit": "Edit",
+  "routines.card.whatChange": "What should change?",
+  "routines.card.send": "Send change",
+  "routines.card.writeBelow": "Write the change in the message box below.",
+  "routines.card.close": "Close",
 } satisfies Entries;
 
 export type MessageId = keyof typeof EN;
