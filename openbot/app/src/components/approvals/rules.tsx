@@ -34,11 +34,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useT } from "@/freeduet/i18n/provider";
-import {
-  type ApprovalRuleInput,
-  type ApprovalRuleRow,
-  type HostCommandPolicy,
-  type RuleBehaviour,
+import type {
+  ApprovalRuleInput,
+  ApprovalRuleRow,
+  HostCommandPolicy,
+  RuleBehaviour,
 } from "@/lib/approvals";
 
 /** What a rule's behaviour is called, in the app's language (D181 stage 2f). The keys are the values the server stores. */
