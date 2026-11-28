@@ -401,7 +401,7 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
                         except asyncio.CancelledError:
                             raise
                         except Exception:  # noqa: BLE001 - the first answer stands
-                            log.warning("%s guard: the second turn crashed", kind, exc_info=True)
+                            log.warning("cannot guard: the second turn crashed" if kind == "cannot" else "hand-off claim guard: the second turn crashed", exc_info=True)
                             failed = True
                         if failed:
                             mark_failed()
@@ -413,10 +413,16 @@ async def run_segment(run: RunInput, member: Member, notes: SegmentNotes | None 
                         notes.handoff_claim_guard = handoff_claim_guard.UNCHANGED
                     else:
                         notes.cannot_guard = cannot_guard.UNCHANGED
-                    log.info(
-                        "%s guard: asked %s again and named %s (thread %s, run %s)",
-                        "hand-off claim" if kind == "claim" else "cannot", member.id, who, run.thread_id, run.run_id,
-                    )
+                    if kind == "claim":
+                        log.info(
+                            "hand-off claim guard: asked %s again for a claim and named %s (thread %s, run %s)",
+                            member.id, who, run.thread_id, run.run_id,
+                        )
+                    else:
+                        log.info(
+                            "cannot guard: asked %s again for a refusal and named %s (thread %s, run %s)",
+                            member.id, who, run.thread_id, run.run_id,
+                        )
                     engine_task = asyncio.create_task(run_again())
                     return True
                 except Exception:  # noqa: BLE001 - the guard never fails a turn
