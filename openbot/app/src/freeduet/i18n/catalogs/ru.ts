@@ -1093,7 +1093,7 @@ export const ru: Catalog<typeof EN> = {
     "Администратор отключил сохранённые пароли. Твои данные для входа сохранены, но предлагаться не будут.",
   "passwords.empty":
     "Нет сохранённых данных для входа. Выбери «Сохранить в Паролях», когда выполняешь вход помощника на сайте.",
-  "passwords.lastUsed": "использовано {date}",
+  "passwords.lastUsed": "последнее использование: {date}",
   "passwords.neverUsed": "ни разу не использовано",
   "passwords.deleteAria": "Удалить данные для входа для {origin}",
   "settings.notificationsPage":
