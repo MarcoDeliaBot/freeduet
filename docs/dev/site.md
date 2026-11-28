@@ -24,4 +24,5 @@ Moved out of `CLAUDE.md`. Read it before changing anything under `site/`.
 - Text of the new page lives only in `i18n/*.json` (flat keys); a new string is a new key in `en.json` and in every other language file, and a language whose translation is not ready is marked `_untranslated` again and keeps its old page. `node site/tools/checklang.js` enforces parity. Translator guide: `site/app/src/i18n/README.md`.
 - The FAQ keys `faq.q1..q6` / `faq.a1..a6` feed both the visible FAQ and the FAQPage JSON-LD.
 - Brand images: `python3 site/app/scripts/render-brand.py` (source `site/app/brand/og-image.html`, `site/favicon.svg`).
+- `site/_redirects` sends `/app/*` to `/` with a 301: `site/app/index.html` is the dev template and would show a blank page at `/app/` if Pages publishes `site/`, and it works only if the Cloudflare Pages output directory is `site/` (to be confirmed in the Cloudflare dashboard).
 - In this sandbox Google Fonts is blocked: for screenshots route the font CSS to local `@fontsource` files (see `render-brand.py --fonts`).

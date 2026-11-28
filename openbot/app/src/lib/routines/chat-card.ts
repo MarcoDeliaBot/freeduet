@@ -3,6 +3,7 @@ import {
   toolResultDeclined,
   toolResultFailed,
 } from "@/lib/plugins/tool-result";
+import { englishT, type T } from "@/freeduet/i18n/provider";
 
 /**
  * The words the card under a routine written in chat reads: which routine it is, what it does, and
@@ -60,9 +61,14 @@ export function cardWords(
  * A moment in one zone, in English: "Monday, 16 November 2026 at 09:00". Null when the platform does not
  * know the zone, so the caller can fall back rather than print a guess.
  */
-export function momentIn(at: Date, zone: string): string | null {
+export function momentIn(
+  at: Date,
+  zone: string,
+  language = "en",
+): string | null {
   try {
-    return new Intl.DateTimeFormat("en-GB", {
+    // English keeps the day-month-year order the card has always used.
+    return new Intl.DateTimeFormat(language === "en" ? "en-GB" : language, {
       dateStyle: "full",
       timeStyle: "short",
       timeZone: zone,
@@ -81,12 +87,14 @@ export function nextRunWords(
   at: Date,
   zone: string,
   device: string | undefined,
+  t: T = englishT,
+  language = "en",
 ): string {
-  const own = momentIn(at, zone) ?? at.toUTCString();
-  const line = `Next run: ${own} (${zone}).`;
+  const own = momentIn(at, zone, language) ?? at.toUTCString();
+  const line = t("routines.nextRun", { when: own, zone });
   if (device === undefined || device === zone) return line;
-  const here = momentIn(at, device);
+  const here = momentIn(at, device, language);
   return here === null
     ? line
-    : `${line} In your time zone (${device}) that is ${here}.`;
+    : t("routines.nextRunHere", { line, zone: device, when: here });
 }
